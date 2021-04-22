@@ -1,0 +1,112 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Non-canonical input</title>
+<meta name="description" content="non-canonical input">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node123.html">
+<link rel="previous" href="node121.html">
+<link rel="up" href="node120.html">
+<link rel="next" href="node123.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2710"
+  href="node123.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2704"
+  href="node120.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2698"
+  href="node121.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2706"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2708"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2711"
+  href="node123.html">A simple utility</a>
+<b> Up:</b> <a name="tex2html2705"
+  href="node120.html">Program development</a>
+<b> Previous:</b> <a name="tex2html2699"
+  href="node121.html">Writing programs</a>
+ &nbsp; <b>  <a name="tex2html2707"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2709"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001420000000000000000"></a><a name="dev-noncanon"></a>
+Non-canonical input</h1>
+
+<p>The <code>noncanon</code> program provides a means of entering data
+via the keyboard without echoing it to the screen. This is known as
+non-canonical input mode, the usual echoing of input being canonical
+input mode<a name="8571"></a>. The general details of terminal control
+are very complex, but simple access has been provided with the
+<code>kbd channel</code>.</p>
+
+<p>Here is a sample program which may be used to test the effect of
+<code>kbd channel</code>:</p>
+
+<pre>
+   PROGRAM noncanon CONTEXT VOID
+   USE standard
+   BEGIN
+      STRING password;
+      FILE kbd;  open(kbd,"",kbd channel);
+      WHILE
+         CHAR ch;  get bin(kbd,ch);
+         ch /= REPR lf
+      DO
+         password+:=ch;
+         print("*")
+      OD;
+      close(kbd);
+      print(("You entered [",
+             password,"]",
+             newline))
+   END
+   FINISH
+</pre>
+
+<p>Notice that the program cannot be aborted by pressing
+<code>^C</code>. Ensure you close the <code>FILE</code> opened with
+the <code>kbd channel</code> after use otherwise you'll find all your
+commands at the command prompt unechoed.  If that happens, issue the
+following command at the prompt:</p>
+
+<pre>
+   $ stty sane
+</pre>
+
+<p>when normal echoing will be restored.</p>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

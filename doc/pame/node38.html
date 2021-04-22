@@ -1,0 +1,152 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The FORALL loop</title>
+<meta name="description" content="the forall loop">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node39.html">
+<link rel="previous" href="node37.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node39.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1247"
+  href="node39.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1241"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1235"
+  href="node37.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1243"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1245"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1248"
+  href="node39.html">Summary</a>
+<b> Up:</b> <a name="tex2html1242"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1236"
+  href="node37.html">Program structure</a>
+ &nbsp; <b>  <a name="tex2html1244"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1246"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section005100000000000000000"></a><a name="rep-forall"></a>
+<br>
+The <tt>FORALL</tt> loop</h1>
+
+<p>The <tt>FORALL</tt> loop<a name="1797"></a> is not part of
+Algol&nbsp;68, but an extension introduced by the
+a68toc<a name="1798"></a> compiler. It is similar to the
+<code>FOR</code> loop, but the identifier has the mode of an element
+of the multiple under consideration.  Look at this
+example<a name="1799"></a>:</p>
+
+<pre>
+   []REAL r1 = (1.0,2.0,3.0,4.0,5.0);
+   FORALL e IN r1 DO print(e * e) OD
+</pre>
+
+<p>In the <code>FORALL</code> loop, <code>e</code> takes the value of
+each element in <code>r1</code> and so has mode <code>REAL</code>. The
+compiler generates more efficient code using the <code>FORALL</code>
+loop by avoiding the normal overheads of the subscripting mechanism.
+However, the <code>FORALL</code> loop can only be used when all the
+elements of a dimension are required. If you want to limit the
+processing to a few elements, you can trim the multiple or use the
+<code>FOR</code> loop.</p>
+
+<p>The elements of more than one multiple can be combined
+simultaneously. For example:</p>
+
+<pre>
+   []INT i = (1,2,3,4,5),
+         j = (11,12,13,14,15);
+   FORALL ii IN i, jj IN j
+   DO
+      print((ii * jj,newline))
+   OD
+</pre>
+
+<p>The comma<a name="1727"></a> between <code>ii IN i</code> and
+<code>jj IN j</code> means that the constructs are elaborated
+collaterally<a name="1728"></a>.  The bounds<a name="1729"></a> of
+<code>i</code> must be the same as the bounds of <code>j</code>.</p>
+
+<p><code>FORALL</code> clauses can be nested<a name="1730"></a> as in
+the case of <code>FOR</code> clauses. If we use <code>l</code> and
+<code>m</code> declared in a previous example, then</p>
+
+<pre>
+   FORALL ll IN l
+   DO
+      FORALL mm IN m
+      DO
+         print(ll * mm)
+      OD
+   OD
+</pre>
+
+<p>could be used to print the products of all the integers.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1247"
+  href="node39.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1241"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1235"
+  href="node37.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1243"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1245"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1248"
+  href="node39.html">Summary</a>
+<b> Up:</b> <a name="tex2html1242"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1236"
+  href="node37.html">Program structure</a>
+ &nbsp; <b>  <a name="tex2html1244"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1246"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

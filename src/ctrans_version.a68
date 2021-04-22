@@ -1,0 +1,53 @@
+DECS  ctrans_version  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: ctrans_version.a68,v 1.2 2002-02-23 17:50:45 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.8 
+02:12:94  33.002  DJS   CorrVers   Update Version from 4_35 to our numbering
+                                   system 33.1. Version 4_35 was really 4_37
+                                   but did not get updated. 
+05:12:94  33.003  DJS   CmplxNos   Update version after complex numbers added
+                                   etc. 
+29:03:95  34.004  ELLA  Modcprght Change copyright header
+03:04:95  34.005  ELLA  Release   Set version number to value following
+                                  pre-release fix.
+22:02:02  34.006  SL    Release   Set version no. following minor fixes.
+??:??:??   ?.???  ????
+COMMENT
+
+VECTOR [] CHAR ctrans_version = "Ctrans_34.6"
+
+KEEP  ctrans_version
+FINISH

@@ -1,0 +1,252 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Balancing</title>
+<meta name="description" content="balancing">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node102.html">
+<link rel="previous" href="node100.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node102.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2348"
+  href="node102.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2342"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2336"
+  href="node100.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2344"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2346"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2349"
+  href="node102.html">Well-formed modes</a>
+<b> Up:</b> <a name="tex2html2343"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2337"
+  href="node100.html">Quaternaries</a>
+ &nbsp; <b>  <a name="tex2html2345"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2347"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2350"
+  href="node101.html#section001291000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001290000000000000000"></a><a name="gram-bal"></a>
+Balancing</h1>
+
+<p>In section&nbsp;<a href="node61.html#rout-cont">6.1</a>, it was
+pointed out that the context of a routine
+denotation<a name="6801"></a> is passed on to the last unit in the
+denotation.  In the example given, the body of the routine denotation
+was a closed clause<a name="6802"></a>.  The yield<a name="6803"></a>
+of the routine was a value of mode <code>INT</code>, but the yield of
+the last unit was a name with mode <code>REF INT</code>.  Since the
+context of the body of a routine denotation is strong, the name is
+dereferenced to get an <code>INT</code>. This principle is applicable
+to all enclosed clauses.</p>
+
+<p>Now conditional clauses, case clauses and conformity clauses can
+yield one of a number of units, and so it is quite possible for the
+units to yield different values of different modes.  The principle of
+balancing<a name="6804"></a> allows the context of all these units,
+except one, to be promoted to strong whatever the context of the
+enclosed clause.  Balancing is also invoked for identity
+relations<a name="6805"></a> which are dealt with in the next
+chapter.</p>
+
+<p>Considering, for example, the formula</p>
+
+<pre>
+   x * (a &gt; 0|3.0|2)
+</pre>
+
+<p>the context of the conditional clause is firm which means that widening
+is not allowed. Without balancing, the conditional clause could yield a
+<code>REAL</code> or an <code>INT</code>. In this example, the principle of
+balancing would promote the context of the <code>INT</code> to strong and
+widen it to <code>REAL</code>. Balancing thus means &ldquo;making the modes the
+same&rdquo;.</p>
+
+<p>In a balanced clause, one of the yielded units is in the context of
+the whole clause and all the others are in a strong context,
+irrespective of the actual context of the clause. Here is an example
+of a balanced case clause<a name="6808"></a></p>
+
+<pre>
+   INT i:=3,j:=4,a:=2;
+   PROC ij = REF INT: (random &lt; 0.5|i|j);
+   print(2 + (a|i,ij|random))
+</pre>
+
+<p>where the <code>a</code> yields an <code>INT</code> in a meek
+context<a name="6811"></a> (that of the enquiry clause). In this
+example, the modes of the values that can be yielded by the case
+clause are <code>REF INT</code> (<code>i</code>), <code>PROC REF
+INT</code> (<code>ij</code>) and <code>PROC REAL</code>
+(<code>random</code>).  In a firm context, the modes become
+<code>INT</code>, <code>INT</code> and <code>REAL</code>. Thus the
+context of <code>random</code> is taken to be firm, and the context of
+<code>i</code> and <code>ij</code> is promoted to strong and they are
+both dereferenced and widened to <code>REAL</code>.  The result is
+that the case clause will yield a <code>REAL</code> value even though
+the clause as a whole is in a firm context (it is an operand of the
+operator <code>+</code>).</p>
+
+<p>If instead, we had</p>
+
+<pre>
+   PROC REAL r:=random;
+   (a|i,ij|j):=ENTIER r
+</pre>
+
+<p>using the declaration of <code>ij</code> in the previous example,
+then balancing would not be needed to produce the required mode.  The
+modes of the yielded units are <code>REF INT</code>, <code>PROC</code>
+<code>REF</code> <code>INT</code> and <code>REF INT</code>
+respectively.  In a soft context<a name="6814"></a>, these modes would
+yield <code>REF INT</code> (no dereferencing allowed), <code>REF
+INT</code> (deproceduring is allowed) and <code>REF INT</code>.  Thus
+the case clause would yield <code>REF INT</code> on the left-hand side
+of the assignment<a name="6815"></a>.</p>
+
+<p>Here is an example of a conditional clause<a name="6816"></a>
+which cannot be balanced:</p>
+
+<pre>
+   INT i:=2, REAL a:=3.0;
+   (random &gt; 0.5|i|r):=random
+</pre>
+
+<p>In this case, the two parts of the conditional clause yield
+<code>REF INT</code> and <code>REF REAL</code>. There is no coercion
+which will convert a <code>REF INT</code> into a <code>REF
+REAL</code>. When you try to compile this, the
+a68toc<a name="6819"></a> compiler gives the following error
+message:</p>
+
+<pre>
+   lhs of assignment must be a reference
+</pre>
+
+<p>The balancing means that one of the yields is in a strong context
+and so is dereferenced which yields a value which is not a name.</p>
+
+<p>The method of determining whether balancing is possible is as
+follows:</p>
+
+<ol>
+<li>Determine the context of the choice clause.</li>
+<li>In the context found in step&nbsp;1, determine the mode yielded by
+each unit in the choice clause.</li>
+<li>If there is a mode such that all the modes but that one can be
+strongly coerced to that mode, the clause can be balanced.</li>
+</ol>
+
+<hr>
+<h2><a name="section001291000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.12<a name="ex-x-xii"></a>
+<dd>In each of the following clauses, state whether balancing is
+possible, and if so, the mode yielded by the balanced clause. These
+declarations are in force:
+<pre>
+   INT i,j, REAL a,b:=random;
+   PROC ij = REF INT: (b&gt;0.5|i|j);
+   PROC r = REAL: random * random;
+   UNION(INT,REAL) ri:=(random&gt;0.6|i|b)
+</pre> Ans<a href="node144.html#ans-x-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>a:=2.0*(random&lt;0.3|i|b)</code>  
+<p>
+<dt>(b)
+<dd><code>(j&lt;2|ij|b):=r</code>  
+<p>
+<dt>(c)
+<dd><code>a:=((ri|(INT r):r,(REAL r):r)&lt;1|2|3)</code>  
+<p>
+<dt>(d)
+<dd><code>b:=2.0*(j&gt;3|4|SKIP)</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2348"
+  href="node102.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2342"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2336"
+  href="node100.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2344"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2346"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2349"
+  href="node102.html">Well-formed modes</a>
+<b> Up:</b> <a name="tex2html2343"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2337"
+  href="node100.html">Quaternaries</a>
+ &nbsp; <b>  <a name="tex2html2345"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2347"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

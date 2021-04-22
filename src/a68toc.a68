@@ -1,0 +1,1071 @@
+PROGRAM  a68toc  CONTEXT VOID  USE
+*L       usefulops, osif,
+         centities,  {CCC must precede rscompiler to hide wrong LABEL decl }
+         rscompiler, {CCC must be first to hide wrong IDDEC declaration}
+         compiler, coutput, denotations, environ, environment, incid,
+         incimperatives, incinstallation, incmode, incoperfn, lookup,
+         mnemonics, modes, modules, moduletracer, uniquenameserver
+BEGIN
+
+configinfo A68CONFIG "$Id: a68toc.a68,v 1.2 2002-02-04 09:26:51 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.20 
+05:12:94  33.002  DJS   CmplxNos   No exponent character generated in floating
+                                   point literals - eg 1.0e-6 output as 1.0-6. 
+31:01:95  33.003  DCT   PCPort-1  "-n" inverted, format of line comment changed
+29:03:95  34.004  ELLA  Modcprght Change copyright header
+31:01:02  34.005  SL    Phoenix Engineering SL: change #include output
+??:??:??   ?.???  ????
+COMMENT
+
+XSIZES	xsizes:= ( 0, 0, 0, min id no, 0, 0 );
+	{set by 'output' and passed to 'translator'}
+
+{
+	Stream declarations and initialisation for output of stream
+}
+
+MODE STREAM = STRUCT(
+	RVC stream buffer,		{ ie buffers[current buffer] }
+	INT stream ptr,			{ index of last byte read/written }
+	REF VECTOR [] RVC buffers,	
+	INT current buffer              { index into buffers }
+);
+
+STREAM unset stream = (NIL, 0, HEAP VECTOR [0] RVC, 0);
+
+STRUCT 20 STREAM streams_area;
+REF [] STREAM streams := streams_area[@0];
+
+STREAM current;
+
+INT fixed streams = 1; { number of streams with local 'stream buffer' fields }
+
+FORALL stream IN streams[:fixed streams]
+DO
+	stream buffer OF stream :=
+		(buffers OF stream := HEAP VECTOR [1] RVC)[current buffer OF stream := 1] :=
+			LOC STRUCT 11 {edit+line number+map} CHAR
+	
+OD;
+
+FORALL stream IN streams [fixed streams + 1 :] DO stream := unset stream OD;
+current := unset stream;
+
+REF RVC stream buffer = stream buffer OF current;
+REF INT strptr = stream ptr OF current;
+REF INT current buffer = current buffer OF current;
+REF REF VECTOR [] RVC buffers = buffers OF current;
+
+REF STREAM curstradd := streams[0];
+
+PROC extend current = VOID:
+CO
+	adds a new buffer to the current stream
+CO
+BEGIN
+	INT size = ( current buffer = 0 | 1000 | 10000 );
+
+	REF REF VECTOR [] RVC (buffers) :=
+		( INT upb buffers = UPB buffers;
+		  HEAP VECTOR [upb buffers+1] RVC new;
+		  new[:upb buffers] := buffers;
+		  stream buffer :=
+		    new[current buffer := upb buffers + 1] :=
+		      HEAP VECTOR [size] CHAR;
+		  strptr := 0;
+		  new
+		)
+END;                 
+                                                 
+{ The stream record code types, stored in the first byte of the record }
+
+INT	separator base 		= 16,
+	terminator base 	= 32,
+	semi base		= 48,
+	load base		= 64,
+	id base 		= 80,
+	number base		= 90,
+	oper base		= 128,
+	miscellaneous base	= 192,
+	warn base		= 208,
+	iddec base		= 224,
+	starter base		= 240,
+
+	range size		= 64,
+	subrange size		= 16;
+INT
+	line type		= 10,
+	map type		= 11,
+	not last xchars type	= 112,
+	last xchars type	= 113,
+	xcallmodule type	= 200,
+	xclosure type		= 203,
+	xtmodule type		= 204;
+
+IF
+BEGIN		{ block to run rscompiler in }
+
+{----------------------------------------I N P U T-----------------------------------------}
+
+set params; { won't return if it fails }
+
+FILE input file = open_file( source file name, read_access, ignore_msg );
+
+IF input file IS NIL THEN terminal error( 250 { source file could not be found} ) FI;
+
+INT line_start := 1,	{ If we strip leading spaces off line before giving to RS compiler, line_start tells error handling where it really started }
+	line_length := 0;	{ Line length including leading spaces if stripped }
+
+BOOL line_pending := FALSE;	{ We've just read a line }
+
+line number := 0;
+
+FLEX VECTOR [0] CHAR flex input line;	{ globally visible so error reporting could use it }
+
+PROC	input = ( REF VECTOR [] CHAR line, REF INT size ) BOOL:
+IF
+  IOSTATUS read_status = read_line(input file,line,size,ignore_msg);
+  (read_status = io_error) OREL (read_status = io_eof)
+THEN
+  FALSE { couldn't read a line, end of file }
+ELSE { read_status is io_ok or io_no_newline }
+  line number +:= 1;
+  IF
+    read_status = io_no_newline
+  THEN
+    error( 253 { line too long } )
+  FI;
+
+  line_pending := TRUE;	{ we've just read a line, so 'output' will output a 'newline'
+                          stream directive at next XCONTROL }
+
+  { staredit: }
+  IF size < 2
+  THEN
+    SKIP {not long enough for a staredit}
+  ELIF
+    REF CHAR first = line[1];
+    first /= "*" ANDTH first /= "%"
+  THEN
+    SKIP {not a staredit}
+  ELIF
+    {
+      process staredits
+      compiler's buffer already holds the current line -- all we have to do is either
+        set size to 0 to omit the line, or write spaces over the staredit characters
+        if we are passing it on
+    }
+    REF CHAR second = line[2];
+    stars[ABS second] = ( first = "*" )
+  THEN
+    first := second := " "
+  ELSE
+    size := 0
+  FI;
+
+  TRUE { we succeeded in reading a line}
+FI;
+
+{----------------------------------------F A U L T-----------------------------------------}
+
+{ 'fault' comes from environment }
+
+{----------------------------------------L O O K U P---------------------------------------}
+
+{ 'lookup' comes from lookup }
+
+{----------------------------------------C H A R S E T-------------------------------------}
+
+ [0:511] STRUCT (INT type, value) charset;
+ charset [:127 @0] := [] STRUCT (INT type, value)(
+         {0}       {1}       {2}       {3}       {4}       {5}       {6}       {7}
+{000}  ( 2, 37), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100),
+{010}  (1, 100), ( 2, 37), ( 2, 37), ( 2, 37), ( 2, 37), (1, 100), (1, 100), (1, 100),
+{020}  (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100),
+{030}  (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100), (1, 100),
+{040}  ( 2,37 ), (20, 45), (5, 100), (20, 62), (20,160), (21,214), (21,229), (1, 100),
+{050}  (20, 50), (20, 54), (22,212), (21,200), (20,128), (21,201), (20,130), (22,213),
+{060}  ( 4, 0 ), ( 4, 1 ), ( 4, 2 ), ( 4, 3 ), ( 4, 4 ), ( 4, 5 ), ( 4, 6 ), ( 4, 7 ),
+{070}  ( 4, 8 ), ( 4, 9 ), (22, 84), (20,111), (22,206), (22,210), (22,207), (21,217),
+{100}  (20,154), ( 6,-98), ( 6,-99), (6,-100), (6,-101), (6,-102), (6,-103), (6,-104),
+{110}  (6,-105), (6,-106), (6,-107), (6,-108), (6,-109), (6,-110), (6,-111), (6,-112),
+{120}  (6,-113), (6,-114), (6,-115), (6,-116), (6,-117), (6,-118), (6,-119), (6,-120),
+{130}  (6,-121), (6,-122), (6,-123), (20,159), (20,175), (20,161), (20,233), ( 3, 36),
+{140}  (1, 100), ( 3, 10), ( 3, 11), ( 3, 12), ( 3, 13), ( 3, 14), ( 3, 15), ( 3, 16),
+{150}  ( 3, 17), ( 3, 18), ( 3, 19), ( 3, 20), ( 3, 21), ( 3, 22), ( 3, 23), ( 3, 24),
+{160}  ( 3, 25), ( 3, 26), ( 3, 27), ( 3, 28), ( 3, 29), ( 3, 30), ( 3, 31), ( 3, 32),
+{170}  ( 3, 33), ( 3, 34), ( 3, 35), (20, 67), (20, 45), (20, 68), (1, 100), (1, 100)) [@0];
+
+ FORALL c IN charset [128:]
+ DO
+    c := (1, 100)	{illegal representation - strings only}
+ OD;
+
+ IF (dot option|charset[ABS "."]:=(7,130);TRUE|FALSE) OR{EL} (quote option|charset[ABS "'"]:=(8,100);TRUE|FALSE) THEN
+    FOR i FROM (ABS "A") TO (ABS "Z") DO
+     charset[i] := (1,100) OD
+ FI;
+ IF tilde option THEN charset[ABS "~"]:=(3,36) FI;
+
+{----------------------------------------G I V E S P E C-----------------------------------}
+{----------------------------------------G I V E M O D U L E D E T A I L S-----------------}
+
+{ 'give spec' and 'give module details' declared in 'modules' }
+
+{---------------------------------------O U T P U T---------------------------------------}
+
+VECTOR [] CHAR contval = 16r"0 f1 f2 f3 f4 11 12 13 14 15 16 17 18 19 21 22 23 24 f5 1a f6 1d 25 f7 26 1b 0 27 c1 1c 28";
+
+BOOL upped := FALSE;  { for synchronising output of line numbers with edits }
+
+XTMODULE last xtmodule;  {for storing type = -1 XTMODULEs output until the following XTDEC}
+BOOL xtmodule pending := FALSE;  {whether an XTMODULE is pending output}
+
+BOOL times checked := FALSE; { whether we have checked if translation necessary}
+
+INT synthetic moduleno;  {for storing 'moduleno OF xopenmodule' until XCALLMODULE output}
+
+
+PROC	output = ( OUTPUT op, INT ll) VOID :
+IF	greatest severity <= 2 { no errors, only warnings}
+THEN	{ we'll output the stream }
+
+	OP INVERT = (REF VECTOR [] CHAR string) VOID:
+	{
+		Reverses the case of characters in 'string'.
+	}
+	FORALL	c IN string
+	DO
+		IF	c >= "a" AND c <= "z"
+		THEN	c := REPR (ABS c - ABS "a" + ABS "A" )
+		ELIF	c >= "A" AND c <= "Z"
+		THEN	c := REPR (ABS c - ABS "A" + ABS "a" )
+		FI
+	OD;
+
+	PROC	outprep = (INT size, type) VOID:
+	{	Used to write type of stream record { first byte } to a stream.
+		Carries out store management to ensure
+		"stream buffer[ strptr + 1 : strptr - 1 + size ]"
+		is available for rest of record.
+		If necessary, the stream is extended, in which case the
+		current buffer is truncated to its used length.
+		"strptr" must be left indexing last byte of record.
+	}
+	BEGIN
+		IF	RVC(stream buffer) IS NIL
+		THEN    { unset stream }
+			extend current
+		ELIF	size + strptr > UPB stream buffer
+		THEN	{ not enough space in current buffer }
+			buffers[currentbuffer] :=
+				buffers[currentbuffer][:strptr];
+			extend current
+		FI;
+
+		IF	stream out option
+		THEN	{ write type of each record and number of stream }
+			list("%" + whole (type,0) + "(" + whole (ll,0) + ")" )
+		FI;
+
+		stream buffer[ REF INT(strptr) +:= 1 ] := REPR type
+      END;
+
+{CCC	INT values are written into 4 stream bytes using a BIOP 99
+	conversion (ITOCS).  This may prove to be too wasteful of space.
+	Previous comment was:
+	{'put int{s}' store ints as 18 bit values in stream so as to save space.
+	They need to be sign extended on input.
+	This is adequate for all rscompiler output numbers except the param
+	for a straight XOPER, which may be a large negative number for
+	i structs.
+	The straight semantic does not use the param field in this case, so we
+	are all right outputing it incorrectly, as long as REPR does not check
+	it's operand <511.}
+CCC}
+
+	PROC	putints = ( INT k, [] INT a) VOID :
+	(
+		outprep( 4 * UPB a + 1, k );
+		FORALL	v IN a
+		DO	stream buffer[ strptr+1: ] [ :4 ] := ITOCS v ;
+			strptr +:= 4
+		OD
+	);
+
+	PROC	put int = ( INT type, i ) VOID:
+	BEGIN
+	        outprep ( 5, type );
+		stream buffer[ strptr + 1 : ] [ : 4 ] := ITOCS i ;
+		strptr +:= 4
+	END;
+
+	PROC	put chars = ( VECTOR[] CHAR s ) VOID :
+	(	INT up = UPB s;
+		outprep( up+1, up);
+		stream buffer[ strptr+1 : strptr+up] := s;
+		REF INT(strptr) +:= up
+	);
+
+	PROC	put truncated chars = ( VECTOR[] CHAR s ) VOID :
+	(	INT up = " " TRUNCATE s;
+		outprep( up+1, up);
+		stream buffer[ strptr+1 : strptr+up] := s[ :up];
+		REF INT(strptr) +:= up
+	);
+
+	{ output (op, ll): }
+
+	IF	line_pending
+	THEN	{ output line number unless semicolon }
+		IF	( op
+			| (XCONTROL c): fn OF c /= 25 
+			| TRUE
+			)
+		THEN
+			putints
+			( line type,
+			  (line number, line_start, line_length)
+			);
+			line_pending := FALSE
+		FI
+	FI;
+
+	IF	upped
+	THEN	outprep (1, 2);
+		upped := FALSE
+	FI;
+
+	REF STREAM (curstradd) := current;
+	{copy 'current' back to 'streams' before selecting 'streams [ll]'}
+	WHILE	ll > UPB streams
+	DO	INT upb streams = UPB streams;
+		HEAP [0:upb streams + upb streams] STREAM new streams;
+		FORALL	stream IN new streams [upb streams + 1:]
+		DO	stream := unset stream
+		OD;
+		new streams [:upb streams AT 0] := streams;
+		streams := new streams
+	OD;
+	current := curstradd := streams[ll];
+
+	CASE	op  IN
+	( XEDIT e ):
+		IF	NOT (upped := up OF e)
+		THEN	outprep( 1, 1)
+		FI,
+	( XOPER xop):
+		IF	fn OF xop = void fn
+		THEN	outprep( 1, 202)
+	        ELSE	putints( 128 + fn OF xop,( m OF xop, param OF xop))
+	        FI,
+	( XCONTROL c):
+	(	IF	fn OF c = 25 { semicolon }
+		THEN	outprep( 1, 48 + ABS props OF c {POSDIV}OVER 2048);
+			IF	line_pending
+			THEN	putints
+				( line type,
+				  (line number, line_start, line_length)
+				);
+				line_pending := FALSE
+			FI
+		ELSE
+			INT	fn val = ABS contval [ fn OF c + 1 ];
+			putints( fn val,( m OF c, ABS props OF c, param OF c))
+		FI                               
+         ),
+	( INT id ):
+		IF	id < 0
+		THEN	putint (78, id)
+		ELSE	putint (80, id)
+		FI,
+	( XNUMBER number ):
+	BEGIN
+		INT type = mode OF number + number base;
+		outprep( 1, type ) ;
+                { No exponent character for REAL literals.  23:03:94   DCT
+                  Rscompiler seems to allow 8r77e5 but generates 77+5
+                  +ve exp => found - start at -1 to allow final subtraction.
+                }
+                INT  exp:= -1;
+                FORALL c IN nu OF number WHILE (exp MINUSAB 1) < 0
+                DO  IF c = "+"  OREL  c = "-" THEN  exp:= -exp  FI  OD;
+                IF exp < 0
+                THEN  { output number in same ASCII format }
+                      putchars(nu OF number)
+                ELSE  { have an exponent - output "e" after mantissa }
+                      putchars( (nu OF number)[: exp-1] + "e" +
+                                (nu OF number)[exp :] )
+                FI
+	END,
+	( XWARN xw ):
+		IF	w OF xw <= 3
+		THEN	outprep( 1, 208 + w OF xw)
+		FI, {only for wassign, and, or}
+	( XIDDEC idd):
+	(	
+		putints
+		( iddec base + type OF idd,
+		  ( mode OF iddec OF idd, decno OF iddec OF idd)
+		);
+		put truncated chars( name OF iddec OF idd )
+	),
+	( XCHARS chars ):
+	BEGIN
+		out prep
+		( 1,
+		  ( no chars OF chars < 0
+		  | not last xchars type
+		  | last xchars type
+		  )                   
+		);
+		VECTOR []CHAR string =
+		IF	base OF chars /= 0
+		THEN	convert radix string(chars OF chars, base OF chars)
+		ELSE	chars OF chars
+		FI;
+		put chars(string)
+	END,
+	( XSTRING str):
+		IF	strmode OF str = 8 CO char CO
+		THEN	outprep( 1, 76)
+		ELSE	putint ( 77, strmode OF str )
+		FI,
+
+	( XROUTINE rd ):
+	(	putints
+		( 197,
+		  ( rdenno OF rd,
+		    mode OF rd,
+		    ABS props OF rd,
+		    maxname OF rd MAX min id no
+		  )
+		);
+		put truncated chars (name OF rd )
+	),
+
+	( STRUCT ( INT nse) nse):
+		outprep( 1, 66 + nse OF nse),
+	( BOOL b):
+		outprep( 1, 65 + ABS b),
+	( XGEN generator ):
+        BEGIN
+		{ produce translator introduced OPER for this code generating load }
+		put ints
+		( 128 + generator fn,
+		  ( mode OF generator, ABS loc OF generator )
+		)
+        END,
+	( XFORMAT):
+		error(808 {format not supported}),
+	( XALIEN al):
+		putint ( 75, almode OF al ),
+	( XCODE c ):
+		{ Translator introduced operator to do code inserts }
+		putints( 70, ( mode OF c, nopars OF c )),
+	( XLABDEC xl ):
+		IF	notsetting OF xl
+		THEN	REF LABEL rl := lab OF xl;
+			IF	status OF rl = 0
+			THEN	putint ( 194, labno OF rl );
+				put truncated chars (name OF rl)
+			ELSE	putints( 195,( labno OF rl, status OF rl))
+			FI
+		ELSE	putint ( 196, labno OF lab OF xl )
+		FI,
+	( REF LABEL lb): putint ( 74, labno OF lb ),
+	( XSIZES xs ): xsizes := xs,
+
+	( REF VECTOR [] MDE mdes) :
+        ( initialise unique name server(uname_option);
+          initialise mode table (mdes, nomodes OF xsizes)
+        ),
+
+	( XTDEC xtd ) :
+	(	IF	xtmodule pending
+		THEN	xtmodule pending := FALSE;
+			add decs module( last xtmodule, level OF xtd )
+		FI;
+		add external id (id OF xtd)
+	),
+	( XTMODULE xtm ):
+		IF	type OF xtm < 0
+		THEN	last xtmodule := xtm; xtmodule pending := TRUE
+		ELSE
+		        putints
+			( xtmodule type,
+			  ( moduleno OF xtm, UPB specs OF ym OF xtm)
+			);
+		        put truncated chars (name OF xtm);
+		        putchars (uname OF ym OF xtm);
+		        putchars (lname OF ym OF xtm);
+		        putchars (gname OF ym OF xtm);
+		        FORALL	spec IN specs OF ym OF xtm
+		        DO	putchars (ys OF spec)
+		        OD
+		FI,
+	( XINTERF ):
+		error(804 {contexts not supported}),
+	( XCLOSURE ):
+		error(805 {closures not supported}),
+	( XOPENMODULE open ):
+		synthetic moduleno := moduleno OF open,
+	( XCOMPTYPE ):
+		error(806 {composition module not supported}),
+	( XCALLMODULE ):
+		error(807 {holes not supported}),      
+	( XMODINFO xm):
+		initialise current module (xm),
+	( XBUTYPE xbu):
+		kept decnos := HEAP [UPB decnos OF xbu] INT := decnos OF xbu,
+	( XSPEC s):
+		initialise spec (s)
+	OUT	SKIP
+	ESAC
+ELSE	{ greatest severity > 2 { errors }
+	  Only do those things that may produce useful user error messages,
+	  the form of stream is undefined now, be careful about assuming
+	  anything
+	}
+	SKIP
+FI	{output};
+
+{------------------------------------------------------------------------------}
+
+init coutput( basename source file );
+
+{ ---------------- RS compiler ------------------ }
+compile(input,output,fault,message,give module details,give spec,
+	(optbool option | optbool lookup | lookup),charset);
+
+	BEGIN
+		STRUCT 160 CHAR waste line;
+		INT waste size;
+		input(waste line,waste size)	{there may be a line to list}
+	END;
+
+	close_file( input file, ignore_msg);
+
+	greatest severity<=2
+END
+THEN
+
+COMMENT ******** compilation successful -> run translator ******** COMMENT
+
+line number := 1;
+
+BOOL printstream     = stream option;
+
+{
+        Initialisation for reading streams.
+}
+
+REF STREAM ( curstradd ) := current; { copy current back to its home in streams }
+
+INT level := 0;
+INT s := 0;
+
+FORALL	stream IN streams
+WHILE	RVC (stream buffer OF stream) ISNT NIL
+DO
+	REF INT stream ptr = stream ptr OF stream,
+		currentbuffer = current buffer OF stream;
+	REF RVC stream buffer = stream buffer OF stream;
+	REF REF VECTOR [] RVC buffers = buffers OF stream;
+
+	buffers[current buffer] := buffers[currentbuffer][:streamptr];
+
+	IF	printstream
+	THEN	{some statistics}
+		INT bytes used := 0;
+		FORALL b IN buffers DO bytes used +:= UPB b OD;
+		list (whole( bytes used, -7 ) + " bytes used in stream " + 
+		whole( s, 0 ))
+	FI;
+	stream buffer := buffers[currentbuffer:=1];
+	stream ptr := 0; { reset it for reading }
+	s +:= 1
+OD;
+
+current := streams[level]; { "strbuff" and "strptr" are identified with fields of current }
+
+INT upbstring; REF VECTOR [] CHAR string;
+
+CO ******** section dealing with basic input and output CO
+                     
+PROC position current = VOID:
+CO
+	positions current stream prior to a read
+CO
+IF
+	strptr < UPB stream buffer
+THEN	{ still data left in current buffer - no action necessary }
+	SKIP
+ELIF
+	( current buffer +:= 1 ) > UPB buffers
+THEN	{ no buffers left }
+	"SHELL: incomplete stream" ASSERT FALSE
+ELSE	{ position on next buffer }
+	stream buffer := buffers[current buffer];
+	str ptr := 0
+FI;
+
+PROC next byte = INT: (position current; ABS stream buffer [strptr +:= 1]);
+
+
+PROC next int { only for use in defining 'next' below } = INT :
+{CCC	Changed to take account of not packing INT stream values CCC}
+BEGIN
+	position current;
+	INT nexti := STRINGVALUE stream buffer [strptr + 1 : ] [: 4] ;
+	strptr +:= 4 ;
+	nexti
+END;
+
+
+PROC INT next = next int;
+
+PROC	next string = RVC :
+BEGIN
+	position current;
+	upbstring := ABS stream buffer[ strptr +:= 1 ];
+	string := stream buffer[ strptr+1 : strptr+upbstring ];
+	strptr +:= upbstring;
+	string
+END;
+
+INT	line_start       := 0,
+	line_length      := 0,
+	statement_number := 0,
+	{ for 'insert statement map entry' in 'next type' }
+	hundred_counter  := -1; { for debugging (progress monitoring) only }
+
+PROC	next type = INT :
+BEGIN
+	INT t;
+	WHILE
+		position current;
+		t := ABS stream buffer[ strptr +:= 1 ] ;
+		t < separator base
+	DO	IF	t<3  CO XEDIT CO
+		THEN	streams[level] := current;
+			current := streams[ level +:= (3-t-t) ]
+			{+1 (t=1), -1 (t=2) }
+		ELIF	t = line type
+		THEN	
+			line number := next;
+			line_start  := next;
+			line_length := next;
+			statement_number := 0 ;
+
+			IF ( TRACELEVEL "shell" /= 0 )
+				ANDTH line number OVER 100 > hundred_counter
+			THEN	hundred_counter := line number OVER 100;
+				type line on terminal(
+				"At line " + whole(linenumber,0) + "...")
+			FI;
+
+			IF line option
+			THEN
+				{ output #line to current code stream }
+				write c stream(
+					cnewline,
+					CODESTREAM current level)
+			ELSE
+			  	{ output line number comment }
+				write c stream(
+				      ( " /* line ",
+			      		whole(line number,0),
+					": */", cnewline
+				      ),
+				      CODESTREAM current level)
+			FI;
+
+		        IF	print stream
+		        THEN	list (whole (line number, 0) + ":") 
+			FI 
+		ELIF	t = map type
+		THEN
+			statement_number+:=1;
+			IF	printstream
+			THEN	list (whole(line number,0) + ":")
+			FI
+		ELSE	"invalid stream directive" ASSERT FALSE
+		FI
+	OD;
+	t
+END;
+
+PROC  next xchars = (INT suggested size, insertion) RVC:
+{
+  Reads the following xchars imperatives, and constructs and delivers
+  a contiguous string from them.
+  Uses 'suggested size' as a guess at the size of the string where
+  there are more than one xchars.
+  Uses 'insertion' to decide what newline characters to use to separate
+  xchars and whether to expand control characters:
+     'insertion'      expand controls?      chars inserted
+          0                  no                 nothing
+          1                  no                 \n
+          2                  yes                \\n
+          3                  yes                nothing
+}
+BEGIN
+  INT type := next type;
+  INT used := 0, result size := suggested size;  
+  RVC result := HEAP VECTOR [ result size ] CHAR;
+
+  WHILE
+    VECTOR [] CHAR string =
+      ( insertion
+      | next string + newline_char,
+        replace control chars( next string )+"\"+newline_char,
+        replace control chars( next string )
+      | next string
+      );
+    INT size     = UPB string;
+    INT new used = used + size;
+       
+    IF  new used > result size
+    THEN  { double size of result }
+      INT new result size = 2 * new used MAX result size;
+      HEAP VECTOR[ new result size ]CHAR new result;
+      new result[ :used] := result[ :used ];
+      result        := new result;
+      result size      := new result size
+    FI;
+    result[ used+1 :new used ] := string;
+    used := new used;
+    type = not last xchars type
+  DO
+    type := next type
+  OD;
+  "SHELL: no last xchars" ASSERT type = last xchars type;
+  result[ :used ]
+END;
+
+PROC  next stream imperative = IMPERATIVE:
+{
+  Delivers the next imperative read from stream as its result.
+}
+BEGIN
+  INT  type = next type;
+
+  IF  print stream
+  THEN  list ("[" + whole (type,-3) + "]    ") 
+  FI ;
+
+  IMPERATIVE imperative =      {--- see above ---}
+
+  CASE (type {POSDIV}OVER range size) + 1
+  IN
+  { 0 <= type <= 63 }
+    CASE type {POSDIV}OVER subrange size
+    IN
+
+    { 16 <= type <= 31 }
+      ( SEPARATOR s; fn OF s := type - separator base;
+        mode  OF s := next; props OF s := BIN next;
+        param OF s := next;
+        s
+      ),
+
+    { 32 <= type <= 47 }   
+      ( TERMINATOR t; fn OF t := type - terminator base;
+        next; props OF t := BIN next; next;
+        t
+      ),
+
+    { 48 <= type <= 63 }   
+      ( SEPARATOR semi; fn OF semi := semi fn;
+        props OF semi := BIN ((type - semi base) * 2048);
+        semi
+      )
+    ESAC,
+
+  { 64 <= type <= 127 }
+    CASE
+      INT load type = type - load base;
+      (load type {POSDIV}OVER subrange size) + 1
+    IN
+    { 64 <= type <= 79 }
+      CASE  load type
+      IN
+      {65} FALSE,
+
+      {66} TRUE,
+
+      {67} ( STRUCT (INT nse) e; nse OF e := empty fn; e ),
+
+      {68} ( STRUCT (INT nse) s; nse OF s := skip fn; s ),
+
+      {69} ( STRUCT (INT nse) n; nse OF n := nil fn; n ),
+
+      {70} ( CODEX c; mode   OF c := next; number OF c := next; insert OF c := next xchars( 128,1 ); c ),
+
+      {71} terminal error (600 {illegal imperative, generator handled in output now} ),
+
+      {72} terminal error (600 {illegal imperative, format not output} ),
+
+      {73} terminal error (600 {illegal imperative}),
+
+      {74} ( STRUCT (INT labno) l; labno OF l := next; l ),
+
+      {75} ( ALIENX a; mode OF a := next; string OF a := next xchars( 400, 1 ); a ),
+
+      {76} ( CHARDENOTATION c; representation OF c := next xchars( 1,3 ); c ),
+
+      {77} ( STRINGDENOTATION s; mode OF s := next; denotation OF s := next xchars( 160,0 ); s ),
+              {160 could use element mode( mode OF s ) to save heap }
+
+      {78} next,  {biop}
+
+      {79} terminal error (600 {illegal imperative})
+      ESAC,
+
+    { 80 <= type <= 95 : identifier}
+      IF
+        type = 80
+      THEN next
+      ELSE
+        terminal error (600 {illegal imperative, 81-95 not used} )
+      FI,
+
+    { 96 <= type <= 111 }
+      ( INT mode = type - number base; NUMBER( mode, next string ) )
+    ESAC,
+
+  { 128 <= type <= 191 }
+    IF
+      OPER o;
+      fn    OF o := type - oper base;
+      mode  OF o := next;
+      param OF o := next;
+      fn OF o = 10 {dyop fn}
+        AND ( INT n = param OF o {POSDIV}OVER 16; n = 4 {andth} OR n = 5 {orel} )
+        AND param OF o MOD 16 = 1 {BOOL version}
+    THEN TERMINATOR (optbool fn, 2r0)
+    ELSE  o
+    FI,
+
+  { 192 <= type <= 255 }
+    CASE
+      INT miscellaneous type = type - miscellaneous base;
+      (miscellaneous type {POSDIV}OVER subrange size) + 1
+    IN
+    { 192 <= type <= 207 }
+      CASE miscellaneous type
+      IN
+      {193}
+        ( UCHOICE u; mode OF u := next; props OF u := BIN next; param OF u := next; u ),
+
+      {194}
+        ( LABDEC s; labno  OF s := next; name OF s := next string;
+          status OF s := 0; not setting OF s := TRUE;
+          s
+        ),
+
+      {195}
+        ( LABDEC e; labno  OF e := next; name   OF e := NIL;
+          status OF e := next; not setting OF e := TRUE;
+          e
+        ),
+
+      {196}
+        ( LABDEC d; labno  OF d := next; name   OF d := NIL;
+          status OF d := 0; not setting OF d := FALSE;
+          d
+      ),
+
+      {197}
+        ( ROUTINE r; rdenno OF r := next; mode OF r := next; props OF r := BIN next;
+          maxname OF r := next; name OF r := next string;
+          r
+        ),
+
+      {198} "chars should be absorbed by load"  ASSERT FALSE,
+
+      {199} terminal error(600 {illegal imperative,KEEPS no longer output}),
+
+      {200}
+        ( composition
+        |  SYNTHETICMODULE s; moduleno OF s := next; i OF s := next; j OF s := next; s
+        |  CALLMODULE c; next;  {skip 'moduleno'} i OF c := next; next;  {skip 'j'} c
+        ),
+ 
+      {201} terminal error(600 {illegal imperative,KEEPS no longer output}),
+
+      {202} ( OPER v; fn   OF v := void fn; mode OF v := void mode; { param OF v := undefined } v ),
+
+      {203}
+        ( CLOSURE cl; body OF cl := next; moduleno OF cl := next;
+          actuals  OF cl := HEAP [next] INT; next type;  {skip xclosure type}
+          FORALL  actual IN actuals OF cl  DO actual := next OD;
+          cl
+        ),
+
+      {204}
+        ( EXTERNALMODULE x; moduleno OF x := next;
+          ysnames OF x := HEAP [next] REF VECTOR [] CHAR; name OF x := next string;
+          uname OF x := next string; lname OF x := next string;
+          gname OF x := next string;
+          FORALL ysname IN ysnames OF x DO  ysname := next string OD;
+          x
+        )
+      OUT
+      {205-207} terminal error (601 {illegal imperative})
+      ESAC,
+
+    { 208 <= type <= 223 }
+      ( WARN w; w OF w := type - warn base; w ),
+
+    { 224 <= type <= 239 }
+      ( TRANSIDDEC i; type OF i := type - iddec base;
+        mode  OF i := next; decno OF i := next;
+        name  OF i := next string;
+        i
+      ),
+
+    { 240 <= type <= 255 }
+      ( STARTER s; fn    OF s := type - starter base;
+        mode  OF s := next; props OF s := BIN next;
+        result mode OF s := next;
+        s
+      )
+    ESAC
+  ESAC;
+
+  IF  print stream
+  THEN  { print out the mnemonic value of the imperative }
+    VECTOR [] CHAR string = imperative mnemonic (imperative) ;
+    { check if string isn't too long }
+    IF  UPB string < 120 { width of paper }
+    THEN  list (string)
+    ELSE  { assume that UPB string < 120 + 120 -35 }
+      list (string [:120]) ;
+      list (35 * " " + string [121:])
+    FI 
+  FI ;
+  imperative
+END;
+
+  IF	greatest severity <= 2
+  THEN
+    { ------ INVOKE THE TRANSLATOR (in compiler.a68 !!) -------- }
+    translator (next stream imperative, xsizes, kept decnos)
+    { ---------------------------------------------------------- }
+  FI;
+
+  IF	greatest severity <= 2
+  THEN	{ produce .c file, and tidy up other output files}
+
+    { write uname seed (must be first line so it may easily be read on subsequent translations }
+    write_cfile_uname(name seed OF config_info);
+
+CO Next but one line changed by Phoenix Engineering SL BP64-01-31
+    write c stream( ( "#include ""Asupport.h""", cnewline ), preamble stream );CO
+    write c stream( ( "#include <algol68/Asupport.h>", cnewline ), preamble stream );
+
+    { delayed generation of externs for used identifiers }
+    declare used ids;
+
+    { --- collate C streams ---
+    	outputs final CEDITs to enable 'close c output' to construct
+	the final program.
+	
+	Only CODESTREAMs,NONLOCDECSTREAMs and 'preamble stream' are written
+	to here. The other streams are collated by the routine handling
+	procedures.
+	
+	The structure of a complete .c file is as follows (where 'h' is
+	the highest level):
+
+      preamble stream   (configuration info, etc)
+ 
+      modes stream	(typedefs, #defines for mode table)
+
+      imports stream    (externs for objects actually used from DECS modules, incl library)
+
+		NONLOCDECSTREAM 0	(global data)
+
+		[NONLOCDECSTREAM 1..h]	(typedefs for non-locals)
+
+      extern stream     (function prototypes for functions in current module)
+                                               
+		[CODESTREAM h..1]	(proc bodies)
+
+		CODESTREAM 0      (main/decs module init)
+    }
+
+    write c stream( ("/* end of translation of ", source file name,
+      " */", cnewline), CODESTREAM 0);
+
+    write c stream( modes stream, preamble stream);
+    write c stream( imports stream, modes stream);
+    write c stream( NONLOCDECSTREAM 0, imports stream );
+    write c stream( extern stream, NONLOCDECSTREAM highestlevel );
+    write c stream( CODESTREAM highestlevel, extern stream );
+
+    IF	highest level > 0
+    THEN
+      FOR level FROM 0 TO highestlevel - 1
+      DO
+        write c stream( NONLOCDECSTREAM (level+1), NONLOCDECSTREAM level );
+        write c stream( CODESTREAM level, CODESTREAM (level+1) )
+      OD
+    FI;
+
+    close coutput;
+
+    closedown unique name server
+  ELSE	purge output files {CCC dont keep output files }
+  FI
+FI;
+
+finish message;	{ prints a message if there have been diagnostics }
+
+IF	greatest severity > 2
+THEN	abort	{ returns error status to command level }
+FI
+
+END
+FINISH
+                                                                    
+{
+Local Variables:
+auto-fill-hook:nil
+End:
+}

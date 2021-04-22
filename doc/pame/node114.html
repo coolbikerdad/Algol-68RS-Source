@@ -1,0 +1,369 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Queues</title>
+<meta name="description" content="queues">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node115.html">
+<link rel="previous" href="node113.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node115.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2566"
+  href="node115.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2560"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2554"
+  href="node113.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2562"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2564"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2567"
+  href="node115.html">The procedure add fan</a>
+<b> Up:</b> <a name="tex2html2561"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2555"
+  href="node113.html">The value NIL</a>
+ &nbsp; <b>  <a name="tex2html2563"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2565"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2568"
+  href="node114.html#section001381000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001380000000000000000"></a><a name="adv-queues"></a>
+Queues</h1>
+
+<p>Consider<a name="7758"></a> the problem of representing a queue.
+We shall suppose that the queue is at a football match and that each
+fan in the queue has a name, in the ordinary sense, and a ticket
+number.  Rather than just present the solution to this problem, we
+shall discuss the problem in detail and show why the solution is what
+it is.</p>
+
+<p>A suitable mode for the fan would be
+<tt>FAN</tt><a name="7989"></a>:</p>
+
+<pre>
+   MODE FAN = STRUCT(STRING name,INT ticket)
+</pre>
+
+<p>but what would be a suitable declaration for a queue? At first sight,
+it would appear that a flexible name<a name="7763"></a> which can
+refer to a multiple of fans would be suitable:</p>
+
+<pre>
+   MODE QUEUE = FLEX[1:0]FAN
+</pre>
+
+<p>but there are difficulties. Firstly, the only way a new fan could be
+added to the queue would be to assign a whole new multiple to a name
+(in the Algol&nbsp;68 sense) referring to the queue:</p>
+
+<pre>
+   QUEUE q; q:=q+FAN("Jim",1)
+</pre>
+
+<p>assuming that the operator <code>+</code> has been declared with the header
+<pre>
+   OP + = ([]QUEUE a,FAN b)[]QUEUE:
+</pre>
+
+<p>If the queue were long, this would be very inefficient. Secondly,
+given a particular fan, how would we find the fan behind him or her?
+Knowing the subscript of the fan would seem to be the answer, but what
+happens if someone joins the queue somewhere in front of the fan in
+question?  Given that there might be several fans under consideration,
+the program would have to update all the relevant subscripts and keep
+a record of which subscripts would be relevant.</p>
+
+<p>The solution is to represent a queue as a recursive
+structure<a name="7770"></a>:</p>
+
+<pre>
+   MODE QUEUE=STRUCT(FAN fan,REF QUEUE next)
+</pre>
+
+<p>Then a queue with two fans in it could be represented by the diagram
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-2.png" alt="ch11-2.png">
+</div>
+
+<p>where the mode of each box is <tt>QUEUE</tt><a name="7990"></a> and
+<code>F</code> and <code>RQ</code> stand for <code>FAN</code> and
+<code>REF QUEUE</code> respectively.  Notice that the
+<code>next</code> field of the first structure refers to the structure
+on its right.  The <code>next</code> field of the second structure
+does not refer to anything.</p>
+
+<p>From the declaration of the mode <code>QUEUE</code>, we can see
+that the <code>next</code> field of the structure is a name with mode
+<code>REF QUEUE</code>. It would appear that it is possible to
+construct a queue in the way depicted by the last diagram: each
+<code>next</code> field of each structure would refer to the next
+structure (of mode <code>QUEUE</code>) and the last <code>next</code>
+field would have the mode <code>REF QUEUE</code> and value
+<code>NIL</code>.</p>
+
+<p>Now consider adding another <code>QUEUE</code> to the right-hand
+end of the queue. We immediately run into a difficulty. The value of
+the <code>next</code> field of the last <code>QUEUE</code> is
+<code>NIL</code> with mode <code>REF QUEUE</code>. However, we cannot
+assign to <code>NIL</code>, nor can we replace the
+name<a name="7778"></a> <tt>NIL</tt><a name="7991"></a> with another
+name to make it refer to a new <code>QUEUE</code>. The reason is that
+a name of mode <code>REF QUEUE</code> can only be replaced by another
+name of mode <code>REF QUEUE</code> if the first name is referred to
+by a name of mode <code>REF REF QUEUE</code>. In other words, instead
+of making the structures have mode <code>QUEUE</code>, we should make
+them have mode <code>REF QUEUE</code>.  In
+section&nbsp;<a href="node67.html#struc-field">7.2</a>, on field
+selection, we pointed out that the modes of the fields of a structure
+name are all preceded by a <code>REF</code>. This also applies to a
+recursively-defined structure. In this case, the mode of the
+<code>next</code> field becomes <code>REF REF QUEUE</code> and could
+refer to <code>NIL</code> (with mode <code>REF QUEUE</code>) or to
+another structure of mode <code>REF QUEUE</code>. We can depict this
+as</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-3.png" alt="ch11-3.png">
+</div>
+
+<p>where <code>RQ</code>, <code>RRQ</code> and <code>RF</code>
+represent the modes <code>REF QUEUE</code>, <code>REF</code>
+<code>REF</code> <code>QUEUE</code> and <code>REF FAN</code>
+respectively.</p>
+
+<p>Now let us consider how such a queue could be created. Since the
+length of the queue at the time the program is written is unknown (and
+will change as fans join or leave the queue), it is not possible to
+have an identifier for each structure forming the queue. Instead, we
+can create anonymous names using a generator<a name="7785"></a>.
+However, we must be able to refer to the queue in order to manipulate
+it. Let us declare a name, identified by <code>head</code>, to refer
+to the beginning of the queue:</p>
+
+<pre>
+   REF QUEUE head:=NIL
+</pre>
+
+<p>We have made it refer to <tt>NIL</tt><a name="7992"></a> (with mode
+<code>REF QUEUE</code>) because the queue is currently empty. Using the
+suggestion of the last section, we shall declare</p>
+
+<pre>
+   REF QUEUE nilq = NIL;
+   REF QUEUE head:=nilq
+</pre>
+
+<p>where <code>head</code> has the mode <code>REF REF
+QUEUE</code>.</p>
+
+<p>Let us assign the first fan to the queue:</p>
+
+<pre>
+   head:=LOC QUEUE:=(("Jim",1),nilq)
+</pre>
+
+<p>We can represent this by the diagram</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-4.png"
+ alt="ch11-4.png">
+</div>
+
+<p>We can now assign another fan to the queue:</p>
+
+<pre>
+   next OF head:=LOC QUEUE:=(("Fred",2),nilq)
+</pre>
+
+<p>Let us be quite clear what is happening here. The mode of
+<code>head</code> is <code>REF REF QUEUE</code>. It is a name which
+refers to a name so it has no fields. We can select
+fields<a name="7799"></a> only from a <code>QUEUE</code> or a
+<code>REF QUEUE</code>. However, the context of a
+selection<a name="7800"></a> is weak<a name="7801"></a>(see
+section&nbsp;<a href="node95.html#gram-coercions">10.3</a>) and so
+only weak-dereferencing is allowed<a name="7803"></a>. Thus in</p>
+
+<pre>
+   next OF head
+</pre>
+
+<p><code>head</code> is dereferenced to mode <code>REF QUEUE</code>
+and the <code>next</code> field selected (with mode <code>REF REF
+QUEUE</code>). The anonymous name <code>LOC QUEUE</code> has mode
+<code>REF QUEUE</code>, so the structure display (with mode
+<code>QUEUE</code>) is assigned to it, and it in turn is assigned to
+<code>next OF head</code> without dereferencing.  This means that the
+<code>nilq</code> which <code>next OF head</code> referred to after
+the first fan <code>("Jim",1)</code> was added to the queue has been
+replaced by the second <code>LOC</code> <code>QUEUE</code> which is
+what we wanted. We can now depict the queue by</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-5.png" alt="ch11-5.png">
+</div>
+
+<p>We could now extend the queue by writing</p>
+
+<pre>
+   next OF next OF queue:=LOC QUEUE
+</pre>
+
+<p>but since we do not know how long the queue might become, clearly
+we cannot go on writing</p>
+
+<pre>
+   next OF next OF ...
+</pre>
+
+<p>What we need is some way of referring to the tail of the queue without
+lots of selections. Because the tail of the queue always has mode
+<code>REF REF QUEUE</code> (it is the <code>next</code> field of a
+<code>REF QUEUE</code>), what we need is a name of mode
+<code>REF REF REF QUEUE</code> (yes, three <code>REF</code>s). Here
+it is:</p>
+
+<pre>
+   REF REF QUEUE tail;
+</pre>
+
+<p>but again we run into a difficulty (the last one). When the queue
+is empty, <code>head</code> refers to <code>nilq</code>, but what does
+<code>tail</code> refer to since we cannot select from
+<code>nilq</code> (because it is <code>NIL</code>)? The solution is to
+make <code>head</code> have the mode <code>REF REF REF QUEUE</code> as
+well as <code>tail</code> and generate a name of mode <code>REF REF
+QUEUE</code> to refer to <code>nilq</code>! (bear with it, we're
+almost there):</p>
+
+<pre>
+   tail:=head:=LOC REF QUEUE:=nilq
+</pre>
+
+<p>In this triple assignment, only <code>head</code> is dereferenced.
+We can depict this as</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-6.png" alt="ch11-6.png">
+</div>
+
+<p>Now we can assign the first fan to the head of the queue:</p>
+
+<pre>
+   REF REF QUEUE(head):=LOC QUEUE:=
+         (("Jim",1),nilq))
+</pre>
+
+<p>and make <code>tail</code> refer to the tail of the queue with</p>
+
+<pre>
+   tail:=next OF head
+</pre>
+
+<p>in which <code>head</code> is dereferenced twice, but the
+selection<a name="7824"></a> is not dereferenced at all. The queue can
+now be depicted as shown below.</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-7.png" alt="ch11-7.png">
+</div>
+
+<p>A queue is one example of what is called a
+<b>linked-list</b><a name="7829"></a>.</p>
+
+<hr>
+<h2><a name="section001381000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.16<a name="ex-xi-xvi"></a>
+<dd>Extend the queue by assigning another <code>REF QUEUE</code> to
+<code>tail</code>.  Ans<a href="node145.html#ans-xi-xvi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.17<a name="ex-xi-xvii"></a>
+<dd>Now make <code>tail</code> refer to the tail of the queue again.
+ Ans<a href="node145.html#ans-xi-xvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.18<a name="ex-xi-xviii"></a>
+<dd>Has the name referred to by <code>head</code> changed after adding the
+new <code>REF QUEUE</code>?  Ans<a href="node145.html#ans-xi-xviii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2566"
+  href="node115.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2560"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2554"
+  href="node113.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2562"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2564"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2567"
+  href="node115.html">The procedure add fan</a>
+<b> Up:</b> <a name="tex2html2561"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2555"
+  href="node113.html">The value NIL</a>
+ &nbsp; <b>  <a name="tex2html2563"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2565"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

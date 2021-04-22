@@ -1,0 +1,242 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Dyadic operators</title>
+<meta name="description" content="dyadic operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node18.html">
+<link rel="previous" href="node16.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node18.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html917"
+  href="node18.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html911"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html905"
+  href="node16.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html913"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html915"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html918"
+  href="node18.html">Multiplication</a>
+<b> Up:</b> <a name="tex2html912"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html906"
+  href="node16.html">Monadic operators</a>
+ &nbsp; <b>  <a name="tex2html914"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html916"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html919"
+  href="node17.html#section00421000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00420000000000000000"></a><a name="form-dyad"></a>
+<br>
+Dyadic operators</h1>
+
+<p>A dyadic operator takes two operands and is written between them.
+The simplest operator is dyadic <tt>+</tt><a name="1059"></a>.  Here
+is an identity declaration using it:</p>
+
+<pre>
+   INT one = 1;
+   INT two = one + one
+</pre>
+
+<p>This operator takes two operands of mode
+<tt>INT</tt><a name="1060"></a> and yields a result of mode
+<code>INT</code>. It is also defined for two operands of mode
+<tt>REAL</tt><a name="1061"></a> yielding a result of mode
+<code>REAL</code>:</p>
+
+<pre>
+REAL x = 1.4e5 + 3.7e12
+</pre>
+
+<p>The <code>+</code> operator performs an action quite different for
+<code>REAL</code> operands from that performed for <code>INT</code>
+operands. Yet the meaning is essentially the same, and so the same
+symbol is used for the two operators.</p>
+
+<p> Before we continue with the other dyadic operators, a word of
+caution is in order. As we have seen, the maximum integer which the
+computer can use is <code>max int</code> and the maximum real is
+<code>max real</code>.  The dyadic <code>+</code> operator could give
+a result which is greater than those two values. Adding two integers
+such that the sum exceeds <code>max int</code> is said to give
+&ldquo;integer overflow&rdquo;<a name="774"></a>.  Algol&nbsp;68
+contains no specific rules about what should happen in such a
+case.<a name="tex2html4"
+href="footnode.html#foot1062"><sup><span
+class="arabic">3</span>.<span class="arabic">1</span></sup></a></p>
+
+<p> The dyadic <tt>-</tt><a name="1063"></a> operator can take two
+operands of mode <code>INT</code> or two operands of mode
+<code>REAL</code> and yields an <code>INT</code> or <code>REAL</code>
+result respectively:</p>
+
+<pre>
+   INT minus 4 = 3 - 7,
+   REAL minus one point five = 1.9 - 3.4
+</pre>
+
+<p>Note that the dyadic <code>-</code> is quite different from the
+monadic <code>-</code>. You can have both operators in the same
+formula:</p>
+
+<pre>
+   INT minus ten = -3 - 7
+</pre>
+
+<p>The first minus sign represents the monadic operator and the second,
+the dyadic.</p>
+
+<p> Since a formula yields a value of a particular mode, you can use
+it as an operand<a name="784"></a> for another operator. For
+example:</p>
+
+<pre>
+   INT six = 1 + 2 + 3
+</pre>
+
+<p>The operators are elaborated in left-to-right order. First the
+formula <code>1+2</code> is elaborated, then the formula <code>3+3</code>. What
+about the formula <code>1-2-3</code>?  Again, the first <code>-</code> operator
+is elaborated giving <code>-1</code>, then the second giving the value
+<code>-4</code>.</p>
+
+<p> Instead of saying &ldquo;the value of mode
+<code>INT</code>&rdquo;, we shall sometimes say &ldquo;the
+<code>INT</code> value&rdquo; or even &ldquo;the
+<code>INT</code>&rdquo;--all these expressions are equivalent.</p>
+
+<hr>
+<h2><a name="section00421000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.1<a name="ex-ii-i"></a>
+<dd>Write an identity declaration for the <code>INT</code> value
+<code>-35</code>.  Ans<a href="node136.html#ans-ii-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>2.2<a name="ex-ii-ii"></a>
+<dd>What is the value of each of the following formul&#230;? Ans<a href="node136.html#ans-ii-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>3 - 2</code>  
+<p>
+<dt>(b)
+<dd><code>3.0 - 2.0</code>  
+<p>
+<dt>(c)
+<dd><code>3.0 - -2.0</code>  
+<p>
+<dt>(d)
+<dd><code>2 + 3 - 5</code>  
+<p>
+<dt>(e)
+<dd><code>-2 + +3 - -4</code>  
+<p>
+</dd>
+</dl>
+<dt>2.3<a name="ex-ii-iii"></a>
+<dd>Given the following declarations
+<pre>
+   INT a = 3, REAL b = 4.5
+</pre>
+
+what is the value of the following formul&#230;? Ans<a href="node136.html#ans-ii-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>a+a</code>  
+<p>
+<dt>(b)
+<dd><code>-a-a</code>  
+<p>
+<dt>(c)
+<dd><code>b+b+b</code>  
+<p>
+<dt>(d)
+<dd><code>-b - -b + -b</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html917"
+  href="node18.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html911"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html905"
+  href="node16.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html913"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html915"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html918"
+  href="node18.html">Multiplication</a>
+<b> Up:</b> <a name="tex2html912"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html906"
+  href="node16.html">Monadic operators</a>
+ &nbsp; <b>  <a name="tex2html914"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html916"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

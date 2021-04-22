@@ -1,0 +1,425 @@
+DECS spaliens CONTEXT VOID
+USE spmodes:
+
+COMMENT
+   $Log: spaliens.a68,v $
+   Revision 1.8  2012/01/04 17:23:31  sian
+   Replaced the ALIENs for ROUND and ENTIER
+
+   Revision 1.6  2004-11-07 15:59:29  sian
+   Removed PLUS, MINUS and TIMES
+
+   Revision 1.5  2002/02/23 17:50:44  sian
+   Release 1.1
+
+   Revision 1.4  2002/02/04 09:26:51  sian
+   Removing GNU auto files.
+
+   Revision 1.3  2001/06/18 11:04:27  sian
+   1. Replaced non-standard hexadecimal string denotations with REPR n.
+   2. Added code to resolve symbolic Internet addresses.
+   3. Replaced the temporary file generation in create.
+
+   Revision 1.2  2001/05/11 08:34:32  sian
+   Added C files and QAD socket inet addr
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.4  2000/08/23 16:33:36  sian
+   Ready for Debianising
+
+   Revision 1.3  2000/07/05 14:55:40  sian
+   Ready for release 0.1.0
+
+   Revision 1.2  2000/01/20 16:43:12  sian
+   Garbage collector prohibits shared libraries.
+
+   Revision 1.1  2000/01/10 05:56:25  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   All ALIEN declarations in the standard prelude are here except
+   for the two declarations in `transput.a68' which are required
+   for command line processing.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+CCHARPTR        null c charptr      = ALIEN "NULL" "#include <stdio.h>";
+INT             max abs char        = ALIEN "A68_MAX_CHAR" "/**/";
+INT             max int             = ALIEN "A68_MAX_INT" "/**/";
+SHORT INT       short max int       = ALIEN "A68_MAX_SINT" "/**/";
+SHORT SHORT INT short short max int = ALIEN "A68_MAX_SSINT" "/**/";
+REAL            infinity            = ALIEN "HUGE_VAL" "#include <math.h>";
+REAL            pi                  = ALIEN "M_PI" "/**/";
+
+INT             short real precision= ALIEN "FLT_MANT_DIG" "#include <float.h>";
+INT             short real width    = ALIEN "FLT_DIG" "/**/";
+REAL            short small real    = ALIEN "FLT_EPSILON" "/**/";
+INT             short min exp       = ALIEN "FLT_MIN_EXP" "/**/";
+INT             short max exp       = ALIEN "FLT_MAX_EXP" "/**/";
+
+INT             real precision      = ALIEN "DBL_MANT_DIG" "/**/";
+INT             real width          = ALIEN "DBL_DIG" "/**/";
+REAL            small real          = ALIEN "DBL_EPSILON" "/**/";
+INT             min exp             = ALIEN "DBL_MIN_EXP" "/**/";
+INT             max exp             = ALIEN "DBL_MAX_EXP" "/**/";
+
+INT             long real precision = ALIEN "LDBL_MANT_DIG" "/**/";
+INT             long real width     = ALIEN "LDBL_DIG" "/**/";
+REAL            long small real     = ALIEN "LDBL_EPSILON" "/**/";
+INT             long min exp        = ALIEN "LDBL_MIN_EXP" "/**/";
+INT             long max exp        = ALIEN "LDBL_MAX_EXP" "/**/";
+
+INT             erange err          = ALIEN "ERANGE" "#include <errno.h>";
+
+BITS
+   o rdonly = ALIEN "O_RDONLY" "#include <fcntl.h>",
+   o wronly = ALIEN "O_WRONLY" "/**/",
+   o rdwr   = ALIEN "O_RDWR"   "/**/",
+   o creat  = ALIEN "O_CREAT"  "/**/",
+   o trunc  = ALIEN "O_TRUNC"  "/**/",
+   o excl   = ALIEN "O_EXCL"   "/**/";
+
+PROC (REAL) REAL
+   sqrt   = ALIEN "sqrt" "/**/",
+   exp    = ALIEN "exp"  "/**/",
+   ln     = ALIEN "log"  "/**/",
+   log    = ALIEN "log10" "/**/",
+   cos    = ALIEN "cos"  "/**/",
+   sin    = ALIEN "sin"  "/**/",
+   tan    = ALIEN "tan"  "/**/",
+   arccos = ALIEN "acos" "/**/",
+   arcsin = ALIEN "asin" "/**/",
+   arctan = ALIEN "atan" "/**/";
+
+INT termios vtime = ALIEN "VTIME" "#include <termios.h>";
+INT termios vmin  = ALIEN "VMIN"  "/**/";
+
+BITS tcsanow = ALIEN "TCSANOW" "/**/",
+   # the change occurs immediately #
+     isig    = ALIEN "ISIG"    "/**/",
+     icanon  = ALIEN "ICANON"  "/**/",
+     echo    = ALIEN "ECHO"    "/**/";
+
+INT posix seek set = ALIEN "SEEK_SET"
+	"#include <sys/types.h>"
+	"#include <unistd.h>";
+INT posix seek cur = ALIEN "SEEK_CUR" "/**/";
+INT posix seek end = ALIEN "SEEK_END" "/**/";
+
+# Linux Signal Names #
+INT  sighup    = ALIEN "SIGHUP"  "#include <signal.h>",
+     sigint    = ALIEN "SIGINT"  "/**/",
+     sigquit   = ALIEN "SIGQUIT" "/**/",
+     sigill    = ALIEN "SIGILL"  "/**/",
+     sigtrap   = ALIEN "SIGTRAP" "/**/",
+     sigabrt   = ALIEN "SIGABRT" "/**/",
+     sigbus    = ALIEN "SIGBUS"  "/**/",
+     sigfpe    = ALIEN "SIGFPE"  "/**/",
+     sigkill   = ALIEN "SIGKILL" "/**/",
+     sigusr1   = ALIEN "SIGUSR1" "/**/",
+     sigsegv   = ALIEN "SIGSEGV" "/**/",
+     sigusr2   = ALIEN "SIGUSR2" "/**/",
+     sigpipe   = ALIEN "SIGPIPE" "/**/",
+     sigalrm   = ALIEN "SIGALRM" "/**/",
+     sigterm   = ALIEN "SIGTERM" "/**/",
+     sigstkflt = ALIEN "SIGSTKFLT" "#if !defined(SIGSTKFLT)" "#define SIGSTKFLT 32" "#endif" "/**/",
+     sigchld   = ALIEN "SIGCHLD" "/**/",
+     sigcont   = ALIEN "SIGCONT" "/**/",
+     sigstop   = ALIEN "SIGSTOP" "/**/",
+     sigtstp   = ALIEN "SIGTSTP" "/**/",
+     sigttin   = ALIEN "SIGTTIN" "/**/",
+     sigttou   = ALIEN "SIGTTOU" "/**/",
+     sigurg    = ALIEN "SIGURG"  "/**/",
+     sigxcpu   = ALIEN "SIGXCPU" "/**/",
+     sigxfsz   = ALIEN "SIGXFSZ" "/**/",
+     sigvtalrm = ALIEN "SIGVTALRM" "/**/",
+     sigprof   = ALIEN "SIGPROF" "/**/",
+     sigwinch  = ALIEN "SIGWINCH" "/**/",
+     sigio     = ALIEN "SIGIO"   "/**/",
+     sigpwr    = ALIEN "SIGPWR"  "#if !defined(SIGPWR)" "#define SIGPWR 33" "#endif" "/**/";
+INT
+   bytes per bits = ALIEN "BYTESPERBITS"
+   "#define BYTESPERBITS A_size_t_INT(sizeof(A68_INT))";
+
+INT af unix = ALIEN "AF_UNIX" "#include <sys/socket.h>",
+    af inet = ALIEN "AF_INET" "/**/",
+    sock stream = ALIEN "SOCK_STREAM" "/**/";
+
+REF INT
+   errno = ALIEN "errno" "/**/";
+
+# ---------- garbage collector declarations ----------- #
+
+PROC (VECTOR [] CHAR, INT) INT
+	gc_param = ALIEN "A_PARAM"
+   "#include <algol68/Alibrary.h>"
+   "#define A_PARAM(name,value) \"
+	   "A_int_INT(Agc_param(A_VC_charptr(name),A_INT_int(value)))";
+
+# Explicitly invoke the garbage collector #
+PROC VOID garbage_collect = ALIEN "Agc_collect" "/**/";
+
+INT always collect = ALIEN "A_ALWAYS_COLLECT" "#include <algol68/Alibrary.h>";
+INT always grow heap = ALIEN "A_ALWAYS_GROW_HEAP" "#include <algol68/Alibrary.h>";
+INT default policy = ALIEN "A_DEFAULT_POLICY" "#include <algol68/Alibrary.h>";
+
+# --------- Conforming to ANSI C -------------- #
+
+PROC(INT)INT ansi raise = ALIEN "RAISE"
+   "#include <stdlib.h>"
+   "#include <sys/stat.h>"
+   "#include <string.h>"
+   "#include <time.h>"
+   "#include <netinet/in.h>"
+   "#include <arpa/inet.h>"
+   "#define RAISE(sig) raise(A_INT_int(A_INT_int(sig)))";
+
+# Set the handler for the signal SIG to HANDLER, returning the old
+   handler, or `sig err' on error.
+   By default `signal' has the BSD meaning.
+   The mode of `sig handler proc' is PROC(INT)VOID: #
+PROC(INT#sig#,CPTR#sig handler proc#)CPTR
+   ansi signal = ALIEN "SIGNAL"
+   "#define SIGNAL(sig,handler) \"
+   "  (void *)signal(A_INT_int(sig),(void *)handler)";
+
+PROC(VECTOR[]CHAR)REAL
+   ansi strtod = ALIEN "STRTOD"
+   "#define STRTOD(s) strtod(A_VC_charptr(s),NULL)";
+
+# ------------ Conforming to BSD4.4 -------------- #
+
+PROC(INT,VECTOR[]CHAR,REF INT)INT
+   bsd accept = ALIEN "ACCEPT"
+   "#define ACCEPT(s,addr,addrlen) \"
+   "    A_int_INT(accept(A_INT_int(s),\"
+   "              (struct sockaddr *)A_VC_charptr(addr),(socklen_t *)addrlen))";
+
+PROC(INT,VECTOR[]CHAR,INT)INT
+   bsd bind = ALIEN "BIND"
+   "#define BIND(sockfd,addr,addrlen) \"
+   "   A_int_INT(bind(A_INT_int(sockfd),\"
+   "                  (struct sockaddr *)A_VC_charptr(addr),A_INT_int(addrlen)))";
+
+PROC(VECTOR[]CHAR,INT)INT
+   bsd chmod = ALIEN "CHMOD"
+   "#define CHMOD(path,mode) \"
+   "   A_int_INT(chmod(A_VC_charptr(path),A_INT_int(mode)))";
+
+PROC(INT,VECTOR[]CHAR,INT)INT
+   bsd connect = ALIEN "CONNECT"
+   "#define CONNECT(sockfd,servaddr,addrlen) \"
+   "   A_int_INT(connect(A_INT_int(sockfd),\"
+   "             (struct sockaddr *)A_VC_charptr(servaddr),A_INT_int(addrlen)))";
+
+PROC(INT,INT)INT
+   bsd fchmod = ALIEN "FCHMOD"
+   "#define FCHMOD(fd,mode) A_int_INT(fchmod(A_INT_int(fd),A_INT_int(mode)))";
+
+PROC(VECTOR[]CHAR)CCHARPTRPTR
+	bsd gethostbyname = ALIEN "GETHOSTBYNAME"
+	"#include <netdb.h>"
+	"#define GETHOSTBYNAME(host) (void *)gethostbyname(A_VC_charptr(host))";
+
+PROC(VECTOR[]CHAR,REF BITS)INT
+   bsd inet aton = ALIEN "INET_ATON"
+   "#define INET_ATON(cp,inp) \"
+   "   A_int_INT(inet_aton(A_VC_charptr(cp),(struct in_addr *)inp))";
+
+PROC(INT)INT
+   bsd is a tty = ALIEN "ISATTY"
+   "#define ISATTY(fd) A_int_INT(isatty(A_INT_int(fd)))";
+
+PROC(INT,INT)INT
+   bsd listen = ALIEN "LISTEN"
+   "#define LISTEN(s,backlog) \"
+   "   A_int_INT(listen(A_INT_int(s),A_INT_int(backlog)))";
+
+PROC(VECTOR[]CHAR)INT
+	bsd mkstemp = ALIEN "MKSTEMP"
+	"#define MKSTEMP(id) A_int_INT(mkstemp(A_VC_charptr(id)))";
+
+# Note that the following call is for the conversion of a REAL to
+  characters ONLY. #
+PROC(VECTOR[]CHAR,VECTOR[]CHAR,REAL,INT,INT)INT
+	bsd real snprintf = ALIEN "REAL_SNPRINTF"
+   "#include <stdio.h>"
+   "#define REAL_SNPRINTF(buff,fmt,num,wd,prec) \"
+   "  A_int_INT(snprintf(A_VC_charptr(buff), \"
+   "                     A_INT_int(buff.upb), \"
+	"                     A_VC_charptr(fmt), \"
+	"                     (double)num,A_INT_int(wd), \"
+	"                                 A_INT_int(prec)))";
+
+PROC(INT,INT)INT
+	bsd shutdown = ALIEN "SHUTDOWN"
+   "#define SHUTDOWN(sd,direction) \"
+   "   A_int_INT(shutdown(A_INT_int(sd),A_INT_int(direction)))";
+
+PROC(INT,INT,INT)INT
+   bsd socket = ALIEN "SOCKET"
+   "#define SOCKET(domain,type,protocol) \"
+   "   A_int_INT(socket(A_INT_int(domain),\"
+   "                    A_INT_int(type),A_INT_int(protocol)))";
+
+# -------------- Conforming to ISO --------------- #
+
+PROC(CPTR)INT
+   iso at exit = ALIEN "AT_EXIT"
+   "#define AT_EXIT(p) atexit((void *)p)"; #0=success, -1=failure#
+
+# -------------- Linux specific ---------------- #
+
+PROC(CPTR,CSTR)INT
+   linux on exit = ALIEN "ON_EXIT"
+   "#if defined(__MACH__)"
+   "#define ON_EXIT(p,a) (0)" #0=success, -1=failure#
+   "#else"
+   "#define ON_EXIT(p,a) on_exit((void *)p,(void *)a)" #0=success, -1=failure#
+   "#endif";
+
+PROC(INT,CCHARPTR)INT
+   linux tc get attr = ALIEN "TCGETATTR"
+   "#define TCGETATTR(fd,t) \"
+   "    A_int_INT(tcgetattr(A_INT_int(fd), (struct termios*)t))";
+
+PROC(INT,BITS,CCHARPTR)INT
+   linux tc set attr = ALIEN "TCSETATTR"
+   "#define TCSETATTR(fd,opt,t) \"
+   "    A_int_INT(tcsetattr(A_INT_int(fd), A_INT_int(opt),(struct termios*)t))";
+
+# -------------- Conforming to POSIX -------------- #
+
+PROC(INT)INT
+   posix close = ALIEN "CLOSE"
+   "#define CLOSE(fd) A_int_INT(close(A_INT_int(fd)))";
+
+PROC(VECTOR[]CHAR,INT)INT
+   posix creat = ALIEN "CREAT"
+   "#define CREAT(path,mode) \"
+   "   A_int_INT(creat(A_VC_charptr(path),A_INT_int(mode)))";
+
+PROC(INT)VOID
+   posix exit = ALIEN "EXIT"
+   "#define EXIT(n) exit(n)";
+
+PROC(VECTOR[]CHAR)CSTR
+   posix getenv = ALIEN "GETENV"
+   "#define GETENV(id) (void *)getenv(A_VC_charptr(id))";
+
+PROC posix getpid = INT: INT CODE "RESULT=A_int_INT(getpid());";
+
+PROC(INT,INT,INT)INT
+   posix lseek = ALIEN "LSEEK"
+   "#define LSEEK(fd,offset,whence) \"
+   "   A_int_INT(lseek(A_INT_int(fd),A_INT_int(offset),A_INT_int(whence)))";
+
+PROC(VECTOR[]CHAR,INT,INT)INT
+   posix open = ALIEN "OPEN"
+   "#define OPEN(path,flags,mode) \"
+   "   A_int_INT(open(A_VC_charptr(path),A_INT_int(flags),A_INT_int(mode)))";
+
+PROC(INT,VECTOR[]CHAR,INT)INT
+   posix read = ALIEN "READ"
+   "#define READ(fd,buf,count) \"
+   "   A_int_INT(read(A_INT_int(fd),A_VC_charptr(buf),A_INT_int(count)))";
+
+PROC(VECTOR[]CHAR,VECTOR[]CHAR)INT
+   posix rename = ALIEN "RENAME"
+   "#define RENAME(old,new) \"
+   "   A_int_INT(rename(A_VC_charptr(old),A_VC_charptr(new)))";
+
+PROC(INT)CSTR
+   posix strerror = ALIEN "STRERROR"
+   "#define STRERROR(e) (void *)strerror(e)";
+
+PROC(CSTR)INT
+   posix strlen = ALIEN "STRLEN"
+   "#define STRLEN(s) strlen((char *)s)";
+
+PROC(REF INT)INT
+   posix time = ALIEN "TIME"
+   "#define TIME(t) A_time_t_INT(time(A_RI_time_tptr(t)))";
+
+PROC(VECTOR[]CHAR)INT
+   posix unlink = ALIEN "UNLINK"
+   "#define UNLINK(path) A_int_INT(unlink(A_VC_charptr(path)))";
+
+PROC(INT,VECTOR[]CHAR,INT)INT
+   posix write = ALIEN "WRITE"
+   "#define WRITE(fd,buf,count) \"
+   "   A_int_INT(write(A_INT_int(fd),A_VC_charptr(buf),A_INT_int(count)))";
+
+# -------------- Local procedures --------------- #
+
+INT fe to nearest = ALIEN "FE_TONEAREST"
+  "#include <fenv.h>"
+  "#include <math.h>"
+  "#include <limits.h>";
+INT fe downward    = ALIEN "FE_DOWNWARD"   "/**/";
+
+PROC(INT)INT fe set round = ALIEN "fesetround" "/**/";
+PROC fe get round = INT:
+  INT CODE "RESULT=fegetround();";
+PROC(REAL)INT lrint = ALIEN "lrint" "/**/";
+
+SKIP
+
+KEEP
+fe to nearest, fe downward,
+fe set round, fe get round, lrint,
+
+null c charptr, max abs char,
+max int, short max int, short short max int,
+infinity, pi,
+
+short real precision, short real width, short small real,
+short min exp, short max exp,
+real precision, real width, small real, min exp, max exp,
+
+erange err,
+o rdonly, o wronly, o rdwr, o creat, o trunc, o excl,
+sqrt, exp, ln, log, cos, sin, tan, arccos, arcsin, arctan,
+termios vtime, termios vmin, tcsanow,
+isig, icanon, echo,
+
+sighup,sigint,sigquit,sigill,sigtrap,sigabrt,sigbus,
+sigfpe,sigkill,sigusr1,sigsegv,sigusr2,sigpipe,
+sigalrm,sigterm,sigstkflt,sigchld,sigcont,sigstop,
+sigtstp,sigttin,sigttou,sigurg,sigxcpu,sigxfsz,
+sigvtalrm,sigprof,sigwinch,sigio,sigpwr,
+
+bytes per bits, errno,
+af unix, af inet, sock stream,
+
+gc_param, garbage_collect,
+always collect, always grow heap, default policy,
+
+ansi raise,     ansi signal,      ansi strtod,
+
+bsd accept,     bsd bind,         bsd chmod,
+bsd connect,    bsd fchmod,       bsd gethostbyname,
+bsd inet aton,  bsd is a tty,     bsd listen,
+bsd mkstemp,    bsd shutdown,     bsd socket,
+bsd real snprintf,
+
+iso at exit,
+
+linux on exit,
+linux tc get attr,                linux tc set attr,
+
+posix seek cur,   posix seek end, posix seek set,
+posix strerror,
+
+posix close,    posix creat,      posix exit,
+posix getenv,   posix getpid,     posix lseek,
+posix open,     posix read,       posix rename,
+posix strlen,   posix time,       posix unlink,
+posix write
+
+FINISH

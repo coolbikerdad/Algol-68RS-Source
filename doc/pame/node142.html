@@ -1,0 +1,212 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 8</title>
+<meta name="description" content="chapter 8">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node143.html">
+<link rel="previous" href="node141.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node143.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3133"
+  href="node143.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3127"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3121"
+  href="node141.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3129"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3131"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3134"
+  href="node143.html">Chapter 9</a>
+<b> Up:</b> <a name="tex2html3128"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3122"
+  href="node141.html">Chapter 7</a>
+ &nbsp; <b>  <a name="tex2html3130"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3132"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001680000000000000000"></a><a name="app-viii"></a>
+<br>
+Chapter 8
+</h1><dl>
+<dt><strong><a href="node75.html#ex-viii-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-i"></a>8.1</strong></dt>
+<dd><code>MODE BINT = UNION(BOOL,INT)</code>
+</dd>
+<dt><strong><a href="node75.html#ex-viii-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-ii"></a>8.2</strong></dt>
+<dd><code>BINT b = TRUE</code>
+</dd>
+<dt><strong><a href="node75.html#ex-viii-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-iii"></a>8.3</strong></dt>
+<dd>One of the constituent modes of the union is
+firmly-related to the united mode. In other words, in a firm context,
+<code>REF UB</code> can be dereferenced to <code>UB</code>.
+</dd>
+<dt><strong><a href="node75.html#ex-viii-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-iv"></a>8.4</strong></dt>
+<dd><code>UNION(INT,[]INT,[,]INT) mint</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node76.html#ex-viii-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-v"></a>8.5</strong></dt>
+<dd>The first parameter is deprocedured to mode <code>CHAR</code>
+before being united.  The second is dereferenced to mode
+<code>[]CHAR</code> and then united.  The two values of the united mode are
+regarded as a row-display and the procedure is then called.  The
+second parameter is an example of an anonymous name--no identifier
+is attached.
+</dd>
+<dt><strong><a href="node76.html#ex-viii-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-vi"></a>8.6</strong></dt>
+<dd> <pre>
+   PROC ucis=(CHAR ch,[]CHAR s)
+                  UNION(INT,VOID):
+
+   IF   INT p = ch FIND s;  p &gt;= LWB s
+   THEN p
+   ELSE EMPTY
+   FI
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node77.html#ex-viii-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-vii"></a>8.7</strong></dt>
+<dd> <pre>
+   PROC p = (MIRC m)IRC:
+   CASE m IN
+      ([]INT i): (INT sum:=0;
+                  FOR j FROM LWB i TO UPB i
+                  DO sum+:=i[j] OD;
+                  sum),
+      ([]REAL r):(REAL sum:=0;
+                  FOR j FROM LWB r TO UPB r
+                  DO sum+:=r[j] OD;
+                  sum),
+      ([]COMPL c):(COMPL sum:=0;
+                  FOR j FROM LWB c TO UPB c
+                  DO sum+:=c[j] OD;
+                  sum)
+   ESAC
+</pre>
+</dd>
+<dt><strong><a href="node77.html#ex-viii-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-viii"></a>8.8</strong></dt>
+<dd> <pre>
+   OP * = (IRC a,b)IRC:
+   CASE a IN
+      (INT i):  CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC,
+      (REAL i): CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC,
+      (COMPL i):CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC
+   ESAC
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node78.html#ex-viii-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-ix"></a>8.9</strong></dt>
+<dd><code>MODE CRIB = UNION(CHAR,REAL,INT,BOOL)</code>
+</dd>
+<dt><strong><a href="node78.html#ex-viii-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-x"></a>8.10</strong></dt>
+<dd> <pre>
+   OP UABS = (CRIB c)UNION(INT,REAL):
+   CASE c IN
+      (CHAR a):   ABS a,
+      (REAL a):   ABS a,
+      (INT a):    ABS a,
+      (BOOL a):   ABS a
+   ESAC
+</pre>
+</dd>
+<dt><strong><a href="node78.html#ex-viii-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-viii-xi"></a>8.11</strong></dt>
+<dd><code>UABS "c"; UABS -4.0; UABS -3; UABS TRUE</code>
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3133"
+  href="node143.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3127"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3121"
+  href="node141.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3129"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3131"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3134"
+  href="node143.html">Chapter 9</a>
+<b> Up:</b> <a name="tex2html3128"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3122"
+  href="node141.html">Chapter 7</a>
+ &nbsp; <b>  <a name="tex2html3130"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3132"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

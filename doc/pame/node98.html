@@ -1,0 +1,282 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Secondaries</title>
+<meta name="description" content="secondaries">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node99.html">
+<link rel="previous" href="node97.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node99.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2304"
+  href="node99.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2298"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2292"
+  href="node97.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2300"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2302"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2305"
+  href="node99.html">Tertiaries</a>
+<b> Up:</b> <a name="tex2html2299"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2293"
+  href="node97.html">Primaries</a>
+ &nbsp; <b>  <a name="tex2html2301"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2303"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2306"
+  href="node98.html#section001261000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001260000000000000000"></a><a name="gram-sec"></a>
+Secondaries</h1>
+
+<p>We have discussed both kinds of secondary
+(selections<a name="6669"></a> and generators<a name="6670"></a>), but
+there are other points which need mentioning.</p>
+
+<p>There are two kinds of generator (see
+section&nbsp;<a href="node49.html#name-assign">5.1</a>).
+Occasionally, when a procedure has a name parameter, the name may not
+be needed. Instead, therefore, of using an identifier of a name which
+is used for another purpose, which would be confusing, or declaring a
+name just for this purpose, which would be unnecessary, an anonymous
+name<a name="6672"></a> can be used. For example, a possible call of
+the procedure <code>char in string</code> could be</p>
+
+<pre>
+   char in string(ch,LOC INT,str)
+</pre>
+
+<p>if you are only interested in whether the character is in the string
+and not in its position.</p>
+
+<p>Another case where an anonymous name is useful is in the creation
+of odd-shaped multiples.  Consider the program fragment:</p>
+
+<pre>
+   [10]REF[]INT ri;  INT j;
+   
+   FOR i TO UPB ri
+   DO
+      read(j);
+      ri[i]:=LOC[j]INT;  read(ri[i])
+   OD
+</pre>
+
+<p>Since there are no declarations in the loop
+clause<a name="6677"></a>, the scope<a name="6678"></a> of the name
+created by the generator is the enclosed clause surrounding the loop
+clause, which includes the declarations for <code>ri</code> and
+<code>j</code>.  The mode of the slice <code>ri[i]</code> is <code>REF
+REF[]INT</code>.  Thus the value of <code>ri[i]</code> is a name with
+two <code>REF</code>s in its mode, and it is made to refer to a name
+of mode <code>REF[]INT</code>, which has one <code>REF</code> less.
+Assignments of this type will be considered in detail in the next
+chapter. Note that the context of a parameter to <code>read</code> is
+firm so the parameter is dereferenced once before a value is read.</p>
+
+<p> <a name="gram-paren"></a>When discussing
+selections<a name="6680"></a> in section
+<a href="node67.html#struc-field">7.2</a>, you may have wondered about
+the peculiar rules of placing parentheses when talking about rows in
+structures, rows of structures and rows in rows of structures.
+Firstly, it should be mentioned that in the secondary</p>
+
+<pre>
+   im OF z
+</pre>
+
+<p>where z has mode <code>COMPL</code> or <code>REF COMPL</code>, the
+<code>z</code> itself is not only a secondary, it is also a primary
+(it is an applied-identifier<a name="6684"></a>). This means that
+using the declarations</p>
+
+<pre>
+   MODE AM = STRUCT(INT i,CHAR c),
+        BM = STRUCT(INT i,AM a);
+   BM b
+</pre>
+
+<p>the selection</p>
+
+<pre>
+   c OF a OF b
+</pre>
+
+<p>is valid because</p>
+
+<pre>
+   a OF b
+</pre>
+
+<p>is also a secondary. We shall meet extended selections like this in
+chapter&nbsp;11.</p>
+
+<p>Secondly, a primary is a secondary, but not necessarily the other
+way round.  Consider these declarations:</p>
+
+<pre>
+   STRUCT(INT i,[3]REAL r)s1;
+   [3]STRUCT(INT i,REAL r)s2
+</pre>
+
+<p>The selection <code>r OF s1</code> has the mode
+<code>REF[]REAL</code>.  If you want to slice it, to get one of the
+constituent names of mode <code>REF REAL</code> say, you cannot do so
+directly.  The reason is that in a slice<a name="6693"></a>, as
+mentioned in the previous section, what is sliced must be a
+primary<a name="6694"></a>.  To convert the
+secondary<a name="6695"></a> into a primary you have to enclose it in
+parentheses<a name="6696"></a> thus converting it into an enclosed
+clause; and enclosed clauses are also primaries (in
+section&nbsp;<a href="node93.html#gram-phrases">10.1</a>, it was said
+that the four classes of units are arranged in a hierarchy in which
+each class includes the lower classes).  So the second name of <code>r
+OF s1</code> is yielded by <code>(r OF s1)[2]</code>.</p>
+
+<p>On the other hand, considering the name identified by
+<code>s2</code>, the selection</p>
+
+<pre>
+   r OF s2[2]
+</pre>
+
+<p>can be written without parentheses because <code>s2</code> is not
+only a secondary, it is also a primary (an applied-identifier) with
+mode <code>REF[]STRUCT...</code>. The phrase <code>s2[2]</code> is
+perfectly valid, it having mode <code>REF STRUCT(...)</code>.  The
+selection <code>r OF s2</code> has the mode <code>REF[]REAL</code> and
+so it too can be sliced by writing <code>(r OF s2)[2]</code>. The
+effect is the same for both of the cases involving <code>s2</code>.
+Note that the a68toc<a name="6700"></a> compiler does not permit
+selection of a field from a row of structures. Doing so will yield the
+following error message:-</p>
+
+<pre>
+OPERATORS - select: []struct not implemented
+FATAL ERROR (661) Compiler error:
+   ENVIRONMENT (ASSERT) - assertion failure
+</pre>
+<p>
+
+<p>To summarise, any primary can be regarded as a secondary, but not
+vice-versa.</p>
+
+<hr>
+<h2><a name="section001261000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.7<a name="ex-x-vii"></a>
+<dd>Give an example of a primary which is also a secondary.
+ Ans<a href="node144.html#ans-x-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>10.8<a name="ex-x-viii"></a>
+<dd>Give an example of a secondary which is not a primary.  Ans<a href="node144.html#ans-x-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>10.9<a name="ex-x-ix"></a>
+<dd>In this exercise, the following declarations hold:
+<pre>
+   MODE AM = STRUCT(CHAR a,b),
+        BM = STRUCT(AM a,
+                    STRUCT(CHAR a,AM b) c,
+                    REF BM d);
+   BM p
+</pre>
+
+How many secondaries are there in each of the following units? Ans<a href="node144.html#ans-x-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>a OF p</code>  
+<p>
+<dt>(b)
+<dd><code>a OF a OF p</code>  
+<p>
+<dt>(c)
+<dd><code>a OF c OF p</code>  
+<p>
+<dt>(d)
+<dd><code>a OF a OF d OF p</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2304"
+  href="node99.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2298"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2292"
+  href="node97.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2300"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2302"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2305"
+  href="node99.html">Tertiaries</a>
+<b> Up:</b> <a name="tex2html2299"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2293"
+  href="node97.html">Primaries</a>
+ &nbsp; <b>  <a name="tex2html2301"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2303"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

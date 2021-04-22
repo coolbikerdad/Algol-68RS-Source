@@ -1,0 +1,89 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Mixed arithmetic</title>
+<meta name="description" content="mixed arithmetic">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node22.html">
+<link rel="previous" href="node20.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node22.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html977"
+  href="node22.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html971"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html965"
+  href="node20.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html973"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html975"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html978"
+  href="node22.html">Order of elaboration</a>
+<b> Up:</b> <a name="tex2html972"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html966"
+  href="node20.html">Exponentiation</a>
+ &nbsp; <b>  <a name="tex2html974"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html976"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00460000000000000000"></a><a name="form-mix"></a>
+<br>
+Mixed arithmetic
+</h1>
+
+<p>Up to now, the four basic arithmetic<a name="918"></a>
+operators have always had operands of the same modes.  In practice,
+it is quite surprising how often you want to compute something like
+<code>2 * 3.0</code>.  Well, fortunately, the dyadic operators <code>+</code>,
+<code>-</code>, <code>*</code> and <code>/</code> (but not <code>%</code>) are also defined
+for mixed modes<a name="919"></a>.  That is, any combination of
+<code>REAL</code> and <code>INT</code> can be used.  With mixed modes the yield
+is always <code>REAL</code>.  Thus the following formul&#230; are all
+valid:</p>
+
+<pre>
+   1+2.5    3.1*-4    2*3.5**3    2.4-2
+</pre>
+
+<p>The priority<a name="923"></a> of the mixed-mode operators is
+unchanged. As we shall see later, the priority relates to the operator
+symbol rather than the flavour of the operator in use.</p>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

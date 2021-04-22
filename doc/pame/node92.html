@@ -1,0 +1,171 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Units</title>
+<meta name="description" content="units">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node106.html">
+<link rel="previous" href="node79.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node93.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2180"
+  href="node93.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2174"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2168"
+  href="node91.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2176"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2178"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2181"
+  href="node93.html">Phrases</a>
+<b> Up:</b> <a name="tex2html2175"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2169"
+  href="node91.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2177"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2179"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001200000000000000000"></a><a name="chapx"></a>
+Units</h1>
+
+<p>The aim of this chapter is to describe the grammar of units in a
+fairly rigorous manner.  The chapter covers units, contexts and
+coercions, as well as a number of lesser, but still important, ideas
+such as casts and balancing.  In describing some of the grammatical
+aspects of the language in previous chapters, it has been necessary
+to gloss over or distort some of the facts.  The definitive truth
+about such matters is in this chapter.</p>
+
+<p>An Algol&nbsp;68 program consists of a closed <code>VOID</code> clause which
+means that any value yielded by the closed clause will be voided. Any
+closed clause can be used including conditional and loop clauses. It
+is unusual to write a program which starts other than with
+<code>BEGIN</code> (and ends other than with <code>END</code>), but there is
+nothing in the definition of the language to preclude it. On our
+round tour of units, we shall start at the bottom and work up.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2182"
+  href="node93.html">Phrases</a>
+<li><a name="tex2html2183"
+  href="node94.html">Contexts</a>
+<li><a name="tex2html2184"
+  href="node95.html">Coercions</a>
+<ul>
+<li><a name="tex2html2185"
+  href="node95.html#section001231000000000000000">Deproceduring</a>
+<li><a name="tex2html2186"
+  href="node95.html#section001232000000000000000">Dereferencing</a>
+<li><a name="tex2html2187"
+  href="node95.html#section001233000000000000000">Weakly-dereferencing</a>
+<li><a name="tex2html2188"
+  href="node95.html#section001234000000000000000">Uniting</a>
+<li><a name="tex2html2189"
+  href="node95.html#section001235000000000000000">Widening</a>
+<li><a name="tex2html2190"
+  href="node95.html#section001236000000000000000">Rowing</a>
+<li><a name="tex2html2191"
+  href="node95.html#section001237000000000000000">Voiding</a>
+<li><a name="tex2html2192"
+  href="node95.html#section001238000000000000000">Legal coercions</a>
+<li><a name="tex2html2193"
+  href="node95.html#section001239000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2194"
+  href="node96.html">Enclosed clauses</a>
+<ul>
+<li><a name="tex2html2195"
+  href="node96.html#section001241000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2196"
+  href="node97.html">Primaries</a>
+<ul>
+<li><a name="tex2html2197"
+  href="node97.html#section001251000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2198"
+  href="node98.html">Secondaries</a>
+<ul>
+<li><a name="tex2html2199"
+  href="node98.html#section001261000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2200"
+  href="node99.html">Tertiaries</a>
+<li><a name="tex2html2201"
+  href="node100.html">Quaternaries</a>
+<ul>
+<li><a name="tex2html2202"
+  href="node100.html#section001281000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2203"
+  href="node101.html">Balancing</a>
+<ul>
+<li><a name="tex2html2204"
+  href="node101.html#section001291000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2205"
+  href="node102.html">Well-formed modes</a>
+<ul>
+<li><a name="tex2html2206"
+  href="node102.html#section0012101000000000000000">Determination of well-formedness</a>
+<li><a name="tex2html2207"
+  href="node102.html#section0012102000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2208"
+  href="node103.html">Flexible names</a>
+<li><a name="tex2html2209"
+  href="node104.html">Orthogonality</a>
+<li><a name="tex2html2210"
+  href="node105.html">Summary</a>
+</ul>
+<!--end of table of child-links-->
+<br><hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

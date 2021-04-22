@@ -1,0 +1,216 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Introduction</title>
+<meta name="description" content="introduction">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node15.html">
+<link rel="previous" href="node2.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node4.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html678"
+  href="node4.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html672"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html666"
+  href="node2.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html674"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html676"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html679"
+  href="node4.html">What you will need</a>
+<b> Up:</b> <a name="tex2html673"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html667"
+  href="node2.html">Preface</a>
+ &nbsp; <b>  <a name="tex2html675"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html677"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00300000000000000000"></a><a name="chapi"></a>
+Introduction</h1>
+
+<p>Algol 68 is a high-level, general-purpose programming language ideally
+suited to modern operating systems.  This book will teach you Algol 68
+plus the necessary development skills to enable you to write
+substantial programs which can be executed from the command line.</p>
+
+<p>
+In principle, you can solve any computable problem with Algol&nbsp;68.
+You can write programs which perform word processing, perform
+complicated calculations with matrices, design graphs or bridges,
+process pictures, predict the weather, and so on.  Or you can write
+simple programs which count the number of words in a file or list a
+file with line numbers.</p>
+
+<p>
+Algol 68 is a powerful language.  There are many constructs which
+enable you to manipulate complicated data structures with ease, and
+yet it is all easy to understand because one of the guiding
+principles of Algol&nbsp;68 was that it was designed to be
+<span  class="textbf">orthogonal</span><a name="90"></a>. This means that the
+language is based on a few independent ideas which are developed and
+applied with generality.  The language was designed in such a way
+that it is impossible to write ambiguous programs.  The design is
+also difficult to describe until it has been fully described, which
+means that some concepts have to be introduced in a superficial
+manner, but later reading will deepen your understanding.</p>
+
+<p>
+You need to have a thorough grasp of the basic ideas if you are going
+to write powerful programs in Algol 68: these ideas unfold in the
+first five chapters.  The chapters should be read in order, but
+chapter&nbsp;5 is a watershed--it forms the basis of much of the computer
+programming performed in the world today.  Its ideas should be
+mastered before continuing.</p>
+
+<p>
+Chapter 10 draws together all the various references to grammatical
+points and clarifies the limitations of the language--you will need
+to know these if you want to squeeze the last ounce of power out of
+the language. Chapters&nbsp;11 and&nbsp;12 deal with advanced topics which
+should not be touched until you have mastered preceding material.
+Chapter&nbsp;13 describes the standard prelude which, besides providing
+means of determining the characteristics of an Algol 68
+implementation, also provides the transput facilities whose power are
+characteristic of Algol 68.</p>
+
+<p>
+In this chapter, some aspects of Algol 68 grammar are described.
+Don't worry if they seem confusing; all will become clear later in
+the book.  It also covers denotations and the identity declaration,
+the latter having crucial importance in the language.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html680"
+  href="node4.html">What you will need</a>
+<li><a name="tex2html681"
+  href="node5.html">Terminology</a>
+<li><a name="tex2html682"
+  href="node6.html">Values and modes</a>
+<ul>
+<li><a name="tex2html683"
+  href="node6.html#section00331000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html684"
+  href="node7.html">Integers</a>
+<ul>
+<li><a name="tex2html685"
+  href="node7.html#section00341000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html686"
+  href="node8.html">Identity declarations</a>
+<ul>
+<li><a name="tex2html687"
+  href="node8.html#section00351000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html688"
+  href="node9.html">Characters</a>
+<ul>
+<li><a name="tex2html689"
+  href="node9.html#section00361000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html690"
+  href="node10.html">Real numbers</a>
+<ul>
+<li><a name="tex2html691"
+  href="node10.html#section00371000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html692"
+  href="node11.html">Program structure</a>
+<ul>
+<li><a name="tex2html693"
+  href="node11.html#section00381000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html694"
+  href="node12.html">Comments</a>
+<ul>
+<li><a name="tex2html695"
+  href="node12.html#section00391000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html696"
+  href="node13.html">External values</a>
+<li><a name="tex2html697"
+  href="node14.html">Summary</a>
+<ul>
+<li><a name="tex2html698"
+  href="node14.html#section003111000000000000000">Exercises</a>
+</ul></ul>
+<!--end of table of child-links-->
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html678"
+  href="node4.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html672"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html666"
+  href="node2.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html674"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html676"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html679"
+  href="node4.html">What you will need</a>
+<b> Up:</b> <a name="tex2html673"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html667"
+  href="node2.html">Preface</a>
+ &nbsp; <b>  <a name="tex2html675"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html677"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

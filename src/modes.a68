@@ -1,0 +1,1498 @@
+DECS  modes  CONTEXT VOID  USE
+*L    usefulops,
+      common, environ, environment, incinstallation, incmode, uniquenameserver,
+      incvalue {for declare c temporary}, coutput, moduletracer, centities:
+
+configinfo A68CONFIG "$Id: modes.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.9 
+05:12:94  33.002  DJS   CmplxNos   No account of "no struct result option" in
+                                   A_STRAIGHT. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+This module contains the translator mode table, and provides its initialisation
+and enquiry routines, together with the fixed mode numbers.
+}
+
+PROC debug message = ( INT level, VECTOR [] CHAR m ) VOID:
+  ( TRACELEVEL "modes" >= level | list( "MODES("+whole(level,0)+"): " + m ) );
+
+PROC debugging = BOOL: TRACELEVEL "modes" > 0;
+                                                             
+MODE STRUCTFIELD = STRUCT( INT mode, offset, ID name ),
+
+     EXTRA       = UNION
+   ( INT,            {ilength of istruct or nods of array}
+     REF VECTOR [] INT,    {modelist for union or procp}
+     REF VECTOR [] STRUCTFIELD,  {selist for struct}
+     VOID            {primitive,  proc, vector or straight}
+   ),
+
+     MODEINFO    = STRUCT
+   ( INT type, auxmode, deflexed mode,
+     BOOL finalised,
+     EXTRA extra,
+     BITS   flags
+   ),
+
+     PROCINFO  = STRUCT
+   ( INT parameters, result,
+     BOOL has descriptors
+   );
+
+REF [] MODEINFO modes;  {the mode table}
+
+BITS 
+  dynamic bit            = 2r100,
+  needs init bit         = 2r1000,
+  has descriptors        = 2r10000,
+  typedef output         = 2r100000,
+  deflex output          = 2r1000000,
+  incomplete type output = 2r10000000;
+
+OP DEREF = (INT mode) INT:
+{
+   Removes all references from the specified 'mode' (including 'no mode').
+}
+   ( mode = no mode | no mode | mode MOD refmark );
+
+PROC  mode type = (INT mode) INT:
+{
+   Returns the 'type' of the specified 'mode'.
+}
+   type OF modes[ DEREF mode ];
+
+{
+   the following operators are used in adicops to check the modes
+   of operands
+}
+
+OP HASONEREF = (INT m) BOOL   : m >= refmark    ANDTH m < refrefmark;
+OP ISBOOL    = (INT m) BOOL   : m = bool mode;
+OP ISCHAR    = (INT m) BOOL   : m = char mode;
+OP ISINT     = (INT m) BOOL   : m = int mode;
+OP ISLBITS   = (INT m) BOOL   : m = short bits mode   OREL m = bits mode   OREL
+            m = long bits mode   OREL m = long long bits mode;
+OP ISLINT    = (INT m) BOOL   : m = short int mode OREL m = int mode OREL
+            m = long int mode OREL m = long long int mode;
+OP ISLREAL   = (INT m) BOOL   : m = short real mode   OREL m = real mode   OREL
+            m = long real mode   OREL m = long long real mode;
+OP ISLCOMPL  = (INT m) BOOL   : m = short compl mode  OREL m = compl mode  OREL
+            m = long compl mode  OREL m = long long compl mode;
+
+{
+   the following operators check if the type is vector or row WITHOUT dereferencing
+}
+OP ISVEC     = (INT m) BOOL   : m < refmark ANDTH type OF modes [m] = vector;
+OP ISROW     = (INT m) BOOL   : m < refmark ANDTH type OF modes [m] = row;
+OP ISFIRMARRAY   = (INT m) BOOL   : ISVEC m OREL ISROW m;
+
+OP ISSTRAIGHT = (INT m) BOOL  : type OF modes [m] = straight;
+{
+   the following operators check if the type is ref flex vector or ref flex row (only 1 ref)
+}
+OP ISFLEXVEC = (INT m) BOOL   : m >= refmark    ANDTH m < refrefmark ANDTH
+            mode type( m ) = flex vector;
+OP ISFLEXROW = (INT m) BOOL   : m >= refmark ANDTH m < refrefmark ANDTH
+            mode type( m ) = flex row;
+OP ISFLEXARRAY = (INT m) BOOL : ISFLEXVEC m OREL ISFLEXROW m;
+
+
+PROC  is vector = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'vector' or 'flex vector', after REFs have been removed.
+}
+BEGIN
+   INT type = mode type( mode );
+   type = vector OREL type = flex vector
+END;
+
+PROC  is row = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'row' or 'flex row', after REFs have been removed.
+}
+BEGIN
+   INT type = mode type( mode );
+   type = row OREL type = flex row
+END;
+
+PROC  is array = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'row' or 'vector' or 'flex row' or 'flex vector',after REFs have been
+   removed.
+}
+BEGIN
+   INT type = mode type( mode );
+   type =      row OREL type =      vector OREL
+   type = flex row OREL type = flex vector
+END;
+
+PROC  is firm array = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'row' or 'vector', after REFs have been removed.
+}
+BEGIN
+   INT type = mode type( mode );
+   type = row OREL type = vector
+END;
+
+PROC  is flex array = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'flex row' or 'flex vector', after REFs have been removed.
+}
+BEGIN
+   INT type = mode type( mode );
+   type = flex row OREL type = flex vector
+END;
+
+PROC  is struct = ( INT mode ) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'struct' after REFs have been removed
+}
+BEGIN
+   INT type = mode type( mode );
+   type = struct
+END;
+
+PROC  is union = ( INT mode ) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'union' after REFs have been removed
+}
+BEGIN
+   INT type = mode type( mode );
+   type = union
+END;
+
+PROC  is istruct = ( INT mode ) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'istruct' after REFs have been removed
+}
+BEGIN
+   INT type = mode type( mode );
+   type = istruct
+END;
+
+PROC  is straight = ( INT mode ) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'straigh' after REFs have been removed
+}
+BEGIN
+   INT type = mode type( mode );
+   type = straight
+END;
+
+PROC  is compl = (INT mode) BOOL:
+{
+   Returns a boolean value indicating whether the specified 'mode'
+   stripped of any REFs is a COMPL mode.
+}
+BEGIN
+   INT noref mode = DEREF mode;
+   noref mode >= short compl mode AND noref mode <= long long compl mode
+END;
+
+PROC  is proc = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'proc' after REFs have been removed
+}
+BEGIN
+   INT m = mode type (mode);
+   m = proc
+END;
+
+PROC  is procp = (INT mode) BOOL:
+{
+   Returns a bool indicating whether the specified 'mode' is of type
+   'procp' after REFs have been removed
+}
+BEGIN
+   INT m = mode type (mode);
+   m = procp
+END;
+
+PROC  has refs = (INT mode) BOOL:
+{
+   Returns TRUE if the mode has one or more refs.
+}
+   NOT (mode MOD refmark = mode);
+
+PROC  is c struct = (INT mode) BOOL:
+{
+   Returns TRUE if mode is represented as a C structure.
+   This is so for:
+      (REF) (VECTOR) [] AMODE
+      FLEX (VECTOR) [] AMODE
+      UNION(...)
+      STRUCT(...)
+      PROC(...)
+}
+( (HASONEREF mode) ANDTH isfirmarray(mode) )
+   OREL
+( (mode<refmark) ANDTH
+   (isarray(mode) OREL isunion(mode) OREL isstruct(mode)
+  OREL isproc(mode) OREL isprocp(mode)));
+
+PROC  deref mode = (INT mode) INT:
+{
+   Returns the dereferenced 'mode'.
+}
+BEGIN
+   IF mode < refmark
+   THEN  terminal error (632 {attempt to deref non-REF mode})
+   FI;
+   mode - refmark
+END;
+
+PROC deref mode ok = ( INT mode ) INT:   { like 'deref mode' except
+                  does not fail if cannot deref }
+   ( mode > refmark | mode - refmark | mode );
+
+PROC  auxmode = (INT mode) INT:
+{
+   Returns the auxiliary mode information for the specified 'mode'.
+}
+auxmode OF modes [DEREF mode];
+
+PROC  flags = (INT mode) BITS:
+{
+   Returns the flags appropriate to the specified 'mode'.
+}
+IF mode < refmark
+THEN  flags OF modes [mode]
+ELSE  BIN 0
+FI;
+
+PROC  dynamic = (INT mode) BOOL:
+{
+   Returns a boolean value indicating whether the specified 'mode' is
+   dynamic ( ie whether it is a straight, vector or row, or is a struct,
+   istruct, or union containing one of these).
+}
+IF mode < refmark
+THEN  flags OF modes [mode] >= dynamic bit
+ELSE  FALSE  {mode is REF}
+FI;
+
+PROC  proc info = (INT mode) PROCINFO:
+{
+   Returns the PROCINFO for the specified proc or procp 'mode'.
+}
+BEGIN
+   "MODES - proc info: non-REF mode" ASSERT mode < refmark;
+   REF MODEINFO m = modes [mode];
+   "MODES - proc info: mode type is proc or procp"
+   ASSERT (type OF m = proc OR type OF m = procp);
+
+     INT parameters = (extra OF m | (REF VECTOR [] INT params): UPB params | 0);
+
+     (parameters, auxmode OF m, flags OF m >= has descriptors)
+END;
+
+PROC  dynamic descriptor = (INT mode) BOOL:
+{
+   Returns a boolean value specifying whether a parameter of the given
+   'mode' has a dynamic descriptor (i.e. one containing runtime bounds).
+}
+IF mode < ref refmark
+THEN  INT type = type OF modes [DEREF mode];
+   type = vector OR type = row
+   OR (mode < refmark AND (type = flex vector OR type = flex row))
+ELSE  FALSE
+FI;
+
+PROC  modelist extra = (INT mode) REF VECTOR [] INT:
+{
+   Returns the EXTRA for a union or procp 'mode' as a REF VECTOR [] INT.
+}
+BEGIN
+     REF MODEINFO m = modes [DEREF mode];
+     "union or procp mode" ASSERT (type OF m = procp OR type OF m = union);
+
+     (extra OF m | (REF VECTOR [] INT modelist): modelist | NIL)
+END;
+
+PROC  int extra = (INT mode) INT:
+{
+   Returns the EXTRA for an istruct, row, or flex row 'mode' as an INT.
+}
+BEGIN
+   REF MODEINFO m = modes [DEREF mode];
+   "istruct, row, or flex row mode"
+   ASSERT (type OF m = istruct OR type OF m = row OR type OF m = flex row);
+   ( extra OF m | (INT i): i | 0)
+END;
+
+PROC  struct fields = (INT mode) REF VECTOR [] STRUCTFIELD:
+{
+   Returns the EXTRA for a struct 'mode' as a REF VECTOR [] STRUCTFIELD.
+}
+BEGIN
+   REF MODEINFO m = modes [ DEREF mode];
+   "MODES - struct field: mode is not a struct" ASSERT type OF m = struct;
+   ( extra OF m
+   | (REF VECTOR [] STRUCTFIELD fields): fields
+   | "MODES - struct fields: mode table is inconsistent" ASSERT FALSE;
+     SKIP
+   )
+END;
+
+PROC  dimensions = (INT mode) INT:
+{
+   Returns the number of dimensions of the given (vector or row) 'mode'.
+}
+( is vector (DEREF mode) | 1 | int extra (mode) );
+
+PROC (INT) INT deproc = auxmode,
+        element mode = auxmode,
+        istruct length = int extra;
+
+PROC (INT) REF VECTOR [] INT constituents = modelist extra,
+               parameters = modelist extra;
+
+MODE  DEFLEXINFO = STRUCT( INT thismode, REF VECTOR [] INT auxmode, INT dims, REF DEFLEXINFO next );
+
+REF DEFLEXINFO rowlist := NIL,       vectorlist := NIL,
+       structlist := NIL,       unionlist := NIL;
+
+PROC  add to list = ( INT thismode, VECTOR[]INT auxmodes,
+         INT dims, REF REF DEFLEXINFO list) VOID:
+BEGIN
+   VECTOR [] INT xmodes =
+        ( list IS row list
+        | INT xmde := auxmodes[1];
+          TO  dims -1   DO  xmde := auxmode (xmde) OD; xmde
+        | auxmodes
+        );
+
+   list := HEAP DEFLEXINFO :=
+      ( DEREF thismode, { NOTE: this mode is derefed completely }
+             HEAP VECTOR [UPB xmodes] INT := xmodes,
+           dims, list
+      )
+END;
+
+OP = = (VECTOR [] INT a, VECTOR[]INT b) BOOL:
+   IF UPB a = UPB b
+   THEN
+      BOOL eq;
+      FOR i TO UPB a WHILE eq := a[i] = b[i]
+      DO SKIP OD;
+           eq
+   ELSE  FALSE
+   FI;
+
+OP /= = (VECTOR [] INT a, VECTOR[]INT b) BOOL: NOT (a = b);
+
+PROC  lookup   = (INT mode, VECTOR [] INT auxmode, INT dims) INT:
+BEGIN
+   REF DEFLEXINFO current := (  is row (mode)   | row list
+              |: is vector (mode)   | vector list
+              |: is struct (mode)   | struct list
+              |: is union (mode) | union list
+                    | "MODES - lookup: unknown list" ASSERT FALSE;
+                SKIP
+              );
+
+   IF is row (mode)
+   THEN
+         WHILE   ( current ISNT REF DEFLEXINFO(NIL) )
+      ANDTH   (      auxmode OF current /= auxmode
+         OREL  dims OF current /= dims
+         )
+      DO
+         current := next OF current
+         OD
+   ELIF  is struct (mode)
+   THEN
+      {
+        To avoid equaling struct(int a) to struct(int b) we
+        need to check the names of the fields as well
+      }
+      REF VECTOR [] STRUCTFIELD strct fields = struct fields (mode);
+      "MODES - lookup: struct fields is NIL"
+      ASSERT (strct fields ISNT REF VECTOR [] STRUCTFIELD (NIL));
+      VECTOR [UPB strct fields] ID field names;
+
+      FORALL   field name IN field names, strct field IN strct fields
+      DO field name := name OF strct field
+      OD;
+
+         WHILE   ( current ISNT REF DEFLEXINFO(NIL) )
+      ANDTH NOT ( auxmode OF current = auxmode
+         ANDTH ( BOOL equal;
+              REF VECTOR [] STRUCTFIELD strct fields =
+                  struct fields (this mode OF current);
+              "MODES - lookup: struct fields is NIL"
+              ASSERT (strct fields ISNT REF VECTOR [] STRUCTFIELD (NIL));
+
+              FORALL strct field IN strct fields, field name IN field names
+              WHILE  equal := (field name = name OF strct field)
+              DO  SKIP
+              OD;
+              equal
+            )
+         )
+      DO
+         current := next OF current
+         OD
+   ELIF  is vector (mode) OREL is union (mode)
+   THEN
+         WHILE   ( current ISNT REF DEFLEXINFO(NIL) )
+         ANDTH   auxmode OF current /= auxmode
+      DO
+         current := next OF current
+         OD
+   ELSE  "MODES - lookup: mode isnt row, vector, struct or union" ASSERT FALSE
+   FI;
+
+   ( current IS REF DEFLEXINFO (NIL)
+   | fault mode   { not found }
+   | this mode OF current
+   )
+
+END;
+
+PROC     deflexed mode = (INT mode, BOOL top level) INT:
+{
+   Returns the deflexed mode entry of 'mode' with the same # refs as 'mode'
+   Note that it may not yet be defined (ie is nomode) in which case
+   the value returned is nomode (WITHOUT refs even if 'mode' has some)
+}
+(  deflexed mode OF modes [ DEREF mode ] = no mode
+|  no mode
+|: NOT toplevel ANDTH is flex array (mode) ANDTH mode > ref mark
+|  { ref(s) flex [] x are never deflexed }
+   mode
+|  deflexed mode OF modes [ DEREF mode ] + (mode % ref mark) * ref mark
+);
+
+PROC find the deflex mode = ( INT mode, BOOL toplevel ) INT:
+IF INT d = deflexed mode (mode, toplevel);
+   d /= no mode         { ie mode is defined }
+THEN  d
+ELIF  flags (DEREF mode) >= deflex output
+THEN  mode
+   {
+   To prevent infinite recursion a deflex output flag is used.
+   If the deflexed mode OF modes[mode] is nomode and the mode has already
+   been output then the mode is (mutually) recursive (with
+   some other mode(s)) and will therefore be deflexed to itself.
+   }
+ELIF  INT derefed mode = DEREF mode,
+       refs  = (mode % ref mark) * ref mark;
+   { Mark mode as deflexed }
+   flags OF modes [derefed mode] := flags OF modes [derefed mode] OR deflex output;
+   is array (mode)
+THEN
+      INT l = look up ( mode,
+           find the deflex mode (element mode (mode), FALSE),
+           dimensions (mode)
+         );
+   deflexed mode OF modes [derefed mode] := ( l = faultmode {ie not found}
+                   | derefed mode
+                      | l
+                   );
+   deflexed mode (mode, toplevel)
+ELIF  is struct (mode)
+THEN
+   REF VECTOR [] STRUCTFIELD strct fields = struct fields (mode);
+   "MODES - find deflex mode: struct fields is NIL"
+   ASSERT (strct fields ISNT REF VECTOR [] STRUCTFIELD (NIL));
+   VECTOR [UPB strct fields] INT deflexed modes;
+
+   FORALL   strct IN strct fields, this deflexed mode IN deflexed modes
+   DO this deflexed mode := find the deflex mode (mode OF strct, FALSE)
+         OD;
+   INT l = look up (mode, deflexed modes, 0 {dummy});
+   deflexed mode OF modes [derefed mode] := ( l = faultmode
+                   | addtolist (mode, deflexed modes, 0 {dummy}, structlist);
+                     derefed mode
+                   | l
+                         );
+
+   IF deflexed mode (mode, toplevel) /= mode
+   THEN
+      { Have to change the unique prefixes to be the same as the deflexed mode }
+
+      REF VECTOR [] STRUCTFIELD deflexed strct fields = struct fields (deflexed mode (mode, toplevel));
+      "MODES - find deflex mode: struct fields is NIL"
+      ASSERT (deflexed strct fields ISNT REF VECTOR [] STRUCTFIELD (NIL))
+   FI;
+
+   deflexed mode (mode, toplevel)
+ELIF  is union (mode)
+THEN
+   REF VECTOR [] INT deflexed modes temp = mode list extra (mode);
+   VECTOR [UPB deflexed modes temp] INT deflexed modes := deflexed modes temp;
+      "MODES - find deflex mode: mode list extra is NIL"
+   ASSERT (deflexed modes ISNT REF VECTOR [] INT (NIL));
+
+   FORALL  this deflexed mode IN deflexed modes
+   DO      this deflexed mode := find the deflex mode (this deflexed mode, FALSE)
+   OD;
+
+   INT l = look up (mode, deflexed modes, 0 {dummy});
+   deflexed mode OF modes [derefed mode] := ( l = faultmode
+                   | addtolist (mode, deflexed modes, 0 {dummy}, unionlist);
+                     derefed mode
+                   | l
+                   );
+
+   deflexed mode (mode, toplevel)
+ELIF  is proc (mode) OREL is procp (mode)
+THEN  deflexed mode OF modes [derefed mode] := derefed mode;
+   mode
+ELIF  is istruct (mode)
+THEN  deflexed mode OF modes [derefed mode] := derefed mode;
+   mode
+ELIF  is straight (mode)
+THEN  deflexed mode OF modes [derefed mode] := derefed mode;
+         mode
+ELSE  ("MODES - find deflex mode: deflexed mode is undefined for "+ whole (mode,0)) ASSERT FALSE;
+   SKIP
+FI;
+
+PROC find deflex mode = ( INT mode ) INT:
+   find the deflex mode (mode, TRUE);
+
+PROC  aux mode name = ( INT mode ) VECTOR [] CHAR:
+IF mode > refmark
+THEN    message( 92 ) {REF } + aux mode name( mode - refmark )
+ELSE    INT type = mode type( mode );
+   IF mode <= long long compl mode OR type = primitive
+         THEN  IF mode = goto mode THEN "" ELSE message( 66 + mode ) FI
+   ELSE
+      "MODE" + whole(mode,0)
+   FI
+FI;
+
+PROC  mode name = ( INT mode ) VECTOR [] CHAR:
+IF mode > refmark
+THEN
+  message( 92 ) {REF } + mode name( mode - refmark )
+ELSE
+  INT type = mode type( mode );
+  IF mode <= long long compl mode OR type = primitive
+  THEN  IF mode = goto mode THEN "" ELSE message( 66 + mode ) FI
+  ELSE
+    PROC row mode name = (VECTOR [] CHAR row type) VECTOR [] CHAR:
+    BEGIN
+      row type +"," *( dimensions( mode ) - 1 ) +message( 44 )
+         {] } + aux mode name( element mode( mode ) )
+    END;
+
+    PROC mode list = (VECTOR [] INT mode list) VECTOR [] CHAR:
+    BEGIN
+      FLEX VECTOR [0] CHAR result;
+      FORALL mode IN mode list
+      DO
+        result +:= aux mode name(mode) + ","
+      OD;
+      result[:UPB result-1]
+    END;
+
+    PROC field list = (VECTOR [] STRUCTFIELD fields) VECTOR [] CHAR:
+    BEGIN
+      FLEX VECTOR [0] CHAR result;
+      FORALL field IN fields
+      DO
+        result +:= aux mode name(mode OF field) + "," 
+      OD;
+      result[:UPB result-1]
+    END;
+
+    VECTOR [] CHAR type mess = message( 550 + type );
+    CASE  type - 1
+    IN
+      {PROC}
+        type mess + aux mode name( deproc( mode ) ),
+      {PROCP}
+        type mess  + mode list(modelist extra(mode)) +
+          message(562) + aux mode name( deproc( mode ) ),
+      {UNION}
+        type mess + mode list(modelist extra(mode)) + message(562),
+      {STRUCT}
+        type mess + field list(struct fields(mode)) + message(562),
+      {ISTRUCT}
+        type mess + whole( istruct length( mode ), 0 )
+          + " " + aux mode name( element mode( mode ) ),
+      {ROW}
+        row mode name( type mess ),
+      {VECTOR}
+        row mode name( type mess ),
+      {FLEX ROW}
+        row mode name( type mess ),
+      {FLEX VECTOR}
+        row mode name( type mess ),
+      {STRAIGHT}
+        type mess + aux mode name( element mode( mode ) )
+    OUT
+      "?"
+    ESAC
+  FI
+FI;
+
+PROC c fieldname = ( REF STRUCTFIELD sf ) CFRAGMENT:
+CO
+   constructs the C selector name for the given field
+CO
+BEGIN
+      CAPITALISED (" " SCANTO name OF sf)
+END;
+
+PROC  select = ( INT mode, field ) CFRAGMENT:
+{
+   Returns the c name of the selected field of the given mode
+}
+BEGIN
+   c fieldname( struct fields( mode )[ field ] )
+END;
+
+PROC  builtin mode   = ( INT mode ) CFRAGMENT:
+BEGIN
+   INT   m = DEREF mode;
+   CASE  m  IN
+   { 1 vacmode   }   ( "cannot map vacmode"  ASSERT FALSE; SKIP ),
+   { 2 skipmode  }   ( "cannot map skipmode" ASSERT FALSE; SKIP ),
+   { 3 nilmode   }   "NIL",
+   { 4 gotomode  }   "jmp_buf",
+   { 5 voidmode  }   "VOID",
+   { 6 faultmode }   ( "cannot map faultmode" ASSERT FALSE; SKIP ),
+   { 7 BOOL      }   "BOOL",
+   { 8 CHAR      }   "CHAR",
+   { 9 FORMAT    }   ( "FORMAT not supported" ASSERT FALSE; SKIP),
+   { 10 LBITS    }   ( long long option | "SBITS"  | "LBITS"),
+      { 11 BITS     }   "BITS",
+   { 12 SBITS    }   ( long long option | "LBITS"  | "SBITS"),
+   { 13 SSBITS   }   ( long long option | "LLBITS" | "SSBITS"),
+   { 14 LONG INT }   ( long long option | "SINT"   | "LINT"),
+   { 15 INT      }   "INT",
+   { 16 SINT     }   ( long long option | "LINT"  | "SINT"),
+   { 17 SSINT    }   ( long long option | "LLINT" | "SSINT"),
+   { 18 LREAL    }   ( long long option | "SREAL" | "LREAL"),
+   { 19 REAL     }   "REAL",
+   { 20 SREAL    }   ( long long option | "LREAL" | "SREAL"),
+   { 21 SSREAL   }   ( long long option | "LLREAL" | "SSREAL"),
+   { 22 LCOMPL   }   ( long long option | "SCOMPL" | "LCOMPL"),
+   { 23 COMPL    }   "COMPL",
+   { 24 SCOMPL   }   ( long long option | "LCOMPL" | "SCOMPL"),
+   { 25 SSCOMPL  }   ( long long option | "LLCOMPL" | "SSCOMPL"),
+   { 26 VECTOR [] CHAR }   "VC",
+   { 27 [] CHAR    } "RC",
+   { 28 collatmode } ( "cannot map collatmode" ASSERT FALSE; SKIP ),
+   { 29 XTYPE }      ( "XTYPE not supported"   ASSERT FALSE; SKIP ),
+   { 30 YTYPE }      ( "YTYPE not supported"   ASSERT FALSE; SKIP )
+   OUT   ("mode " + whole(mode,0) + " is not built in") ASSERT FALSE;SKIP
+   ESAC
+END;
+
+PROC give c type = ( INT mode, BOOL tagged ) CFRAGMENT:
+{
+      returns the C type required to represent a value of mode 'mode'
+}
+BEGIN
+   IF
+      INT basic mode = DEREF mode;
+      basic mode < first non fixed mode
+   THEN
+      "A68_" + builtinmode(basicmode)
+   ELSE
+      ( tagged | "struct A68t" | "A68_" ) + whole(basicmode,0)
+   FI + " " +
+   ( (mode % refmark) * "*")
+END;
+
+PROC  give c variable type = (INT mode, BOOL identity) INT:
+IF
+   identity
+THEN
+   ( is firm array(mode) | derefmodeok(mode) | mode )
+ELSE
+   derefmodeok( ( is firm array(mode) | derefmodeok(mode) | mode ))
+FI;
+
+PROC  c type = ( INT mode ) CFRAGMENT:
+   give c type(givecvariabletype(mode,TRUE),FALSE);
+
+PROC  c var type = (INT mode)  CFRAGMENT:
+   give c type(mode,FALSE);
+
+PROC  cast  = ( INT mode ) CFRAGMENT:
+   bracket( ctype( mode ) );
+
+PROC  c sizeof = ( INT mode ) CFRAGMENT:  "A_SZ_"+ builtin mode( mode );
+
+PROC c tag = ( INT mode ) CFRAGMENT:
+   "A68t" + whole(mode,0);
+
+PROC c tagged type = ( INT mode ) CFRAGMENT:
+   give c type(givecvariabletype(mode,TRUE),TRUE);
+
+INT padno := 0;  { used to generate unique padding field names}
+
+PROC  align next struct field = ( INT field mode, INT stream ) VOID:
+CO
+   If 'field mode' is a primitive mode, write A_PAD_mode(uname) to
+   output stream (eg A_PAD_SSINT(ABCDEFG) ).
+   If 'field mode' is an i-struct, write A_PAD_ISTRUCT(type,uname).
+   The macros are defined in a68_types.h and may be machine-specific.
+CO
+IF field mode < vector row of char mode
+THEN
+   write c stream((
+      "A_PAD_", builtin mode(field mode), "(PAD_",
+      whole(padno+:=1,0), ")", cnewline
+   ), stream )
+ELIF field mode < refmark ANDTH is istruct(field mode)
+THEN
+   write c stream((
+      "A_PAD_ISTRUCT(", give c type(field mode,FALSE), ",PAD_",
+      whole(padno+:=1,0), ")", cnewline
+   ), stream )
+FI;
+
+PROC  write c typedef = ( INT underefed mode, INT stream, BOOL pre_declare ) VOID:
+CO
+   Writes the CFRAGMENT which constitutes the C typedef definition
+   of the supplied mode number to the specified stream.
+
+   If the current mode depends on others, then the typedef for these
+   are output first. 'typedef output' flags prevents the typedef
+   being output more than once.
+
+   This proc is called for every non-fixed mode at the beginning
+   of translation, the CFRAGMENTS being output to stream 0.
+
+   'pre-declare' indicates whether an incomplete C type specifier is acceptable (e.g.
+   for procedure formal parameters) for potentially recursive types.  Every mode
+   must be declared with pre_declare = FALSE at some stage. 
+
+   Thereafter, non-fixed modes are always referred to as A68_<mode> where
+   <mode> is the mode number.
+
+   Output is of the form:
+      struct A68t<mode>
+      { <mode dependent> };
+      typedef struct A68t<mode> A68_mode;
+
+   Except for flex modes for which a deflex mode can be found:
+      #define A68_flexmode A68_deflexmode
+      #define A68tflexmode A68tdeflexmode
+CO
+IF INT mode = DEREF underefed mode;
+   {
+     Cannot do a straight forward mode<refmark since
+     union(ref[]int) will go wrong since a68-mode has
+     ref but c-mode hasn't & C compiler will moan about
+     unknown size
+   }
+   give c variable type (underefed mode, TRUE) < ref mark
+ANDTH mode >= first non fixed mode
+ANDTH NOT( flags(mode) >= typedef output )
+THEN
+   debug message(5, "write c typedef(" + whole(mode,0) + ")");
+
+   REF MODEINFO entry = modes[mode];
+
+   CFRAGMENT   typedef = "typedef ",
+         comment = ( verbose option
+              | "/* " + modename(mode) + " */"
+              | ""
+              ),
+         typedefname = cvartype(mode);
+
+   PROC  emit tag typedef = ( INT mode ) VOID:
+      write c stream
+      ( ( typedef, ctaggedtype( mode ),
+          " ", cvartype( mode ), ";    ", comment,
+          cnewline
+        ), stream
+      );
+
+   PROC  emit deflex typedef = ( INT mode, deflex mode ) VOID:
+   BEGIN
+      write c typedef( deflex mode, stream, FALSE );
+
+      IF NOT (flags(mode) >= typedef output)
+      THEN
+         write c stream
+         ( ( "#define ", cvartype (mode), " ", cvartype (deflex mode),
+             c newline, "#define ", ctag  (mode), " ", ctag  (deflex mode),
+             "            ", comment, cnewline
+           ), stream
+         )
+      FI
+   END;
+
+   PROC emit incomplete type = VOID:
+   IF NOT (flags OF entry >= incomplete type output)
+   THEN
+     write c stream(( ctaggedtype(mode), ";", cnewline), stream);
+     flags OF entry := flags OF entry OR incomplete type output
+   FI;
+
+   PROC  emit proc typedef = VOID:
+   IF
+     pre_declare
+   THEN
+     emit incomplete type
+   ELSE
+     flags OF entry := flags OF entry OR typedef output;
+
+     INT deproc mode = deproc(mode);
+     BOOL needs struct result param = no struct result option ANDTH is c struct(deproc mode);
+
+     REF VECTOR [] INT params = ( is procp(mode) | parameters(mode) | HEAP VECTOR [0] INT );
+     
+     { Pre-declare parameter and return types }
+
+     write c typedef( DEREF deproc mode, stream, TRUE);
+
+     FORALL p IN params
+     DO
+       write c typedef( DEREF p, stream, TRUE )
+     OD;
+
+     { Declare the procedure itself }
+     
+     write c stream((
+       cnewline,
+       "A_PROCEDURE(", 
+       ctaggedtype( ( needs struct result param | void mode | deproc mode )), ",",
+       ctag(mode), ",("
+       ),stream );
+
+     IF UPB params = 0 ANDTH NOT needs struct result param
+     THEN
+       write c stream( "void", stream )
+     ELSE
+       BOOL comma := FALSE;
+       FORALL p IN params
+       DO
+         write c stream( ( (comma|","|""), ctaggedtype(p)), stream);
+         comma := TRUE
+       OD;
+
+       IF needs struct result param
+       THEN
+         write c stream( ((comma|","|""), ctaggedtype(deproc mode), "*"), stream)
+       FI
+     FI;
+
+     write c stream( "),(", stream );
+
+     BOOL comma := FALSE;
+     FORALL p IN params
+     DO
+       write c stream( ( (comma|","|""), ctaggedtype(p)), stream);
+       comma := TRUE
+     OD;
+
+     IF needs struct result param
+     THEN
+       write c stream( ((comma|","|""), ctaggedtype(deproc mode), "*"), stream);
+       comma := TRUE
+     FI;
+
+     write c stream(( (comma|","|""), "void *));", cnewline),stream );
+
+     emit tag typedef( mode )
+
+   FI;
+
+    PROC  emit vector typedef = VOID:
+       IF pre_declare
+       THEN
+         emit incomplete type
+       ELIF  INT deflex mode = find deflex mode( mode );
+            deflex mode = mode
+           { ie no flexes anywhere in mode or couldnt find deflex }
+       THEN
+          { no corresponding deflex }
+          INT elem mode   = element mode (mode);
+
+          write c stream
+          ( ( "A_VECTOR(", ctaggedtype(elem mode),
+              ",", ctag(mode),
+              ");", cnewline
+            ), stream
+          );
+          emit tag typedef( mode );
+
+          flags OF entry := flags OF entry OR typedef output;
+          write c typedef( elem mode, stream, FALSE )
+       ELSE
+          emit deflex typedef (mode, deflex mode)
+       FI;
+
+    PROC  emit array typedef = VOID:
+       IF pre_declare
+       THEN
+         emit incomplete type
+       ELIF  INT deflex mode = find deflex mode ( mode );
+           deflex mode = mode
+          { ie no flexes anywhere in mode or couldnt find deflex }
+       THEN
+          INT elem mode   = element mode (mode);
+
+          write c stream
+          ( ( "A_ROW(" + ctaggedtype(elem mode),
+              ",", ctag(mode),
+              ",", whole (dimensions (mode), 0),
+              ");", cnewline
+            ), stream
+          );
+          emit tag typedef( mode );
+
+          flags OF entry := flags OF entry OR typedef output;
+          write c typedef( elem mode, stream, FALSE )
+       ELSE
+          emit deflex typedef (mode, deflex mode)
+       FI;
+
+   CASE  modetype( mode )  IN
+   {  1 primitive }
+   BEGIN
+      write c stream
+      ( ( typedef, ctype(auxmode(mode)), " ", typedefname,
+          ";      " + comment, cnewline
+        ),stream
+      )
+   END,
+   {  2 proc }
+      emit proc typedef,
+   {  3 procp }
+      emit proc typedef,
+   {  4 union }
+   IF pre_declare
+   THEN
+     emit incomplete type
+   ELIF INT deflex mode = find deflex mode (mode);
+      deflex mode = mode
+   THEN
+      REF VECTOR [] INT umodes = modelist extra(mode);
+
+            FORALL   umode IN umodes
+         DO      write c typedef( umode, stream, FALSE )
+      OD;
+
+      IF NOT (flags(mode) >= typedef output)
+      THEN
+         write c stream
+         ( ( "struct ", ctag(mode),
+             " { A68_INT mode; union {",
+             cnewline
+           ),stream
+         );
+         FOR i TO UPB umodes
+         DO
+            IF INT thismode = umodes[i];
+               thismode /= voidmode
+            THEN
+               write c stream
+                  ( (ctaggedtype(thismode)," mode",
+                  whole(i,0), ";",
+                   cnewline
+                 ),stream
+               )
+            FI
+         OD;
+         write c stream(("} data __attribute__ ((__aligned__(8))); };",cnewline),stream);
+         emit tag typedef( mode )
+      FI
+   ELSE  emit deflex typedef (mode, deflex mode)
+   FI,
+   {  5 struct }
+   IF pre_declare
+   THEN
+     emit incomplete type
+   ELIF INT deflex mode = find deflex mode (mode);
+      deflex mode = mode
+   THEN
+      REF VECTOR [] STRUCTFIELD fields = structfields(mode);
+
+      FORALL field IN fields
+      DO
+         write c typedef( mode OF field, stream, FALSE )
+      OD;
+
+      IF NOT (flags(mode) >= typedef output)
+      THEN
+         write c stream
+         ( ( "struct "+ ctag(mode) +"{", cnewline ), stream );
+         FORALL field IN fields
+         DO
+            write c stream
+            ( (ctaggedtype(mode OF field)," ",
+                cfieldname(field), ";", cnewline
+              ), stream
+            );
+            align next struct field(mode OF field, stream)
+         OD;
+         write c stream(( "};", cnewline ),stream);
+         emit tag typedef( mode )
+      FI
+   ELSE  emit deflex typedef (mode, deflex mode)
+   FI,
+   {  6 istruct }
+   IF pre_declare
+   THEN
+     emit incomplete type
+   ELSE
+      INT elem mode = element mode (mode);
+      write c typedef( elem mode, stream, FALSE );
+
+      IF NOT (flags(mode) >= typedef output)
+      THEN
+         write c stream
+         ( ( "A_ISTRUCT(" +
+             ctaggedtype(elem mode), ",",
+                ( int extra (mode) = 0
+                 | "1"            {fixes struct 0 char}
+                 | whole(intextra(mode),0)
+                ), ",",
+             ctag(mode), ");",
+             cnewline
+           ),stream
+         );
+         emit tag typedef( mode )
+      FI
+   FI,
+   {  7 row }
+        emit array typedef,
+   {  8 vector }
+        emit vector typedef,
+   {  9 flex row }
+        emit array typedef,
+   { 10 flex vector }
+        emit vector typedef,
+   { 11 straight }
+   IF pre_declare
+   THEN
+     emit incomplete type
+   ELSE
+      INT elem mode = element mode( mode );
+
+      write c stream
+         ( ( "A_STRAIGHT(" +
+             {returnmode (*index)()}
+                IF no struct result option THEN "A68_VOID"
+                                           ELSE  ctagged type(elem mode)
+                FI,  ",",
+             {struct straightmode{...}} ctag (mode), ");",
+             cnewline
+           ), stream
+         );
+      emit tag typedef( mode );
+      flags OF entry := flags OF entry OR typedef output;
+
+      write c typedef( elem mode, stream, FALSE )
+   FI
+   OUT   SKIP
+   ESAC;
+
+   IF NOT pre_declare
+   THEN
+     flags OF entry := flags OF entry OR typedef output
+   FI
+FI;
+
+PROC initialise mode table = (REF [] MDE mdes, INT nomodes) VOID:
+{
+Initialises the translator mode table 'modes' of size 'nomodes'.
+Proc 'initialise modes' completes the initialisation of primitive,
+vector, flex vector, and straight modes; for proc, procp, union, struct, istruct,
+row, and flex row modes the 'length' field is left 'unset', indicating that
+initialisation of these modes is to be completed by proc 'finalise mode'.
+This two pass initialisation is required to allow for mutually recursive modes.
+}
+BEGIN
+   debug message(1, "initialise mode table(REF ["+whole(UPB mdes,0)+"] MDE)");
+
+   INT   unset = -1;
+
+     PROC   initialise modes = VOID:
+     BEGIN
+
+   { skeleton mode table entries: }
+
+   MODEINFO primitive entry := (primitive, unset, no mode, TRUE, EMPTY, 2r0),
+            proc entry      := (proc, unset, no mode, FALSE, EMPTY, 2r0),
+            procp entry     := (procp, unset, no mode, FALSE, unset, 2r0),
+            union entry     := (union, unset, no mode, FALSE, unset, 2r0),
+            struct entry    := (struct, unset, no mode, FALSE, unset, 2r0 ),
+            istruct entry   := (istruct, unset, no mode, FALSE, unset, 2r0),
+            vector entry    := (unset, unset, no mode, TRUE, EMPTY, dynamic bit ),
+            row entry       := (unset, unset, no mode, FALSE, unset, dynamic bit),
+            straight entry  := (straight, unset, no mode, TRUE, EMPTY, dynamic bit);
+   MODEINFO dummy entry      = (unset, unset, no mode, TRUE, unset, 2r0);
+
+   PROC  reduced modelist = ( REF MODELIST modelist )REF VECTOR [] INT:
+   {
+   Reduces the specified 'modelist' to a VECTOR [] INT and returns its address.
+   }
+   BEGIN
+        INT i := 0;
+        REF MODELIST list := modelist;
+
+        WHILE list ISNT REF MODELIST (NIL)
+        DO
+      list := rest OF list;
+      i +:= 1
+        OD;
+
+        HEAP VECTOR [i] INT extra;
+        list := modelist;
+
+        FORALL mode IN extra
+        DO
+      mode := mode OF list;
+      list := rest OF list
+        OD;
+
+        extra
+
+   END;
+
+   PROC  reduced selist = ( REF SELIST selist )REF VECTOR []STRUCTFIELD:
+   {
+   Reduces the specified 'selist' to a VECTOR [] STRUCTFIELD and returns its address.
+   }
+   BEGIN
+        INT i := 0;
+        REF SELIST list := selist;
+
+        WHILE list ISNT REF SELIST (NIL)
+        DO
+      list := rest OF list;
+      i +:= 1
+        OD;
+
+        HEAP VECTOR [i] STRUCTFIELD fields;
+        list := selist;
+
+        FORALL field IN fields
+        DO
+      mode OF field := mode OF list;
+      name OF field := name OF list;
+      list := rest OF list
+        OD;
+
+        fields
+
+   END;
+
+   { initialise modes: }
+
+   INT i := 1;  { the current mode number }
+
+   FORALL   mode IN modes [i:], mde IN mdes [i:]
+   DO
+      mode :=
+
+      CASE  mde  IN
+      (PRIMITIVE primitive):
+      ( auxmode OF primitive entry := primitive;
+        primitive entry
+      ),
+
+      ( REF PRC proc ):
+      ( auxmode OF proc entry := deproc OF proc;
+        proc entry
+      ),
+
+      ( REF PROCP procp ):
+      ( auxmode OF procp entry := deproc OF procp;
+        extra OF procp entry := reduced modelist (pars OF procp);
+        procp entry
+      ),
+
+      ( REF UNN union ):
+      ( extra OF union entry := reduced modelist (modelist OF union);
+        union entry
+      ),
+
+      ( REF STRCT struct ):
+      ( extra OF struct entry := reduced selist (sels OF struct);
+        struct entry
+      ),
+
+      ( REF ISTRUCT istruct ):
+      ( auxmode OF istruct entry := imode  OF istruct;
+        extra   OF istruct entry := length OF istruct;
+        istruct entry
+      ),
+
+      ( REF ARRAY array ):
+      ( type OF row entry :=
+        ( deflex OF array >= 0
+        | add to list( i, mode OF array, nods OF array, rowlist);
+          row
+        | flex row
+        );
+        auxmode OF row entry := mode OF array;
+        extra OF row entry := nods OF array;
+        row entry
+      ),
+
+      (REF VCTOR vctor):
+      ( type OF vector entry :=
+        ( deflex OF vctor >= 0
+        | add to list( i, vecmode OF vctor, 1, vectorlist );
+          vector
+        | flex vector
+        );
+        auxmode OF vector entry := vecmode OF vctor;
+        vector entry
+      ),
+
+      (REF STEN straight):
+      (auxmode OF straight entry := mode OF straight;
+       straight entry
+      ),
+
+      (SAMEAS): dummy entry
+
+        OUT terminal error (630 {invalid mode in REF [] MDES});
+         dummy entry
+        ESAC;
+        i +:= 1
+   OD;
+
+   modes [xtype mode] := modes [ytype mode] := modes [vector row of char mode];
+   modes [no mode] := dummy entry
+
+     END;
+
+     PROC   finalise mode = (INT mode) VOID:
+     {
+     Completes the initialisation of those mode table entries that have 'unset'
+     'length' fields.  This involves setting the 'length', 'bitlength', and 'flags'
+     fields of union, struct, and istruct entries, the 'offset' field for structs,
+     the 'length' and 'auxmode' fields for rows, and the 'flags' field for proc and procp entries.
+     On exit 'current length' contains the length of the specified 'mode'.
+     }
+     BEGIN
+
+        REF MODEINFO entry = modes [DEREF mode];
+
+   IF NOT finalised OF entry
+   THEN
+        finalised OF entry := TRUE;
+
+        CASE type OF entry - (type OF entry = flex row | 3 | 1)
+        IN
+
+      {PROC: determine 'has descriptors'}
+      ( IF   auxmode OF entry < refmark
+       THEN INT type = type OF modes [auxmode OF entry];
+         IF type = row      OR type = vector
+         OR type = flex row OR type = flex vector
+         THEN  flags OF entry := flags OF entry OR has descriptors
+         FI
+       FI
+      ),
+
+      {PROCP: determine 'has descriptors'}
+      (extra OF entry | (REF VECTOR [] INT params):
+       (IF  auxmode OF entry < refmark
+        THEN   INT type = type OF modes [auxmode OF entry];
+         IF type = row      OR type = vector
+         OR type = flex row OR type = flex vector
+         THEN  flags OF entry := flags OF entry OR has descriptors
+         FI
+        FI;
+        FORALL param IN params
+        WHILE NOT flags OF entry >= has descriptors
+        DO
+             IF   dynamic descriptor (param)
+             THEN flags OF entry := flags OF entry OR has descriptors
+             FI
+        OD
+      )),
+
+      (extra OF entry | (REF VECTOR [] INT constituents):
+       {UNION: length = maximum constituent length + tag length}
+       (FORALL constituent IN constituents
+        DO
+             finalise mode (constituent);
+             flags OF entry := flags OF entry OR flags (constituent)
+        OD
+      )),
+
+      (extra OF entry | (REF VECTOR [] STRUCTFIELD fields):
+       {STRUCT: length = sum of field lengths + slack}
+       (FORALL field IN fields
+        DO
+             INT field mode = mode OF field;
+             finalise mode (field mode);
+             flags OF entry := flags OF entry OR flags (field mode)
+        OD
+      )),
+
+      (extra OF entry | (INT istruct length):
+       {ISTRUCT: (N.B. STRUCT n BOOL and STRUCT n CHAR do not have 'needs init bit')}
+       (INT imode = auxmode OF entry;
+        finalise mode (imode);
+        flags OF entry := flags OF entry OR flags (imode)
+      )),
+
+      (extra OF entry | (INT nods):
+       {ROW, FLEX ROW:}
+       ({set 'length' before calling 'finalise mode' to avoid coming here again!}
+        IF  nods > 1
+        THEN   {set 'auxmode OF entry' to mode of elements:}
+         finalise mode (auxmode OF entry);
+         auxmode OF entry := auxmode OF modes [auxmode OF entry]
+        FI
+      ))
+         OUT   terminal error (631 {'unset' length invalid for mode type})
+         ESAC
+    FI
+     END;
+
+   { initialise mode table (mdes, nomodes): }
+
+   modes := HEAP [no mode : nomodes] MODEINFO;
+   initialise modes;
+
+   FOR i FROM short compl mode TO nomodes
+   DO
+      finalise mode (i)
+   OD;
+
+   {
+   Define the entries in the deflexed mode field in the mode table.
+   The fixed modes have deflexedmode=mode, the non fixed modes are
+   set to no mode to signal that they are not yet defined.
+   }
+   FOR i FROM no mode TO first non fixed mode -1
+   DO       deflexed mode OF modes [i] := i;
+      flags OF modes [i] := flags OF modes [i] OR deflex output
+   OD;
+   FOR i    FROM first non fixed mode TO no modes
+   DO deflexed mode OF modes [i] := no mode  OD;
+
+   IF debugging
+   THEN
+     FOR i  FROM first non fixed mode TO no modes
+     DO
+       debug message(1, whole(i,0) + ": " + modename(i))
+     OD;
+     debug message(5,"------------------")
+   FI;
+
+   { output typedefs for non fixed modes to stream level 0 }
+   FOR i FROM first non fixed mode TO nomodes
+   DO
+      write c typedef( i, modes stream, FALSE );
+      IF debugging
+      THEN
+        INT deflex = deflexed mode (i, TRUE);
+         debug message(5,
+           whole(i,0) + ": " + modename(i) + " ---deflex--> " +
+           whole(deflex,0) + ": " + modename(deflex)
+         )
+      FI
+   OD
+END;
+
+PROC  declare c temporary = ( INT mode, CFRAGMENT comment text ) TEMPORARY:
+{
+   Declares a C temporary corresponding to algol 68 'mode'.
+   If 'verbose option' is set, 'comment text' is output in a
+   C comment after the declaration.
+   The temporary is returned.
+}
+BEGIN
+   INT   locdecstream = LOCDECSTREAM current level;
+   INT   cvt = give c variable type (mode, TRUE);
+   TEMPORARY new temp;
+   name OF new temp := new unique name;
+   mode OF new temp := cvt;
+   write c stream
+   ( cvartype( cvt ) + " " + name OF new temp + ";",
+     locdecstream
+   );
+   IF verbose option ANDTH UPB comment text > 0
+   THEN    write c stream
+      ( "  /* " + comment text + " */",
+        locdecstream
+      )
+   FI;
+   write c stream( cnewline, locdecstream );
+   new temp
+END;
+
+PROC( INT, CFRAGMENT )TEMPORARY new = declare c temporary;
+
+SKIP
+
+KEEP
+    PROCINFO, STRUCTFIELD, constituents, ctype,
+    cvartype,
+    c fieldname, declare c temporary, deproc, deref mode,
+    deref mode ok, dimensions, dynamic,
+    element mode, has refs, initialise mode table,
+    is array, is compl, is firm array, is flex array, is row, is vector,
+    is struct, is union, is istruct, is proc, is procp, istruct length, mode name,
+    mode type, new, parameters, procinfo, cast, c sizeof,
+    is c struct,
+    struct fields, find deflex mode, give c variable type, c tagged type,
+    align next struct field,
+    DEREF( INT ), select, ISSTRAIGHT (INT),
+    ISBOOL (INT), ISCHAR (INT), ISINT (INT), ISLBITS (INT), ISLINT (INT),
+    ISLREAL (INT), ISLCOMPL (INT), ISROW (INT), ISVEC (INT), ISFIRMARRAY (INT),
+    ISFLEXROW (INT), ISFLEXVEC (INT), ISFLEXARRAY (INT), HASONEREF (INT)
+FINISH
+
+{
+Local Variables:
+auto-fill-hook:nil
+End:
+}

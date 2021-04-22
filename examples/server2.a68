@@ -1,0 +1,21 @@
+PROGRAM server2 CONTEXT VOID
+USE standard
+BEGIN
+
+FILE server socket;
+
+IF INT r=establish(server socket,"127.0.0.1",server socket channel,af inet,9734,0);
+   r/=0
+THEN put(stand error,("server2: ",error text(r),newline));  exit(r)
+FI;
+
+DO
+	CHAR ch;  print(("server waiting",newline));
+	REF FILE client socket = accept(server socket);
+	get(client socket,ch);
+	ch:=REPR(ABS ch+1);
+	put(client socket,ch);
+	close(client socket)
+OD
+END
+FINISH

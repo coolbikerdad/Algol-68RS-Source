@@ -1,0 +1,67 @@
+DECS  incenviron  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incenviron.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE	NONLOCLIST = STRUCT( INT decno, REF NONLOCLIST rest ),
+	FULLENVIRON = STRUCT 
+		     	( INT level,		    { routine nesting level }
+			      block, 		    { block nesting }
+			      rdenno,	    	    { rdenno of current routine }
+			  REF NONLOCLIST nonlocals  { list of non-locals used }
+			),                                             
+	ENVIRONSTACK = STRUCT( FULLENVIRON env, REF ENVIRONSTACK rest),
+	ENVIRON = STRUCT( INT level, block );	{ subset of fullenviron for identifier declarations }
+
+REF NONLOCLIST	 empty non loc list  = NIL;
+REF ENVIRONSTACK empty environ stack = NIL;
+ENVIRON		 null environ   = ( 0, 0 );
+FULLENVIRON	 global environ = ( 0, 0, 0, NIL );
+SKIP
+
+KEEP
+	ENVIRON, null environ, empty non loc list, empty environ stack 
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

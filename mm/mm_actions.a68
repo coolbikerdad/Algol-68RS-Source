@@ -1,0 +1,1087 @@
+DECS mm_actions CONTEXT VOID USE putstrings, osinterface, basics, messageproc,
+                                 commandsyntax, commandreader, command,
+                                 kernelreader, ioprocs, commandcaller,
+                                 mm_basics, mm_oscommands, mm_utilities,
+                                 mm_version :
+
+configinfo A68CONFIG "$Id: mm_actions.a68,v 1.3 2002-06-06 13:55:55 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+31:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 32.1 
+02:09:94  33.001  DJS    
+08:09:94  33.002  DJS   MMCR001   Add a mechanism for doing translate and C
+                                  compile separately.
+09:12:94  33.003  DJS   MMCR005    Correct bug in 'removemodule_action',
+                                  Replace scan of 'disconnect_action' by calls
+                                  to 'clear_usedby_lists' and
+                                  'set_usedby_lists'. 
+29:03:95  34.004  ELLA  Modcprght Change copyright header
+15:01:00  34.005  SL    Phoenix Engineering: msg changes
+COMMENT
+
+PROC obey_go_action = (VECTOR[ ]CHAR node, BOOL notify, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR prompt = oneline(( "Is it OK to go ahead on",
+                                     IF UPB node > 0 THEN " node "
+                                                     ELSE "line"
+                                     FI, node ));
+
+    IF NOT notify OREL
+       (BOOL ok = list_compiles( screen, "Compile :-", msg );
+
+         list_links( screen, "Link :-" );
+         ok ANDTH
+         query( prompt, default_yes, msg )) THEN
+        execute( node, msg )
+    FI
+END;
+
+PROC set_bool_variable = (VALUES param_values,
+                          REF BOOL var,
+                          MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR p1 = get_string( param_values[ 1 ], msg );
+
+    set_lowercase( p1 );
+    IF try_name( p1, "on" ) THEN
+        var := TRUE
+    ELIF try_name( p1, "off" ) THEN
+        var := FALSE
+    ELSE
+        put( screen, ( "Bad parameter, expect on or off", newline ))
+    FI
+END;
+
+PROC setdiag_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    set_bool_variable( param_values, diagnose, msg )
+END;
+
+PROC setquery_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    set_bool_variable( param_values, query_active, msg )
+END;
+
+PROC setdebug_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    test_attribute( debug_attribute, param_values, FALSE, msg )
+END;
+
+PROC setexedir_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    test_attribute( exename_attribute, param_values, TRUE, msg )
+END;
+
+PROC setheapsize_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    test_attribute( heap_attribute, param_values, FALSE, msg )
+END;
+
+PROC setoptimise_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    test_attribute( optimise_attribute, param_values, TRUE, msg )
+END;
+
+PROC setstaredit_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    test_attribute( star_attribute, param_values, TRUE, msg )
+END;
+
+PROC version_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF MODULELIST ml;
+BOOL found := FALSE;
+REF VECTOR[ ]CHAR name;
+
+    FORALL p IN param_values
+    DO
+        name := get_name( p, msg );
+        set_lowercase( name );
+        ml := findmodule( modules, name );
+        IF ml IS nilmodulelist THEN
+            put( screen, ( mnot_found( name ), newline ))
+      ELIF NOT decs OF module OF ml THEN
+            put( screen, ( "Module ", name,
+                           " is a PROGRAM module so cannot be a version.",
+                           newline ))
+      ELSE
+            found := TRUE;
+            set_attribute( module OF ml, version_attribute, FALSE )
+        FI
+    OD;
+    IF found ANDTH
+       FLAGOFF auto_version ANDTH
+       query( "Do you wish to set automatic version updating",
+              default_yes, msg ) THEN
+        define_symbol( "auto_version", on_string, mmd_tag OR changed_tag )
+    FI
+END;
+
+VECTOR[ ]CHAR env_heading = "Environment variables :- ";
+
+PROC showenviron_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+INT db_state = database_modified;
+VECTOR[ UPB env_heading ]CHAR heading := env_heading;
+
+    put( screen, ( newline, "                 Mm version ", mm_number,
+                            " on ", operating_system, newline,
+                            "   Modified on ", mm_date,
+                            " ", mm_string, newline ));
+    put( screen, ( newline, "Database name ", database_name, mmd_type,
+                   CASE db_state IN " environment changed.",
+                                    " modules changed.",
+                                    " all changed."
+                                OUT " not modified."
+                   ESAC, newline ));
+    IF UPB detach_name > 0 THEN
+        put( screen, ( "Detached database file ", detach_name, newline ))
+    FI;
+    show_symbol_class( "Initfile", "initialise files" );
+
+    put( screen, newline );
+    show_symbol_class( "message", "messages" );
+
+    put( screen, newline );
+    FORALL var IN standard_symbols
+    DO
+        put( screen, ( heading, name OF var, " is ", text OF var, newline ));
+        clear( heading )
+    OD;
+
+    put( screen, newline );
+    show_symbol_class( "dir", "directories" );
+    show_symbol_class( "lib", "libraries" );
+    show_symbol_class( "incl", "includes" );
+    IF diagnose THEN
+        put( screen, ( newline, "Diagnose is active", newline ))
+    FI;
+    SKIP
+END;
+
+PROC showcompile_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    list_compiles( screen, "Pending compiles :-", msg )
+END;
+
+PROC showlink_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    list_links( screen, "Pending links :-" )
+END;
+
+PROC showpending_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    list_compiles( screen, "Pending compiles :-", msg );
+    list_links( screen, "Pending links :-" )
+END;
+
+PROC showsymbol_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+BOOL found := FALSE;
+
+    PROC show_action = ( REF SYMBOL sym )BOOL:
+    BEGIN
+        found := TRUE;
+        IF diagnose OREL ( tags OF sym AND dest_tag ) /= 2r0 THEN
+            put( screen, ( name OF sym, " = """, text OF sym, """", newline ))
+        FI;
+        TRUE
+    END;
+
+    IF are_all_required( "", param_values, msg ) THEN
+        scansymbols( "", show_action )
+  ELSE
+    REF VECTOR[ ]CHAR name;
+
+        FORALL p IN param_values
+        DO
+            name := get_string( p, msg );
+            scansymbols( name, show_action );
+            IF NOT found THEN
+                put( screen, ( "Symbol ", name, " not found.", newline ))
+            FI
+        OD
+    FI
+END;
+
+PROC showversion_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    list_attributes( screen, version_attribute )
+END;
+
+PROC showmodule_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+BOOL all = are_all_required( "", param_values, msg );
+
+    PROC show_module = (REF MODULE m, STAR star_char )BOOL:
+    BEGIN
+    CHAR sep;
+    INT global_extra := 0;
+    BOOL have_indirect := FALSE;
+
+        PROC print_module_name = (REF MODULE mu, STAR star )BOOL:
+        BEGIN
+        INT extra = IF mode OF star = " " THEN 2 ELSE 6 FI + global_extra;
+
+            marker OF mu := number OF m;
+            put( screen, sep );
+            IF UPB name OF mu + extra > charsleft( screen  ) THEN
+                put( screen, ( newline, "           " ))
+            FI;
+            sep := ",";
+            put( screen, ( " ", name OF mu ));
+            IF mode OF star /= " " THEN
+                put( screen, ( "{", mode OF star, value OF star, "}" ))
+            FI;
+            TRUE
+        END;
+
+        PROC print_indirect_use = (REF MODULE mu, STAR star )BOOL:
+        BEGIN
+            IF marker OF mu /= number OF m THEN
+                IF NOT have_indirect THEN put( screen,  "          " ) FI;
+                have_indirect := TRUE;
+                print_module_name( mu, star );
+                scanmodules( uses OF mu, print_indirect_use )
+            FI;
+            TRUE
+        END;
+
+        put( screen, ( intwidth( number OF m, 3 ), " " ));
+        put( screen, ( IF decs OF m THEN "Decs module  "
+                     ELIF all       THEN "Program      "
+                                    ELSE "Program  "
+                       FI ));
+        put_module_name( screen, m, all, msg );
+        put( screen, newline );
+
+        IF NOT all THEN
+        BOOL is_marked := FALSE;
+        REF VECTOR[ ]CHAR att_val;
+
+            sep := " ";
+            IF mode OF star_char /= " " THEN
+                put( screen, ( "    If star ", value OF star_char, " is ",
+                               IF mode OF star_char = "*" THEN "present"
+                                                          ELSE "absent"
+                               FI, newline ))
+            FI;
+
+            FOR an TO max_attribute
+            DO
+                IF attribute_marked( m, an ) THEN
+                    att_val := attribute_value( m, an );
+                    IF UPB att_val + 2 > charsleft( screen ) THEN
+                        put( screen, ( ",", newline ));
+                        is_marked := FALSE
+                    FI;
+                    IF NOT is_marked THEN
+                        put( screen, "  " );
+                        is_marked := TRUE
+                    FI;
+                    put( screen, ( sep, " ", attribute_name( an ), " = ",
+                                   att_val ));
+                    sep := ","
+                FI
+            OD;
+            IF is_marked THEN put( screen, ( ".", newline )) FI;
+
+            put( screen, ( "    Level ", intwidth( level OF m, 3 )));
+            IF recursive OF m THEN put( screen, " RECURSIVE" ) FI;
+            put( screen, newline );
+
+            IF uses OF m ISNT nilmodulelist THEN
+                put( screen,  "    Uses  " );
+                sep := " ";
+                global_extra := 0;
+                scanmodules( uses OF m, print_module_name );
+                put( screen, newline );
+                sep := "(";
+                global_extra := 2;
+                scanmodules( uses OF m, print_indirect_use );
+                IF have_indirect THEN put( screen, ( " )", newline )) FI
+          ELIF UPB filename OF m > 0 THEN
+                put( screen, ( "    Does not use anything", newline))
+            FI;
+
+            IF usedby OF m ISNT nilmodulelist THEN
+                put( screen,  "    Used B" );
+                sep := "y";
+                global_extra := 0;
+                scanmodules( usedby OF m, print_module_name );
+                put( screen, newline )
+          ELIF decs OF m THEN
+                put( screen, ( "    Not used", newline))
+            FI;
+            put( screen, newline )
+        FI;
+        TRUE
+    END;
+
+    IF modules IS nilmodulelist THEN
+        put( screen, ( "No modules to show.", newline ))
+  ELIF all THEN
+        mark_modules( modules, 0 );
+        scanmodules( modules, show_module )
+  ELSE
+    REF MODULELIST ml;
+    REF VECTOR[ ]CHAR mn;
+
+        mark_modules( modules, 0 );
+        FORALL p IN param_values
+        DO
+            mn := get_name( p, msg );
+            set_lowercase( mn );
+            ml := findmodule( modules, mn );
+            IF ml IS nilmodulelist THEN
+                put( screen, ( mnot_found( mn ), newline ))
+          ELSE
+                show_module( module OF ml, star OF ml )
+            FI
+        OD
+    FI
+END;
+
+PROC compile_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    prepare_compile( "Compile all modules", param_values, on_string, msg );
+    link_programs( modules, msg )
+END;
+
+PROC cc_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    prepare_compile( "Do cc on all modules", param_values, cc_string, msg );
+    link_programs( modules, msg )
+END;
+
+PROC translate_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    prepare_compile( "Translate all modules", param_values, tr_string, msg )
+END;
+
+PROC link_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    prepare_link( param_values, msg )
+END;
+
+PROC go_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR node = IF is_name( param_values[ 1 ] ) THEN
+                             get_name( param_values[ 1 ], msg )
+                       ELSE
+                             blankname
+                         FI;
+
+    obey_go_action( node, FLAGON notify_at_go, msg )
+END;
+
+PROC after_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_symbol_move( param_values, FALSE, msg )
+END;
+
+PROC before_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_symbol_move( param_values, TRUE, msg )
+END;
+
+PROC define_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR name = get_string( param_values[ 1 ], msg );
+REF SYMBOL sym = define_symbol( name, get_text( param_values[ 2 ], msg ),
+                                mmd_tag OR changed_tag );
+
+    IF sym IS nilsymbol THEN
+        put( screen, ( "You cannot re-define symbol", name, newline ))
+  ELSE
+        mark_action_symbol( sym )
+    FI
+END;
+
+PROC undefine_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR name;
+
+    FORALL p IN param_values
+    DO
+        name := get_string( p, msg );
+        CASE undefine_symbol( name ) IN
+          { OK }
+            put( screen, ( "symbol ", name, " has been undefined.", newline )),
+          { Not defined }
+            put( screen, ( "symbol ", name, " does not exist.", newline )),
+          { System symbol, reset to default }
+            put( screen, ( "symbol ", name,
+                           " has reverted to its default state.", newline )),
+          { Local symbol cannot be un-defined }
+            put( screen, ( "symbol ", name,
+                           " is a local symbol and cannot be un-defined.",
+                           newline ))
+        OUT
+            msg( system, "Unexpected result to undefine_symbol" )
+        ESAC
+    OD
+END;
+
+PROC save_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+INT num_params = UPB param_values;
+REF VECTOR[ ]CHAR dbname = IF is_filename( param_values[ 1 ] ) THEN
+                               filename OF
+                                get_filename( param_values[ 1 ], mmd_type, msg )
+                         ELSE
+                               database_name
+                           FI,
+                  dtname = IF num_params > 1 THEN
+                               filename OF
+                                get_filename( param_values[ 2 ], aux_type, msg )
+                         ELSE
+                               detach_name
+                           FI;
+
+    save_database( dbname, dtname, save_all, global_msg )
+END;
+
+PROC removemodule_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    IF are_all_required( "Remove all modules", param_values, msg ) THEN
+        modules := nilmodulelist;
+        attribute_modified := TRUE;
+        put( screen, ( "All modules have been removed from the database.",
+                       newline ))
+  ELSE
+        REF MODULE m;
+
+        PROC list_action = (REF MODULE mm, STAR s )BOOL:
+        BEGIN
+            IF marker OF mm = 1 THEN
+                put( screen, ( "    ", name OF mm, newline ))
+            FI;
+            TRUE
+        END;
+
+        BOOL have_module := FALSE;
+        REF VECTOR[ ]CHAR name;
+        REF MODULELIST ml;
+        REF REF MODULELIST mltail;
+
+        mark_modules( modules, 0 );
+        FORALL p1 IN param_values
+        DO
+            name := get_name( p1, msg );
+            set_lowercase( name );
+            ml := findmodule( modules, name );
+            IF ml IS nilmodulelist THEN
+                put( screen, ( mnot_found( name ), newline ))
+          ELIF usedby OF module OF ml ISNT nilmodulelist THEN
+                put( screen, ( "Module ", name,
+                               " cannot be removed as it is still being used.",
+                               newline ))
+          ELSE
+                have_module := TRUE;
+                marker OF module OF ml := 1
+            FI
+        OD;
+        IF have_module THEN
+            put( screen, ( "Remove the following modules from the database:-",
+                           newline ));
+            scanmodules( modules, list_action );
+            IF query( "Is it OK to go ahead", default_yes, msg ) THEN
+                mltail := modules;
+                WHILE mltail ISNT nilmodulelist
+                DO
+                    m := module OF mltail;
+                    IF marker OF m /= 1 THEN
+                        mltail := rest OF mltail
+                  ELSE
+                        put( screen, ( "Module ", name OF m,
+                                       " has been removed from the database.",
+                                       newline ));
+                        REF REF MODULELIST( mltail ) := rest OF mltail;
+                        attribute_modified := TRUE
+                    FI
+                OD;
+
+                clear_usedby_lists( modules );
+                set_usedby_lists( modules );
+                set_modulenumbers
+            FI
+        FI
+    FI
+END;
+
+PROC removecompile_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    remove_attribute( "Remove all compiles", param_values, compile_attribute,
+                      unmark_compile, msg )
+END;
+
+PROC removelink_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    remove_attribute( "Remove all links", param_values, link_attribute,
+                      unmark_link, msg )
+END;
+
+PROC removepending_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    removecompile_action( param_values, msg );
+    removelink_action( param_values, msg )
+END;
+
+PROC removeversion_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    remove_attribute( "Remove all versions", param_values, version_attribute,
+                      unmark_attribute, msg )
+END;
+
+PROC detach_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR name = IF is_name( param_values[ 1 ] ) THEN
+                            get_name( param_values[ 1 ], msg )
+                       ELIF UPB detach_name /= 0  THEN
+                            detach_name
+                       ELSE
+                            database_name
+                         FI;
+
+    IF NOT case_sensitive THEN set_lowercase( name ) FI;
+    IF name = detach_name THEN
+        put( screen, ( "Already detached to the given file, no change.",
+                       newline ))
+  ELIF UPB detach_name = 0 OREL
+       ( put( screen, ( "Already detached to file ", detach_name, newline ));
+         query( "Do you wish to change the name", default_no, msg ) ) THEN
+
+        detach_name := name;
+        put( screen, ( "Detaching modules to file ", detach_name, newline ))
+  ELSE
+        put( screen, ( "No change", newline ))
+    FI
+END;
+
+PROC attach_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    IF UPB detach_name = 0 THEN
+        put( screen, ( "The database is not detached, no change", newline ))
+  ELSE
+        put( screen, ( "Database is no longer detached.", newline ));
+        detach_name := blankname
+    FI
+END;
+
+PROC edit_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR name := blankname,
+                  full_name;
+REF MODULE m := nilmodule;
+BOOL show_failed_modules = UPB text OF edit_command = 0 OREL
+                           text OF edit_command = "show";
+BOOL first_failed := TRUE;
+
+    PROC try_failed = (REF MODULE mm, STAR s )BOOL:
+    BEGIN
+    REF VECTOR[ ]CHAR av = attribute_value( mm, compile_attribute );
+
+        IF av = failed_string OREL
+           av = trfailed_string OREL
+           av = ccfailed_string THEN
+            m := mm;
+            FALSE
+      ELSE
+            TRUE
+        FI
+    END;
+
+    PROC show_failed = (REF MODULE mm, STAR s )BOOL:
+    BEGIN
+    REF VECTOR[ ]CHAR av = attribute_value( mm, compile_attribute );
+    BOOL failed := TRUE;
+
+        IF av = failed_string THEN
+            set_attribute( mm, compile_attribute, TRUE )
+      ELIF av = trfailed_string THEN
+            set_attribute( mm, compile_attribute, tr_string )
+      ELIF av = ccfailed_string THEN
+            set_attribute( mm, compile_attribute, cc_string )
+      ELSE
+            failed := FALSE
+        FI;
+        IF failed THEN
+            IF first_failed THEN
+                first_failed := FALSE;
+                put( screen, (
+#Change by Phoenix Engineering (SL) BP21500-01-15
+ "The following modules have failed to compile so may need editing.",#
+ "The following modules have failed to compile so they may need editing.",
+                               newline ))
+            FI;
+            put( screen, ( "    ", name OF mm, newline ))
+        FI;
+        TRUE
+    END;
+
+    IF is_name( param_values[ 1 ] ) THEN
+    REF VECTOR[ ]CHAR p1 = get_name( param_values[ 1 ], msg );
+
+        set_lowercase( p1 );
+
+    REF MODULELIST ml = findmodule( modules, p1 );
+
+        IF ml ISNT nilmodulelist THEN
+            m := module OF ml;
+
+        REF VECTOR[ ]CHAR av = attribute_value( m, compile_attribute );
+
+            name := filename OF m;
+            IF show_failed_modules THEN
+               put( screen, ( "No editor set, use an external editor. Module ",
+                              name OF m, " is in file ", newline, "    ", name,
+                              newline, "and has ",
+                              IF av = failed_string THEN
+                                  "failed to compile."
+                            ELIF av = trfailed_string THEN
+                                  "failed to translate."
+                            ELIF av = ccfailed_string THEN
+                                  "failed to C compile."
+                            ELSE  "compiled OK."
+                              FI, newline ));
+               IF av = failed_string THEN
+                   set_attribute( m, compile_attribute, TRUE )
+             ELIF av = trfailed_string THEN
+                   set_attribute( m, compile_attribute, tr_string )
+             ELIF av = ccfailed_string THEN
+                   set_attribute( m, compile_attribute, cc_string )
+               FI
+            FI
+      ELSE
+            msg( user, mnot_found( p1 ))
+        FI
+  ELIF show_failed_modules THEN
+        scanmodules( modules, show_failed )
+  ELSE
+        scanmodules( modules, try_failed );
+        IF m IS nilmodule THEN
+            msg( user, "No outstanding failure: give a module or file name" )
+        FI;
+        name := filename OF m
+    FI;
+
+    IF show_failed_modules THEN
+        SKIP
+  ELIF check_module_file( m, first_directory, full_name, msg ) THEN
+        insert_oscommand_item( oneline(( text OF edit_command, " ",
+                                         full_name )));
+        IF obey_oscommand( msg ) THEN
+            IF attribute_marked( m, compile_attribute ) THEN
+                { Clear failure if it is set }
+                set_attribute( m, compile_attribute, TRUE )
+          ELIF query( oneline(( "Do you wish to compile module ", name )),
+                      default_yes, msg ) THEN
+                mark_modules( modules, 0 );
+                set_compile_mark( m, on_string, msg );
+                link_programs( modules, msg )
+            FI
+        FI
+  ELSE
+        msg( user, fnot_found( name ))
+    FI
+END;
+
+PROC simplespecchange_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_specchange( param_values, optimistic, msg )
+END;
+
+PROC specchange_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_specchange( param_values, pessimistic, msg )
+END;
+
+PROC rebuild_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_specchange( param_values, rebuild, msg )
+END;
+
+PROC update_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    PROC version_string = (VECTOR[ ]CHAR message )REF VECTOR[ ]CHAR:
+    BEGIN
+        IF is_name( param_values[ 1 ] ) THEN get_name( param_values[ 1 ], msg )
+      ELIF NOT can_query THEN
+            global_msg( fatal, "You must supply a parameter when updating"
+                               " non-interactively." );
+            SKIP
+      ELSE
+            prompt( message )
+        FI
+    END;
+
+    mark_modules( modules, 0 );
+
+REF MODULELIST ml = update_version( modules, all_modules, version_string, msg );
+
+    IF ml ISNT nilmodulelist THEN
+        link_programs( modules, msg )
+  ELSE
+        put( screen, ( "No version module found.", newline ))
+    FI
+END;
+
+PROC module_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_module_action( param_values, FALSE, msg )
+END;
+
+PROC install_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    do_module_action( param_values, TRUE, msg )
+END;
+
+PROC analyseusage_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+INT used_cnt := 0,
+    needed_cnt := 0;
+
+    PROC count_use = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        used_cnt PLUSAB 1;
+        TRUE
+    END;
+
+    PROC count_need = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        needed_cnt PLUSAB 1;
+        TRUE
+    END;
+
+    PROC count_usage = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        scanmodules( uses OF m, count_use );
+        scanmodules( usedby OF m, count_need );
+        TRUE
+    END;
+
+    scanmodules( modules, count_usage );
+    put( screen, ( "Total number of uses  = ", used_cnt, newline,
+                   "Total number of needs = ", needed_cnt, newline ))
+END;
+
+PROC analyselevels_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+VECTOR[ max_level ]INT level_counts;
+
+    PROC count_action = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF level OF m > 0 ANDTH level OF m <= max_level THEN
+            level_counts[ level OF m ] PLUSAB 1
+        FI;
+        TRUE
+    END;
+
+    clear( level_counts );
+    scanmodules( modules, count_action );
+    put( screen, ( "Number of levels ", max_level, newline,
+                   "Level analysis:-", newline ));
+    FOR ln TO max_level
+    DO
+        put( screen, ( intwidth( ln, 3 ), "  ", level_counts[ ln ],
+                       " modules", newline ))
+    OD
+END;
+
+PROC debug_action = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+    put( screen, ( "Debug trap, returning from debugger.", newline ))
+END;
+
+PROC make_command = (VECTOR[ ]CHAR name,
+                                   abreviation,
+                     COMMANDSYNTAX parameter,
+                     ACCESS access,
+                     VECTOR[ ]CHAR help_text,
+                     PROC( VALUES, MESSAGEPROC )VOID action )REF SIMPLE:
+BEGIN
+    HEAP SIMPLE := ( MAKERVC name, MAKERVC abreviation, parameter,
+                     access, continue, MAKERVC help_text, action )
+END;
+
+PROC make_mm_commands = (MESSAGEPROC msg )COMMANDVEC:
+BEGIN
+    initialise_mm_utilities( msg );
+
+    MAKECOMMANDS VECTOR [] COMMAND
+    (
+ #Phoenix Engineering (SL) BP21500-01-15 Added abbreviation for this group
+  make_group( "ANALYSE", "", hidden access, #
+      make_group( "ANALYSE", "A", hidden access,
+ #Phoenix Engineering (SL) BP21500-01-15 Added abbreviation for this command
+        ( make_command( "LEVELS", "",#
+        ( make_command( "LEVELS", "L",
+                        no parameters,
+                        hidden access,
+                        "Count numbers of modules at each level",
+                        analyselevels_action ),
+ #Phoenix Engineering (SL) BP21500-01-15 Added abbreviation for this command
+          make_command( "USAGE", "U",#
+          make_command( "USAGE", "U",
+                        no parameters,
+                        hidden access,
+                        "Count numbers in uses and usedby lists",
+                        analyseusage_action )
+        )),
+      make_group( "REMOVE", "REM", normal access,
+        ( make_command( "COMPILE", "C",
+                        opt( star( name_syntax )),
+                        normal access,
+                        "Removes a module from the compile list",
+                        removecompile_action ),
+          make_command( "LINK", "L",
+                        opt( star( name_syntax )),
+                        normal access,
+                        "Removes a module from the linking list",
+                        removelink_action ),
+          make_command( "MODULE", "M",
+                        opt( star( name_syntax )),
+                        normal access,
+                        "Remove a module from the database",
+                        removemodule_action ),
+          make_command( "PENDING", "P",
+                        opt( star( name_syntax )),
+                        normal access,
+ #Phoenix Engineering (SL) BP21500-01-15 Corrected the message
+                        "Removes a module from both the compile and lists",#
+                        "Removes a module from both the compile and links",
+                        removepending_action ),
+          make_command( "VERSION", "V",
+                        opt( star( name_syntax )),
+                        normal access,
+                        "Remove a module from the version list",
+                        removeversion_action )
+        )),
+      make_group( "SET", "", normal access,
+        ( make_command( "DEBUG", "DBG",
+                        prod(( string_syntax, star( name_syntax ))),
+                        normal access,
+                        "Set debug state for the given modules",
+                        setdebug_action ),
+          make_command( "EXEDIR", "EXE",
+                        prod(( string_syntax, star( name_syntax ))),
+                        normal access,
+                        "Set image target directory for the given modules",
+                        setexedir_action ),
+          make_command( "HEAPSIZE", "HSZ",
+                        prod(( string_syntax, star( name_syntax ))),
+                        normal access,
+                        "Set heapsize for the given modules",
+                        setheapsize_action ),
+          make_command( "OPTIMISE", "OPT",
+                        prod(( string_syntax, star( name_syntax ))),
+                        normal access,
+                        "Set optimise characters for the given modules",
+                        setoptimise_action ),
+          make_command( "STAREDIT", "STA",
+                        prod(( string_syntax, star( name_syntax ))),
+                        normal access,
+                        "Set staredit characters for the given modules",
+                        setstaredit_action ),
+          make_command( "DIAG", "",
+                        string_syntax,
+                        hidden access,
+                        "Set/clear diagnose",
+                        setdiag_action ),
+          make_command( "QUERY", "",
+                        string_syntax,
+                        hidden access,
+                        "Set/clear prompting at query",
+                        setquery_action )
+        )),
+      make_group( "SHOW", "S", normal access,
+        ( make_command( "COMPILE", "C",
+                        no parameters,
+                        normal access,
+                        "Show pending compiles",
+                        showcompile_action ),
+          make_command( "ENVIRON", "E",
+                        no parameters,
+                        normal access,
+                        "Show environment",
+                        showenviron_action ),
+          make_command( "LINK", "L",
+                        no parameters,
+                        normal access,
+                        "Show pending links",
+                        showlink_action ),
+          make_command( "MODULE", "M",
+                        opt( star( name_syntax )),
+                        normal access,
+                        "Show modules",
+                        showmodule_action ),
+          make_command( "SYMBOL", "S",
+                        opt( star( string_syntax )),
+                        normal access,
+                        "Show the definition of a symbol.",
+                        showsymbol_action ),
+          make_command( "PENDING", "P",
+                        no parameters,
+                        normal access,
+                        "Show pending compiles and links",
+                        showpending_action ),
+          make_command( "VERSION", "V",
+                        no parameters,
+                        normal access,
+                        "Show version modules",
+                        showversion_action )
+        )),
+      make_command( "AFTER", "",
+                    opt( name_syntax ),
+                    normal access,
+                    "Move symbol pointer after given symbol.",
+                    after_action ),
+      make_command( "ATTACH", "",
+                    opt( name_syntax ),
+                    normal access,
+                    "Re-attach the module data to the environment data.",
+                    attach_action ),
+      make_command( "BEFORE", "",
+                    opt( name_syntax ),
+                    normal access,
+                    "Move symbol pointer before given symbol.",
+                    before_action ),
+      make_command( "CC", "",
+                    opt( star( name_syntax )),
+                    normal access,
+                    "Prepare to do cc on one or more modules",
+                    cc_action ),
+      make_command( "COMPILE", "C",
+                    opt( star( name_syntax )),
+                    normal access,
+                    "Prepare to compile one or more modules",
+                    compile_action ),
+      make_command( "DEFINE", "DEF",
+                    prod(( string_syntax, text_syntax )),
+                    normal access,
+                    "Define a symbol.",
+                    define_action ),
+      make_command( "DETACH", "",
+                    opt( name_syntax ),
+                    normal access,
+                    "Detach the module data from the environment data.",
+                    detach_action ),
+      make_command( "EDIT", "ED",
+                    opt( name_syntax ),
+                    normal access,
+                    "Edit a module source file",
+                    edit_action ),
+      HEAP SIMPLE := ( MAKERVC "EXIT", nullstr, no parameters, normal access,
+                       finish,
+                       MAKERVC "Exit from the utility keeping the modified "
+                               "database",
+                       nullcommand ),
+      make_command( "GO", "G",
+                    opt( name_syntax ),
+                    normal access,
+                    "Obey the current compiles and links",
+                    go_action ),
+      make_command( "INSTALL", "",
+                    star( name_syntax ),
+                    normal access,
+ #Phoenix Engineering (SL) BP21500-01-15 Corrected the help message
+                    "Install a module and all it dependends on",#
+                    "Install a module and all it depends on",
+                    install_action ),
+      make_command( "LINK", "L",
+                    opt( star( name_syntax )),
+                    normal access,
+                    "Prepare to link a module",
+                    link_action ),
+      make_command( "MODULE", "M",
+                    star( name_syntax ),
+                    normal access,
+                    "Introduce or re-analyse a module",
+                    module_action ),
+      make_command( "REBUILD", "RBD",
+                    opt( star( name_syntax )),
+                    normal access,
+                    "Compile all modules required for a given program",
+                    rebuild_action ),
+      make_command( "SAVE", "",
+                    opt( star( filename_syntax )),
+                    normal access,
+                    "Save the database, optionally to a named file",
+                    save_action ),
+      make_command( "SIMPLESPECCHANGE", "SSC",
+                    star( name_syntax ),
+                    normal access,
+ #Phoenix Engineering (SL) BP21500-01-15 Corrected the help message
+                    "Module has an non pesimistic change to its keep list etc",#
+                    "Module has a non-pessimistic change to its keep list etc",
+                    simplespecchange_action ),
+      make_command( "SPECCHANGE", "SPEC",
+                    star( name_syntax ),
+                    normal access,
+ #Phoenix Engineering (SL) BP21500-01-15 Corrected the help message
+                    "Module has an pesimistic change to its keep list etc",#
+                    "Module has a pessimistic change to its keep list etc",
+                    specchange_action ),
+      make_command( "TRANSLATE", "TR",
+                    opt( star( name_syntax )),
+                    normal access,
+                    "Prepare to translate one or more modules",
+                    translate_action ),
+      make_command( "UNDEFINE", "UDEF",
+                    star( string_syntax ),
+                    normal access,
+                    "Un-define symbols.",
+                    undefine_action ),
+      make_command( "UPDATE", "",
+                    opt( name_syntax ),
+                    normal access,
+                    "Update version data",
+                    update_action ),
+      make_command( "VERSION", "",
+                    star( name_syntax ),
+                    normal access,
+                    "Indicate that a module is a version recorder",
+                    version_action ),
+      make_command( "DEBUG", "",
+                    no parameters,
+                    hidden access,
+                    "Debug trap",
+                    debug_action )
+    )
+END;
+
+    SKIP
+KEEP make_mm_commands, obey_go_action
+FINISH

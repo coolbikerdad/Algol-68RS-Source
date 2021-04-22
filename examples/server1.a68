@@ -1,0 +1,24 @@
+PROGRAM server1 CONTEXT VOID
+USE standard
+BEGIN
+
+FILE server socket;
+
+IF INT r=establish(server socket,"server_socket",server socket channel,af unix,0,1024);
+   r/=0
+THEN put(stand error,("server1: ",error text(r),newline));  exit(r)
+FI;
+
+DO
+	INT ch;  print(("server waiting",newline));
+	REF FILE client socket = accept(server socket);
+        print(("server accepted",newline));
+        get bin(client socket,ch);
+	print(("from client = ",ch,newline));
+	COMMENT ch:=REPR(ABS ch+1); COMMENT
+	ch:=ch+1;
+	put bin(client socket,ch);
+	close(client socket)
+OD
+END
+FINISH

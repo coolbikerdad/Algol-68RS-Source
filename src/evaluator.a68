@@ -1,0 +1,207 @@
+DECS  evaluator  CONTEXT VOID  USE
+      adicops, operators, idtable, centities, environment, evalbase, coutput,
+      uniquenameserver, incmode, modes, incvalue, values, unionaids,
+      moduletracer:
+
+configinfo A68CONFIG "$Id: evaluator.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.2 
+05:12:94  33.002  DJS   CmplxNos   xwrc - real to complex added. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC	unimplemented op = ( REF VALUE root, TREEOPER oper ) VALUE:
+BEGIN
+	( mode OF root, default info, "/* UNIMPLEMENTED OPER */" )
+END;
+
+PROC ( REF VALUE, BOOL ) VOID call trace;
+	{ Set by translator for calling compiler trace routine }
+BITS trace all levels = 16r800000;
+
+PROC spare op = (REF VALUE value, TREEOPER oper ) VALUE:
+	("EVALUATE - spare op number" ASSERT FALSE; skip value);
+
+[] PROC ( REF VALUE, TREEOPER ) VALUE oper semantics =
+(	{   1  statgrab      }  staticpart generator,
+	{   2  param pack    }  spare op, 
+	{   3  select        }  select op,
+	{   4  copy          }  copy to flex,
+	{   5  trim          }  ( REF VALUE v, TREEOPER param ) VALUE:
+		( "EVALUATE - trim implemented by trimindex" ASSERT FALSE; skipvalue),
+	{   6  simpleindex   }  simple index op,
+	{   7  trimindex     }  trim index op,
+	{   8  dyngrab       }  dynamic generator,
+	{   9  boundpack     }  ( REF VALUE v, TREEOPER param ) VALUE:
+		( "EVALUATE - boundpack implemented by dynamic generator" ASSERT FALSE; SKIP),
+	{  10  dyadic op     }  dyadic sem,
+	{  11  monadic op    }  monadic sem,
+	{  12  straight      }  straighten,
+	{  13  prestraight   }  ( REF VALUE v, TREEOPER param ) VALUE:
+		( "EVALUATE - prestraight implemented by straighten" ASSERT FALSE; skipvalue),
+	{  14  strindex      }  straight index op,
+	{  15  assign        }  assign op,
+	{  16  default bound }  ( REF VALUE v, TREEOPER param ) VALUE:
+		( "EVALUATE - default bound implemented by load" ASSERT FALSE; SKIP),
+	{  17  deref         }  deref op,
+	{  18  call          }  call op,
+	{  19  void          }  void op,
+	{  20  niltom        }  nil to mode op,
+	{  21  gotoproc      }  goto to proc,
+	{  22  gotom         }  goto to mode,
+	{  23  realtocompl   }  real to complex,
+	{  24  inttoreal     }  int to real,
+	{  25  68R inttobits }  ( REF VALUE v, TREEOPER param ) VALUE:
+		( "EVALUATE - 25 68R inttobits no longer implemented" ASSERT FALSE; skipvalue),
+	{  26  arrarr        }  rows to row rows,
+	{  27  vecarr        }  vector to row,   
+	{  28  isvec         }  istruct to vector,
+	{  29  is            }  mode to struct 1 mode,
+	{  30  unite         }  unite simple,
+	{  31  uniteu        }  unite union,
+	{  32  isarr         }  istruct to row,
+	{  33  skiptom       }  skip to mode,
+	{  34  vec           }  scalar to vector,
+	{  35  arr           }  scalar to row,
+	{  36  deunite       }  deunite,
+	{  37  bitstov[]bool }  bits to row bool,
+	{  38  vac           }  vacuum,
+	{  39  ytypetom      }  ytypetom,
+	{  40  mtoxtype      }  mtoxtype,
+	{  41 SPARE	 }  spare op, 
+	{  42 SPARE	 }  spare op, 
+	{  43 SPARE	 }  spare op, 
+	{  44 SPARE	 }  spare op, 
+	{  45 SPARE	 }  spare op, 
+	{  46 SPARE	 }  spare op, 
+	{  47 SPARE	 }  spare op, 
+	{  48 SPARE	 }  spare op, 
+	{  49 SPARE	 }  spare op, 
+{ Translator introduced ops: }
+	{  50 static generator }  static generator,
+	{  51 format	 }  unimplemented op  { format } 
+       );
+
+
+PROC	eval no trace = ( REF VALUE root ) VOID:
+BEGIN
+	"EVALUATE - evaluator passed a NIL reference" ASSERT (root ISNT NIL);
+	CASE	extra OF root  IN
+	( TREEOPER rator ):
+		root := oper semantics[ fn OF rator ]( root, rator ),
+
+	( TREENSE nihil ):
+		( nse OF nihil
+		| SKIP,				{ EMPTY or vacuum }
+		  SKIP,				{ SKIP		  }
+		  extra OF root := "A68_NIL"	{ NIL		  }
+		| "EVALUATE - Unknown NSE" ASSERT FALSE; SKIP    
+		),
+
+	( CONSTANT ):
+		SKIP,
+
+	( ROUTINEINFO r ):
+		SKIP,
+
+	( IDENTIFIER id ):
+		SKIP,
+
+	( TEMPORARY temp ):
+		SKIP,
+
+	( LABNO label ):
+		SKIP,
+          
+	( CFRAGMENT cf ):
+		SKIP,
+
+	( VOID ):
+		extra OF root := "/* VOID? */"
+
+	OUT	"EVALUATE - evaluation not defined for this value" ASSERT FALSE
+	ESAC        
+END;                 
+
+{ eval trace is the entry to evaluation which handles calling of tracing
+  of internal translator objects if this is required
+}
+
+PROC	eval trace = ( REF VALUE root ) VOID:
+BEGIN
+	call trace ( root, FALSE );		{ Do first lot of tracing }
+	IF	trace level flags >= trace all levels
+	THEN	eval no trace ( root )
+		{ ie keep evaluate = eval trace }
+	ELSE
+		evaluate := eval no trace;	{ So lower levels are not traced }
+		eval no trace ( root );
+		evaluate := eval trace		{ Restore top level trace }
+	FI;
+	call trace ( root, TRUE )		{ Output second lot of trace }
+END;
+
+{ evaluate stack ensures that ALL values on the value stack are evaluated
+ ( in the correct order ). This is used to ensure that a lack of semicolons
+ does not stop evaluation of any values. The supplied attribute is only
+ used in the evaluation of the top value, and all other values are discarded
+ after evaluation.
+}
+
+PROC	evaluate stack = ( REF REF VALUELIST value stack ) VOID:
+IF	rest OF value stack IS nil value list
+THEN	{ value stack contains just one element - the simple case }
+	evaluate ( value OF value stack )
+ELSE	
+	REF VALUELIST kcats eulav := reverse value list ( value stack );
+	WHILE	rest OF kcats eulav ISNT nil value list
+	DO	
+		evaluate ( value OF kcats eulav );
+		kcats eulav := rest OF kcats eulav
+	OD;
+	warning( 799 ); { stack has more than one value on it }
+	{ Drop all but top element of value stack }
+	value stack := kcats eulav;
+	evaluate ( value OF value stack )
+FI;
+
+PROC	initialise evaluator = VOID:
+	evaluate := ( trace on | eval trace | eval no trace )
+
+KEEP
+	call trace, evaluate { from eval base }, evaluate stack, 
+	initialise evaluator
+FINISH

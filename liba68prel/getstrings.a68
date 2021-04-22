@@ -1,0 +1,239 @@
+DECS getstrings CONTEXT VOID USE osif, iobasics :
+
+configinfo A68CONFIG "$Id: getstrings.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1994
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+05:12:94  33.001  ELLA   CmplxNos   Created to be input equivalent of
+                                    'putstrings'. 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE  INMODE  = UNION ( REF INT,  RVI, REF [] INT,
+                        REF BITS, REF VECTOR [] BITS, REF [] BITS,
+                        REF CHAR, RVC,  REF [] CHAR,
+                        REF BOOL, REF VECTOR [] BOOL, REF [] BOOL,
+                        REF REAL, REF VECTOR [] REAL, REF [] REAL,
+                        PROC (RCH) VOID,
+                        STRAIGHT INMODE );
+
+PROC  (STR, REF CHAR) INT  diff = ALIEN "STRDIFF"
+   "#define STRDIFF(p1,p2) \"
+   "   A_int_INT(A_CHARPTR_charptr(p2) - A_VC_charptr(p1))";
+
+PROC (STR, REF REF CHAR, INT) LONG INT  strtol = ALIEN "STRTOL"
+  "#include <stdlib.h>"
+  "#define STRTOL(s,e,r) A_long_LINT(strtol(A_VC_charptr(s), (char **)(e), r))";
+
+PROC (STR, REF REF CHAR) REAL  strtod = ALIEN "STRTOD"
+   "#include <stdlib.h>"
+   "#define STRTOD(s,e) (A68_REAL)(strtod(A_VC_charptr(s), (char **)(e)))";
+
+{{ Other status declarations are in module osfiles.a68 }}
+IOSTATUS  tt;
+IOSTATUS  io_badnumber = (status OF tt:= 5; tt),
+          io_overflow  = (status OF tt:= 6; tt);
+
+PROC make_user_status = (INT n )IOSTATUS:
+BEGIN
+  status OF tt := 100 + n;
+  tt
+END;
+
+PROC getchar = (RCH ch )CHAR:
+BEGIN
+   CHAR result;
+   WHILE charnumber OF ch > width OF ch + 1 ANDTH status OF ch = io_ok
+   DO  newline( ch )  OD;
+   result := (buffer OF ch)[ charnumber OF ch ];
+   charnumber OF ch PLUSAB 1;
+   result
+END;
+
+PROC skiplayout = (RCH ch )VOID:
+BEGIN
+   CHAR c;
+   WHILE ( c := getchar( ch )) <= " " ANDTH c /= end_of_file_char DO SKIP OD;
+   charnumber OF ch MINUSAB 1  { Reset pointer to last character }
+END;
+
+PROC skiptext = (RCH ch )VOID:
+BEGIN
+   CHAR c;
+   WHILE ( c := getchar( ch )) >= " " DO SKIP OD;
+   charnumber OF ch MINUSAB 1  { Reset pointer to last character }
+END;
+
+PROC nextchar = (RCH ch )CHAR:
+BEGIN
+   CHAR c = getchar( ch );
+   charnumber OF ch MINUSAB 1;  { Reset pointer to last character }
+   c
+END;
+
+PROC end_of_line = (RCH ch )BOOL: charnumber OF ch > width OF ch;
+
+PROC basicgetint = (RCH ch, INT radix )INT:
+BEGIN
+  skiplayout( ch );
+  IF status OF ch /= io_ok
+  THEN  0
+  ELSE  REF CHAR  end;
+        REF VECTOR [] CHAR str = (buffer OF ch)[ charnumber OF ch :
+                                                 width OF ch ];
+        INT int:= SHORTEN strtol(str, end, radix),
+            len := diff(str, end);
+        charnumber OF ch PLUSAB len;
+        IF len = 0 THEN status OF ch:= io_badnumber FI;
+        int
+  FI
+END;
+
+PROC getint = (RCH ch )INT:  basicgetint( ch, 0 );
+PROC gethex = (RCH ch )INT:  basicgetint( ch, 16 );
+PROC getoct = (RCH ch )INT:  basicgetint( ch, 8 );
+
+PROC getreal = (RCH ch )REAL:
+BEGIN
+  skiplayout( ch );
+  IF status OF ch /= io_ok
+  THEN  0.0
+  ELSE  REF CHAR  end;
+        REF VECTOR [] CHAR str = (buffer OF ch)[ charnumber OF ch :
+                                                 width OF ch ];
+        REAL real:= strtod(str, end);
+        INT len := diff(str, end);
+        charnumber OF ch PLUSAB len;
+        IF len = 0 THEN status OF ch:= io_badnumber FI;
+        real
+  FI
+END;
+
+PROC getbool = (RCH ch )BOOL:
+BEGIN
+  skiplayout( ch );
+  IF status OF ch /= io_ok
+  THEN  FALSE
+  ELSE  CHAR  c = getchar(ch);
+        IF c = "T" OREL c = "t"
+      THEN  TRUE
+      ELIF c = "F" OREL c = "f"
+      THEN  FALSE
+      ELSE  status OF ch:= io_badnumber;  FALSE
+        FI
+  FI
+END;
+
+PROC getstr = (RCH ch )STR:
+BEGIN
+   IF charnumber OF ch > width OF ch + 1 ANDTH status OF ch = io_ok
+   THEN  newline( ch )
+   FI;
+   IF status OF ch /= io_ok
+   THEN  (buffer OF ch)[ : 0 ]
+   ELSE  INT rem = width OF ch + 1 - charnumber OF ch;
+         INT start = charnumber OF ch;
+         charnumber OF ch PLUSAB rem + 1;
+                                       { Force pointer beyond the newline char }
+         (buffer OF ch)[ start : start + rem - 1 ]
+   FI
+END;
+
+PROC getstatus = (RCH ch )IOSTATUS:
+BEGIN
+   IF charnumber OF ch > width OF ch ANDTH status OF ch = io_ok
+   THEN  newline( ch )
+   FI;
+   status OF ch
+END;
+
+PROC strtrim = (STR str )STR:
+BEGIN  INT top = UPB str;
+       INT pos := 0;
+       WHILE pos < top ANDTH str[ pos PLUSAB 1 ] /= REPR 0 DO SKIP OD;
+       str[ : pos - 1 ]
+END;
+
+PROC basicgetstring = (RCH ch, REF [] CHAR rrc)VOID:
+BEGIN
+   INT bottom = LWB rrc, top = UPB rrc,
+          rem = width OF ch + 1 - charnumber OF ch;
+   INT start = charnumber OF ch, len = top - bottom + 1;
+   INT size = IF len < rem THEN len ELSE rem FI;
+   IF size > 0
+   THEN  INT extent = size - 1;
+         charnumber OF ch PLUSAB size;
+          rrc[ bottom : bottom + extent ] :=
+                                       (buffer OF ch)[ start : start + extent ];
+         FORALL tc IN rrc[ bottom + size : ] DO tc := REPR 0 OD
+   ELSE  FORALL tc IN rrc[  ] DO tc := REPR 0 OD
+   FI
+END;
+
+PROC get = (RCH ch, VECTOR [] INMODE in )BOOL:
+BEGIN
+   FORALL elem IN in WHILE status OF ch = io_ok
+   DO
+      CASE elem IN
+      ( REF INT ri ) ri := getint( ch ),
+      ( RVI rvi ) FORALL i IN rvi DO i := getint( ch ) OD,
+      ( REF [] INT rri ) FORALL i IN rri DO i := getint( ch ) OD,
+      ( REF BITS rbt ) rbt := BIN gethex( ch ),
+      ( REF VECTOR [] BITS rvbt ) FORALL bt IN rvbt DO bt:= BIN gethex( ch ) OD,
+      ( REF [] BITS rrbt ) FORALL bt IN rrbt DO bt := BIN gethex( ch ) OD,
+      ( REF CHAR rc ) rc := getchar( ch ),
+      ( RVC rvc ) basicgetstring( ch, rvc ),
+      ( REF [] CHAR rrc ) basicgetstring( ch, rrc ),
+      ( REF BOOL rbl )  rbl := getbool( ch ),
+      ( REF VECTOR [] BOOL rvbl ) FORALL bb IN rvbl DO bb := getbool( ch ) OD,
+      ( REF [] BOOL rrbl ) FORALL bb IN rrbl DO bb := getbool( ch ) OD,
+      ( REF REAL rr ) rr := getreal( ch ),
+      ( REF VECTOR [] REAL rrr ) FORALL r IN rrr DO r := getreal( ch ) OD,
+      ( REF [] REAL rvr ) FORALL r IN rvr DO r := getreal( ch ) OD,
+      ( PROC (RCH) VOID proc ) proc( ch ),
+      ( STRAIGHT INMODE struct )  FOR i TO UPB struct DO get( ch, struct[i]) OD
+      ESAC
+   OD;
+   status OF ch = io_ok
+END;
+
+
+    SKIP
+KEEP   STR,  VI,  RVC,  RVI,  nilstr,  nullstr,  nilints,  nullints, nilchannel,
+       CHANNEL,  RCH,  INMODE,
+       make_channel,  newline_char,  newpage_char,  null_char, 
+       end_of_file_char, getchar, skiplayout, skiptext, nextchar,
+       getint, gethex, getoct, getreal,
+       getbool, getstr, getstatus, get, end_of_line, strtrim,
+       io_badnumber, io_overflow, make_user_status
+FINISH

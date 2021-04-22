@@ -1,0 +1,189 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Loops revisited</title>
+<meta name="description" content="loops revisited">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node58.html">
+<link rel="previous" href="node56.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node58.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1565"
+  href="node58.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1559"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1553"
+  href="node56.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1561"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1563"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1566"
+  href="node58.html">Abbreviated declarations</a>
+<b> Up:</b> <a name="tex2html1560"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1554"
+  href="node56.html">Dynamic names</a>
+ &nbsp; <b>  <a name="tex2html1562"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1564"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1567"
+  href="node57.html#section00791000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00790000000000000000"></a><a name="name-loop"></a>
+Loops revisited</h1>
+
+<p>In section <a href="node35.html#rep-rep">3.7</a>, we introduced the
+loop clause whose start, step and finish were specified by integer
+denotations.  Instead of an integer, a unit which yields a value of
+mode <code>INT</code> in a meek<a name="3118"></a> context can be
+supplied.  The principle coercions not available in a meek context are
+rowing and widening.  In practice, almost any unit yielding
+<code>INT</code> will do. In particular, a name with mode <code>REF
+INT</code> can be given.</p>
+
+<p>There is an extra construct which is extremely useful for
+controlling the execution of the
+<code>DO</code>&nbsp;...&nbsp;<code>OD</code> loop.  It is very common
+to execute a loop while a particular condition holds.  For example,
+while integers are negative:</p>
+
+<pre>
+   WHILE
+      REF INT int=LOC INT; read(int); int &lt; 0
+   DO
+      print((ABS int,newline))
+   OD
+</pre>
+
+<p>In this example, no loop counter was needed and so the <code>FOR
+id</code> part was omitted.  The phrase following the
+<tt>WHILE</tt><a name="3230"></a> must be an enquiry
+clause<a name="3123"></a> yielding <code>BOOL</code>. In this case, an
+integer is read each time the loop is elaborated until a non-negative
+integer is read. The range of any declarations in the enquiry clause
+extends to the <code>DO</code>&nbsp;...&nbsp;<code>OD</code> loop.</p>
+
+<p>It happens quite often that the <code>WHILE</code> enquiry clause
+performs all the actions which need repeating and nothing is required
+in the <code>DO</code> part. Since the loop clause must contain at
+least one unit, <tt>SKIP</tt><a name="3231"></a> can be used as in</p>
+
+<pre>
+   FOR i FROM LWB a TO UPB a
+   WHILE (sum+:=a[i]) &lt;= max
+   DO
+      SKIP
+   OD
+</pre>
+
+<p>The complete loop clause<a name="3128"></a> thus takes the
+form:</p>
+
+<pre>
+   FOR id FROM from-unit BY by-unit TO to-unit
+   WHILE boolean-enquiry-clause
+   DO
+      serial clause
+   OD
+</pre>
+
+<hr>
+<h2><a name="section00791000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.17<a name="ex-v-xvii"></a>
+<dd>Write a program which will read integers until zero is
+encountered.  The program should print the sums of the negative and
+positive integers.  Ans<a href="node139.html#ans-v-xvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.18<a name="ex-v-xviii"></a>
+<dd>Write a program which will read lines from the keyboard and
+then compute a unique code for each line as follows: if <code>"did"</code>
+is read, compute the value of
+<pre>
+   ABS"d" + ABS"i"*2 + ABS"d"*3
+</pre>
+
+Display the string and its corresponding number on the screen.
+Terminate the program when a zero-length line has been read (if the
+result exceeds <tt>max int</tt>, you will normally not get an error:
+just erroneous results--see section <a href="node128.html#stan-othop">13.3.13</a>).  Ans<a href="node139.html#ans-v-xviii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1565"
+  href="node58.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1559"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1553"
+  href="node56.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1561"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1563"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1566"
+  href="node58.html">Abbreviated declarations</a>
+<b> Up:</b> <a name="tex2html1560"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1554"
+  href="node56.html">Dynamic names</a>
+ &nbsp; <b>  <a name="tex2html1562"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1564"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

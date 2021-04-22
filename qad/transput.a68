@@ -1,0 +1,2480 @@
+DECS transput CONTEXT VOID
+USE spmodes, spaliens, spplain, spops, spconvert:
+
+COMMENT
+   $Log: transput.a68,v $
+   Revision 1.11  2005-01-28 17:09:50  sian
+   1. Altered the `new filebuffer' to (INT mtu)FILEBUFFER:
+   2. Altered bufprocs and `client socket estab', `server socket estab'
+      and `accept' to reflect that change.
+
+   Revision 1.10  2004/08/06 22:58:22  sian
+   Removed `bin possible' from both `stand in' and `stand out'
+
+   Revision 1.9  2003/11/09 14:31:47  sian
+   Squashed a bug in transput.a68
+
+   Revision 1.8  2003/06/10 14:32:26  sian
+   Added envp to the KEEP list in transput and standard
+
+   Revision 1.7  2003/06/10 14:03:55  sian
+   Added envp to the C main routine
+
+   Revision 1.6  2003/04/23 08:57:34  sian
+   Debian release 1.5
+
+   Revision 1.5  2002/06/06 12:45:16  sian
+   Reset of nameseed. argc and argv now available after open(...arg channel)
+
+   Revision 1.4  2001/09/27 13:06:05  sian
+   Partial conversion to new package
+
+   Revision 1.3  2001/06/18 11:04:27  sian
+   1. Replaced non-standard hexadecimal string denotations with REPR n.
+   2. Added code to resolve symbolic Internet addresses.
+   3. Replaced the temporary file generation in create.
+
+   Revision 1.2  2001/05/11 08:34:32  sian
+   Added C files and QAD socket inet addr
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.3  2000/08/23 16:33:36  sian
+   Ready for Debianising
+
+   Revision 1.2  2000/07/05 14:56:02  sian
+   Ready for release 0.1.0
+
+   Revision 1.1  2000/01/10 05:56:27  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   All the transput code is in this file.
+   For modes, see `spmodes.a68'.
+   For aliens, see `spaliens.a68'.
+   For operators, see `spops.a68'.
+   For plain value declarations, see `spplain.a68'.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+# ------------ Garbage Collector routines ------------- #
+INT saved policy; #Garbage collector policy#
+
+PROC set_gc_params = (VECTOR[]GCPARAM gcparams)VOID:
+# Set parameters affecting behaviour of the garbage collector. #
+FORALL p IN gcparams
+DO
+   IF gc_param("SET " + name OF p + nul ch,value OF p) /= value OF p
+   THEN posix write(2,"Error=>set_gc_params: "+name OF p+lf,
+                    23+UPB name OF p)
+   FI
+OD; #set_gc_params#
+
+PROC get_gc_param = (VECTOR[]CHAR name)INT:
+BEGIN
+  INT value = gc_param("GET " + name + nul ch,0);
+  IF value = -1
+  THEN posix write(2,"Error=>get_gc_param: "+name+lf,22+UPB name)
+  FI;
+  value
+END;
+
+PROC disable_garbage_collector = VOID:
+BEGIN
+  saved policy := get_gc_param("POLICY");
+  set_gc_params( GCPARAM("POLICY", always grow heap))
+END;
+
+PROC enable_garbage_collector = VOID:
+  set_gc_params( GCPARAM("POLICY", saved policy));
+
+#--------- Wrapper PROCs for exit routines ----------#
+
+PROC exit = (INT n)VOID: posix exit(n);
+
+PROC at exit = (PROC VOID p)INT: iso at exit(cp OF TOPDESC p);
+
+PROC on exit = (PROC(INT,CPTR)VOID p,[]CHAR arg)INT:
+   linux on exit(cp OF TOPDESC p,CCHARPTRTOCSTR VCTOCHARPTR Z MAKERVC arg);
+
+PROC stop = VOID: exit(0);
+
+#--------- Wrapper PROC for signals -----------#
+
+PROC on signal = (INT sig, PROC(INT)VOID handler)VOID:
+   ansi signal(sig,cp OF TOPDESC handler);
+
+#--------- BITS packing -----------#
+
+PROC long bits pack = ([]BOOL vb)LONG BITS:
+(
+   LONG BITS t:=LONG 2r0;
+   FOR i FROM LWB vb TO long bits width MIN UPB vb
+   DO
+      t:=t SHL 1 OR LENG BIN ABS vb[i]
+   OD;
+   t
+); #long bits pack#
+
+PROC bits pack = ([]BOOL vb)BITS:
+(
+   BITS t:=2r0;
+   FOR i FROM LWB vb TO bits width MIN UPB vb
+   DO
+      t:=t SHL 1 OR BIN ABS vb[i]
+   OD;
+   t
+); #bits pack#
+
+PROC short bits pack = ([]BOOL vb)SHORT BITS:
+(
+   SHORT BITS t:=SHORT 2r0;
+   FOR i FROM LWB vb TO short bits width MIN UPB vb
+   DO
+      t:=t SHL 1 OR SHORTEN BIN ABS vb[i]
+   OD;
+   t
+); #short bits pack#
+
+PROC short short bits pack = ([]BOOL vb)SHORT SHORT BITS:
+(
+   SHORT SHORT BITS t:=SHORT SHORT 2r0;
+   FOR i FROM LWB vb TO short short bits width MIN UPB vb
+   DO
+      t:=t SHL 1 OR SHORTEN SHORTEN BIN ABS vb[i]
+   OD;
+   t
+); #short short bits pack#
+
+#----------- Command line processing -----------#
+
+PROC concat = (VECTOR[]RVC strs)RVC:
+BEGIN
+   INT len:=0;
+   FOR i TO UPB strs
+	DO
+		len PLUSAB UPB strs[i]
+	OD;
+   HEAP VECTOR[len+1]CHAR y;
+   len:=0;
+   FOR i TO UPB strs
+   DO
+      RVC str=strs[i];
+      INT lwb=len+1, upb=len+UPB str;  len PLUSAB UPB str;
+      y[lwb:upb]:=str
+   OD;
+   y[UPB y]:=null character;
+	y
+END; #concat#
+
+
+INT prelude = ALIEN "A_prelude"     # KEEP this #
+   "extern int A_argc;"
+   "extern char **A_argv;"
+	"extern char **A_envp;"
+   "#define A_prelude(argc,argv,envp) A_argc=argc; A_argv=argv; A_envp=envp";
+
+INT define_argc_argv_envp = ALIEN "dummy"
+   "int A_argc=0;"
+   "char **A_argv=NULL;"
+	"char **A_envp=NULL;";
+
+INT argc;
+CCHARPTRPTR argv,envp;
+
+BOOL args_initialised:=FALSE;
+
+REF VECTOR[]RVC arguments;
+
+PROC command line = RVC:
+IF args_initialised
+THEN concat(arguments)
+ELIF (argc:=INT CODE "RESULT=A_argc;") = 0
+THEN NIL
+ELSE
+   arguments:=HEAP VECTOR[2*argc]RVC;
+
+	argv:=CCHARPTRPTR CODE "RESULT=(void *)A_argv;";
+	envp:=CCHARPTRPTR CODE "RESULT=(void *)A_envp;";
+
+   FOR a TO UPB arguments
+   DO
+      REF RVC(arguments[a]):=IF NOT ODD a
+      							  THEN MAKERVC blank
+                             ELSE MAKERVC CSTRTORVC argv[(a+1)%2]
+                             FI
+   OD;
+   args_initialised:=TRUE;
+   concat(arguments)
+FI; #command line#
+
+#----------------  OS file access routines -------------#
+
+FILEBUFFER no buffer = (NIL, 0, 0, 0, FALSE, FALSE);
+
+PROC new filebuffer = (INT mtu)FILEBUFFER:
+IF mtu=0
+THEN no buffer
+ELSE (SYSBUFF mtu, mtu, 0, 0, FALSE, FALSE)
+FI;
+
+INT zero pos = 0;
+
+PROC error text = (INT e)RVC:  CSTRTORVC posix strerror(e);
+
+PROC system error = (REF FILE f)VOID:
+(
+   RVC et=concat((MAKERVC "system error (",
+                  CSTRTORVC posix strerror(errno),
+                  MAKERVC ") on ",idf OF book OF f,MAKERVC lf));
+   posix write(2,et,UPB et-1);
+   exit(errno)
+); #system error#
+
+INT
+   physical file end not mended   = 255,
+   logical file end not mended    = 254,
+   stand in redirected            = 253,
+   environment string unset       = 252,
+   environment string estab err   = 251,
+   estab invalid parameters       = 250,
+   open invalid parameters        = 249,
+   no program args                = 248,
+   value error not mended         = 247,
+	estab cannot resolve inet addr = 246,
+	estab inet alias wrong length  = 245;
+
+[]STRING trans err txt =
+   ("physical file end not mended",
+    "logical file end not mended",
+    "stand in redirected",
+    "environment string unset",
+    "environment string estab err",
+    "estab invalid parameters",
+    "open invalid parameters",
+    "no program args",
+    "value error not mended",
+	 "estab cannot resolve inet addr",
+	 "estab inet alias wrong length",
+    "unknown transput error");
+
+PROC transput error = (REF FILE f,INT err)VOID:
+(
+   RVC et=concat((MAKERVC "transput error (",
+                  MAKERVC trans err txt[(err > 246|256-err|9)],
+                  MAKERVC ") on ",idf OF book OF f,MAKERVC lf));
+   posix write(2,et,UPB et-1);
+   exit(err)
+); #transput error#
+
+BOOKTYPE
+   stand in   book = (TRUE, FALSE,TRUE, TRUE, FALSE),
+   stand out  book = (TRUE, TRUE, FALSE,TRUE, FALSE),
+   stand back book = (TRUE, TRUE, TRUE, TRUE, TRUE ),
+   io    ra   book = (TRUE, TRUE, TRUE, TRUE, FALSE), #mem channel#
+   io         book = (TRUE, TRUE, TRUE, FALSE,FALSE); #client/server socket#
+
+IOSTATE
+   init state        = (TRUE,  FALSE, TRUE,  FALSE, TRUE, -1, 0, no buffer, zero pos),
+   init closed state = (FALSE, FALSE, FALSE, FALSE, TRUE, -1, 0, no buffer, zero pos);
+
+
+PROC
+   set possible = (REF FILE f)BOOL: set possible OF type OF book OF f,
+   get possible = (REF FILE f)BOOL: get possible OF type OF book OF f,
+   put possible = (REF FILE f)BOOL: put possible OF type OF book OF f,
+   bin possible = (REF FILE f)BOOL: bin possible OF type OF book OF f,
+   reidf possible = (REF FILE f)BOOL: reidf possible OF type OF book OF f;
+
+PROC idf = (REF FILE f)RVC: idf OF book OF f;
+
+PROC reidf = (REF FILE f, STRING new idf)VOID:
+   reidf OF book OF f:=
+      IF reidf possible OF type OF book OF f
+                        ANDTH
+         opened OF state OF f
+      THEN MAKERVC new idf
+      ELSE NIL
+      FI; #reidf#
+
+PROC current pos = (REF FILE f)INT: pos OF state OF f;
+
+PROC logical end = (REF FILE f)INT: (logical end OF sys OF f) (f);
+
+PROC on logical file end = (REF FILE f,
+                            PROC(REF FILE)BOOL p)VOID:
+   logical file mended OF io OF f:=p;
+
+PROC on physical file end = (REF FILE f,
+                             PROC(REF FILE)BOOL p)VOID:
+   physical file mended OF io OF f:=p;
+
+PROC on value error = (REF FILE f,PROC(REF FILE)BOOL p)VOID:
+   value error mended OF io OF f:=p;
+
+PROC on char error = (REF FILE f,PROC(REF FILE,REF CHAR)BOOL p)VOID:
+   char error mended OF io OF f:=p;
+
+PROC make term = (REF FILE f, STRING term)VOID:
+    string term OF io OF f := STRINGTOBAG(lf+term);
+
+PROC set read mood  = (REF FILE f)VOID:
+IF   NOT read mood OF state OF f
+THEN
+   (flush buffer OF sys OF f) (f);
+   read mood OF state OF f := TRUE
+FI;
+
+PROC set write mood = (REF FILE f)VOID:
+IF   read mood OF state OF f
+THEN
+   (flush buffer OF sys OF f) (f);
+   read mood OF state OF f := FALSE
+FI;
+
+PROC establish = (REF FILE f, STRING idf, CHANNEL chann, INT p,l,c)INT:
+(
+   f := ((MAKERVC idf, MAKERVC "", type OF chann),
+         0, sys OF chann, default io OF chann, init closed state);
+
+   INT r=(estab OF sys OF chann) (f,p,l,c);  opened OF state OF f := r=0;
+   r
+); #establish#
+
+PROC open = (REF FILE f, UNION(CHAR,STRING,RVC) idf, CHANNEL chann)INT:
+(
+   f := (((idf|(CHAR c):   MAKERVC c,
+               (STRING s): MAKERVC s,
+               (RVC r):    r), #idf#
+          RVC(NIL),          #reidf#
+          type OF chann),
+         0, #sysfile#
+         sys OF chann, default io OF chann, init closed state);
+   INT r;
+   opened OF state OF f :=(r:=(open OF sys OF chann)(f)) = 0;
+   r
+); #open#
+
+PROC create = (REF FILE f,CHANNEL chann)INT: #Creates a work-file (see the RR)#
+(
+	VECTOR[14]CHAR unique id:="/tmp/qadXXXXXX";
+   INT create sysfile = bsd mkstemp(unique id);
+   f := ((unique id, RVC(NIL), type OF chann),
+			create sysfile,
+			sys OF chann, default io OF chann, init closed state);
+	INT r;
+	opened OF state OF f:=(r:=(open OF sys OF chann)(f)) = 0;
+	r
+); #create#
+
+PROC close = (REF FILE f)VOID:
+IF opened OF state OF f
+THEN
+   (close OF sys OF f) (f);  opened OF state OF f:=FALSE;
+   IF (RVC(reidf OF book OF f) ISNT NIL) ANDTH reidf OF book OF f/=""
+   THEN
+      IF posix rename(Z idf OF book OF f,Z reidf OF book OF f) = -1
+      THEN system error(f)
+      FI
+   FI;
+   ended OF state OF f:=TRUE
+FI; #close#
+
+
+PROC scratch = (REF FILE f)VOID:
+IF opened OF state OF f
+THEN
+   (close OF sys OF f) (f);  opened OF state OF f:=FALSE;
+   posix unlink (idf OF book OF f);
+   ended OF state OF f:=TRUE
+FI;
+
+PROC lock = (REF FILE f)VOID:
+IF
+   opened OF state OF f
+THEN
+   (close OF sys OF f) (f);
+   IF reidf possible OF type OF book OF f
+                     ANDTH
+      (RVC(reidf OF book OF f) ISNT NIL)
+   THEN
+      IF posix rename(idf OF book OF f, reidf OF book OF f)=-1
+      THEN system error(f)
+      ELSE bsd chmod(reidf OF book OF f,0)
+      FI
+   ELSE bsd chmod (idf OF book OF f, 0)
+   FI;  # remove all permissions #
+   opened OF state OF f:=FALSE;
+   ended OF state OF f:=TRUE
+FI;
+
+
+PROC reset = (REF FILE f)VOID:
+IF set possible OF type OF book OF f
+THEN
+   ended OF state OF f:=FALSE;
+   back ch OF state OF f:=-1;
+   IF opened OF state OF f
+            ANDTH
+      (set OF sys OF f) (f, zero pos)
+   THEN pos OF state OF f:=zero pos
+   ELIF opened OF state OF f
+   THEN ended OF state OF f:=TRUE
+   FI
+FI; #reset#
+
+
+PROC set = (REF FILE f, INT p,l,c)VOID:
+IF set possible OF type OF book OF f
+         ANDTH
+   NOT ended OF state OF f
+         ANDTH
+   opened OF state OF f
+THEN
+   back ch OF state OF f := -1;
+   IF (set OF sys OF f) (f, c) THEN pos OF state OF f := c FI
+FI; #set#
+
+
+PROC no file end = (REF FILE f)BOOL: FALSE;
+
+PROC ignore value error = (REF FILE f)BOOL: FALSE;
+
+PROC ignore char error = (REF FILE f, REF CHAR ch)BOOL: FALSE;
+
+IOPROCS default io procs =
+(
+   lf bag,
+   no file end,
+   no file end,
+   ignore value error,
+   ignore char error
+);
+
+
+BOOL expect crlf = FALSE;
+
+SYSFILE
+   sys stdin  = 0, #Linux stand in #
+   sys stdout = 1, #Linux stand out#
+   sys stderr = 2; #Linux stand err#
+
+PROC access mode = (BOOKTYPE type) BITS:
+    IF   get possible OF type AND put possible OF type THEN o rdwr
+    ELIF put possible OF type                          THEN o wronly
+    ELIF get possible OF type                          THEN o rdonly
+    ELSE o rdonly
+    FI;
+
+PROC sys estab = (REF FILE f, INT p, l, c)INT:
+IF INT default mode = ABS 8r 644;
+
+   INT r = posix open(Z idf OF book OF f,
+                      ABS(access mode (type OF book OF f)
+                      OR o creat OR o trunc),
+                      default mode);
+
+   r >= 0
+THEN
+   sysfile OF f := r;
+   last error OF state OF f := 0
+ELSE errno
+FI; #sys estab#
+
+
+PROC sys open = (REF FILE f)INT:
+IF INT default mode = ABS 8r 444;
+
+   INT r = posix open(Z idf OF book OF f,
+                      ABS access mode (type OF book OF f),
+                      default mode);
+
+   r >= 0
+THEN
+   sysfile OF f := r;
+   last error OF state OF f := 0
+ELSE errno
+FI; #sys open#
+
+
+PROC sys close = (REF FILE f) VOID:
+IF  posix close (sysfile OF f) < 0 # Cannot be called if f not open #
+THEN system error(f)
+FI;
+
+
+PROC sys get buf = (REF FILE f, BUFFER buf)INT:
+IF INT r = posix read(sysfile OF f, buf, UPB buf); r < 0
+THEN system error(f);  SKIP
+ELSE last error OF state OF f := 0; r
+FI; #sys get buf#
+
+
+PROC sys put buf = (REF FILE f, BUFFER buf)INT:
+IF INT r = posix write (sysfile OF f, buf, UPB buf); r < 0
+THEN system error(f);  SKIP
+ELSE last error OF state OF f := 0; r
+FI; #sys put buf#
+
+VECTOR[bytes per bits]CHAR char buffer;
+
+PROC sys get ch = (REF FILE f, REF CHAR c)BOOL:
+IF sys get buf (f, char buffer[:1]) /= 0
+THEN c := char buffer[1]; TRUE
+ELSE FALSE
+FI; #sys get ch#
+
+PROC sys put ch = (REF FILE f, CHAR c)BOOL:
+IF char buffer[1]:=c; sys put buf (f, char buffer[:1]) /= 0
+THEN TRUE
+ELSE FALSE
+FI; #sys put ch#
+
+PROC sys set = (REF FILE f, INT p) BOOL:
+IF INT r = posix lseek (sysfile OF f, p, posix seek set);
+   r < 0
+THEN system error(f);  SKIP
+ELSE last error OF state OF f := 0;  TRUE
+FI;
+
+PROC sys lpos = (REF FILE f)INT:
+IF INT curr = posix lseek (sysfile OF f, 0, posix seek cur); curr < 0
+THEN system error(f); SKIP
+ELIF INT end = posix lseek (sysfile OF f, 0, posix seek end); end < 0
+THEN system error(f); SKIP
+ELIF posix lseek (sysfile OF f, curr, posix seek set) < 0
+THEN system error(f); SKIP
+ELSE end
+FI; #sys lpos#
+
+PROC sys cpos = (REF FILE f) VOID:
+   pos OF buffer OF state OF f :=
+      pos OF state OF f :=
+         posix lseek (sysfile OF f, 0, posix seek cur);
+
+PROC no control stream = (REF FILE f, INT i)BOOL: FALSE;
+
+SYSPROCS
+  unbuf sysprocs =
+  (
+     sys estab, sys open, sys close,
+     sys set, sys lpos,
+     sys put buf, sys get buf,
+     (REF FILE f, INT bytes)RVC: SKIP,
+     (REF FILE f) VOID: SKIP,
+     sys put ch, sys get ch,
+     no control stream
+  );
+
+IOSTATE
+   char buf state:=(TRUE,FALSE,TRUE,FALSE,TRUE,-1,0,
+                    (char buffer,4,0,zero pos,FALSE,TRUE),zero pos);
+
+#
+        PRE-OPENED FILES
+#
+
+FILE stand in :=
+(
+    (HEAP VECTOR[8]CHAR:="stand in", NIL,
+     (FALSE, FALSE, TRUE, FALSE, FALSE)),
+    sys stdin,
+    unbuf sysprocs,
+    default io procs,
+    init state
+);
+
+FILE stand out :=
+(
+    (HEAP VECTOR[9]CHAR:="stand out", NIL,
+     (FALSE, TRUE, FALSE, FALSE, FALSE)),
+    sys stdout,
+    unbuf sysprocs,
+    default io procs,
+    init state
+);
+
+FILE stand error :=
+(
+    (HEAP VECTOR[11]CHAR:="stand error", NIL,
+     (TRUE, TRUE, FALSE, FALSE, FALSE)), #Cannot `set' on stand err#
+    sys stderr,
+    unbuf sysprocs,
+    default io procs,
+    init state
+);
+
+
+FILE stand back;
+
+COMMENT
+BUFFERED TRANSPUT SYSPROCS
+
+When a file is buffered, the INT in the FILE is not the same as that
+recorded by the underlying OS. In general, reading a buffered file means
+that the INT lags the OS, while writing to a buffered file means that the
+INT leads the OS.
+COMMENT
+
+PROC set flush after put = (REF FILE f) VOID:
+   flush after put OF buffer OF state OF f := TRUE;
+
+PROC sys flush buffer = (REF FILE f) VOID:
+(
+   IF   writeback OF buffer OF state OF f
+   THEN
+      IF sys put buf (f, (start OF buffer OF state OF f)[:
+                       valid OF buffer OF state OF f]) < valid OF buffer OF state OF f
+      THEN
+         IF (physical file mended OF io OF f)(f)
+         THEN sys flush buffer(f) #try again#
+         ELSE transput error(f,physical file end not mended)
+         FI
+      FI;
+      writeback OF buffer OF state OF f:=FALSE
+   ELIF ABS sysfile OF f > 2          #Linux: lseek illegal on stand in,out,err#
+   THEN sys set(f, pos OF state OF f) # ensure the OS file ptr is in step with f #
+   FI;
+
+   pos OF buffer OF state OF f := pos OF state OF f;
+   valid OF buffer OF state OF f := 0
+); #sys flush buffer#
+
+PROC ensure buf space = (REF FILE f, INT bytes)RVC:
+IF #Get the difference between the transput & buffer positions#
+   INT curr = pos OF state OF f - pos OF buffer OF state OF f; #curr>=0#
+
+   curr + bytes > IF read mood OF state OF f
+                  THEN valid OF buffer OF state OF f
+                  ELSE max OF buffer OF state OF f
+                  FI
+THEN
+    sys flush buffer (f);
+
+    valid OF buffer OF state OF f :=
+        IF   read mood OF state OF f
+        THEN sys get buf(f,(start OF buffer OF state OF f)[:
+                              max OF buffer OF state OF f])
+
+        ELSE 0
+        FI;
+
+    pos OF buffer OF state OF f := pos OF state OF f;
+    (start OF buffer OF state OF f)[:bytes]
+ELSE
+    (start OF buffer OF state OF f)[curr+1:curr+bytes] #+1 'cos the buffer is a vector#
+FI; #ensure buf space#
+
+PROC buff estab = (REF FILE f, INT p,l,c) INT:
+IF INT r=sys estab(f,p,l,c);  r=0
+THEN buffer OF state OF f := new filebuffer(4096); 0
+ELSE r
+FI; #buff estab#
+
+PROC buff open  = (REF FILE f)INT:
+IF INT r=sys open(f);  r=0
+THEN buffer OF state OF f := new filebuffer(4096); 0
+ELSE r
+FI; #buff open#
+
+PROC buff close  = (REF FILE f) VOID:
+BEGIN
+   sys flush buffer (f);
+   sys close (f);
+   start OF buffer OF state OF f:=NIL
+END; #buff close#
+
+PROC buff set = (REF FILE f, INT pos) BOOL:
+IF writeback OF buffer OF state OF f OREL
+   pos < pos OF buffer OF state OF f OREL
+   pos > pos OF buffer OF state OF f + valid OF buffer OF state OF f
+THEN
+   sys flush buffer(f);  sys set(f,pos);
+   pos OF buffer OF state OF f := pos;  TRUE
+ELSE TRUE
+FI; #buff set#
+
+PROC buff lpos = (REF FILE f)INT:
+BEGIN
+   INT sys = sys lpos (f);
+
+    sys MAX (pos OF buffer OF state OF f + valid OF buffer OF state OF f)
+END; #buff lpos#
+
+PROC buff put buf = (REF FILE f, BUFFER b) INT:
+   (sys flush buffer (f); sys put buf (f, b));
+
+PROC buff get buf = (REF FILE f, BUFFER b) INT:
+   (sys flush buffer (f); sys get buf (f, b));
+
+PROC buff get ch = (REF FILE f, REF CHAR c) BOOL:
+IF c := ensure buf space(f, 1)[1];
+   valid OF buffer OF state OF f > 0
+THEN TRUE
+ELIF (logical file mended OF io OF f)(f)
+THEN buff get ch(f,c) #try again#
+ELSE transput error(f,logical file end not mended);  SKIP
+FI; #buff get ch#
+
+PROC buff put ch = (REF FILE f, CHAR c) BOOL:
+(
+   ensure buf space (f, 1)[1]:=c;
+   valid OF buffer OF state OF f +:= 1;
+   writeback OF buffer OF state OF f := TRUE;
+   TRUE
+);
+
+SYSPROCS sysprocs =
+(
+    buff estab, buff open, buff close,
+    buff set, buff lpos,
+    buff put buf, buff get buf,
+    ensure buf space, sys flush buffer,
+    buff put ch, buff get ch,
+    no control stream
+);
+
+CO Keyboard channel -- Linux port
+   Created: PE59-11-24 Sian
+   Amended: PE61-01-15 Sian - changed size of termios CO
+
+VECTOR[4]CHAR kbd buffer;
+TERMIOS tattr, tattr orig;
+
+PROC kbd open = (REF FILE f)INT:
+IF bsd is a tty(sys stdin) /= 1
+THEN stand in redirected
+ELSE
+   linux tc get attr(sys stdin, RTERMIOSTOCCHARPTR tattr orig);
+#Vn1.0.4   direct setting#
+   tattr:=(2r0,2r0,c cflag OF tattr orig,2r0,c line OF tattr orig,
+	        c cc OF tattr orig,2r0,2r0);
+   (c cc OF tattr)[termios vmin ]:=SHORT SHORT 2r1; # wait for 1 char #
+   (c cc OF tattr)[termios vtime]:=SHORT SHORT 2r0; # no min. waiting time #
+   linux tc set attr(sys stdin, tcsanow, RTERMIOSTOCCHARPTR tattr);
+
+   state OF f:=(TRUE,  # read mood #
+                TRUE,  # char mood #
+                TRUE,  # opened    #
+                FALSE, # ended     #
+                TRUE,  # bol       #
+                -1,    # back ch   #
+                0,     # last error#
+                (kbd buffer, 1, 0, 0, FALSE, FALSE),
+                0);    # pos #
+   sysfile OF f:=sys stdin;
+   0
+FI; #kbd open#
+
+PROC kbd estab = (REF FILE f,INT p,l,c)INT: kbd open(f);
+
+PROC kbd close = (REF FILE f)VOID:
+BEGIN
+  linux tc set attr(sysfile OF f,tcsa now,RTERMIOSTOCCHARPTR tattr orig);
+  opened OF state OF f:=FALSE;
+  ended OF state OF f:=TRUE
+END; #kbd close#
+
+
+PROC kbd get ch = (REF FILE f,REF CHAR ch)BOOL:
+#Vn1.0.4 based on beav-1.40: wait for a char#
+BEGIN
+   WHILE posix read(sysfile OF f,kbd buffer,1)/=1 DO SKIP OD;
+   ch:=kbd buffer[1];  valid OF buffer OF state OF f:=1;  TRUE
+END; #kbd get ch#
+
+PROC kbd ensure buf space = (REF FILE f, INT n)RVC:
+(
+	kbd get ch(f, kbd buffer[1]);
+	kbd buffer[1]
+); #kbd ensure buf space#
+
+CHANNEL kbd channel =
+  ( (kbd estab, kbd open, kbd close,
+     SKIP,SKIP,     # no set or lpos #
+     SKIP,SKIP,     # no put/get buf #
+     kbd ensure buf space,
+     SKIP,          #no buffer#
+     SKIP,          # no put  #
+     kbd get ch, no control stream),
+    (TRUE, FALSE, TRUE, FALSE, FALSE),
+    default io procs );
+
+#------------------- argument channel -----------------#
+
+PROC arg open = (REF FILE f)INT:
+IF state OF f:=(TRUE,TRUE,TRUE,FALSE,TRUE,-1,0,no buffer,0);
+   (start OF buffer OF state OF f:=command line) IS NIL
+THEN no program args
+ELSE
+   REF FILEBUFFER fb=buffer OF state OF f;
+   max OF fb:=valid OF fb:=UPB start OF fb;
+   make term(f,blank);
+   0
+FI; #arg open#
+
+PROC arg estab = (REF FILE f, INT p, l, c)INT: arg open(f);
+
+PROC arg close = (REF FILE f)VOID: SKIP;
+
+PROC arg set = (REF FILE f, INT p)BOOL:
+(
+   last error OF state OF f:=0;
+   p>=0 & p<=valid OF buffer OF state OF f
+); #arg set#
+
+PROC arg lpos = (REF FILE f)INT: max OF buffer OF state OF f;
+
+PROC arg put buf = (REF FILE f,BUFFER b)INT: 0;
+PROC arg get buf = (REF FILE f,BUFFER b)INT: 0;
+
+PROC arg flush buffer = (REF FILE f)VOID: SKIP;
+
+PROC arg ensure bytes = (REF FILE f, INT bytes)RVC:
+IF REF FILEBUFFER fb = buffer OF state OF f;
+   pos OF state OF f = valid OF fb
+THEN
+   valid OF fb:=0;
+   (start OF fb)[:bytes]
+ELSE (start OF fb)[pos OF state OF f+1:pos OF state OF f+bytes]
+FI; #arg ensure bytes#
+
+PROC arg put ch = (REF FILE f, CHAR c)BOOL: FALSE;
+
+PROC arg get ch = (REF FILE f, REF CHAR c)BOOL:
+IF pos OF state OF f >= valid OF buffer OF state OF f
+THEN NOT(ended OF state OF f:=TRUE)
+ELSE
+   c:=arg ensure bytes(f, char bin bytes)[1];
+   valid OF buffer OF state OF f>0
+FI; #arg get ch#
+
+CHANNEL arg channel =
+(
+   (arg estab, arg open, arg close,
+    arg set, arg lpos, arg put buf, arg get buf,
+    arg ensure bytes, arg flush buffer,
+    arg put ch, arg get ch,
+    no control stream),
+   (FALSE, FALSE, TRUE, TRUE, FALSE), default io procs);
+
+#-------------------- env channel -------------------#
+
+PROC env estab = (REF FILE f, INT p, l, c)INT: environment string estab err;
+
+PROC env open = (REF FILE f)INT:
+IF CSTR cs;
+   (idf OF book OF f IS NIL)
+            OREL
+   (idf OF book OF f="")
+            OREL
+   (CSTR(cs:=posix get env(Z idf OF book OF f)) IS NIL)
+THEN environment string unset
+ELSE
+   INT csl=posix strlen(cs);
+   state OF f:=(TRUE,TRUE,TRUE,FALSE,TRUE,-1,0,
+                (HEAP VECTOR[1+csl]CHAR:=cs[:csl+1],0,0,0,FALSE,FALSE),zero pos);
+   max OF buffer OF state OF f:=valid OF buffer OF state OF f:=
+      UPB start OF buffer OF state OF f;
+   string term OF io OF f:=STRINGTOBAG (nul ch+lf); #default terminator#
+   sysfile OF f:=-1;
+   0
+FI; #env open#
+
+PROC env close = (REF FILE f)VOID: SKIP;
+
+PROC env set = (REF FILE f, INT p)BOOL:
+(
+   last error OF state OF f:=0;
+   p>=0 & p<=valid OF buffer OF state OF f
+); #env set#
+
+PROC env lpos = (REF FILE f)INT: valid OF buffer OF state OF f;
+
+PROC env put buf = (REF FILE f,BUFFER buf)INT: UPB buf;
+PROC env get buf = (REF FILE f,BUFFER buf)INT: UPB buf;
+
+PROC env flush buffer = (REF FILE f)VOID: SKIP;
+
+PROC env ensure bytes = (REF FILE f, INT bytes)RVC:
+IF REF FILEBUFFER fb = buffer OF state OF f;
+   pos OF state OF f = valid OF fb
+THEN valid OF fb:=0;   (start OF fb)[:bytes]
+ELSE (start OF fb)[pos OF state OF f+1:pos OF state OF f+bytes]
+FI; #env ensure bytes#
+
+PROC env put ch = (REF FILE f, CHAR c)BOOL: FALSE;
+
+PROC env get ch = (REF FILE f, REF CHAR c)BOOL:
+IF pos OF state OF f>=valid OF buffer OF state OF f
+THEN NOT(ended OF state OF f:=TRUE)
+ELSE
+   c:=env ensure bytes(f,1)[1];
+   valid OF buffer OF state OF f > 0
+FI; #env get ch#
+
+CHANNEL env channel =
+(
+   (env estab, env open, env close,
+    env set, env lpos, env put buf, env get buf,
+    env ensure bytes, env flush buffer,
+    env put ch, env get ch,
+    no control stream),
+   (FALSE, FALSE, TRUE, TRUE, FALSE),
+   default io procs);
+
+#------------------ mem channel -------------------#
+
+PROC mem estab = (REF FILE f, INT p, l, c)INT:
+IF state OF f:=(FALSE,FALSE,TRUE,FALSE,TRUE,-1,0,no buffer,zero pos);
+   p=1 & l=1 & c>0
+THEN
+   buffer OF state OF f:=(SYSBUFF c, c, 0, 0, FALSE, FALSE);
+   sysfile OF f:=-1;
+   0
+ELSE estab invalid parameters
+FI; #mem estab#
+
+PROC mem open = (REF FILE f)INT:
+IF (idf OF book OF f IS NIL)
+            OREL
+   (idf OF book OF f="")
+THEN open invalid parameters
+ELSE
+   state OF f:=(TRUE,FALSE,TRUE,FALSE,TRUE,-1,0,
+                (idf OF book OF f,UPB idf OF book OF f,
+                 UPB idf OF book OF f,0,FALSE,FALSE),0);
+   sysfile OF f:=-1;
+   0
+FI; #mem open#
+
+PROC mem close = (REF FILE f)VOID: SKIP;
+
+PROC mem set = (REF FILE f, INT p)BOOL:
+(
+   last error OF state OF f:=0;
+   p>=0 & p<=max OF buffer OF state OF f
+); #mem set#
+
+PROC mem lpos = (REF FILE f)INT: valid OF buffer OF state OF f;
+
+PROC mem put buf = (REF FILE f,BUFFER buf)INT: 0;
+PROC mem get buf = (REF FILE f,BUFFER buf)INT: 0;
+
+PROC mem flush buffer = (REF FILE f)VOID: SKIP;
+
+PROC mem ensure bytes = (REF FILE f, INT bytes)RVC:
+IF REF FILEBUFFER fb = buffer OF state OF f;
+   pos OF state OF f+bytes > IF read mood OF state OF f
+                             THEN valid OF fb
+                             ELSE max OF fb
+                             FI
+THEN #insufficient bytes are available#
+   valid OF fb:=0;
+   IF read mood OF state OF f
+   THEN
+      IF (logical file mended OF io OF f)(f)
+      THEN mem ensure bytes(f,bytes) #try again#
+      ELSE transput error(f,logical file end not mended)
+      FI
+   ELIF (physical file mended OF io OF f)(f)
+   THEN mem ensure bytes(f,bytes)  #try again#
+   ELSE transput error(f,physical file end not mended)
+   FI;
+   (start OF fb)[:bytes]
+ELSE (start OF fb)[pos OF state OF f+1:pos OF state OF f+bytes]
+FI; #mem ensure bytes#
+
+PROC mem put ch = (REF FILE f, CHAR c)BOOL:
+IF pos OF state OF f = max OF buffer OF state OF f
+THEN FALSE
+ELSE
+   mem ensure bytes(f, 1)[1]:=c;
+   valid OF buffer OF state OF f+:=1;
+   TRUE
+FI; #mem put ch#
+
+PROC mem get ch = (REF FILE f, REF CHAR c)BOOL:
+IF pos OF state OF f >= valid OF buffer OF state OF f
+THEN FALSE
+ELSE
+   c:=mem ensure bytes(f,1)[1];
+   valid OF buffer OF state OF f > 0
+FI; #mem get ch#
+
+CHANNEL mem channel =
+(
+   (mem estab, mem open, mem close,
+    mem set, mem lpos,
+    mem put buf, mem get buf,
+    mem ensure bytes, mem flush buffer,
+    mem put ch, mem get ch,
+    no control stream),
+   io ra book, default io procs);
+
+#------------------- socket channel --------------------#
+COMMENT
+   Created:  PE60-12-04 - Sian Leitch
+   Amended:  PE61-11=12 - Sian Leitch
+      ** changed to client socket channel & server socket channel **
+   Accessories:
+      accept(sock) yields an additional REF FILE for server socket transput.
+   Notes:
+   (1) Uses "sock stream" only, default protocol
+   (2) Provides Algol 68 wrapper PROCs for socket functions
+COMMENT
+
+INT backlog queue size = 5;
+
+PROC sys unpack str addr list = (CCHARPTRPTR a,INT l)REF[]STRING:
+BEGIN # a=the address of the list of addresses,
+        l=length of each address in bytes; 0=>null-terminated #
+	# count the number of addresses #
+	INT n:=0;
+	FOR i WHILE a[i] ISNT CSTR(NIL) DO n+:=1 OD;
+	HEAP[n]FLEX[1:l]CHAR hrs;
+
+	IF l>0
+	THEN #Fixed length strings#
+		FOR i TO n
+		DO
+			CSTR ai=a[i];
+			hrs[i]:=ai[:l]
+		OD
+	ELSE #null-terminated strings#
+		FOR i TO n
+		DO
+			hrs[n]:=VECTOR[]CHAR(CSTRTORVC a[i])
+		OD
+	FI;
+
+	hrs
+END; # sys unpack str addr list #
+
+PROC sys get inet addr = (RVC host,REF BITS iaddr)INT:
+IF CHAR h1=host[1];  h1>="0" & h1<="9"
+THEN #this is a dotted quad address#
+	IF   bsd inet aton(host,iaddr)=0
+	THEN estab invalid parameters
+	ELSE 0
+	FI
+ELIF #this is a symbolic address#
+	CCHARPTRPTR host hostent = bsd gethostbyname(Z host);
+	host hostent IS NIL
+THEN estab cannot resolve inet addr
+ELIF
+	INT h length = CSTRTOINT host hostent[4];
+	REF[]STRING h addr list=
+		sys unpack str addr list(TOCCHARPTRPTR host hostent[5],
+									    h length);
+
+   IF UPB h addr list>0
+	THEN UPB h addr list[1]/=h length
+	ELSE TRUE
+	FI
+THEN estab inet alias wrong length
+ELSE #convert the STRING to BITS#
+	STRING hl1=h addr list[1];  iaddr:=2r0;
+
+	FOR i TO 4 #ipv4 only#
+	DO
+		iaddr:=iaddr SHL 8 OR BIN ABS hl1[i] & 16rff
+	OD;
+
+	0
+FI; #sys get inet addr#
+
+PROC sock flush buffer = (REF FILE sf)VOID:
+BEGIN
+   IF write back OF buffer OF state OF sf
+   THEN
+      sys put buf(sf,
+                  (start OF buffer OF state OF sf)[:valid OF buffer OF state OF sf]);
+      write back OF buffer OF state OF sf:=FALSE
+   FI;
+   valid OF buffer OF state OF sf:=0;
+   pos OF buffer OF state OF sf:=pos OF state OF sf
+END; #sock flush buffer#
+
+PROC sock ensure buf space = (REF FILE sf, INT bytes)RVC:
+IF INT curr = pos OF state OF sf - pos OF buffer OF state OF sf;
+   curr + bytes > IF read mood OF state OF sf
+                  THEN valid OF buffer OF state OF sf
+                  ELSE max OF buffer OF state OF sf
+                  FI
+THEN
+   sock flush buffer(sf);
+   valid OF buffer OF state OF sf:=
+       IF read mood OF state OF sf
+       THEN sys get buf(sf, (start OF buffer OF state OF sf)
+                                  [: max OF buffer OF state OF sf])
+       ELSE 0
+       FI;
+   pos OF buffer OF state OF sf:=pos OF state OF sf;
+   (start OF buffer OF state OF sf)[:bytes]
+ELSE (start OF buffer OF state OF sf)[curr+1:curr+bytes]
+FI; #sock ensure buf bytes#
+
+INT
+   sock addr un sz = 110,
+   sock addr in sz = 16;
+
+PROC client sock estab = (REF FILE f, INT p, l, c)INT: #p=family, l=port c=MTU#
+IF p/=af unix & p/=af inet
+THEN estab invalid parameters
+ELIF
+   HEAP VECTOR[sock addr un sz MAX sock addr in sz]CHAR sock addr;
+   sock addr[:2]:=FLATB SHORTEN BIN p;
+   p = af unix
+THEN #family = af unix#
+   INT u = (sock addr un sz - 3) #SHORT BITS+nul ch#
+                    MIN
+           UPB idf OF book OF f;
+   sock addr[3:2+u]:=(idf OF book OF f)[:u];
+
+   IF (sysfile OF f:=bsd socket(p,sock stream,0)) = -1
+   THEN errno
+   ELIF
+      state OF f:=(FALSE, FALSE, TRUE, FALSE, TRUE, -1, 0,
+                   new filebuffer(c), zero pos);
+      bsd connect(sysfile OF f,sock addr,sock addr un sz)=-1
+   THEN errno
+   ELSE last error OF state OF f:=0
+   FI
+ELIF #family = af inet#
+   BITS inet addr:=2r0;
+	sys get inet addr(idf OF book OF f,inet addr)/=0
+THEN estab invalid parameters
+ELIF (sysfile OF f:=bsd socket(p,sock stream,0))=-1
+THEN errno
+ELIF
+   state OF f:=(FALSE,FALSE,TRUE,FALSE,TRUE,-1,0,
+                new file buffer(c),zero pos);
+   []CHAR htos=FLATB SHORTEN BIN l; #port#
+   sock addr[3]:=htos[2];  sock addr[4]:=htos[1]; #Internet order#
+   sock addr[5:8]:=FLATB inet addr; #Internet order#
+   bsd connect(sysfile OF f,sock addr,sock addr in sz)=-1
+THEN errno
+ELSE last error OF state OF f:=0
+FI; #client sock estab#
+
+PROC server sock estab = (REF FILE f, INT p, l, c)INT: #p=family, l=port c=MTU#
+IF p/=af unix & p/=af inet
+THEN estab invalid parameters
+ELIF
+   HEAP VECTOR[sock addr un sz MAX sock addr in sz]CHAR sock addr;
+   sock addr[:2]:=FLATB SHORTEN BIN p;
+   p = af unix
+THEN
+   INT u = (sock addr un sz - 3) #SHORT BITS+nul ch#
+                    MIN
+           UPB idf OF book OF f;
+   sock addr[3:2+u]:=(idf OF book OF f)[:u];
+   posix unlink(idf OF book OF f);
+
+   IF (sysfile OF f:=bsd socket(p,sock stream,0))=-1
+   THEN errno
+   ELIF bsd bind(sysfile OF f,sock addr,sock addr un sz)=-1
+   THEN errno
+   ELIF bsd listen(sysfile OF f,backlog queue size)=-1
+   THEN errno
+   ELSE last error OF state OF f:=0
+   FI
+ELIF #family = af inet#
+   BITS inet addr;
+	sys get inet addr(idf OF book OF f,inet addr)/=0
+THEN estab invalid parameters
+ELIF (sysfile OF f:=bsd socket(p,sock stream,0))=-1
+THEN errno
+ELIF
+   []CHAR htos=FLATB SHORTEN BIN l; #port#
+   sock addr[3]:=htos[2];  sock addr[4]:=htos[1]; #Internet order#
+   sock addr[5:8]:=FLATB inet addr; #Internet order#
+   bsd bind(sysfile OF f,sock addr,sock addr in sz)=-1
+THEN errno
+ELIF bsd listen(sysfile OF f,backlog queue size)=-1
+THEN errno
+ELSE last error OF state OF f:=0
+FI; #server sock estab#
+
+PROC sock open = (REF FILE s)INT:  open invalid parameters;
+
+PROC sock close = (REF FILE s)VOID:
+(
+   IF write back OF buffer OF state OF s
+   THEN sock flush buffer(s)
+   FI;
+   bsd shutdown(sysfile OF s,2 #send & receive#);
+   sys close(s)
+); #sock close#
+
+PROC sock lpos = (REF FILE s)INT:
+   pos OF buffer OF state OF s + valid OF buffer OF state OF s;
+
+PROC sock set = (REF FILE s, INT p)BOOL:
+IF write back OF buffer OF state OF s
+THEN sock flush buffer(s);  pos OF buffer OF state OF s:=p;  TRUE
+ELSE TRUE
+FI;
+
+PROC sock get ch = (REF FILE f, REF CHAR c) BOOL:
+(
+   c:=sock ensure buf space(f, 1)[1];
+   valid OF buffer OF state OF f > 0
+);
+
+PROC sock put ch = (REF FILE f, CHAR c) BOOL:
+(
+   sock ensure buf space (f, 1)[1]:=c;
+   valid OF buffer OF state OF f +:= 1;
+   writeback OF buffer OF state OF f:=TRUE
+); #sock put ch#
+
+PROC accept = (REF FILE s)REF FILE:
+(
+   HEAP VECTOR[sock addr un sz]CHAR client address;
+   HEAP FILE client sock:=s;
+   buffer OF state OF client sock:=new filebuffer(max OF buffer OF state OF s);
+   sysfile OF client sock:=bsd accept(sysfile OF s, client address, LOC INT);
+   client sock
+); #accept#
+
+
+CHANNEL
+   client socket channel = ((client sock estab, sock open, sock close,
+                             sock set, sock lpos,
+                             SKIP,SKIP,
+                             sock ensure buf space,
+                             sock flush buffer,
+                             sock put ch, sock get ch,
+                             no control stream),
+                            io book,
+                            default io procs);
+
+CHANNEL
+   server socket channel = ((server sock estab, sock open, sock close,
+                             sock set, sock lpos,
+                             SKIP,SKIP,
+                             sock ensure buf space,
+                             sock flush buffer,
+                             sock put ch, sock get ch,
+                             no control stream),
+                            io book,
+                            default io procs);
+
+CHANNEL stand in channel =
+(
+   sysprocs,
+   stand in book,
+   default ioprocs
+);
+
+CHANNEL stand out channel =
+(
+   sysprocs,
+   stand out book,
+   default ioprocs
+);
+
+CHANNEL stand back channel =
+(
+   sysprocs,
+   stand back book,
+   default ioprocs
+);
+
+PROC flush buffer = (REF FILE f) VOID: (flush buffer OF sys OF f) (f);
+PROC file buffer  = (REF FILE f)BUFFER: start OF buffer OF state OF f;
+
+#----------- primitives for character transput -----------#
+
+PROC put ch = (REF FILE f, CHAR c)VOID:
+IF (put ch OF sys OF f)(f, c)
+THEN bol OF state OF f:=(c=lf);  pos OF state OF f +:= 1
+ELIF (physical file mended OF io OF f)(f)
+THEN put ch(f,c) #try again#
+ELSE transput error(f,physical file end not mended)
+FI; #put ch#
+
+PROC get ch = (REF FILE f) CHAR:
+IF  back ch OF state OF f /= -1 ANDTH NOT ended OF state OF f
+THEN
+    CHAR ch = REPR back ch OF state OF f;
+    back ch OF state OF f := -1;
+    ch
+ELIF
+    CHAR ch := eof char;
+    (get ch OF sys OF f)(f, ch) ANDTH ch /= eof char
+THEN pos OF state OF f +:= 1; bol OF state OF f:=(ch=lf);  ch
+ELIF (logical file mended OF io OF f)(f)
+THEN get ch(f) #try again#
+ELSE transput error(f,logical file end not mended); SKIP
+FI; #get ch#
+
+PROC space = (REF FILE f)VOID:     set(f, 0,0,pos OF state OF f+1);
+PROC backspace = (REF FILE f)VOID: set(f, 0,0,pos OF state OF f-1);
+
+PROC back ch = (REF FILE f, CHAR c)VOID: back ch OF state OF f := ABS c;
+   { this is to allow a single backspace on streams that do not support backspace }
+
+PROC skip terminators = (REF FILE f)VOID:
+(
+   CHAR c;
+   WHILE c:=get ch(f); c ELEM string term OF io OF f DO SKIP OD;
+   back ch OF state OF f:=ABS c
+); #skip terminators#
+
+PROC get char = (REF FILE f)CHAR: #skips control chars only#
+(
+   CHAR c;
+   WHILE (c:=get ch(f))<" " DO SKIP OD;
+   c
+);
+
+PROC skip to char = (REF FILE f,CHAR ch)VOID:
+(
+   CHAR c;
+   WHILE (c:=get ch(f))/=ch DO SKIP OD
+); #skip to char#
+
+PROC newline = (REF FILE f) VOID:
+   (read mood OF state OF f | skip to char(f,lf) | put ch(f,lf));
+
+PROC newpage = (REF FILE f) VOID:
+   (read mood OF state OF f | skip to char(f,ff) | put ch(f,ff));
+
+# --------- binary transput primitives --------- #
+
+PRIO READ = 1, WRITE = 1;
+
+OP READ = (REF FILE f, RVC rc)VOID:
+IF UPB rc > max OF buffer OF state OF f
+THEN
+   f READ rc[:max OF buffer OF state OF f];
+   f READ rc[max OF buffer OF state OF f+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f,UPB rc);
+   valid OF buffer OF state OF f < UPB rc
+THEN #insufficient data in the file#
+   IF valid OF buffer OF state OF f > 0
+   THEN #some data read#
+      INT v=valid OF buffer OF state OF f;
+      rc[:v]:=buf[:v];
+      IF (logical file mended OF io OF f)(f)
+      THEN f READ rc[v+1:] #try for the remainder#
+      ELSE transput error(f,logical file end not mended)
+      FI
+   ELIF (logical file mended OF io OF f)(f) #no data read at all#
+   THEN f READ rc #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE  rc:=buf;  pos OF state OF f+:=UPB rc
+FI; #READ(REF FILE,RVC)#
+
+
+OP READ = (REF FILE f, REF[]CHAR rc)VOID:
+IF UPB rc > max OF buffer OF state OF f
+THEN
+   f READ rc[:max OF buffer OF state OF f];
+   f READ rc[max OF buffer OF state OF f+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f,UPB rc);
+   valid OF buffer OF state OF f < UPB rc
+THEN
+   IF valid OF buffer OF state OF f > 0
+   THEN
+      INT v=valid OF buffer OF state OF f;
+      rc[:v]:=buf[:v];
+      IF (logical file mended OF io OF f)(f)
+      THEN f READ rc[v+1:] #try for the remainder#
+      ELSE transput error(f,logical file end not mended)
+      FI
+   ELIF (logical file mended OF io OF f)(f) #no date read at all#
+   THEN f READ rc #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE  rc:=buf;  pos OF state OF f+:=UPB rc
+FI; #READ(REF FILE,REF[]CHAR)#
+
+
+OP READ = (REF FILE f, REF CHAR c)VOID:
+   (VECTOR[1]CHAR vc;  f READ vc;  c:=vc[1]);
+
+OP READ = (REF FILE f, REF LONG BITS b)VOID:
+IF b:=FLATRVLB(ensure buf space OF sys OF f)(f,long bits bin bytes);
+   valid OF buffer OF state OF f < long bits bin bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ b #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE pos OF state OF f+:=long bits bin bytes
+FI; #READ(REF FILE,REF LONG BITS)#
+
+OP READ = (REF FILE f, REF BITS b)VOID:
+IF b:=FLATRVB(ensure buf space OF sys OF f)(f,bits bin bytes);
+   valid OF buffer OF state OF f < bits bin bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ b #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE pos OF state OF f+:=bits bin bytes
+FI; #READ(REF FILE,REF BITS)#
+
+OP READ = (REF FILE f, REF SHORT BITS b)VOID:
+IF b:=FLATRVSB(ensure buf space OF sys OF f)(f,short bits bin bytes);
+   valid OF buffer OF state OF f < short bits bin bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ b #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE pos OF state OF f+:=short bits bin bytes
+FI; #READ(REF FILE,REF SHORT BITS)#
+
+OP READ = (REF FILE f, REF SHORT SHORT BITS b)VOID:
+IF b:=FLATRVSSB(ensure buf space OF sys OF f)(f,short short bits bin bytes);
+   valid OF buffer OF state OF f < short short bits bin bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ b #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE pos OF state OF f+:=short short bits bin bytes
+FI; #READ(REF FILE,REF SHORT SHORT BITS)#
+
+OP READ = (REF FILE f, REF[]LONG BITS rb)VOID:
+IF INT num bytes = long bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f % long bits bin bytes;
+   f READ rb[:mk];  f READ rb[mk+1:]
+ELIF
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rb #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rb
+   DO
+      INT i8 = ABS(BIN(i-1)SHL 3)+1;
+      rb[i]:=FLATRVLB(buf[i8:i8+7])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]LONG BITS)#
+
+OP READ = (REF FILE f, REF[]BITS rb)VOID:
+IF INT num bytes = bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f % bits bin bytes;
+   f READ rb[:mk];  f READ rb[mk+1:]
+ELIF
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rb #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rb
+   DO
+      INT i4 = ABS(BIN(i-1)SHL 2)+1;
+      rb[i]:=FLATRVB(buf[i4:i4+3])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]BITS)#
+
+OP READ = (REF FILE f, REF[]SHORT BITS rb)VOID:
+IF INT num bytes = short bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f % short bits bin bytes;
+   f READ rb[:mk];  f READ rb[mk+1:]
+ELIF
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rb #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rb
+   DO
+      INT i2 = ABS(BIN(i-1)SHL 1)+1;
+      rb[i]:=FLATRVSB(buf[i2:i2+1])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]SHORT BITS)#
+
+OP READ = (REF FILE f, REF[]SHORT SHORT BITS rb)VOID:
+IF INT num bytes = short short bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f % short short bits bin bytes;
+   f READ rb[:mk];  f READ rb[mk+1:]
+ELIF
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN #insufficient data read#
+   IF valid OF buffer OF state OF f > 0
+   THEN
+      INT v=valid OF buffer OF state OF f;
+      FOR i TO v DO rb[i]:=FLATRVSSB buf[i:i] OD;
+      IF (logical file mended OF io OF f)(f)
+      THEN f READ rb[v+1:] #try for the remainder#
+      ELSE transput error(f,logical file end not mended)
+      FI
+   ELIF (logical file mended OF io OF f)(f) #no data read at all#
+   THEN f READ rb #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rb
+   DO
+      rb[i]:=FLATRVSSB(buf[i:i])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]SHORT SHORT BITS)#
+
+OP READ = (REF FILE f, REF LONG INT n)VOID:
+   (LONG BITS b;  f READ b;  n:=ABS b);
+
+OP READ = (REF FILE f, REF INT n)VOID:
+   (BITS b;  f READ b;  n:=ABS b);
+
+OP READ = (REF FILE f, REF SHORT INT n)VOID:
+   (SHORT BITS b;  f READ b;  n:=ABS b);
+
+OP READ = (REF FILE f, REF SHORT SHORT INT n)VOID:
+   (SHORT SHORT BITS b;  f READ b;  n:=ABS b);
+
+OP READ = (REF FILE f, REF[]LONG INT rn)VOID:
+IF INT num bytes = long int bin bytes * UPB rn;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f% long int bin bytes;
+   f READ rn[:mk];  f READ rn[mk+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rn #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rn
+   DO
+      INT i8 = ABS(BIN(i-1)SHL 3)+1;
+      rn[i]:=ABS FLATRVLB(buf[i8:i8+7])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]LONG INT)#
+
+OP READ = (REF FILE f, REF[]INT rn)VOID:
+IF INT num bytes = int bin bytes * UPB rn;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f% int bin bytes;
+   f READ rn[:mk];  f READ rn[mk+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rn #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rn
+   DO
+      INT i4 = ABS(BIN(i-1)SHL 2)+1;
+      rn[i]:=ABS FLATRVB(buf[i4:i4+3])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]INT)#
+
+OP READ = (REF FILE f, REF[]SHORT INT rn)VOID:
+IF INT num bytes = short int bin bytes * UPB rn;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f% short int bin bytes;
+   f READ rn[:mk];  f READ rn[mk+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF (logical file mended OF io OF f)(f)
+   THEN f READ rn #try again#
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rn
+   DO
+      INT i2 = ABS(BIN(i-1)SHL 1)+1;
+      rn[i]:=ABS FLATRVSB(buf[i2:i2+1])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]SHORT INT)#
+
+OP READ = (REF FILE f, REF[]SHORT SHORT INT rn)VOID:
+IF INT num bytes = short short int bin bytes * UPB rn;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f% short short int bin bytes;
+   f READ rn[:mk];  f READ rn[mk+1:]
+ELIF
+   RVC buf=(ensure buf space OF sys OF f)(f, num bytes);
+   valid OF buffer OF state OF f < num bytes
+THEN
+   IF valid OF buffer OF state OF f > 0
+   THEN #some data read#
+      INT v=valid OF buffer OF state OF f;
+      FOR i TO v
+      DO
+         rn[i]:=ABS FLATRVSSB(buf[i:i])
+      OD;
+      IF (logical file mended OF io OF f)(f)
+      THEN f READ rn[v+1:]
+      ELSE transput error(f,logical file end not mended)
+      FI
+   ELIF (logical file mended OF io OF f)(f)
+   THEN f READ rn
+   ELSE transput error(f,logical file end not mended)
+   FI
+ELSE
+   FOR i TO UPB rn
+   DO
+      rn[i]:=ABS FLATRVSSB(buf[i:i])
+   OD;
+   pos OF state OF f+:=num bytes
+FI; #READ(REF FILE,REF[]SHORT SHORT INT)#
+
+OP WRITE = (REF FILE f, LONG BITS b)VOID:
+(
+   (ensure buf space OF sys OF f)(f, long bits bin bytes):=FLATB b;
+   valid OF buffer OF state OF f+:=long bits bin bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=long bits bin bytes
+); #WRITE(REF FILE,LONG BITS)#
+
+OP WRITE = (REF FILE f, BITS b)VOID:
+(
+   (ensure buf space OF sys OF f)(f, bits bin bytes):=FLATB b;
+   valid OF buffer OF state OF f+:=bits bin bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=bits bin bytes
+); #WRITE(REF FILE,BITS)#
+
+OP WRITE = (REF FILE f, SHORT BITS b)VOID:
+(
+   (ensure buf space OF sys OF f)(f, short bits bin bytes):=FLATB b;
+   valid OF buffer OF state OF f+:=short bits bin bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=short bits bin bytes
+); #WRITE(REF FILE,SHORT BITS)#
+
+OP WRITE = (REF FILE f, SHORT SHORT BITS b)VOID:
+(
+   (ensure buf space OF sys OF f)(f, short short bits bin bytes):=FLATB b;
+   valid OF buffer OF state OF f+:=short short bits bin bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=short short bits bin bytes
+); #WRITE(REF FILE,SHORT SHORT BITS)#
+
+OP WRITE = (REF FILE f, CHAR c)VOID: f WRITE SHORTEN SHORTEN BIN ABS c;
+
+OP WRITE = (REF FILE f, []LONG BITS rb)VOID:
+IF INT num bytes = long bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f%long bits bin bytes;
+   f WRITE rb[:mk];  f WRITE rb[mk+1:]
+ELSE
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   FOR i TO UPB rb
+   DO #subsumed here that long bits bin bytes = 8#
+      INT ik = ABS(BIN(i-1)SHL 3)+1;
+      buf[ik:ik+7]:=FLATB rb[i]
+   OD;
+
+   valid OF buffer OF state OF f+:=num bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=num bytes
+FI; #WRITE(REF FILE,[]LONG BITS)#
+
+OP WRITE = (REF FILE f, []BITS rb)VOID:
+IF INT num bytes = bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f%bits bin bytes;
+   f WRITE rb[:mk];  f WRITE rb[mk+1:]
+ELSE
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   FOR i TO UPB rb
+   DO #subsumed here that bits bin bytes = 4#
+
+      INT ik = ABS(BIN(i-1)SHL 2)+1;
+      buf[ik:ik+3]:=FLATB rb[i]
+   OD;
+
+   valid OF buffer OF state OF f+:=num bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=num bytes
+FI; #WRITE(REF FILE,[]BITS)#
+
+OP WRITE = (REF FILE f, []SHORT BITS rb)VOID:
+IF INT num bytes = short bits bin bytes * UPB rb;
+   num bytes > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f%short bits bin bytes;
+   f WRITE rb[:mk];  f WRITE rb[mk+1:]
+ELSE
+   RVC buf = (ensure buf space OF sys OF f)(f, num bytes);
+   FOR i TO UPB rb
+   DO #subsumed here that bits bin bytes = 2#
+      INT ik = ABS(BIN(i-1)SHL 1)+1;
+      buf[ik:ik+1]:=FLATB rb[i]
+   OD;
+
+   valid OF buffer OF state OF f+:=num bytes;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=num bytes
+FI; #WRITE(REF FILE,[]SHORT BITS)#
+
+OP WRITE = (REF FILE f, []SHORT SHORT BITS rb)VOID:
+IF UPB rb > max OF buffer OF state OF f
+THEN
+   INT mk = max OF buffer OF state OF f;
+   f WRITE rb[:mk];  f WRITE rb[mk+1:]
+ELSE
+   RVC buf = (ensure buf space OF sys OF f)(f, UPB rb);
+   FOR i TO UPB rb
+   DO
+      buf[i:i]:=FLATB rb[i]
+   OD;
+
+   valid OF buffer OF state OF f+:=UPB rb;
+   #presumes short short bits bin bytes = 1#
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=UPB rb
+FI; #WRITE(REF FILE,[]SHORT SHORT BITS)#
+
+OP WRITE = (REF FILE f, []CHAR rc)VOID:
+IF UPB rc > max OF buffer OF state OF f
+THEN
+   f WRITE rc[:max OF buffer OF state OF f];
+   f WRITE rc[max OF buffer OF state OF f+1:]
+ELSE
+   REF[]CHAR((ensure buf space OF sys OF f)(f,UPB rc)):=rc;
+   valid OF buffer OF state OF f+:=UPB rc;
+   writeback OF buffer OF state OF f:=TRUE;
+   pos OF state OF f+:=UPB rc
+FI; #WRITE(REF FILE,[]CHAR)#
+
+
+# --------- formatless transput --------- #
+
+PROC get = (REF FILE f, []UNION(SIMPLIN,PROC(REF FILE)VOID) x)VOID:
+IF opened OF state OF f
+         ANDTH
+   NOT ended OF state OF f
+         ANDTH
+   get possible OF type OF book OF f
+THEN
+   set read mood (f);  char mood OF state OF f:=TRUE;
+
+   FOR i FROM LWB x TO UPB x
+   DO
+      CASE x[i]
+      IN
+         (PROC(REF FILE)VOID pf):     pf(f),
+
+         (SIMPLIN si):
+            BEGIN
+               CHAR k;
+
+               PROC mend char = (CHARBAG s, CHAR sugg)VOID:
+               IF k:=sugg;
+                  NOT IF (char error mended OF io OF f)(f,k)
+                      THEN k ELEM s
+                      ELSE FALSE
+                      FI
+               THEN k:=sugg
+               FI; #mend char#
+
+               PROC skip initial spaces = VOID: #& lf, ff, tab etc#
+               WHILE (k:=get ch(f))<=blank DO SKIP OD;
+
+               PROC skip spaces = VOID:
+               WHILE (k:=get ch(f))=blank DO SKIP OD;
+
+               PROC read long integer = (REF LONG INT i)BOOL:
+               BEGIN
+                  BOOL ok:=TRUE;  BOOL neg = k="-";
+                  (neg OR k="+"|skip spaces);
+                  IF NOT(k ELEM radix 10 digit)
+                  THEN mend char(radix 10 digit,"0")
+                  FI;
+
+                  LONG INT j:=LENG char dig(k);
+
+                  WHILE
+                     k:=get char(f);
+                     IF NOT(k ELEM radix 10 digit)
+                     THEN back ch(f,k); FALSE
+                     ELSE (ok|ok:=j ADD char dig(k)); TRUE
+                     FI
+                  DO SKIP OD;
+
+                  IF ok THEN i:=(neg|-j|j) FI;
+                  ok
+               END; #read long integer#
+
+               PROC read integer = (REF INT i)BOOL:
+               BEGIN
+                  BOOL ok:=TRUE;  BOOL neg = k="-";
+                  (neg OR k="+"|skip spaces);
+                  IF NOT(k ELEM radix 10 digit)
+                  THEN mend char(radix 10 digit,"0")
+                  FI;
+
+                  INT j:=char dig(k);
+
+                  WHILE
+                     k:=get char(f);
+                     IF NOT(k ELEM radix 10 digit)
+                     THEN back ch(f,k); FALSE
+                     ELSE (ok|ok:=j ADD char dig(k)); TRUE
+                     FI
+                  DO SKIP OD;
+
+                  IF ok THEN i:=(neg|-j|j) FI;
+                  ok
+               END; #read integer#
+
+               PROC read short integer = (REF SHORT INT i)BOOL:
+               BEGIN
+                  BOOL ok:=TRUE;  BOOL neg = k="-";
+                  (neg OR k="+"|skip spaces);
+                  IF NOT(k ELEM radix 10 digit)
+                  THEN mend char(radix 10 digit,"0")
+                  FI;
+
+                  SHORT INT j:=SHORTEN char dig(k);
+
+                  WHILE
+                     k:=get char(f);
+                     IF NOT(k ELEM radix 10 digit)
+                     THEN back ch(f,k); FALSE
+                     ELSE (ok|ok:=j ADD char dig(k)); TRUE
+                     FI
+                  DO SKIP OD;
+
+                  IF ok THEN i:=(neg|-j|j) FI;
+                  ok
+               END; #read short integer#
+
+               PROC read short short integer = (REF SHORT SHORT INT i)BOOL:
+               BEGIN
+                  BOOL ok:=TRUE;  BOOL neg = k="-";
+                  (neg OR k="+"|skip spaces);
+                  IF NOT(k ELEM radix 10 digit)
+                  THEN mend char(radix 10 digit,"0")
+                  FI;
+
+                  SHORT SHORT INT j:=SHORTEN SHORTEN char dig(k);
+
+                  WHILE
+                     k:=get char(f);
+                     IF NOT(k ELEM radix 10 digit)
+                     THEN back ch(f,k); FALSE
+                     ELSE (ok|ok:=j ADD char dig(k)); TRUE
+                     FI
+                  DO SKIP OD;
+
+                  IF ok THEN i:=(neg|-j|j) FI;
+                  ok
+               END; #read short short integer#
+
+               PROC read l real = (UNION(REF REAL, REF SHORT REAL) r)BOOL:
+               BEGIN
+                  BOOL ok:=TRUE; BOOL neg = k="-"; INT lrw = RREALWIDTH r;
+                  (neg OR k="+"|skip spaces);
+                  [0:lrw]CHAR s; INT index:=-1, exp:=0;
+                  BOOL sig:=FALSE;
+
+                  PROC read digits = (BOOL after)VOID:
+                  BEGIN
+                     INT i = ABS after;
+                     IF NOT(k ELEM radix 10 digit)
+                     THEN mend char(radix 10 digit,"0")
+                     FI;
+
+                     WHILE
+                        IF NOT(k ELEM radix 10 digit)
+                        THEN FALSE
+                        ELIF
+                           IF sig:=sig OR k/="0"
+                           THEN (index < lrw|s[index+:=1]:=k|exp+:=1)
+                           FI;
+                           exp-:=i;
+                           k/=lf
+                        THEN k:=get ch(f); TRUE
+                        ELSE FALSE
+                        FI
+                     DO SKIP OD
+                  END; #read digits#
+
+                  (k/="."|read digits(FALSE));
+                  IF k="."
+                  THEN k:=get char(f);  read digits(TRUE)
+                  FI;
+
+                  IF k ELEM times ten to the power
+                  THEN
+                     INT e; skip spaces; ok:=read integer(e);
+                     IF ok:=ok & (SIGN e/=SIGN exp OR ABS e<=max int-ABS exp)
+                     THEN exp+:=e
+                     FI
+                  ELSE back ch(f,k)
+                  FI;
+
+                  IF NOT ok THEN FALSE
+                  ELSE string to l real(s[:index],exp,neg,r)
+                  FI
+               END; #read l real#
+
+               CASE si
+               IN
+                  (UNION(REF LONG INT, REF INT,
+                         REF SHORT INT, REF SHORT SHORT INT,
+                         REF REAL, REF SHORT REAL,
+                         REF COMPL, REF SHORT COMPL) irc):
+                  BEGIN
+                     skip initial spaces;
+                     IF NOT
+                        CASE irc
+                        IN
+                        (REF LONG INT ii): read long integer(ii),
+                        (REF INT ii):      read integer(ii),
+                        (REF SHORT INT ii): read short integer(ii),
+                        (REF SHORT SHORT INT ii):
+                                           read short short integer(ii),
+                        (UNION(REF REAL,REF SHORT REAL) rr):
+                                           read l real(rr),
+                        (REF COMPL zz):
+                           BEGIN
+                              BOOL ok = read l real(re OF zz);
+                              skip spaces;
+                              IF NOT(k ELEM plus i times)
+                              THEN mend char(plus i times,"i")
+                              FI;
+                              skip spaces;
+                              ok AND read l real(im OF zz)
+                           END,
+                        (REF SHORT COMPL zz):
+                           BEGIN
+                              BOOL ok = read l real(re OF zz);
+                              skip spaces;
+                              IF NOT(k ELEM plus i times)
+                              THEN mend char(plus i times,"i")
+                              FI;
+                              skip spaces;
+                              ok AND read l real(im OF zz)
+                           END
+                        ESAC
+                     THEN
+                        IF NOT(value error mended OF io OF f)(f)
+                        THEN transput error(f,value error not mended)
+                        FI
+                     FI
+                  END,
+
+                  (REF[]LONG INT rii):
+                     FOR i FROM LWB rii TO UPB rii
+                     DO get(f,rii[i]) OD,
+                  (REF[]INT rii):
+                     FOR i FROM LWB rii TO UPB rii
+                     DO get(f,rii[i]) OD,
+                  (REF[]SHORT INT rii):
+                     FOR i FROM LWB rii TO UPB rii
+                     DO get(f,rii[i]) OD,
+                  (REF[]SHORT SHORT INT rii):
+                     FOR i FROM LWB rii TO UPB rii
+                     DO get(f,rii[i]) OD,
+                  (REF[]REAL rri):
+                     FOR i FROM LWB rri TO UPB rri
+                     DO get(f,rri[i]) OD,
+                  (REF[]SHORT REAL rri):
+                     FOR i FROM LWB rri TO UPB rri
+                     DO get(f,rri[i]) OD,
+                  (REF[]COMPL rzz):
+                     FOR i FROM LWB rzz TO UPB rzz
+                     DO get(f,rzz[i]) OD,
+                  (REF[]SHORT COMPL rzz):
+                     FOR i FROM LWB rzz TO UPB rzz
+                     DO get(f,rzz[i]) OD,
+
+                  (REF BOOL bb):
+                     BEGIN
+                        skip initial spaces;
+                        IF NOT(k ELEM flip flop)
+                        THEN mend char(flip flop, flop)
+                        FI;
+                        bb:=k=flip
+                     END,
+                  (REF[]BOOL rbb):
+                     FOR i FROM LWB rbb TO UPB rbb
+                     DO get(f,rbb[i]) OD,
+
+                  (REF LONG BITS lb):
+                     BEGIN
+                        VECTOR[long bits width]BOOL b;
+
+                        FOR i TO long bits width
+                        DO
+                           skip initial spaces;
+                           IF NOT(k ELEM flip flop)
+                           THEN mend char(flip flop, flop)
+                           FI;
+                           b[i]:=k=flip
+                        OD;
+                        lb:=long bits pack(b)
+                     END,
+                  (REF BITS lb):
+                     BEGIN
+                        VECTOR[bits width]BOOL b;
+
+                        FOR i TO bits width
+                        DO
+                           skip initial spaces;
+                           IF NOT (k ELEM flip flop)
+                           THEN mend char(flip flop, flop)
+                           FI;
+                           b[i]:=k=flip
+                        OD;
+                        lb:=bits pack(b)
+                     END,
+                  (REF SHORT BITS lb):
+                     BEGIN
+                        VECTOR[short bits width]BOOL b;
+
+                        FOR i TO short bits width
+                        DO
+                           skip initial spaces;
+                           IF NOT (k ELEM flip flop)
+                           THEN mend char(flip flop, flop)
+                           FI;
+                           b[i]:=k=flip
+                        OD;
+                        lb:=short bits pack(b)
+                     END,
+                  (REF SHORT SHORT BITS lb):
+                     BEGIN
+                        VECTOR[short short bits width]BOOL b;
+
+                        FOR i TO short short bits width
+                        DO
+                           skip initial spaces;
+                           IF NOT (k ELEM flip flop)
+                           THEN mend char(flip flop, flop)
+                           FI;
+                           b[i]:=k=flip
+                        OD;
+                        lb:=short short bits pack(b)
+                     END,
+
+                  (REF[]LONG BITS rlb):
+                     FOR i FROM LWB rlb TO UPB rlb
+                     DO get(f,rlb[i]) OD,
+                  (REF[]BITS rlb):
+                     FOR i FROM LWB rlb TO UPB rlb
+                     DO get(f,rlb[i]) OD,
+                  (REF[]SHORT BITS rlb):
+                     FOR i FROM LWB rlb TO UPB rlb
+                     DO get(f,rlb[i]) OD,
+                  (REF[]SHORT SHORT BITS rlb):
+                     FOR i FROM LWB rlb TO UPB rlb
+                     DO get(f,rlb[i]) OD,
+
+                  (REF CHAR cc): cc:=get char(f),
+                  (REF[]CHAR ss):
+                     FOR i FROM LWB ss TO UPB ss
+                     DO ss[i]:=get char(f) OD,
+                  (REF STRING ss):
+                     BEGIN
+                        INT index:=0;
+                        REF[]CHAR s:=LOC[256]CHAR;
+                        WHILE
+                           IF k:=get ch(f);
+                              k ELEM string term OF io OF f
+                           THEN back ch(f, k); FALSE
+                           ELSE TRUE
+                           FI
+                        DO
+                           IF index = UPB s
+                           THEN HEAP[2*UPB s]CHAR t;  t[:UPB s]:=s; s:=t
+                           FI;
+                           s[index+:=1]:=k
+                        OD;
+                        ss:=s[:index]
+                     END, #REF STRING#
+                  (STRAIGHT SIMPLIN st):
+                     FOR i FROM LWB st TO UPB st DO get(f,st[i]) OD
+               ESAC #si#
+            END #simplin#
+      ESAC #x[i]#
+   OD
+FI; #get#
+
+PROC put = (REF FILE f, []UNION(SIMPLOUT,PROC(REF FILE)VOID) x) VOID:
+IF opened OF state OF f
+          ANDTH
+   NOT ended OF state OF f
+         ANDTH
+   put possible OF type OF book OF f
+THEN
+   set write mood (f); char mood OF state OF f:=TRUE;
+
+   FOR i FROM LWB x TO UPB x
+   DO
+      CASE x[i]
+      IN
+         (PROC(REF FILE)VOID pf): pf(f),
+         (SIMPLOUT so):
+         BEGIN
+            CASE so
+            IN
+               (UNION(NUMBER,COMPL,SHORT COMPL) nc):
+               BEGIN
+                  (NOT bol OF state OF f|put ch(f,blank));
+
+                  CASE nc
+                  IN
+                     (UNION(LONG INT,INT,SHORT INT,SHORT SHORT INT) k):
+                        put(f,whole(k,1+INTWIDTH k)),
+                     (UNION(REAL,SHORT REAL) r):
+                        (INT rw=REALWIDTH r, ew=EXPWIDTH r;
+                         put(f,float(r,rw+ew+3,rw,ew))),
+                     (COMPL z):
+                        (INT rw=REALWIDTH re OF z, ew=EXPWIDTH re OF z;
+                         put(f,(float(re OF z,rw+ew+3,rw,ew)," i ",
+                                float(im OF z,rw+ew+3,rw,ew)))),
+                     (SHORT COMPL z):
+                        (INT rw=REALWIDTH re OF z, ew=EXPWIDTH re OF z;
+                         put(f,(float(re OF z,rw+ew+3,rw,ew)," i ",
+                                float(im OF z,rw+ew+3,rw,ew))))
+                  ESAC #nc#
+               END, #numeric#
+
+               ([]LONG INT nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]INT nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]SHORT INT nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]SHORT SHORT INT nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]REAL nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]SHORT REAL nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]COMPL nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+               ([]SHORT COMPL nn):
+                  FOR i FROM LWB nn TO UPB nn DO put(f,nn[i]) OD,
+
+               (BOOL b):      put ch(f, (b|flip|flop)),
+               ([]BOOL rb):   FOR i FROM LWB rb TO UPB rb
+                              DO put ch(f,(rb[i]|flip|flop)) OD,
+
+               (LONG BITS lt):
+                  FOR k TO long bits width
+                  DO put ch(f,(k ELEM lt|flip|flop)) OD,
+               (BITS t):
+                  FOR k TO bits width
+                  DO put ch(f,(k ELEM t|flip|flop)) OD,
+               (SHORT BITS st):
+                  FOR k TO short bits width
+                  DO put ch(f,(k ELEM st|flip|flop)) OD,
+               (SHORT SHORT BITS sst):
+                  FOR k TO short short bits width
+                  DO put ch(f,(k ELEM sst|flip|flop)) OD,
+
+               ([]LONG BITS rlh):
+                  FOR i FROM LWB rlh TO UPB rlh
+                  DO
+                     FOR k TO long bits width
+                     DO put ch(f,(k ELEM rlh[k]|flip|flop)) OD
+                  OD,
+               ([]BITS rh):
+                  FOR i FROM LWB rh TO UPB rh
+                  DO
+                     FOR k TO bits width
+                     DO put ch(f,(k ELEM rh[k]|flip|flop)) OD
+                  OD,
+               ([]SHORT BITS rsh):
+                  FOR i FROM LWB rsh TO UPB rsh
+                  DO
+                     FOR k TO short bits width
+                     DO put ch(f,(k ELEM rsh[k]|flip|flop)) OD
+                  OD,
+               ([]SHORT SHORT BITS rssh):
+                  FOR i FROM LWB rssh TO UPB rssh
+                  DO
+                     FOR k TO short short bits width
+                     DO put ch(f,(k ELEM rssh[k]|flip|flop)) OD
+                  OD,
+
+               (CHAR c): put ch(f, c),
+               ([]CHAR ss):
+                  FOR i FROM LWB ss TO UPB ss DO put ch(f, ss[i]) OD,
+
+               (STRAIGHT SIMPLOUT st):
+                  FOR i FROM LWB st TO UPB st DO put(f,st[i]) OD
+              ESAC #so#
+         END
+      ESAC #x[i]#
+   OD;
+
+   IF flush after put OF buffer OF state OF f THEN flush buffer (f) FI
+FI; #put#
+
+PROC read = ([]UNION(SIMPLIN,PROC(REF FILE)VOID) x)VOID: get(standin, x);
+
+PROC print = ([]UNION(SIMPLOUT,PROC(REF FILE)VOID) x)VOID: put(standout, x);
+PROC write = ([]UNION(SIMPLOUT,PROC(REF FILE)VOID) x)VOID: put(standout, x);
+
+# ----------- binary transput ----------- #
+
+PROC get bin = (REF FILE f, []SIMPLIN items) VOID:
+IF
+   opened OF state OF f
+         ANDTH
+   get possible OF type OF book OF f
+         ANDTH
+   bin possible OF type OF book OF f
+THEN
+   set read mood (f); char mood OF state OF f:=FALSE;
+
+   FOR n TO UPB items
+   DO
+      CASE items [n]
+      IN
+         (REF CHAR c):       f READ c,
+         (REF []CHAR rc):    f READ rc[AT 1],
+         (REF STRING rs):
+            BEGIN
+               CHAR ch;
+               REF[]CHAR rc:=HEAP[1:256]CHAR;
+               INT u:=LWB rc-1;
+
+               WHILE f READ ch;  NOT(ch ELEM string term OF io OF f)
+               DO
+                  REF[]CHAR(rc)[u+:=1]:=ch;
+                  IF u=UPB rc
+                  THEN HEAP[1:2*UPB rc]CHAR t; t[:u]:=rc;  rc:=t
+                  FI
+               OD;
+               rs:=rc[:u]
+            END,
+
+         (REF BOOL b):       b:=(BITS t; f READ t; t/=16r0),
+         (REF []BOOL rb):    FOR i FROM LWB rb TO UPB rb
+                             DO
+                                  rb[i]:=(BITS t; f READ t; t/=16r0)
+                             OD,
+
+         (REF LONG INT i):   f READ i,
+         (REF INT i):        f READ i,
+         (REF SHORT INT i):  f READ i,
+         (REF SHORT SHORT INT i): f READ i,
+
+         (REF[]LONG INT rn): f READ rn[AT 1],
+         (REF[]INT rn):      f READ rn[AT 1],
+         (REF[]SHORT INT rn):f READ rn[AT 1],
+         (REF[]SHORT SHORT INT rn): f READ rn[AT 1],
+
+         (REF LONG BITS b):  f READ b,
+         (REF BITS b):       f READ b,
+         (REF SHORT BITS b): f READ b,
+         (REF SHORT SHORT BITS b): f READ b,
+
+         (REF []LONG BITS rb): f READ rb [AT 1],
+         (REF []BITS rb):   f READ rb [AT 1],
+         (REF []SHORT BITS rb): f READ rb [AT 1],
+         (REF []SHORT SHORT BITS rb): f READ rb [AT 1],
+
+         (REF REAL r):      r:=(VECTOR[8]CHAR v8; f READ v8;
+                                FLATRVR v8),
+         (REF []REAL rr):   FOR i FROM LWB rr TO UPB rr
+                            DO
+                                VECTOR[8]CHAR v8;  f READ v8;
+                               rr[i]:=FLATRVR v8
+                            OD,
+
+         (REF SHORT REAL r):r:=(VECTOR[4]CHAR v4; f READ v4;
+                                FLATRVSR v4),
+         (REF[]SHORT REAL rr):
+                            FOR i FROM LWB rr TO UPB rr
+                            DO
+                                VECTOR[4]CHAR v4;  f READ v4;
+                               rr[i]:=FLATRVSR v4
+                            OD,
+
+         (REF COMPL z):     get bin(f,(re OF z,im OF z)),
+         (REF []COMPL rz):  FOR i FROM LWB rz TO UPB rz
+                            DO get bin(f,(re OF rz[i], im OF rz[i])) OD,
+
+         (REF SHORT COMPL sz):
+                            get bin(f,(re OF sz,im OF sz)),
+         (REF[]SHORT COMPL rsz):
+                            FOR i FROM LWB rsz TO UPB rsz
+                            DO get bin(f,(re OF rsz[i], im OF rsz[i])) OD,
+
+         (STRAIGHT SIMPLIN st):
+                            FOR i FROM LWB st TO UPB st
+                            DO get bin(f, st[i]) OD
+      ESAC
+   OD
+FI; #get bin#
+
+
+PROC put bin = (REF FILE f, []SIMPLOUT items) VOID:
+IF
+   opened OF state OF f
+         ANDTH
+   put possible OF type OF book OF f
+         ANDTH
+   bin possible OF type OF book OF f
+THEN
+   set write mood (f); char mood OF state OF f:=FALSE;
+
+   FOR n TO UPB items
+   DO
+      CASE items [n]
+      IN
+         (CHAR c):      f WRITE c,
+         ([]CHAR rc):   f WRITE rc [AT 1],
+
+         (BOOL b):      f WRITE BIN ABS b,
+         ([]BOOL rb):   FOR i FROM LWB rb TO UPB rb DO f WRITE BIN ABS rb[i]  OD,
+
+         (LONG BITS b): f WRITE b,
+         (BITS b):      f WRITE b,
+         (SHORT BITS b):f WRITE b,
+         (SHORT SHORT BITS b): f WRITE b,
+
+         ([]LONG BITS rb):
+                        FOR i FROM LWB rb TO UPB rb DO f WRITE rb[i] OD,
+         ([]BITS rb):   FOR i FROM LWB rb TO UPB rb DO f WRITE rb[i] OD,
+         ([]SHORT BITS rb):
+                        FOR i FROM LWB rb TO UPB rb DO f WRITE rb[i] OD,
+         ([]SHORT SHORT BITS rb):
+                        FOR i FROM LWB rb TO UPB rb DO f WRITE rb[i] OD,
+
+         (LONG INT i):  f WRITE BIN i,
+         (INT i):       f WRITE BIN i,
+         (SHORT INT i): f WRITE BIN i,
+         (SHORT SHORT INT i):
+                        f WRITE BIN i,
+
+         ([]LONG INT ri):
+                        FOR i FROM LWB ri TO UPB ri DO f WRITE BIN ri[i] OD,
+         ([]INT ri):    FOR i FROM LWB ri TO UPB ri DO f WRITE BIN ri[i] OD,
+         ([]SHORT INT ri):
+                        FOR i FROM LWB ri TO UPB ri DO f WRITE BIN ri[i] OD,
+         ([]SHORT SHORT INT ri):
+                        FOR i FROM LWB ri TO UPB ri DO f WRITE BIN ri[i] OD,
+
+         (REAL r):      f WRITE FLAT r,
+         ([]REAL rr):   FOR i FROM LWB rr TO UPB rr DO f WRITE FLAT rr[i] OD,
+
+         (SHORT REAL r):f WRITE FLAT r,
+         ([]SHORT REAL rr):
+                        FOR i FROM LWB rr TO UPB rr DO f WRITE FLAT rr[i] OD,
+
+         (COMPL z):     put bin(f,(re OF z, im OF z)),
+         ([]COMPL rz):  FOR i FROM LWB rz TO UPB rz
+                        DO put bin(f,(re OF rz[i], im OF rz[i])) OD,
+
+         (SHORT COMPL z):
+                        put bin(f,(re OF z, im OF z)),
+         ([]SHORT COMPL rz):
+                        FOR i FROM LWB rz TO UPB rz
+                        DO put bin(f,(re OF rz[i], im OF rz[i])) OD,
+
+         (STRAIGHT SIMPLOUT st):
+                        FOR i FROM LWB st TO UPB st
+                        DO put bin(f, st[i]) OD
+      ESAC
+   OD;
+
+   IF flush after put OF buffer OF state OF f
+   THEN flush buffer(f)
+   FI
+FI;
+
+PROC read bin  = ([]SIMPLIN  items)VOID: get bin(stand back, items);
+PROC write bin = ([]SIMPLOUT items)VOID: put bin(stand back, items);
+
+SKIP
+
+KEEP
+
+prelude, argc, argv, envp,
+
+set_gc_params, get_gc_param,
+disable_garbage_collector, enable_garbage_collector,
+exit, at exit, on exit, stop,
+on signal,
+
+long bits pack, bits pack, short bits pack, short short bits pack,
+error text,
+physical file end not mended,
+logical file end not mended,
+stand in redirected,
+environment string unset,
+environment string estab err,
+estab invalid parameters,
+open invalid parameters,
+no program args,
+value error not mended,
+
+set possible, get possible, put possible, bin possible, reidf possible,
+idf, reidf, current pos, logical end, set flush after put,
+
+on logical file end, on physical file end,
+on value error, on char error,
+make term,
+
+establish, open, create, close, scratch, lock,
+reset, set,
+no file end, ignore value error, ignore char error,
+
+stand in, stand out, stand error, stand back,
+kbd channel, arg channel, env channel, mem channel,
+accept, client socket channel, server socket channel,
+stand in channel, stand out channel, stand back channel,
+
+file buffer, flush buffer,
+
+space, backspace, skip terminators, newline, newpage,
+get, put, read, print, write,
+get bin, put bin, read bin, write bin,
+
+stand in book, stand out book, stand back book
+
+FINISH

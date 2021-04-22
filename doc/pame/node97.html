@@ -1,0 +1,258 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Primaries</title>
+<meta name="description" content="primaries">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node98.html">
+<link rel="previous" href="node96.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node98.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2289"
+  href="node98.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2283"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2277"
+  href="node96.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2285"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2287"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2290"
+  href="node98.html">Secondaries</a>
+<b> Up:</b> <a name="tex2html2284"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2278"
+  href="node96.html">Enclosed clauses</a>
+ &nbsp; <b>  <a name="tex2html2286"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2288"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2291"
+  href="node97.html#section001251000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001250000000000000000"></a><a name="gram-prim"></a>
+Primaries</h1>
+
+<p>Primaries are denotations, applied identifiers, casts, calls and
+slices. We have met denotations<a name="6609"></a> in chapters
+1,&nbsp;4 and&nbsp;6. Only plain values<a name="6610"></a>, routines
+and a special name (<code>NIL</code>) have a denotation.
+<code>NIL</code> is dealt with in the section on tertiaries and the
+mode <code>BITS</code> is covered in chapter&nbsp;11.
+Applied-identifiers means identifiers being used in a context, rather
+than in their declarations.  We have met numerous examples of these.
+Routine denotations are not primaries.</p>
+
+<p>A <b>cast</b><a name="6612"></a> consists of a mode
+indicant<a name="6613"></a> followed by an enclosed clause, usually a
+closed clause. Here is a formula with a cast:</p>
+
+<pre>
+   3.4 * REAL (i)
+</pre>
+
+<p>where <code>i</code> has mode <code>INT</code>. The cast puts the
+enclosed clause in a strong context. Thus, in the above formula, the
+normal context of an operand is firm (see chapter&nbsp;2), but the
+cast causes the value of <code>i</code> to be widened to a
+<code>REAL</code>. Casts are usually used in formul&#230; and identity
+relations<a name="6617"></a> (see sections
+<a href="node100.html#gram-quat">10.8</a> and
+<a href="node112.html#adv-idrel">11.6</a>). Casts are sometimes used
+to coerce a conditional or case clause where
+balancing<a name="6620"></a> is insufficient to provide the mode
+required (see section&nbsp;<a href="node101.html#gram-bal">10.9</a>
+later in this chapter). The mode indicant can be any mode and can
+contain any of the mode-constructors such as <code>REF</code> or
+<code>PROC</code> or <code>[]</code> (but it should not be a
+generator<a name="6622"></a>, which is not a mode indicant). Care
+should be taken when using a structured mode. For example, in this
+formula,</p>
+
+<pre>
+   3 * STRUCT(INT k)(4)
+</pre>
+
+<p>assuming that the operator has been declared for operands of modes
+<code>INT</code> and <code>STRUCT(INT k)</code>, the cast must include the
+field selector<a name="6625"></a> because it is part of the mode.</p>
+
+<p>Calls<a name="6626"></a> were discussed in sections
+<a href="node63.html#rout-npprocs">6.3.1</a> and
+<a href="node63.html#rout-parprocs">6.3.2</a>. Here is a simple
+example:</p>
+
+<pre>
+   sqrt(0.7)
+</pre>
+
+<p>In this call, <code>sqrt</code> is itself a primary (it is an
+applied-identifier<a name="6631"></a>). In
+section&nbsp;<a href="node94.html#gram-contexts">10.2</a>, it was
+mentioned that the primary of a call is in a meek
+context<a name="6633"></a>. This applies even if the call itself (as a
+whole) is in a strong context. The primary of a call can be an
+enclosed clause. For example,</p>
+
+<pre>
+   (a&gt;4|sqrt|sin)(x)
+</pre>
+
+<p>which yields <code>sqrt(x)</code> if <code>a &gt; 4</code> and
+<code>sin(x)</code> otherwise. In this case, the primary is</p>
+
+<pre>
+   (a&gt;4|sqrt|sin)
+</pre>
+
+<p>We discussed slices<a name="6638"></a> in section
+<a href="node30.html#rep-slice">3.2</a>. They include simple
+subscripting.  For example, given the declaration</p>
+
+<pre>
+   [,]INT r = ((1,2,3),(4,5,6))
+</pre>
+
+<p>the units <code>r[1,]</code> and <code>r[2,3]</code> are both
+slices. Whatever the context of the slice, the context of the primary
+of the slice (<code>r</code> in these examples) is always
+weak<a name="6642"></a>. This means that only weak-dereferencing is
+allowed. Thus, given the phrases<a name="6643"></a></p>
+
+<pre>
+   [2,3]INT s:=r;  INT p:=s[2,1]
+</pre>
+
+<p>the slice <code>s[2,1]</code> is in a strong
+context<a name="6646"></a>, but the <code>s</code> is in a weak
+context, so the name that <code>s</code> identifies, which has the
+mode <code>REF[,]INT</code> will not be dereferenced, though the
+slice, which has mode <code>REF INT</code>, will be.</p>
+
+<p><a name="gram-slice"></a>There is another consequence of the weak
+context of the primary of a slice: row-displays can only be used in a
+strong context. So if you want to change the bounds of a row-display,
+because the slicer will produce a weak context, the row-display must
+be enclosed in a cast.</p>
+
+<p>The context of subscripts and bounds in trimmers is
+meek<a name="6648"></a> and they must be units.</p>
+
+<p>All enclosed clauses are primaries, but not all primaries are
+enclosed clauses.</p>
+
+<hr>
+<h2><a name="section001251000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.5<a name="ex-x-v"></a>
+<dd>What are the contexts of Ans<a href="node144.html#ans-x-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>p</code> (mode <code>REF[]REAL</code>) in <code>[]REAL (p[3])</code>
+ 
+<p>
+<dt>(b)
+<dd><code>q</code> (mode <code>PROC(REAL)INT</code>) in <code>REAL(q(0.5))</code>
+ 
+<p>
+</dd>
+</dl>
+<dt>10.6<a name="ex-x-vi"></a>
+<dd>How many primaries are there in each of the following units: Ans<a href="node144.html#ans-x-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>3 * (1.4 + r)/2**6</code>  
+<p>
+<dt>(b)
+<dd><code>p:=sqrt(r) - 6</code>  
+<p>
+<dt>(c)
+<dd><code>num:=x[3,ENTIER r]</code>  
+<p>
+<dt>(d)
+<dd><code>i * []CHAR("e")</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2289"
+  href="node98.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2283"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2277"
+  href="node96.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2285"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2287"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2290"
+  href="node98.html">Secondaries</a>
+<b> Up:</b> <a name="tex2html2284"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2278"
+  href="node96.html">Enclosed clauses</a>
+ &nbsp; <b>  <a name="tex2html2286"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2288"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

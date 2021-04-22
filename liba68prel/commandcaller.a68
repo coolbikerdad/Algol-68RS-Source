@@ -1,0 +1,124 @@
+DECS  commandcaller  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface,
+      commandsyntax,  command,  ioprocs:
+
+{ " Id: commandcaller.sta,v 1.1 91/10/14 14:26:12 edcad Exp $" }
+configinfo A68CONFIG "$Id: commandcaller.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+09:02:89  RSRE version of Module "commandcaller" - No EPI
+             This Module glues together the pieces required by the ETI command
+             interpretter.  It is designed to permit command execution to be
+             controllable and to help separate the ETI package from the rest of
+             ELLA.
+24:08:89  Updated to permit message translation for read procedures.  DCT
+21:06:90  "show" failed with no params, separated from check.  DCT
+07:11:91  CG loop security checker added.  MDR/DCT
+23:06:93  Updated for new OSIF.  DCT
+27:09:93  security system removed.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+BOOL  check_syntax:= FALSE,  show_parameters:= FALSE;
+
+
+{ These procedures are passed to initialise_commands to control command
+  evaluation, message and error processing. }
+
+
+PROC  report_error = (RVRVC lines) VOID:
+BEGIN   { Report an error with the offending input sequence }
+   put(screen, resetindent);
+   IF charnumber(screen) > 1 THEN  newline(screen)  FI;
+   put(out, resetindent);
+   IF charnumber(out) > 1 THEN  newline(out)  FI;
+   FORALL line IN lines DO  put(err, (line, newline))  OD;
+   io_fault(default_msg)
+END;
+
+
+PROC  set_default_msg = (UNION (MESSAGEPROC, VOID)  proc) VOID:
+   { This procedure permits certain IO failures to be trapped }
+   global_msg:= CASE proc IN  (MESSAGEPROC  msg)  msg  OUT  default_msg  ESAC;
+
+
+
+PROC  call_command = ( COMMANDENV  env,  REF SIMPLE  command,
+                       COMMANDPARAM  param,  MESSAGEPROC  msg ) CONTINUATION:
+BEGIN
+   { The main command evaluation procedure.  Commands may be intercepted.  The
+     command interpreter calls this procedure after a command name has been
+     read, the appropriate COMMAND data structure has been found and its
+     parameters checked against the specified syntax.  This procedure should
+     return a CONTINUATION to instruct the command interpreter how to proceed.
+     This would normally be that supplied by the COMMAND. }
+
+   IF show_parameters
+   THEN  VALUES  vals = simplify_params(param);
+         { simplify_params delivers at least 1 VALUE - (0, null) if no params }
+         IF sort OF vals[1] /= 0
+         THEN  FORALL v IN vals
+               DO  put(screen, ( justify(intchars(sort OF v), 3), " ",
+                                 description OF (analysers OF env)[sort OF v],
+                                 tab(20), value OF v, newline ))
+               OD
+         FI
+   FI;
+
+   IF check_syntax  ANDTH
+         ( RVC  name = name OF command;
+           name /= "CHECKSYNTAX"  ANDTH  name /= "REMOVEFILE"  ANDTH
+           name /= "INPUT"  ANDTH  name /= "INPUTS"  ANDTH
+           name /= "OFFLINE"  ANDTH  name /= "ONLINE"   ANDTH  name /= "HELP"
+         )
+   THEN  continue
+   ELSE  CASE command OF command IN
+            (RVCPROC  rvcproc)
+               (proc OF rvcproc)(parameter OF rvcproc, param, msg) ,
+            (PROC (COMMANDPARAM, MESSAGEPROC) VOID  cpproc)
+               cpproc(param, msg) ,
+            (PROC (VALUES, MESSAGEPROC) VOID  vproc)
+               vproc(simplify_params(param), msg)
+         ESAC;
+
+         continuation OF command
+   FI
+END
+
+
+KEEP  check_syntax,  show_parameters,
+      report_error,  set_default_msg,  call_command
+FINISH

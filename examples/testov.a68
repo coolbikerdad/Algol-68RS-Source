@@ -1,0 +1,58 @@
+PROGRAM testov CONTEXT VOID
+USE standard
+BEGIN
+PROC sig ov print = (LONG INT a,b,STRING op)VOID:
+   print(("Overflow detected for ",
+          whole(a,0),blank,op,blank,whole(b,0),newline));
+
+PROC ov ign print = (STRING op)VOID:
+   print(("Overflow undetected for ",blank,op,newline));
+
+REAL limit = maxint * 100.0;
+REAL x;
+LONG INT a, b;
+SHORT INT sa, sb;
+
+on signal(sigfpe,
+	(INT sig)VOID:
+	(print(("ROUND ",x," Ok",newline)); GOTO lab1));
+
+x:=2.5;
+
+WHILE x<=limit DO
+   print(("x=",x," ROUND x=",ROUND x,newline));
+	x*:=9
+OD;
+
+print(("Overflow undetected for ROUND",newline));
+
+lab1:
+
+x:=2.5;
+
+on signal(sigfpe,
+          (INT sig)VOID:
+          (print(("ENTIER ",x," Ok",newline));  GOTO lab2));
+
+WHILE x<=limit DO
+   print(("x=",x," ENTIER x=",ENTIER x,newline));
+	x*:=9
+OD;
+
+print(("Overflow undetected for ENTIER",newline));
+
+lab2:
+on signal(sigfpe,
+   (INT sig)VOID: (print(("FPU overflow detected",newline)); stop));
+
+x:=max real/10.0;
+
+TO 10
+DO
+   print(("x=",x,newline));
+	x*:=10.0
+OD;
+print(("FPU overflow undetected",newline))
+
+END
+FINISH

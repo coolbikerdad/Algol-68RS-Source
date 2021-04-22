@@ -1,0 +1,26 @@
+
+This file lists the contents and use of directory
+                   /opt/ctrans-0.1.0/ctrans/
+
+This directory contains subdirectories
+      a    The algol68 source files for ctrans
+      c    The c source files resulting from translation
+      m    The ctrans modules files
+      bin  The ctrans binary, library and object files
+
+The files
+      modules.mmd and modules.aux are the mm control files for creating
+      the build.
+
+The file
+      ctrans_nameseed  is the ctrans seed file, this must be re-initialised to
+                       AAAACTR before the start of a build.
+      rctr             contains AAAACTR
+
+This area depends on:-  include
+                        sunos  or  i386emx  or  Linux
+                        library
+                        a68library
+                        liba68prel
+
+Rebuild using  mm

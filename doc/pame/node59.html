@@ -1,0 +1,166 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node58.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node60.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1593"
+  href="node60.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1587"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1583"
+  href="node58.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1589"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1591"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1594"
+  href="node60.html">Routines</a>
+<b> Up:</b> <a name="tex2html1588"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1584"
+  href="node58.html">Abbreviated declarations</a>
+ &nbsp; <b>  <a name="tex2html1590"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1592"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1595"
+  href="node59.html#section007111000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section007110000000000000000"></a><a name="name-summ"></a>
+Summary</h1>
+
+<p>A name is a value whose mode always begins with the mode
+constructor <code>REF</code>. A name can refer to a value whose mode
+starts with one less <code>REF</code> than the mode of the name.  An
+assignment causes a name to refer to a value.  The value to which a
+name refers can be superseded using a further assignment.  An
+assignment is a kind of unit and can appear in a formula if it is
+enclosed by parentheses (or <code>BEGIN</code> and <code>END</code>).
+Multiple assignments can be used to assign the same value to more than
+one name.</p>
+
+<p>A name can be generated using a local or global generator and can
+be made to refer to a value in the same phrase in which it is
+declared.</p>
+
+<p>Algol 68 provides flexible names as well as fixed names for
+multiples.  The mode indicant for <code>FLEX[]CHAR</code> is defined in the
+standard prelude as <code>STRING</code>.  Names for multiples can have
+bounds determined at run-time.</p>
+
+<p><code>read</code> will convert external character sequences into internal
+values.  Its parameters must be names or <code>newline</code> or
+<code>newpage</code>.</p>
+
+<p>Name declarations may be written as identity declarations or in an
+abbreviated form.</p>
+
+<p>Before continuing with chapter 6, it would be wise to revise the
+material in the first five chapters since these comprise the basis of
+the language.</p>
+
+<hr>
+<h2><a name="section007111000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.21<a name="ex-v-xxi"></a>
+<dd>Declare a name to refer to a multiple of 1000 integers, first as
+an identity declaration, and secondly in abbreviated form.
+ Ans<a href="node139.html#ans-v-xxi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.22<a name="ex-v-xxii"></a>
+<dd>Write a program which will compute the average of a number of
+salaries (<i>eg</i>, 1010.53) read from the keyboard until the number
+<code>-1</code> is read. Display the average on the screen.  Ans<a href="node139.html#ans-v-xxii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.23<a name="ex-v-xxiii"></a>
+<dd>Write a program which will read a line and then scan it,
+writing out the individual words on one line apiece. The program
+should read the line into a <code>REF STRING</code> name, then remove
+leading and trailing spaces and add a space to the end. Use a
+boolean name called <code>in word</code> and make it refer to <code>FALSE</code>.
+As you step along the line, make <code>in word</code> refer to <code>FALSE</code>
+if you read a space and <code>TRUE</code> otherwise. Keep a track of the
+length of the current word. Whenever the value <code>in word</code> changes
+from <code>TRUE</code> to <code>FALSE</code>, extract the word using an
+appropriate trimmer and print it. Allow for there being more than one
+space between words. Ignore the possibility of commas, brackets etc.
+ Ans<a href="node139.html#ans-v-xxiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1593"
+  href="node60.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1587"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1583"
+  href="node58.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1589"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1591"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1594"
+  href="node60.html">Routines</a>
+<b> Up:</b> <a name="tex2html1588"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1584"
+  href="node58.html">Abbreviated declarations</a>
+ &nbsp; <b>  <a name="tex2html1590"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1592"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

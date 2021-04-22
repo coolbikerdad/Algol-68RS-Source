@@ -1,0 +1,273 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Program repetition</title>
+<meta name="description" content="program repetition">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node36.html">
+<link rel="previous" href="node34.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node36.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1203"
+  href="node36.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1197"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1191"
+  href="node34.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1199"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1201"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1204"
+  href="node36.html">Nested loops</a>
+<b> Up:</b> <a name="tex2html1198"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1192"
+  href="node34.html">Ranges</a>
+ &nbsp; <b>  <a name="tex2html1200"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1202"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1205"
+  href="node35.html#section00571000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00570000000000000000"></a><a name="rep-rep"></a>
+Program repetition</h1>
+
+<p>Having investigated the construction and use of multiple values, it
+is now time to address repetition<a name="1622"></a> of program actions.  For
+example, suppose you wanted to output&nbsp;8 blank lines.  You could
+write</p>
+
+<pre>
+   print((newline,newline,newline,newline,
+          newline,newline,newline,newline))
+</pre>
+
+<p>A simpler way would be to write</p>
+
+<pre>
+   TO 8 DO print(newline) OD
+</pre>
+
+<p>The integer following the <tt>TO</tt><a name="1789"></a> can be any unit yielding an
+integer (not necessarily positive) in a meek
+context<a name="1629"></a>.  If the value yielded is zero or
+negative, then the ensuing clause enclosed by <code>DO</code> and <code>OD</code>
+will not be elaborated at all.  The <code>TO</code>&nbsp;...&nbsp;<code>OD</code>
+construct is called a <b>loop clause</b> or, more simply, a loop.</p>
+
+<p>If you omit the <code>TO</code> integer construct, the loop will
+be repeated indefinitely.  In that case, you would need some way of
+terminating the program inside the loop.</p>
+
+<p>A more useful form of the loop clause<a name="1631"></a> is shown
+by the following example</p>
+
+<pre>
+   FOR i TO 10
+   DO
+      print((i,newline))
+   OD
+</pre>
+
+<p>The <code>i</code> is an identifier<a name="1634"></a>, whose declaration occurs at that
+point and whose mode is <tt>INT</tt><a name="1790"></a>.  The example will print the
+numbers <code>1</code> to <code>10</code>, each on its own line.  The range<a name="1637"></a> of
+<code>i</code> is the whole of the loop clause, but does not include the
+unit following <code>TO</code>.  Any identifier may be used in place of
+<code>i</code>. When the <code>TO</code> part is omitted, it is as though
+<code>TO</code> &#8734; had been written.</p>
+
+<p>It is possible to modify the number of times the loop is obeyed.
+The simplest way is to define the starting point using the
+<tt>FROM</tt><a name="1791"></a> construct. Here is an example:</p>
+
+<pre>
+   FOR n FROM -10 TO 10 DO print((n,blank)) OD
+</pre>
+
+<p>This prints the numbers from <code>-10</code> to <code>+10</code>
+on the screen.  The integer after <code>FROM</code> can be any
+unit<a name="1642"></a> which yields a value of mode <code>INT</code>
+in a meek context<a name="1643"></a>.  When <code>FROM</code> is
+omitted, it is assumed that the first value of the identifier
+following <code>FOR</code> is&nbsp;1.</p>
+
+<p>This example prints the square of each of the numbers from
+<code>0.2</code> to <code>0.9</code>:</p>
+
+<pre>
+   FOR number FROM 2 TO 9
+   DO
+      REAL value = number / 10;
+      print((value," squared =",
+             value * value,newline))
+</pre>
+
+<p>In these examples, the value of the identifier has always increased
+by <code>1</code>. The increase can be changed using the
+<tt>BY</tt><a name="1792"></a> construct. For example, to print the
+cubes of the even numbers between 30 and 50 inclusive, you could
+write<a name="tex2html8"
+href="footnode.html#foot1800"><sup><span
+class="arabic">4</span>.<span class="arabic">4</span></sup></a></p>
+
+<pre>
+   FOR n FROM 30 BY --2 TO 50
+   DO
+      print((n**3,newline))
+   OD
+</pre>
+
+<p>The <code>BY</code> construct is particularly useful for decreasing
+the value of the identifier:</p>
+
+<pre>
+   []CHAR title =
+          "Programming Algol 68 Made Easy";
+
+   FOR c FROM UPB title BY -1 TO LWB title
+   DO
+      print(title[c])
+   OD
+</pre>
+
+<p>This last example shows how useful the loop
+clause<a name="1660"></a> can be for accessing some of or all of
+the elements of a multiple.  Here is another
+example<a name="1794"></a>:<a name="1795"></a></p>
+
+<pre>
+   []INT hh=(7,17,27,37,47);
+   INT two=2;
+
+   FOR i BY --2 TO UPB hh
+   DO
+      print(hh[i] * hh[i])
+   OD
+</pre>
+
+<p>which will print</p>
+
+<pre>
+        +49        +729       +2209
+</pre>
+
+<p>on one line.  Omitting the <code>BY</code> construct assumes a default step
+of&nbsp;1.</p>
+
+<p>Notice how use of the <code>LWB</code> and <code>UPB</code> operators ensures
+that your program does not try to use a subscript outwith the bounds
+of the multiple. If you try to access an element whose subscript is
+greater than the upper bound (or less than the lower bound), the
+program will fail at run-time with an appropriate error message.</p>
+
+<p>An important use of the identity declaration<a name="1669"></a> is
+that of optimisation<a name="1670"></a>. In the previous example, the
+computation of the i<sup>th</sup> element of <code>hh</code> takes a
+little time, and there is no point in repeating it.  In the following
+example, the identity declaration computes the value of
+<code>hh[i]</code> and the <code>print</code> statement uses the
+resulting value twice:</p>
+
+<pre>
+   FOR i BY --2 TO UPB hh
+   DO
+      INT hhi = hh[i];
+      print((hhi * hhi,newline))
+   OD
+</pre>
+
+<p>Everything said about multiples with elements of mode <code>INT</code> or
+<code>CHAR</code> applies equally well to multiples whose elements have
+mode <code>REAL</code>. A <code>FOR</code> loop yields no value (cf section
+<a href="node61.html#rout-yname">6.1.5</a>).</p>
+
+<hr>
+<h2><a name="section00571000000000000000">
+Exercises</a></h2>
+
+<dl compact>
+<dt>3.11<a name="ex-iii-xi"></a>
+<dd>Write an Algol 68 program which will print the cubes of the numbers
+from <code>1</code> to <code>25</code>.  Ans<a href="node137.html#ans-iii-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>3.12<a name="ex-iii-xii"></a>
+<dd>Write a program which will print the characters of the alphabet
+backwards, all on one line.  Ans<a href="node137.html#ans-iii-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1203"
+  href="node36.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1197"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1191"
+  href="node34.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1199"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1201"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1204"
+  href="node36.html">Nested loops</a>
+<b> Up:</b> <a name="tex2html1198"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1192"
+  href="node34.html">Ranges</a>
+ &nbsp; <b>  <a name="tex2html1200"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1202"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

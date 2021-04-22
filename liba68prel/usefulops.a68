@@ -1,0 +1,302 @@
+DECS  usefulops  CONTEXT VOID  USE  cif,  strops:
+
+{  Id: usefulops.a68,v 2.10 1993/07/07 11:32:56 aap Exp $ }
+configinfo A68CONFIG "$Id: usefulops.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+27:09:93  MAKERVC and concat moved to strops to avoid problems on VMS.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.005 
+31:01:95  33.002  DCT   PCPort-1  <null> terminate sprintf strings
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{  Miscellaneous utility operators.
+}
+
+
+{ MODE Cheats }
+OP ( STRUCT 4 CHAR ) INT CSTOI = BIOP 99;
+
+OP ( INT ) STRUCT 4 CHAR ITOCS = BIOP 99;
+
+OP (REF VECTOR [] INT) REF VECTOR [] CHAR AS = BIOP 99;
+
+OP ORAB = ( REF BITS l, BITS r ) REF BITS: l := l OR r;
+
+PRIO BECOMES = 1;
+
+OP BECOMES = ( REF INT i, VECTOR [] CHAR slice ) REF INT:
+  ( AS REF VECTOR [] INT (i) := slice; i);
+
+OP BECOMES = ( REF VECTOR [] CHAR slice, INT i ) REF VECTOR [] CHAR:
+{N.B. no check for 'overflow' currently}
+BEGIN
+  slice := (ITOCS i) [5 - UPB slice :]
+END;
+
+{
+  Operators to convert VECTOR [] CHAR to a RVC, which has the same
+  representation in RS Algol 68.
+  MAKERVC copies the vector, CASTRVC does not
+}
+
+{ OP (VECTOR [] CHAR) REF VECTOR [] CHAR  MAKERVC - see 'strops' }
+
+OP (VECTOR [] CHAR) REF VECTOR [] CHAR CASTRVC = BIOP 99;
+
+PRIO FILL = 1;
+OP FILL = ( REF VECTOR [] CHAR dest, CHAR source ) VOID:
+  FORALL c IN dest DO c := source OD;
+
+PRIO MAX = 8;
+OP MAX = ( INT a, b ) INT: ( a > b | a | b );
+
+PRIO XOR = 2;
+OP XOR = ( BITS a, b ) BITS: ( a AND NOT b ) OR ( NOT a AND b );
+OP XOR = ( LONG BITS a, b ) LONG BITS: ( a AND NOT b ) OR ( NOT a AND b );
+
+PRIO CHARINVEC = 1;
+OP CHARINVEC = ( CHAR c, VECTOR [] CHAR s ) INT:
+COMMENT
+  Gives the index of the first "c" in "s", or 0 if no occurances.
+COMMENT
+BEGIN
+  INT position := 0;
+  FOR i TO UPB s
+  WHILE
+    IF c = s[i]
+    THEN position := i; FALSE
+    ELSE TRUE
+    FI
+  DO
+    SKIP
+  OD;
+  position
+END;
+
+OP TRUNCATE = (CHAR c,VECTOR [] CHAR s) INT:
+  (INT i:=UPB s;FROM i BY -1 TO 1 WHILE s[i]=c DO i -:=1 OD; i );
+
+OP SCANTO = (CHAR c,REF VECTOR [] CHAR s)REF VECTOR [] CHAR:
+  s[:c TRUNCATE s];
+
+OP BEFORE = (REF VECTOR [] CHAR s, CHAR c) REF VECTOR [] CHAR:
+  s[:c TRUNCATE s];
+OP BEFORE = (VECTOR [] CHAR s, CHAR c) VECTOR [] CHAR:
+  s[:c TRUNCATE s];
+
+
+{ PROC (VECTOR [] VECTOR [] CHAR) REF VECTOR [] CHAR  concat  - see 'strops' }
+
+OP UPPERCASED = (VECTOR [] CHAR string) REF VECTOR [] CHAR:
+{
+  Returns an upper cased copy of the supplied 'string'.
+}
+BEGIN
+  HEAP VECTOR [UPB string] CHAR uppercased string := string;
+  FORALL c IN uppercased string
+  DO
+    IF c >= "a" AND c <= "z"
+    THEN
+      c := REPR (ABS c - ABS 8r40)
+    FI
+  OD;
+  uppercased string
+END;
+
+OP CAPITALISED = (VECTOR [] CHAR string) REF VECTOR [] CHAR:
+{
+  Returns an upper cased copy of the supplied 'string'.
+}
+BEGIN
+  HEAP VECTOR [UPB string] CHAR capitalised string := string;
+  IF
+    REF CHAR c = capitalised string[1];
+    c >= "a" AND c <= "z"
+  THEN
+    c := REPR (ABS c - ABS 8r40)
+  FI;
+  capitalised string
+END;
+
+OP STRINGVALUE = (VECTOR [] CHAR string) INT:
+BEGIN
+  STRUCT 4 CHAR value := ITOCS 0;
+  value [5 - UPB string :] := string;
+  CSTOI value
+END {STRINGVALUE};
+
+{
+  Binary to character conversions
+}
+PROC whole = (INT val, INT width) REF VECTOR [] CHAR:
+BEGIN
+  PROC(REF VECTOR [] CHAR,VECTOR [] CHAR,INT,INT)INT sprintf =
+    ALIEN "SPRINTF"
+          "#include <stdio.h>"
+          "#define SPRINTF(s,format,p1,p2) \"
+          "  A_int_INT(sprintf(A_VC_charptr(s),A_VC_charptr(format),A_INT_int(p1),A_INT_int(p2)))";
+
+  HEAP VECTOR [(width <= 0 | 25 | width + 10)] CHAR result;
+  VOID( sprintf(result, "%*d"2r"0", width, val));
+  CSTRINGTORVC CPTRTOCSTRING VCTOCHARPTR result
+END;
+
+PROC lwhole = (LONG INT val, INT width) REF VECTOR [] CHAR:
+BEGIN
+  PROC(REF VECTOR [] CHAR,VECTOR [] CHAR,INT,LONG INT)INT sprintf =
+    ALIEN "SPRINTF2"
+          "#include <stdio.h>"
+          "#define SPRINTF2(s,format,p1,p2) \"
+          "  A_int_INT(sprintf(A_VC_charptr(s),A_VC_charptr(format),A_INT_int(p1),A_LINT_long(p2)))";
+
+  HEAP VECTOR [(width <= 0 | 25 | width + 10)] CHAR result;
+  VOID( sprintf(result, "%*lld"2r"0", width, val));
+  CSTRINGTORVC CPTRTOCSTRING VCTOCHARPTR result
+END;
+
+PROC hex = (LONG BITS b, INT width) REF VECTOR [] CHAR:
+BEGIN
+  PROC(REF VECTOR [] CHAR,VECTOR [] CHAR,INT,LONG BITS)INT sprintf =
+    ALIEN "SPRINTF3"
+          "#include <stdio.h>"
+          "#define SPRINTF3(s,format,p1,p2) \"
+          "  A_int_INT(sprintf(A_VC_charptr(s),A_VC_charptr(format),A_INT_int(p1),A_LBITS_ulong(p2)))";
+
+  HEAP VECTOR [(width <= 0 | 25 | width + 10)] CHAR result;
+  VOID( sprintf(result, "%.*llx"2r"0", width, b));
+
+  CSTRINGTORVC CPTRTOCSTRING VCTOCHARPTR result
+END;
+
+{
+  Character to binary conversions
+}
+
+OP VCDECTOINT = (REF INT ri, VECTOR [] CHAR num) BOOL:
+{
+  Decimal char string to INT and assign to 'ri'.
+  Returns TRUE if successful, FALSE if not (invalid chars found)
+}
+BEGIN
+  INT result := 0, sign := 1;
+
+  IF UPB num = 0
+  THEN
+     GOTO error
+  ELSE
+    INT i := 1;      { place marker in num }
+    INT length = UPB num;
+
+    { Eat leading spaces }
+    WHILE i <= length ANDTH num[i] = " " DO i+:=1 OD;
+    IF i > length THEN GOTO error FI;
+
+    { Optional sign }
+    IF CHAR c = num[i]; c = "-"
+    THEN sign := -1; i +:= 1
+    ELIF c = "+"
+    THEN i +:= 1
+    FI;
+    IF i > length THEN GOTO error FI;
+
+    { Digits }
+
+    WHILE
+      i <= length ANDTH num[i] /= " "
+    DO
+      CHAR c = num[i];
+      IF c >= "0" ANDTH c <= "9"
+      THEN
+        result := (10*result) + ABS c - ABS "0"; i +:= 1
+      ELSE
+        GOTO error
+      FI
+    OD;
+
+    { Eat trailing spaces }
+    FORALL c IN num[i:] DO IF c /= " " THEN GOTO error FI OD
+  FI;
+  ri := result * sign;
+  TRUE
+EXIT
+error:
+  FALSE
+END;
+
+PROC char in string = ( CHAR c, REF INT i, VECTOR [] CHAR s ) BOOL:
+BEGIN
+  BOOL found := FALSE; i:=0;
+  FOR k FROM LWB s TO UPB s
+  WHILE NOT found
+  DO ( c =s[k] | i:=k; found := TRUE ) OD;
+  found
+END;
+
+
+OP XC = ( INT i ) VECTOR[]CHAR: whole(i,0);
+
+SKIP
+
+KEEP
+  BECOMES (REF INT,VECTOR [] CHAR),
+  BECOMES (REF VECTOR [] CHAR,INT),
+  BEFORE (REF VECTOR [] CHAR, CHAR),
+  BEFORE (VECTOR [] CHAR, CHAR),
+  concat,
+  CHARINVEC ( CHAR, VECTOR [] CHAR ),
+  MAKERVC ( VECTOR [] CHAR ),
+  CASTRVC ( VECTOR [] CHAR ),
+  FILL ( REF VECTOR [] CHAR, CHAR ),
+  ITOCS( INT ),
+  MAX ( INT, INT ),
+  SCANTO (CHAR, REF VECTOR [] CHAR),
+  STRINGVALUE (VECTOR [] CHAR),
+  TRUNCATE (CHAR, VECTOR [] CHAR),
+  UPPERCASED (VECTOR [] CHAR),
+  CAPITALISED (VECTOR [] CHAR),
+  XOR ( BITS, BITS ), XOR ( LONG BITS, LONG BITS ),
+  ORAB( REF BITS, BITS ),
+  XC(INT), whole, lwhole, charinstring, hex,
+  VCDECTOINT(REF INT, VECTOR [] CHAR)
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}
+

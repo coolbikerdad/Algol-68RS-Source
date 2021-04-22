@@ -1,0 +1,227 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/Debian) (preloaded format=etex 2021.4.2)  18 APR 2021 17:36
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**\nonstopmode \input ./ctrans.texi
+(./ctrans.texi (/usr/share/texmf/tex/texinfo/texinfo.tex
+Loading texinfo [version 2019-09-20.22]:
+\outerhsize=\dimen16
+\outervsize=\dimen17
+\topandbottommargin=\dimen18
+\bindingoffset=\dimen19
+\normaloffset=\dimen20
+\txipagewidth=\dimen21
+\txipageheight=\dimen22
+\defaultoutput=\toks13
+\headlinebox=\box16
+\footlinebox=\box17
+\savedtopmark=\toks14
+\margin=\insert252
+\EMsimple=\toks15
+\groupbox=\box18
+\groupinvalidhelp=\toks16
+\mil=\dimen23
+\exdentamount=\skip18
+\inmarginspacing=\skip19
+\centerpenalty=\count27
+ pdf,
+\tempnum=\count28
+\lnkcount=\count29
+\filename=\toks17
+\filenamelength=\count30
+\pgn=\count31
+\toksA=\toks18
+\toksB=\toks19
+\toksC=\toks20
+\toksD=\toks21
+\boxA=\box19
+\boxB=\box20
+\countA=\count32
+\nopdfimagehelp=\toks22
+ fonts,
+\textleading=\dimen24
+\sffam=\fam8
+ markup,
+\fontdepth=\count33
+ glyphs,
+\errorbox=\box21
+
+page headings,
+\titlepagetopglue=\skip20
+\titlepagebottomglue=\skip21
+\evenheadline=\toks23
+\oddheadline=\toks24
+\evenfootline=\toks25
+\oddfootline=\toks26
+ tables,
+\tableindent=\dimen25
+\itemindent=\dimen26
+\itemmargin=\dimen27
+\itemmax=\dimen28
+\itemno=\count34
+\multitableparskip=\skip22
+\multitableparindent=\skip23
+\multitablecolspace=\dimen29
+\multitablelinespace=\skip24
+\colcount=\count35
+\everytab=\toks27
+ conditionals,
+\doignorecount=\count36
+ indexing,
+\dummybox=\box22
+\whatsitskip=\skip25
+\whatsitpenalty=\count37
+\entryrightmargin=\dimen30
+\thinshrinkable=\skip26
+\partialpage=\box23
+\doublecolumnhsize=\dimen31
+\balancedcolumns=\box24
+ sectioning,
+\unnumberedno=\count38
+\chapno=\count39
+\secno=\count40
+\subsecno=\count41
+\subsubsecno=\count42
+\appendixno=\count43
+\absseclevel=\count44
+\secbase=\count45
+\chapheadingskip=\skip27
+\secheadingskip=\skip28
+\subsecheadingskip=\skip29
+ toc,
+\tocfile=\write0
+\contentsrightmargin=\skip30
+\savepageno=\count46
+\lastnegativepageno=\count47
+\tocindent=\dimen32
+ environments,
+\lispnarrowing=\skip31
+\envskipamount=\skip32
+\lskip=\skip33
+\rskip=\skip34
+\circthick=\dimen33
+\cartouter=\dimen34
+\cartinner=\dimen35
+\normbskip=\skip35
+\normpskip=\skip36
+\normlskip=\skip37
+\nonfillparindent=\dimen36
+\tabw=\dimen37
+\verbbox=\box25
+
+defuns,
+\defbodyindent=\skip38
+\defargsindent=\skip39
+\deflastargmargin=\skip40
+\defunpenalty=\count48
+\parencount=\count49
+\brackcount=\count50
+ macros,
+\paramno=\count51
+\macname=\toks28
+ cross references,
+\auxfile=\write1
+\savesfregister=\count52
+\toprefbox=\box26
+\printedrefnamebox=\box27
+\infofilenamebox=\box28
+\printedmanualbox=\box29
+ insertions,
+\footnoteno=\count53
+\SAVEfootins=\box30
+\SAVEmargin=\box31
+\noepsfhelp=\toks29
+ localization,
+\nolanghelp=\toks30
+\countUTFx=\count54
+\countUTFy=\count55
+\countUTFz=\count56
+ formatting,
+\defaultparindent=\dimen38
+
+and turning on texinfo input format.) [1] [2] Chapter 1
+\openout0 = `ctrans.toc'.
+
+
+(/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.aux)
+\openout1 = `ctrans.aux'.
+
+@cpindfile=@write2
+\openout2 = `ctrans.cp'.
+
+
+Writing index file ctrans.cp
+Chapter 2 [1] [2] [3] [4] [5]
+Underfull \hbox (badness 10000) in paragraph at lines 543--546
+[]@textrm Actions can be spec-i-fied by pro-vid-ing def-i-ni-tions for these ma
+cros. See
+
+@hbox(7.60416+2.12917)x455.24408, glue set 4.66774
+.@hbox(0.0+0.0)x15.0
+.@textrm A
+.@textrm c
+.@textrm t
+.@textrm i
+.etc.
+
+Chapter 3 [6]
+@vrindfile=@write3
+\openout3 = `ctrans.vr'.
+
+
+Writing index file ctrans.vr
+Chapter 4 [7] [8] [9] Chapter 5 [10] Chapter 6 [11] [12] Appendix A [13]
+[14]
+@fnindfile=@write4
+\openout4 = `ctrans.fn'.
+
+
+Writing index file ctrans.fn
+[15] [16] Appendix B [17] [18] Appendix C [19] [20] [21]
+./ctrans.texi:1427: Argument of @asis has an extra }.
+<inserted text> 
+                @par 
+<to be read again> 
+                   }
+@doitemize ...1}@setbox 0 = @hbox {@itemcontents }
+                                                  @ifx @itemcontents @empty ...
+l.1427 @itemize @asis
+                     
+I've run across a `}' that doesn't seem to match anything.
+For example, `\def\a#1{...}' and `\a}' would produce
+this error. If you simply proceed now, the `\par' that
+I've just inserted will cause me to report a runaway
+argument that might be the root of the problem. But if
+your `}' was spurious, just type `2' and it will go away.
+
+Runaway argument?
+./ctrans.texi:1427: Paragraph ended before @asis was complete.
+<to be read again> 
+                   @par 
+<to be read again> 
+                   }
+@doitemize ...1}@setbox 0 = @hbox {@itemcontents }
+                                                  @ifx @itemcontents @empty ...
+l.1427 @itemize @asis
+                     
+I suspect you've forgotten a `}', causing me to apply this
+control sequence to too much text. How can we recover?
+My plan is to forget the whole thing and hope for the best.
+
+[22] [23] [24] [25] [26] [27] [28] [29] [30] [31] [32] [33] (Option index)
+[34] (/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.fns) (Symbol index)
+[35] [36] (/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.vrs [37])
+(Concept index) [38] (/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.cps)
+[39] [40] (/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.toc) [-1] [-2]
+(/home/neil/Algol-68RS/algol68toc-1.20/doc/ctrans.toc [-3]) [-4] ) 
+Here is how much of TeX's memory you used:
+ 3163 strings out of 497104
+ 32930 string characters out of 6207132
+ 86618 words of memory out of 5000000
+ 4343 multiletter control sequences out of 15000+600000
+ 34203 words of font info for 119 fonts, out of 8000000 for 9000
+ 51 hyphenation exceptions out of 8191
+ 15i,6n,16p,327b,648s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on ctrans.dvi (46 pages, 185080 bytes).

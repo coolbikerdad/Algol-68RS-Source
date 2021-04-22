@@ -1,0 +1,14 @@
+
+This file lists the contents and use of directory
+                   a68config
+
+The file
+      nameseed  is the a68toc seed file which must be re-initialised to
+                AAAALIB before the start of a complete rebuild.
+                The command "resetseed -f" will do it.
+      rctr      contains AAAALIB
+
+This area depends upon:-  include
+                          Linux
+                          library
+

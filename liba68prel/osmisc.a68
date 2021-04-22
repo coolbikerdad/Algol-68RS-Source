@@ -1,0 +1,240 @@
+DECS  osmisc  CONTEXT VOID  USE  cif,  oserrors,  usefulops:
+
+{  Id: osmisc.a68,v 2.10 1993/08/18 13:28:51 aap Exp $ }
+
+configinfo A68CONFIG "$Id: osmisc.a68,v 1.2 2001-09-27 13:06:01 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+
+10:09:93  A68INIT used for initialisation and NULLSTR to null terminate.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.005 
+14:12:94  33.002  DJS   Porting    Remove OS specific elements. Prototypes for
+                                  time() and system() moved to file
+                                  sunos/Ahostenv.h. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+14:28:00  34.003  SL    Change call to bash
+??:??:??   ?.???  ????
+COMMENT
+
+{  Miscellaneous Low level operating system interfaces.
+
+  Low level routines for accessing OS facilities, defined with POSIX.1 in mind.
+  Staredits for deviations from POSIX are:
+    to be supplied.
+}
+
+{
+  ALIEN declarations
+}
+
+PROC(REF VECTOR [] CHAR,INT) CSTRING getcwd =
+  ALIEN "GETCWD"
+        "#include <unistd.h>"
+        "#define GETCWD(buf,size) \"
+        "   ((void *)(getcwd(A_VC_charptr(buf),A_INT_size_t(size))))";
+
+PROC (VECTOR [] CHAR) CSTRING getenv =
+  ALIEN "GETENV"
+        "#include <stdlib.h>"
+        "#define GETENV(name) ((void *)getenv(A_VC_charptr(name)))";
+
+PROC (INT) LONG INT time =
+  ALIEN "TIME"
+        "#include <time.h>"
+        "#define TIME(x) A_time_t_LINT(time((time_t *)NULL))";
+
+PROC (REF LONG INT) CSTRING ctime =
+  ALIEN "CTIME"
+        "#include <time.h>"
+        "#define CTIME(timer) ((void *)ctime((A_RLI_time_tptr(timer))))";
+
+PROC (INT) VOID exit =
+  ALIEN "EXIT"
+CO      "#include <stdlib.h>" SunOs CO
+CO New include for Linux -- SL/PE61-09-25 CO
+        "#include <unistd.h>"
+        "#define EXIT(status) exit(A_INT_int(status))";
+
+PROC (VECTOR [] CHAR) INT system =
+  ALIEN "SYSTEM"
+        "#include <stdlib.h>"
+        "#define SYSTEM(string) A_int_INT(system(A_VC_charptr(string)))";
+
+PROC (INT) LONG INT times = ALIEN
+   "TIMES"
+   "#include <sys/times.h>"
+   "clock_t A_times()"
+   "{ struct tms TMS;"
+   "  times(&TMS);"
+   "  return TMS.tms_utime + TMS.tms_stime + TMS.tms_cutime + TMS.tms_cstime;"
+   "}"
+   "#define TIMES(x) A_clock_t_LINT(A_times())";
+
+PROC (INT {dummy}) CSTRING getlogin =
+  ALIEN "GETLOGIN"
+        "#include <unistd.h>"
+        "#define GETLOGIN(x) ((void *)getlogin())";
+
+
+{
+  CURRENT WORKING DIRECTORY
+}
+
+PROC get_working_directory = VECTOR [] CHAR:
+BEGIN
+  INT bufsize = 1000;
+  CSTRINGTORVC getcwd(HEAP VECTOR [bufsize] CHAR, bufsize)
+END;
+
+{
+  READ ENVIRONMENT VARIABLE
+
+  A copy of the data is returned in case C library uses static data.
+}
+
+PROC get_env_var = (
+  VECTOR [] CHAR env name
+) VECTOR [] CHAR:
+BEGIN
+  MAKERVC CSTRINGTORVC getenv(NULLSTR env name)
+END;
+
+{
+  TIME OF DAY
+
+  Seconds since 00:00 1/1/1970 GMT.
+}
+
+PROC get_time = LONG INT: time(0);
+
+{
+  CONVERT TIME TO LOCAL TIME STRING
+
+  result of ctime is copied since it may be overwritten each call
+  the trailing newline is removed
+}
+PROC local_time_str = (LONG INT time) VECTOR [] CHAR:
+BEGIN
+  REF VECTOR [] CHAR time_str = CSTRINGTORVC ctime(LOC LONG INT := time);
+  MAKERVC time_str[:UPB time_str - 1]
+END;
+
+{
+  EXIT PROGRAM WITH STATUS CODE
+
+  exit defined above
+}
+
+
+{
+  EXECUTE OS COMMAND
+
+  Value returned is defined by the application.
+}
+
+PROC execute_os_command = (
+  VECTOR [] CHAR command,
+  MESSAGEPROC msg
+) INT:
+BEGIN
+  VECTOR [] CHAR program =
+    IF
+      UPB command > 0
+    THEN
+      command
+    ELIF
+      VECTOR [] CHAR shell = get_env_var("SHELL");
+      UPB shell > 0
+    THEN #Phoenix Engineering -- SL: BP21306-06-22: added login option#
+		IF shell = "/bin/bash"
+		THEN "/bin/bash --login"
+		ELSE shell
+		FI
+    ELSE "/bin/sh"
+    FI;
+
+  INT result = system(NULLSTR program);
+
+  IF
+    result < 0
+  THEN
+    osif message( 81, (command, errno text), msg)
+  FI;
+
+  result
+END;
+
+{
+  CPU TIME
+
+  Centi-seconds cpu time used since the start of the program.
+}
+
+LONG INT clk_tck;  { clock ticks per second initialised by 'init osif' }
+
+PROC get_cpu_time = INT:
+BEGIN
+  SHORTEN (times(0) * LONG 100 % clk_tck)
+END;
+
+
+{
+  LOGIN NAME
+}
+
+PROC get_login_name = VECTOR [] CHAR:
+  MAKERVC CSTRINGTORVC getlogin(0);
+
+
+PROC init_osmisc = VOID:
+BEGIN
+  PROC (INT) LONG INT sysconf =
+    ALIEN "SYSCONF"
+          "#include <unistd.h>"
+          "#define SYSCONF(name) A_long_LINT(sysconf(A_INT_int(name)))";
+
+  INT sc_clk_tck =
+    ALIEN "A_int_INT(_SC_CLK_TCK)"
+          "#include <unistd.h>";
+
+  clk_tck := sysconf(sc_clk_tck)
+END;
+
+A68INIT  init_osmisc
+
+KEEP
+  get_working_directory, clk_tck,
+  get_env_var, get_time, local_time_str,
+  exit, execute_os_command, get_cpu_time, get_login_name
+FINISH

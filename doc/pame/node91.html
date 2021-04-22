@@ -1,0 +1,154 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node90.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node92.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2165"
+  href="node92.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2159"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2155"
+  href="node90.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2161"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2163"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2166"
+  href="node92.html">Units</a>
+<b> Up:</b> <a name="tex2html2160"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2156"
+  href="node90.html">Other transput procedures</a>
+ &nbsp; <b>  <a name="tex2html2162"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2164"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2167"
+  href="node91.html#section0011121000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section0011120000000000000000"></a><a name="trans-summ"></a>
+Summary</h1>
+
+<p>External values (usually called data) are stored in books. A
+program uses an internal structure, called a file (of mode
+<code>FILE</code>), to keep track of the process of transferring data
+to or from books. The link between them is controlled by a
+channel.</p>
+
+<p>A number of procedures are provided in the standard prelude to
+facilitate the transfer of data to and from books, as well as changing
+the position recorded by a file within a book.</p>
+
+<p>Books can be created and written to, or opened and read from, or
+both read from and written to. A file should be closed to sever the
+link between itself and its corresponding book, and to ensure that any
+data storage areas (usually called buffers) are flushed to the storage
+medium.</p>
+
+<p>Formatting of numbers can be performed with the procedures
+<code>whole</code>, <code>fixed</code> and <code>float</code>. This
+facilitates the production of reports.</p>
+
+<p>String terminators make it easier to read values of mode
+<code>STRING</code>.  They are set with the procedure <code>make
+term</code>.</p>
+
+<p>The command line can be read just like any other book (text only)
+and environment variables can be read.</p>
+
+<hr>
+<h2><a name="section0011121000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.20<a name="ex-ix-xx"></a>
+<dd>Write a program to read real numbers from the keyboard, and
+write them to the screen in scientific notation and 3 decimal places.
+Continue until zero is read.  Ans<a href="node143.html#ans-ix-xx"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.21<a name="ex-ix-xxi"></a>
+<dd>Using the mode <code>EMPLOYEE</code> declared in
+section&nbsp;<a href="node70.html#struc-mult">7.5</a>, write a program to read the employee
+records from a binary book, and write a report of the name of each
+employee, her or his net pay for the current week and the total net
+pay and number of employees read. In the binary book, each string is
+preceded by the length of that string as an integer. Get the book idf
+and the week number from the command line.  Ans<a href="node143.html#ans-ix-xxi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>  
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2165"
+  href="node92.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2159"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2155"
+  href="node90.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2161"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2163"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2166"
+  href="node92.html">Units</a>
+<b> Up:</b> <a name="tex2html2160"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2156"
+  href="node90.html">Other transput procedures</a>
+ &nbsp; <b>  <a name="tex2html2162"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2164"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

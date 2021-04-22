@@ -1,0 +1,290 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Reading books</title>
+<meta name="description" content="reading books">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node82.html">
+<link rel="previous" href="node80.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node82.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2014"
+  href="node82.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2008"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2002"
+  href="node80.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2010"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2012"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2015"
+  href="node82.html">Writing to books</a>
+<b> Up:</b> <a name="tex2html2009"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2003"
+  href="node80.html">Books, channels and files</a>
+ &nbsp; <b>  <a name="tex2html2011"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2013"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2016"
+  href="node81.html#section001121000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001120000000000000000"></a><a name="trans-readbook"></a>
+Reading books</h1>
+
+<p>Before<a name="5544"></a> you can read the contents of an existing
+book, you need to connect the book to your program. The procedure
+<tt>open</tt><a name="5983"></a> with the header</p>
+
+<pre>
+   PROC open = (REF FILE f,
+                STRING idf,
+                CHANNEL chan)INT:
+</pre>
+
+<p>performs that function. <code>open</code> yields zero if the
+connection is established and non-zero otherwise. Here is a program
+fragment which establishes communication with a read-only book whose
+identification is <code>testdata</code>:</p>
+
+<pre>
+   FILE inf;
+
+   IF open(inf,"testdata",stand in channel)/=0
+   THEN
+      print(("Cannot open book testdata",
+             newline));
+      exit(1)
+   FI
+</pre>
+
+<p>Notice that the program displays a short message on the screen if
+for any reason the book cannot be opened and then terminates with a
+suitable error number. The procedure <code>exit</code> is not standard
+Algol&nbsp;68, but is provided by a system routine whose declaration
+is in the standard prelude issued with the a68toc compiler.</p>
+
+<p>After a book has been opened, data can be read from the book using
+the procedure <tt>get</tt><a name="5984"></a> which transforms
+external values into internal values like
+<tt>read</tt><a name="5985"></a> (you will meet <code>read</code>
+again shortly). It has the header</p>
+
+<pre>
+   PROC get=(REF FILE f,[]SIMPLIN items)VOID:
+</pre>
+
+<p>The mode <tt>SIMPLIN</tt><a name="5986"></a> is declared in the standard prelude as
+<pre>
+   MODE SIMPLIN=
+      UNION(
+       REF CHAR, REF[]CHAR,  REF STRING,
+       REF BOOL, REF[]BOOL,
+   
+       REF LONG BITS,        REF[]LONG BITS,
+       REF BITS,             REF[]BITS,
+       REF SHORT BITS,       REF[]SHORT BITS,
+       REF SHORT SHORT BITS,
+                        REF[]SHORT SHORT BITS,
+   
+       REF LONG INT,         REF[]LONG INT,
+       REF INT,              REF[]INT,
+       REF SHORT INT,        REF[]SHORT INT,
+       REF SHORT SHORT INT,
+                        REF[]SHORT SHORT INT,
+   
+       REF REAL,             REF[]REAL,
+       REF SHORT REAL,       REF[]SHORT REAL,
+   
+       REF COMPL,            REF[]COMPL,
+       REF SHORT COMPL,      REF[]SHORT COMPL,
+            
+       STRAIGHT SIMPLIN
+      ),
+</pre>
+
+<p>The mode <code>BITS</code> is covered in chapter 11 together with
+<code>LONG</code> and <code>SHORT</code> modes. As you can see, all
+the constituent modes of the union are the modes of names, except for
+the <code>STRAIGHT SIMPLIN</code> and the <code>PROC(REF
+FILE)VOID</code>. The <code>PROC</code> mode lets you use routines
+like <tt>newpage</tt><a name="5987"></a> and
+<tt>newline</tt><a name="5988"></a> as one of the parameters. The
+actual header of <code>newline</code> is</p>
+
+<pre>
+   PROC newline = (REF FILE f)VOID:
+</pre>
+
+<p>and you can call it outwith <tt>get</tt><a name="5989"></a> if you want.
+On input, the rest of the current line is skipped and a new line
+started. The position in the book is at the start of the new line, just
+before the first character of that line. Here is a program fragment
+which opens a book and then reads the first line and makes a name of
+mode <code>REF STRING</code> to refer to it. After reading the string,
+<code>newline</code> is called explicitly:</p>
+
+<pre>
+   FILE inf;
+   open(inf,"book",stand in channel);
+   STRING line;  get(inf,line);  newline(inf)
+</pre>
+
+<p>This could equally well have been written</p>
+
+<pre>
+   FILE inf;
+   open(inf,"book",stand in channel);
+   STRING line;  get(inf,(line,newline))
+</pre>
+
+<p>There is no reason why you should not declare your own procedures
+with mode <code>PROC(REF FILE)VOID</code>. Here is an example:</p>
+
+<pre>
+   PROC nl3 = (REF FILE f)VOID:
+      TO 3 DO newline(f) OD;
+</pre>
+
+<p>This procedure could then be used in <code>get</code>, for
+example:</p>
+
+<pre>
+   STRING line1, line2;
+   get(inf,(line1,nl3,line2))
+</pre>
+
+<p>where <code>line2</code> would be separated by 2 skipped lines from
+<code>line1</code>.</p>
+
+<p><a name="trans-straight"></a>The
+<tt>STRAIGHT</tt><a name="5990"></a> operator converts any structure
+or multiple into a row of values of the constituent fields or
+elements. This means that <code>get</code> can read directly any
+structure or multiple (or even rows of structures or multiples).</p>
+
+<p>There are four names of mode <code>REF FILE</code> declared in the
+standard prelude. One of these is identified by <tt>stand
+in</tt><a name="5991"></a>. The procedure
+<tt>read</tt><a name="5992"></a> which you have already used is
+declared as</p>
+
+<pre>
+   PROC read=([]SIMPLIN items)VOID:
+      get(stand in,items)
+</pre>
+
+<p>in the standard prelude. As you can see, it gets data from
+<code>stand in</code>. If you want to, you can use
+<tt>get</tt><a name="5993"></a> with <code>stand in</code> instead of
+<code>read</code>. The file <code>stand in</code> is already open when
+your program starts and should not be closed<a name="tex2html29"
+href="footnode.html#foot5588"><sup><span
+class="arabic">10</span>.<span class="arabic">2</span></sup></a>. Note
+that input from <code>stand in</code> is unbuffered, that is, it does
+not use the channel <code>stand</code> <code>in</code>
+<code>channel</code>.</p>
+
+<p>When you have finished reading data from a book, you should sever
+the connection between the book and your program by calling the
+procedure <tt>close</tt><a name="5994"></a>. This closes the book. Its
+header is</p>
+
+<pre>
+   PROC close=(REF FILE f)VOID:
+</pre>
+
+<hr>
+<h2><a name="section001121000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.1<a name="ex-ix-i"></a>
+<dd>Write a program called <code>list</code> which will read lines from a
+text book until a zero length line is read.  The program should
+display each line on the screen on separate lines.
+ Ans<a href="node143.html#ans-ix-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.2<a name="ex-ix-ii"></a>
+<dd>Write a program which will read a positive integer from a text
+book and which will then read that number of numbers (integer or
+real) from the book and display their total.
+ Ans<a href="node143.html#ans-ix-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2014"
+  href="node82.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2008"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2002"
+  href="node80.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2010"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2012"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2015"
+  href="node82.html">Writing to books</a>
+<b> Up:</b> <a name="tex2html2009"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2003"
+  href="node80.html">Books, channels and files</a>
+ &nbsp; <b>  <a name="tex2html2011"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2013"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

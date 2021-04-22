@@ -1,0 +1,157 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Books, channels and files</title>
+<meta name="description" content="books, channels and files">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node81.html">
+<link rel="previous" href="node79.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node81.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2000"
+  href="node81.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1994"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1988"
+  href="node79.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1996"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1998"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2001"
+  href="node81.html">Reading books</a>
+<b> Up:</b> <a name="tex2html1995"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html1989"
+  href="node79.html">Transput</a>
+ &nbsp; <b>  <a name="tex2html1997"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1999"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001110000000000000000"></a><a name="trans-books"></a>
+Books, channels and files</h1>
+
+<p>In Algol&nbsp;68 terms, external values are held in a
+<span class="textbf">book</span><a name="5511"></a>. Books have
+various properties. They usually have an identification
+string<a name="5512"></a>. Some books can be read, some written to and
+some permit both reading<a name="5513"></a> and
+writing<a name="5514"></a>.  Some books allow you to
+browse<a name="5515"></a>: that is, they allow you to start anywhere
+and read (or write) from that point on.  If browsing is allowed, you
+can restart<a name="5516"></a> at the beginning. Some books allow you
+to store external values in text form (human-readable form) only,
+while others allow you to store values in a compact internal form
+known as <b>binary</b><a name="5518"></a>.  In the latter form, values
+are stored more or less in the same form as they are held in the
+program.  The values will not usually be human-readable, being more
+suited to fast access by computer programs.</p>
+
+<p>In operating-system<a name="5519"></a> terms, Algol&nbsp;68 books
+are called &ldquo;files<a name="5520"></a>&rdquo; (just to confuse
+you, of course), but a book has a wider meaning than an
+operating-system file.<a name="tex2html28"
+href="footnode.html#foot5977"><sup><span
+class="arabic">10</span>.<span class="arabic">1</span></sup></a> When
+reading external values from the keyboard<a name="5522"></a>, your
+program is reading data from a read-only book<a name="5523"></a>.
+When printing data, your program is writing data to a write-only
+book<a name="5524"></a>.  When accessing a device, such as
+<code>/dev/ttyS2</code>, to which you can attach a modem, your program
+can both read from and write to the book, but it cannot browse in
+it.</p>
+
+<p>The <b>data</b><a name="5526"></a> (as external values are called)
+in a book, or the data to be put in a book, travels between the book
+and your program via a <b>channel</b>.  Three principal channels are
+provided in the standard prelude<a name="5528"></a>: <tt>stand in
+channel</tt><a name="5978"></a>, <tt>stand out
+channel</tt><a name="5979"></a> and <tt>stand back
+channel</tt><a name="5980"></a>.  The first is used for books which
+can only be read (they are
+&ldquo;read-only<a name="5535"></a>&rdquo;), the second for books
+which can only be written to (they are
+&ldquo;write-only<a name="5536"></a>&rdquo;) and the last for books
+which permit both reading and writing.  This classification is a
+little over-simplified.  Many books permit both reading and writing,
+but you may only want your program to read it. The three standard
+channels mentioned are all &ldquo;buffered&rdquo;. This means that
+when you, for example, write data to a book, the data is collected in
+memory until a fixed amount has been transput, when the collection is
+written to the book in its entirety.  The standard channels use a
+buffer of 4096 bytes.  The mode of a channel is
+<tt>CHANNEL</tt><a name="5981"></a> and is declared in the standard
+prelude.</p>
+
+<p> Your program keeps track of where you are in a book, which book is
+being accessed and whether you have come to the end of the book by
+means of a special structure which has the mode
+<tt>FILE</tt><a name="5982"></a>. This is a complicated structure
+declared in the standard prelude. The internals of values of mode
+<code>FILE</code> are likely to change from time to time, but the
+methods of using them will remain the same.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2000"
+  href="node81.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1994"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1988"
+  href="node79.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1996"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1998"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2001"
+  href="node81.html">Reading books</a>
+<b> Up:</b> <a name="tex2html1995"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html1989"
+  href="node79.html">Transput</a>
+ &nbsp; <b>  <a name="tex2html1997"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1999"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

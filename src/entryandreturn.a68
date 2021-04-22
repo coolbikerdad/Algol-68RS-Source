@@ -1,0 +1,361 @@
+DECS  entryandreturn  CONTEXT VOID  USE
+*L    usefulops, osif,
+      centities, environ, coutput, modes, identifiers, environment, incid,
+      incimperatives, incvalue, incmode, modules, uniquenameserver, values:
+
+configinfo A68CONFIG "$Id: entryandreturn.a68,v 1.2 2003-06-10 14:03:55 sian Exp $";
+
+
+COMMENT
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.13 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+10:06:03  34.003  SL    Phoenix Engineering SL: changed main header and macro
+??:??:??   ?.???  ????
+COMMENT
+
+PROC	write initial open curly = VOID:
+{
+	Writes the first open curly bracket of a C procedure followed by a
+        cedit to the locdecstream. Used for all C procedures, including C
+        Translator invented ones, eg "main". Uses 'current level' to ascertain
+        nesting level. 
+}
+BEGIN
+	INT code stream = CODESTREAM current level;
+	write c stream( ( "{ ", cnewline ), code stream );
+	write c stream( LOCDECSTREAM current level, code stream ) { go to locdec stream }
+END;
+
+PROC	write closing curly = VOID :
+{
+       Writes the final closing curly bracket of a C procedure followed by
+       cedits to achieve the correct collating of streams at the end of a
+       procedure. Used for all C procedures, including C Translator invented
+       ones, eg "main". Uses 'current level' to ascertain nesting level. 
+}
+BEGIN
+	INT 	code stream   = CODESTREAM   current level,
+	    	locdec stream = LOCDECSTREAM current level,
+	    	label stream  = LABELSTREAM  current level;
+
+	write c stream( ( "} ", cnewline, "#undef NL", cnewline ), code stream );
+	write c stream( label stream, locdec stream ); { go to label stream }
+	write c stream( code stream, label stream ) { go back to code stream }
+END;
+
+PROC routine_entry_hook = ( VECTOR [] CHAR routine name ) VOID:
+IF routine name [1] /= "!"
+THEN
+  write c stream( ( "A_PROC_ENTRY(", routine name, ");", cnewline ), CODESTREAM current level )
+FI;
+
+PROC routine_exit_hook = ( VECTOR [] CHAR  routine name ) VOID:
+IF routine name [1] /= "!"
+THEN
+  write c stream( ( "A_PROC_EXIT(", routine name, ");", cnewline ), CODESTREAM current level )
+FI;
+
+PROC write config info = VOID:
+{
+  write configuration info into outer level code stream (must be here so that char** can be initialised).
+}
+BEGIN
+    write c stream( ( cnewline,
+      "/* --- Configuration information for this module */", cnewline,
+      "static char *A_config_arguments[] = {" {}
+      ), LOCDECSTREAM 0 );
+
+    FORALL arg IN get_args
+    DO
+      write c stream(( """", arg, ""","), LOCDECSTREAM 0)
+    OD;
+
+    write c stream((
+      """""};", cnewline,
+      "static char *A_config_environment[] = {" {}
+      ), LOCDECSTREAM 0 );
+
+    REF ENVINFO env := environment OF config_info;
+    WHILE env ISNT nil_envinfo
+    DO
+      write c stream((
+        """", env_name OF env, "=", env_value OF env, ""","
+        ), LOCDECSTREAM 0);
+      env := next OF env
+    OD;
+
+    write c stream((
+      """""};", cnewline,
+      "static char *A_config_modinfo_files[] = {" {}
+      ), LOCDECSTREAM 0 );
+
+    REF MODINFOLIST mlist := used_modules OF config_info;
+    WHILE mlist ISNT nil_modinfolist
+    DO
+      write c stream((
+        """", modinfo_file OF mlist, ""","
+        ), LOCDECSTREAM 0);
+      mlist := next OF mlist
+    OD;
+
+    write c stream((
+      """""};", cnewline,
+      "static A_CONFIG_INFO A_config;", cnewline,
+       "/* --- end of configuration information */", cnewline
+      ), LOCDECSTREAM 0);
+
+    write c stream((
+      "/* --- Initialise configuration information */", cnewline,
+      "A_config.source_file = """, current_directory, "/", source file name, """;", cnewline,
+      "A_config.translation_time = """, local_time_str(translation time OF config_info), """;", cnewline,
+      "A_config.ctrans_version = """, version OF config_info, """;", cnewline,
+      "A_config.name_seed = """, name seed OF config_info,
+          name seed origin string( name seed origin OF config_info ), """;", cnewline,
+      "A_config.spec_change_time = """, 
+          (UPB specs = 0 | "no spec" | local_time_str(time of last change OF (specs[1]))), """;", cnewline,
+      "A_config.arguments = A_config_arguments;", cnewline,
+      "A_config.environment = A_config_environment;", cnewline,
+      "A_config.modinfo_files = A_config_modinfo_files;", cnewline
+      ), CODESTREAM 0 )
+END;
+
+PROC	start routine =
+( ROUTINE routine,
+  ENVIRON environ,
+  REF VECTOR [] INT param decnos,
+  INT result mode,
+  REF VALUE result value
+) VOID:
+BEGIN                            
+	rddec	
+	( name OF routine, 
+	  mode OF routine,
+	  param decnos,
+	  result mode,
+	  rdenno OF routine, 
+	  environ, 
+	  props OF routine
+	);    
+	write initial open curly;
+        routine_entry_hook( name OF routine );
+
+	result value := LOC VALUE := ( result mode, default info, EMPTY )
+END;                                            
+
+PROC	end routine = ( ROUTINE routine, REF VALUE result ) VOID:
+BEGIN
+        BOOL generator = props OF routine >= gen proc bit;
+	INT code stream = CODESTREAM current level;
+	IF	generator  { CME dynamic results not fully implemented yet }
+	THEN	{ op call (gen_return) } SKIP
+	ELIF	dynamic (mode OF result)
+	THEN	IF	is array (mode OF result)
+		THEN	SKIP
+		ELSE	{op call (dynamic_return) } SKIP
+		FI
+	ELSE	{ op call (return_op) } SKIP
+	FI;
+
+        routine_exit_hook( name OF routine );
+
+	{ decide whether temp is being used for result }
+	BOOL use temp for result =
+		no struct result option ANDTH is c struct (mode OF result);
+
+	IF	mode OF result = void mode
+	THEN	write c stream( ("return;", cnewline), code stream)
+	ELIF	use temp for result
+	THEN
+		write c stream(
+			( "*ReturnedValue = (", GETCFRAGMENT result,
+			  ");", cnewline ), code stream );
+	     	write c stream( ("return;", cnewline), code stream)
+	ELSE
+		write c stream(
+			( "return( ", GETCFRAGMENT result, 
+			  " );", cnewline ), code stream)
+	FI;
+
+	write closing curly;
+
+	complete rddec
+END;
+
+PROC	global environ = ENVIRON: environ OF ids [ global id no ];
+
+PROC	start module =( REF VECTOR [] CHAR unique name, module name) VOID:
+{
+	outputs the function header for 'main'
+}
+BEGIN
+	INT code stream = CODESTREAM current level;
+
+	write c stream
+CO Next but one line changed by Phoenix Engineering SL BP65-06-10
+	(("int main (int argc, char **argv)", cnewline CO
+   (("int main(int argc, char *argv[], char *envp[])", cnewline
+	 ),code stream
+	);
+
+	write initial open curly;
+
+	{ call garbage collector startup hook
+	  - must be first executable statement
+	}
+	write c stream(( "A_GC_STARTUP(argc);", cnewline), codestream );
+
+	process contexts;
+
+        write config info;
+
+        write c stream((
+          "#ifdef A_prelude", cnewline,
+CO Next but one line changed by Phoenix Engineering SL BP65-06-10
+          "A_prelude(argc,argv);", cnewline,CO
+			 "A_prelude(argc,argv,envp);",cnewline,
+          "#endif", cnewline
+          ), code stream);
+
+        routine_entry_hook( "MAIN" )
+END;
+
+PROC	start decs module = ( REF VECTOR [] CHAR unique name, module name) VOID:
+{
+        outputs the header for the module initialisation function. A static
+        BOOL 'A_invoked' is used to prevent the module being initialised more
+        than once (if the module is USEd by more than one other module). This
+        is purely an optimisation since DECS modules have no side effects by
+        definition. 
+}
+BEGIN
+	INT code stream   = CODESTREAM   current level,
+	    locdec stream = LOCDECSTREAM current level;
+
+	{ ensure that files can be included once only }
+
+	write c stream
+	(( "void ", uniquename, "(void)   /* initialise DECS ", module name, " */",
+	   cnewline
+	 ),code stream
+	);
+
+	write initial open curly;
+
+	write c stream
+	(( "static A68_BOOL A_invoked = A68_FALSE;", cnewline
+	 ),locdec stream
+	);
+
+	write c stream
+	(( "if( A_invoked ) return;", cnewline,
+	   "A_invoked = A68_TRUE;", cnewline
+	 ),code stream
+	);
+
+     	process contexts;
+
+        write config info;
+
+        routine_entry_hook(concat(("DECS ",module name)))
+END;
+        
+PROC start proc module =
+( ROUTINE routine,
+  REF VECTOR [] CHAR unique name, module name,
+  REF VALUE result value
+) VOID:
+BEGIN
+	terminal error (809)
+END;
+
+PROC	start composition module =
+( REF VECTOR [] CHAR unique name, module name,
+  BOOL partial composition
+) VOID:
+{
+	Provides entry to both composition and partial composition closures.
+}
+BEGIN
+	terminal error(806)
+END;
+
+PROC	end module = VOID:
+BEGIN
+        routine_exit_hook("MAIN");
+	write c stream((
+          "#ifdef A_postlude", cnewline,
+          "A_postlude;", cnewline,
+          "#endif", cnewline,
+          "return(0);", cnewline
+        ), CODESTREAM current level);
+	write closing curly
+END;
+
+PROC	end decs module = (REF VECTOR [] CHAR module name) VOID:
+BEGIN                                       
+	IF	previous version found
+	THEN    IF      rs compatible with previous version
+			ANDTH
+			trans compatible with previous version
+		THEN    comment (319 { Compatible with previous version of module })
+		ELSE    warning (320 { Incompatible with previous version })
+		FI
+	FI;
+
+        routine_exit_hook(concat(("DECS ",module name)));
+
+	write closing curly;
+
+        output module information
+END;
+
+PROC	complete program =
+( REF VECTOR [] CHAR module name,
+  REF LABEL auto comp label
+) VOID:
+{
+	Provides entry and return for the external frame required for complete
+       	programs, together with a call of the body of the program, either a
+       	simple program (VOID context with no holes), or an automatic composition.
+}
+BEGIN
+	"'complete program' called" ASSERT FALSE
+END;
+
+SKIP
+
+KEEP
+     start module, end module, start routine, end routine, 
+     start decs module, start proc module, end decs module,
+     start composition module, complete program
+FINISH

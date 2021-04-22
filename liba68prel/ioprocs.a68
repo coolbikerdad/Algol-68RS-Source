@@ -1,0 +1,569 @@
+DECS  ioprocs  CONTEXT VOID  USE  putstrings,  osinterface,  testmode,
+      basics,  messageproc,  iomessages,  commandreader:
+
+{ " Id: ioprocs.sta,v 1.1 91/10/14 14:27:11 edcad Exp $" }
+configinfo A68CONFIG "$Id: ioprocs.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1985
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+02:09:85  Derived from the simulator input/output procedures.  Also includes
+             global commands such as obey and edit.
+25:09:85  "EDIT" now uses "rd text" rather than "rd string uc" to allow VAX
+             qualifiers (penalty:  less clear error message for no parameter)
+11:11:85  "EDIT" change rejected, uses "rd string uc" again.
+17:12:85  Updated for change in COMMAND structure.  Diagnostic commands
+             removed - except PRINTVAXSTATUS.
+27:01:86  CLOCKON/CLOCKOFF renamed SHOWTIME/DONTSHOWTIME CO026.
+             Abbreviation "D" for "DONT" added.
+14:02:86  Changed for command renames.
+26:02:86  Miscellaneous bug fixes.
+                "File name" globally replaced by "Filename" in msgs (Bug 011)
+                ">>>" removed from message output (Bug 021)
+                obey command recommends eoj as terminator, not log (Bug 005)
+05:03:86  Bug 88 (outputting to file after file close) fixed
+07:03:86  Page command now valid offline (Bug 29)
+13:03:86  Release 2 help messages
+18:03:86  Changed "input" message (Bug 023); channel for "message"
+             (Bug 009); "log" and "output" error messageas (Bug 026)
+25:03:86  Corrections to help messages
+28:04:86  Bug 010 Fixed.
+06:05:86  Access to undocumented commands rationalised (Bug 87)
+24:07:86  PROC spawn now has FLTPROC parameter, vax_fault msg changed
+22:10:86  Updated for new osinterface.  "shortname" used for file messages.
+             Attempt to recover from more os errors.  DCT
+04:12:86  "shortname" removed from lines 78, 93, 207, 253, 288, 347   DCT
+02:09:87  CR244 - use shortened filenames on VMS.  JER
+02:09:87  R2.2B004  Remove mention of VMS from time-of-day messages  JER
+29:09:87  Porting change integrated.  JER
+14:10:87  CR 186.  Log lines to log file only once.  CME
+14:10:87  R2.2B005.  Stop EOF looping.  CME
+29:10:87  CR 244. Correction to use shortname on UNIX as well.  JER
+05:11:87  R3B064.  Remove '<sub-command>' from help messages.  JER
+08:02:88  Updated help messages.  LR
+18:02:88  R3B161.  Correction to help messages.  JER
+23:02:88  R3B166.  Correction to help messages.  LR
+11:05:88  CR 596  Modules renamed  JER
+27:05:88  Modified for use with EPI: putline changed to output eti_m_output
+             messages; i/o commands arranged as global procedures and added
+             to KEEP list; io_fault changed . BGH
+11:10:88  Output of newline by getline corrected. BGH
+23:11:88  Show time command reinstated even if epi is in use. BGH
+10:03:89  Only "spaces between words" discarded in chopping lines.  DCT
+14:03:89  R4B063.  Quick fix for infinite loop reporting 'END-OF-FILE on
+                      input line' when ELLA is driven by a DCL file which
+                      becomes exhausted. Note: The correct fix would be to
+                      modify 'interactive_session' of vmsinterface so that
+                      non-tty input is detected. BGH
+21:08:89  CR642:  Kernel interface changes merged with Release 4.  DCT
+15:01:90  PROC flt_msg added to permit easy use of flt when msg wanted.  DCT
+15:06:90  get_filename renamed file_name.  DCT
+27:06:90  Bug in PROC writer - when last char is space.  DCT
+04:07:90  Removefile bug and arrow missing from seein.  DCT
+04:12:90  Move RCH out into vmsinterface and keep through, osinterface and
+             basics.   DJS
+31:01:91  Buffer sizes increased from 1000 to 4096.  DCT
+25:03:91  Modify for more general form of MSGNO, see messageproc. DJS
+22:03:93  Reworked, simplified and speeded up for the new OSIF.  DCT
+05:08:93  IO differences with Update 30.  DCT
+27:09:93  header OF ioprocs removed, noninteractive failure reinstated.  DCT
+05:10:93  facility used instead of header in out/log.  DCT
+21:10:93  from_file - "new" not assigned to buffer - looping.  DCT
+27:10:93  PROC banner added.  R6B196 setwidth <null> corrected.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.047 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE  INFILES = STRUCT ( FILE  file,  BOOL  suspended,  INT  number,  RVC  name,
+                         REF READERDETAILS  reader,  REF INFILES  previous ),
+      IOSTATE = STRUCT ( BOOL  logging,  outputing,  seeing_in,  seeing_out,
+                               paging,  clock,  screen_output,
+                         INT  width,  page_count,  page_length,  eof_count,
+                         REF READERDETAILS  standard_reader,
+                         REF INFILES  infile,
+                         PROC RVC  prompt,
+                         FILE  logfile,  outfile
+                       );
+
+
+
+{ Procedure to identify ioproc messages for the kernel interface }
+
+
+{  Globals  }
+
+INT  in_step = 512,       { initial / step to increase size of input buffers }
+     default_width = 80,  { default output width - stdout + files }
+   { max_width = 10000,     an arbitary limit for output width (as buffered) }
+     min_width = 40,      { minimum output width to allow sensible layout }
+     default_length = 22, { default page length for "paged" output }
+     min_page_length = 3, { minimum page length for paged output }
+     max_eof_count = 3;   { maximum number of consecutive EOFs allowed }
+
+STR  stars = "*****";
+
+{ These buffers do not need to use the heap }
+
+RVC  in_buffer:= LOC VECTOR [in_step] CHAR;
+
+{ RCH  screen - kept in osinterface with a default outputer for early messages }
+
+IOSTATE  iostate;
+PROC  out_is_online = BOOL:  NOT outputing OF iostate;
+PROC  get_iostate = REF IOSTATE:  iostate;
+
+
+{ Screen / output file / log file writing procedures }
+
+PROC  log_msg = (MSGNO  no,  VECSTR  msg) VOID:
+BEGIN
+    logging OF iostate:= FALSE;
+    global_msg( { "* Error writing to log file - closing file ""*""" }
+                io_msg(1), (stars, testmode_file_name(logfile OF iostate)) );
+    close_file(logfile OF iostate, global_msg);
+    global_msg(no, msg)
+END;
+
+PROC  out_msg = (MSGNO  no,  VECSTR  msg) VOID:
+BEGIN
+   outputing OF iostate:= FALSE;
+   global_msg( { "* Error writing to out file - closing file ""*""" }
+               io_msg(2), (stars, testmode_file_name(outfile OF iostate)) );
+   close_file(outfile OF iostate, global_msg);
+   global_msg(no, msg)
+END;
+
+
+PROC  page = VOID:
+BEGIN
+   page_count OF iostate PLUSAB 1;
+   IF page_count OF iostate = page_length OF iostate
+   THEN  prompt("Paging - press <RET> for more ");
+         page_count OF iostate:= 0
+   FI
+END;
+
+
+PROC  write_screen = (STR  str) VOID:
+BEGIN
+   IF screen_output OF iostate
+   THEN  write_stdout(str);
+         IF paging OF iostate THEN  page  FI
+   FI;
+   IF logging OF iostate
+   THEN  write_buffer(logfile OF iostate, str, log_msg)
+   FI;
+   IF outputing OF iostate
+   THEN  write_buffer(outfile OF iostate, str, out_msg)
+   FI
+END;
+
+
+PROC  write_err = (STR  str) VOID:
+BEGIN
+   IF screen_output OF iostate
+   THEN  write_buffer(stderr, str, ignore_msg);
+         IF paging OF iostate THEN  page  FI
+   FI;
+   IF logging OF iostate
+   THEN  write_buffer(logfile OF iostate, str, log_msg)
+   FI;
+   IF outputing OF iostate
+   THEN  write_buffer(outfile OF iostate, str, out_msg)
+   FI
+END;
+
+
+PROC  write_out = (STR  str) VOID:
+BEGIN
+   IF seeing_out OF iostate  OREL  NOT outputing OF iostate
+   THEN  write_stdout(str);
+         IF paging OF iostate THEN  page  FI
+   FI;
+   IF logging OF iostate
+   THEN  write_buffer(logfile OF iostate, str, log_msg)
+   FI;
+   IF outputing OF iostate
+   THEN  write_buffer(outfile OF iostate, str, out_msg)
+   FI
+END;
+
+
+
+PROC  getline = (REF RVC  buffer,  MESSAGEPROC  msg) INT:
+BEGIN
+   { For the time being, in_buffer is extended arbitarily to cope with any
+     line length.  This avoids any problem with the interleaving of logging
+     information from input with any logging information generated by output
+     from elsewhere in ELLA.  22:02:93  DCT
+     The "screen" channel is used to prompt and to echo the input line to the
+     log file.  The iostate switches are used to supress output to the screen
+     and output files as needed (see "out/screen_enabled" ).  DCT  05:08:93
+   }
+   INT  length:= 0;
+   BOOL  prompt = number OF infile OF iostate = 0  OREL
+                  suspended OF infile OF iostate,
+         visible = prompt  OREL  logging OF iostate  OREL
+                   seeing_in OF iostate,
+         screen_enabled = screen_output OF iostate,
+         out_enabled = outputing OF iostate;
+
+   { Make sure that there is no outstanding output }
+   IF charnumber(screen) > 1 THEN  newline(screen)  FI;
+   IF charnumber(out) > 1 THEN  newline(out)  FI;
+
+   { Now log / prompt if required }
+
+   IF visible
+   THEN  newline(screen);
+         IF number OF infile OF iostate > 0
+         THEN  putstr(screen, name OF infile OF iostate);
+               IF suspended OF infile OF iostate
+               THEN  putstr(screen, "(suspended)  ")
+               ELSE  putstr(screen, "  ")
+               FI
+         FI;
+         IF clock OF iostate THEN  putstr(screen, time_str)  FI;
+         putstr(screen, prompt OF iostate);
+         putstr(screen, arrow_str);
+
+         { Now write the line without a newline character - but do not want to
+           write to the output file nor to the screen if unseen file input -
+           probably easiest way is to write via doctored screen output }
+
+         outputing OF iostate:= FALSE;
+         IF NOT prompt  ANDTH  NOT seeing_in OF iostate
+         THEN  screen_output OF iostate:= FALSE
+         FI;
+         writeline(screen);
+         screen_output OF iostate:= screen_enabled;
+         outputing OF iostate:= out_enabled
+   FI;
+
+
+   PROC  read_from_file = (RVC  buf) VOID:  { Recursive to allow extension }
+   BEGIN
+      INT  leng:= 0;
+      FILE  file = IF prompt THEN  stdin  ELSE  file OF infile OF iostate  FI;
+      IOSTATUS  status = read_line(file, buf, leng, msg);
+      IF status = io_eof
+      THEN  IF prompt
+            THEN  IF (eof_count OF iostate PLUSAB 1) > max_eof_count
+                  THEN  msg( {"Too many END-OF-FILEs encountered on input line"}
+                             io_msg(5), nullmsg )
+                  ELSE  msg( {"END-OF-FILE found on input line"}
+                             io_msg(6), nullmsg )
+                  FI
+            ELSE  FILE  old = file OF infile OF iostate;
+                  infile OF iostate:= previous OF infile OF iostate;
+                  reset_reader(reader OF infile OF iostate);
+                  newline(screen);
+                  msg( { "Input file ""*"" closed " }
+                       io_msg(3), testmode_file_name(old) );
+                  close_file(old, msg)
+            FI
+            { leng will (should ?) be zero }
+      ELIF status = io_partline
+      THEN  length PLUSAB leng;
+            { Extend buffer }
+            HEAP VECTOR [UPB buffer + in_step] CHAR  new;
+            new[: UPB buffer]:= buffer;
+            buffer:= new;
+            { Now read starting after previous read(s) }
+            read_from_file(buffer[length + 1 : ])
+      ELIF status = io_error
+      THEN  { Should already have reported an error directly via msg }
+            msg(user, "An error ocurred on input")
+      ELSE  length PLUSAB leng;
+            eof_count OF iostate:= 0
+      FI
+   END;
+
+   read_from_file(buffer);
+
+   { Now log the response / line from infile }
+   outputing OF iostate:= FALSE;
+   IF NOT seeing_in OF iostate THEN  screen_output OF iostate:= FALSE  FI;
+   putstr(screen, buffer[: length]);
+   newline(screen);
+   page_count OF iostate:= 1;
+
+   outputing OF iostate:= out_enabled;
+   screen_output OF iostate:= screen_enabled;
+
+   length
+END;
+
+
+PROC  banner = (STR  message) VOID:
+BEGIN
+   INT  gap  = width OF iostate - UPB message,
+        sgap = width OF iostate OVER 8;   { Prefered indent }
+   IF (gap - 8) < (2 * sgap)
+   THEN  { Not enough room for prefered indent and 2 bar characters each end }
+         IF gap > 1
+         THEN  { centre }
+               put(screen, (newline, " " * (gap OVER 2), message, newline))
+         ELSE  put(screen, (newline, message, newline))
+         FI
+   ELSE  INT  bgap =  gap - 2 * sgap - 4,    hgap = bgap OVER 2;
+         put(screen, ( newline, spaces(sgap), "=" * hgap, "  ", message, "  ",
+                       "=" * (bgap - hgap), newline))
+   FI
+END;
+
+
+PROC  io_fault = (MESSAGEPROC  msg) VOID :
+   IF NOT continue_on_error
+   THEN
+      IF number OF infile OF iostate > 0  ANDTH
+         NOT suspended OF infile OF iostate
+      THEN  suspended OF infile OF iostate:= TRUE;
+            msg( { "From *" }
+                 io_msg(8),
+                 testmode_file_name(file OF infile OF iostate) )
+      FI;
+      IF NOT interactive   { interactive not in OSIF level 1   DCT }
+      THEN  msg({"Input error in non-interactive working"} io_msg(9), nullmsg)
+      FI
+   FI;
+
+
+PROC  current_width = INT:  width OF iostate;
+
+
+
+{ Command procedures }
+
+
+PROC  io_clearinputs = (MESSAGEPROC  msg) VOID:
+   IF number OF infile OF iostate = 0
+   THEN  msg({ "No input files open" } io_msg(10), nullmsg)
+   ELSE  WHILE number OF infile OF iostate > 0
+         DO  FILE  old = file OF infile OF iostate;
+             infile OF iostate:= previous OF infile OF iostate;
+             msg( { "Input file ""*"" closed " }
+                  io_msg(3), testmode_file_name(old) );
+             reset_reader(reader OF infile OF iostate);
+             close_file(old, msg)
+         OD
+   FI;
+
+
+
+PROC  io_input = (RVC  name,  MESSAGEPROC  msg) VOID:
+BEGIN
+   { Textual interface should supply "rdline OF reader OF infile OF iostate" }
+   FILE  new = open_file(name, read_access, msg);
+   infile OF iostate:= HEAP INFILES:=
+              ( new, FALSE, number OF infile OF iostate + 1,
+                oneline(("File ", number OF infile OF iostate + 1, "  ")),
+                set_reader( HEAP VECTOR [in_step] CHAR,
+                            rdline OF standard_reader OF iostate ),
+                infile OF iostate );
+   msg({ "Reading from ""*""" } io_msg(11), testmode_file_name(new))
+END;
+
+
+PROC  io_removefile = (MESSAGEPROC  msg) VOID:
+   IF number OF infile OF iostate = 0
+   THEN  msg({ "No input files open" } io_msg(12), nullmsg)
+   ELSE  BOOL  suspended = suspended OF infile OF iostate;
+         FILE  old = file OF infile OF iostate;
+         infile OF iostate:= previous OF infile OF iostate;
+         reset_reader(reader OF infile OF iostate);
+         msg( { "Input file ""*"" closed " }
+              io_msg(3), testmode_file_name(old) );
+         suspended OF infile OF iostate:= suspended; { zero still has field }
+         close_file(old, msg)
+   FI;
+
+
+PROC  io_showinput = (MESSAGEPROC  msg) VOID:
+   seeing_in OF iostate:= TRUE;
+PROC  io_dontshowinput = (MESSAGEPROC  msg) VOID:
+   seeing_in OF iostate:= FALSE;
+PROC  io_showoutput = (MESSAGEPROC  msg) VOID:
+   seeing_out OF iostate:= TRUE;
+PROC  io_dontshowoutput = (MESSAGEPROC  msg) VOID:
+   seeing_out OF iostate:= FALSE;
+PROC  io_showtime = (MESSAGEPROC  msg) VOID:
+   clock OF iostate:= TRUE;
+PROC  io_dontshowtime = (MESSAGEPROC  msg) VOID:
+   clock OF iostate:= FALSE;
+
+
+PROC  io_printtime = (MESSAGEPROC  msg) VOID:
+   msg({ "*" } io_msg(13), time_str);
+
+PROC  io_message = (STR  text, MESSAGEPROC  msg) VOID:
+   msg({ "*" } io_msg(14), text);
+
+PROC  io_comment = (STR  text, MESSAGEPROC  msg) VOID:
+   msg({ "*" } io_msg(15), text);
+
+
+
+PROC  io_offline = (MESSAGEPROC  msg) VOID:
+   IF number OF infile OF iostate = 0
+   THEN  msg( { "No input file to resume" } io_msg(16), nullmsg )
+   ELIF NOT suspended OF infile OF iostate
+   THEN  msg( { "Input file not suspended" } io_msg(17), nullmsg )
+   ELSE  suspended OF infile OF iostate:= FALSE
+   FI;
+
+
+PROC  io_online = (MESSAGEPROC  msg) VOID:
+   IF number OF infile OF iostate = 0  OREL  suspended OF infile OF iostate
+   THEN  msg( { "This command may only be given form an input file" }
+              io_msg(18), nullmsg )
+   ELSE  suspended OF infile OF iostate:= TRUE;
+         msg( { "Input file suspended due to ONLINE command" }
+              io_msg(19), nullmsg )
+   FI;
+
+
+PROC  io_log = (RVC  name,  MESSAGEPROC  msg) VOID:
+   IF logging OF iostate
+   THEN  msg( { "You are already using a log file, use ""dontlog"" first" }
+              io_msg(20), nullmsg )
+   ELSE  logfile OF iostate:= open_file(name, write_access, msg);
+         logging OF iostate:= TRUE;
+         msg( { "* log file  ""*""  started on  *" }
+              io_msg(21), ( facility, testmode_file_name(logfile OF iostate),
+                            date_time(seconds) ) );
+         newline(screen)
+   FI;
+
+
+PROC  io_dontlog = (MESSAGEPROC  msg) VOID:
+   IF logging OF iostate
+   THEN  logging OF iostate:= FALSE;
+         STR  name = testmode_file_name(logfile OF iostate);
+         close_file(logfile OF iostate, msg);
+         msg( { "Log file  ""*""  closed" } io_msg(22), name )
+   ELSE  msg( { "Not using a log file" } io_msg(23), nullmsg )
+   FI;
+
+
+
+PROC  io_output = (RVC  name,  MESSAGEPROC  msg) VOID:
+   IF outputing OF iostate
+   THEN  msg( { "You are already writing a file, use ""dontoutput"" first" }
+              io_msg(24), nullmsg )
+   ELSE  outfile OF iostate:= open_file(name, write_access, msg);
+         outputing OF iostate:= TRUE;
+         msg( { "COM  * output file  ""*""  started on  *  MOC" }
+              io_msg(25), ( facility, testmode_file_name(outfile OF iostate),
+                            date_time(seconds) ) );
+         newline(out)
+   FI;
+
+
+PROC  io_dontoutput = (MESSAGEPROC  msg) VOID:
+   IF outputing OF iostate
+   THEN  outputing OF iostate:= FALSE;
+         STR  name = testmode_file_name(outfile OF iostate);
+         close_file(outfile OF iostate, msg);
+         msg( { "Output file  ""*""  closed" } io_msg(26), name )
+   ELSE  msg( { "Not using an output file" } io_msg(27), nullmsg )
+   FI;
+
+
+PROC  io_page = (INT  l,  MESSAGEPROC  msg) VOID:
+BEGIN
+   IF l = 0
+   THEN  page_length OF iostate:= default_length
+   ELIF l < min_page_length
+   THEN  msg({ "Screen page length too short" } io_msg(28), nullmsg)
+   ELSE  page_length OF iostate:= l
+   FI;
+   paging OF iostate:= TRUE;
+   msg( { "Screen page length is * lines" }
+        io_msg(29), intchars(page_length OF iostate) )
+END;
+
+
+PROC  io_dontpage = (MESSAGEPROC  msg) VOID:   paging OF iostate:= FALSE;
+
+
+PROC  io_setwidth = (INT  w,  MESSAGEPROC  msg) VOID:
+BEGIN
+   IF w = 0
+   THEN  width OF iostate:= width OF screen:= width OF out:= width OF err:=
+         default_width
+   ELIF w < min_width
+   THEN  msg({ "Output width too narrow" } io_msg(30), nullmsg)
+ { ELIF w > max_width
+   THEN  msg({ "Output width too wide" } io_msg(31), nullmsg)
+ } ELSE  IF w > UPB buffer OF screen
+         THEN  buffer OF screen:= HEAP VECTOR [w+1] CHAR;
+               buffer OF out:= HEAP VECTOR [w+1] CHAR;
+               buffer OF err:= HEAP VECTOR [w+1] CHAR
+         FI;
+         width OF iostate:= width OF screen:= width OF out:= width OF err:= w
+
+   FI;
+   msg( { "Output width is now * characters" }
+        io_msg(32), intchars(width OF iostate) )
+END;
+
+
+{ declare initial size to default value + 1 to allow for newline_char }
+
+VECTOR [default_width + 1] CHAR  screen_buffer,  out_buffer,  err_buffer;
+
+PROC  initialise_ioprocs = (PROC RVC  get_prompt) VOID:
+BEGIN
+   REF READERDETAILS  rd = set_reader(in_buffer, getline);
+   screen:= make_channel(screen_buffer, write_screen);  { buffered output }
+   out:= make_channel(out_buffer, write_out);           { buffered output }
+   err:= make_channel(err_buffer, write_err);           { buffered output }
+
+   iostate:= ( FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
+               default_width, 0, default_length, 0, rd,
+               HEAP INFILES:= (stdin,  FALSE,  0, MAKERVC "stdin  ", rd,  NIL),
+               get_prompt,   nil_file,  nil_file
+             )
+END
+
+
+
+KEEP  out_is_online,  IOSTATE,  iostate,  get_iostate,  write_screen,
+      putline,  getline,  current_width,  banner,
+      io_fault,  io_clearinputs,  io_input,  io_removefile,  io_showinput,
+      io_dontshowinput,  io_showoutput,  io_dontshowoutput,  io_showtime,
+      io_dontshowtime,  io_printtime,  io_message,  io_comment,  io_offline,
+      io_online,  io_log,  io_dontlog,  io_output,  io_dontoutput,  io_page,
+      io_dontpage,  io_setwidth,  initialise_ioprocs
+FINISH

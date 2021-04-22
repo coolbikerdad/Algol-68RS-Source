@@ -1,0 +1,242 @@
+DECS  commandsyntax  CONTEXT VOID  USE  putstrings,  messageproc:
+
+{ " Id: commandsyntax.sta,v 1.1 91/10/14 14:26:16 edcad Exp $" }
+configinfo A68CONFIG "$Id: commandsyntax.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+12:01:89  Module to define a Mode to describe the syntax to be used by the
+             command interpreter and procedures for processing it.   DCT
+12:01:90  help string added to MODE READER.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number   0.026 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+MODE  COMMANDSYNTAX,
+      RULE          = STRUCT ( BITS  type, { Defined by procedures
+                                             alt, prod, opt and star }
+                               REF VECTOR [] COMMANDSYNTAX  elements
+                             ),
+      COMMANDSYNTAX = UNION (REF INT, RULE),
+      VALUE         = STRUCT ( INT  sort,  { Which reader read it }
+                               RVC  value  { it }
+                             ),
+      VALUES        = REF VECTOR [] VALUE,
+      COMMANDPARAM,
+      CHOICE        = STRUCT ( INT  choice,   { Which alternative in syntax }
+                               REF VECTOR [] COMMANDPARAM  params
+                             ),
+      COMMANDPARAM  = UNION (CHOICE, VALUE),
+      READER        = UNION ( PROC (MESSAGEPROC) RVC,  { The string if legal,
+                                                         nilstr if illegal and
+                                                         nullstr if nothing
+                                                         present }
+                              COMMANDSYNTAX        { Expands to another rule }
+                            ),
+      ANALYSER      = STRUCT ( REF INT  sort,      { Which reader read it }
+                               READER  reader,
+                               RVC  description,   { eg "<int>" }
+                                    help           { a description }
+                             ),
+      READERS       = STRUCT (ANALYSER  rule,  REF READERS  rest);
+
+COMMANDSYNTAX  no parameters = HEAP INT:= 0;  { without "_" for Module command }
+COMMANDPARAM   no_parameters = VALUE (0, HEAP VECTOR [0] CHAR);
+
+
+{ Basic syntax construction procedures }
+
+BITS  prod_syn = 16r0,  alt_syn = 16r8,  opt_syn = 16r2,  star_syn = 16r4;
+
+PROC  is_alt = (RULE  rule) BOOL:  (type OF rule AND alt_syn) = alt_syn;
+PROC  is_opt = (RULE  rule) BOOL:  (type OF rule AND opt_syn) = opt_syn;
+PROC  is_star = (RULE  rule) BOOL:  (type OF rule AND star_syn) = star_syn;
+
+PROC  alt = (VECTOR [] COMMANDSYNTAX  cs) RULE:
+   (16r8, HEAP VECTOR [UPB cs] COMMANDSYNTAX:= cs);
+
+PROC  prod = (VECTOR [] COMMANDSYNTAX  cs) RULE:
+   (16r0, HEAP VECTOR [UPB cs] COMMANDSYNTAX:= cs);
+
+PROC  opt = (COMMANDSYNTAX  cs) RULE:
+   CASE cs IN
+      (RULE  rule)
+         (type OF rule OR 16r2, elements OF rule) ,
+      (REF INT  terminal_symbol)
+         (16r2, HEAP VECTOR [1] COMMANDSYNTAX:= terminal_symbol)
+   ESAC;
+
+PROC  star = (COMMANDSYNTAX  cs) RULE:
+   CASE cs IN
+      (RULE  rule)
+         (type OF rule OR 16r4, elements OF rule) ,
+      (REF INT  terminal_symbol)
+         (16r4, HEAP VECTOR [1] COMMANDSYNTAX:= terminal_symbol)
+   ESAC;
+
+
+PROC  show_syntax = ( COMMANDSYNTAX  syntax,
+                      REF VECTOR [] ANALYSER  analysers ) RVC:
+   CASE syntax IN
+      (REF INT  symbol_number)
+         IF symbol_number = 0
+         THEN  nullstr
+         ELIF symbol_number < 0  OREL  symbol_number > UPB analysers
+         THEN  MAKERVC "illegal"
+         ELSE  description OF analysers[symbol_number]
+         FI ,
+      (RULE  rule)
+         ( PROC  needs_brackets = (RVC  line) BOOL:
+           BEGIN
+              INT  n:= 0;  BOOL  ans:= FALSE;
+              FORALL c IN line WHILE NOT ans
+              DO  IF c = "{"  OREL  c = "["
+                  THEN  n PLUSAB 1
+                  ELIF c = "}"  OREL  c = "]"
+                  THEN  n MINUSAB 1
+                  ELIF c = " " { implies prod or alt }  ANDTH  n = 0
+                  THEN  ans:= TRUE
+                  FI
+              OD;
+              ans
+           END;
+
+           RVC  ans:= nullstr;
+           STR  alt = IF is_alt(rule) THEN  " | "  ELSE  " "  FI;
+           INT  n:= 0;  INT  l = UPB elements OF rule;
+           FORALL r IN elements OF rule
+           DO  RVC  phrase = show_syntax(r, analysers),
+                    brk = IF l  > 1  ANDTH  needs_brackets(phrase)
+                          THEN  oneline(("{", phrase, "}"))
+                          ELSE  phrase
+                          FI;
+               ans:= IF (n PLUSAB 1) = l
+                     THEN  oneline((ans, brk))
+                     ELSE  oneline((ans, brk, alt))
+                     FI
+           OD;
+
+           IF is_opt(rule)
+           THEN  ans:= oneline(("[", ans, "]"))
+           ELIF is_star(rule)  ANDTH  needs_brackets(ans)
+           THEN  ans:= oneline(("{", ans, "}"))
+           FI;
+
+           IF is_star(rule) THEN  oneline((ans, "*"))  ELSE  ans  FI
+         )
+   ESAC;
+
+
+
+PROC  show_readers = (RCH  out,  REF VECTOR [] ANALYSER  readers) VOID:
+   FORALL reader IN readers
+   DO  put(out, description OF reader);
+       CASE reader OF reader IN
+          (COMMANDSYNTAX  syntax)
+             CASE syntax IN
+                (RULE)  put(out, (tab(12), "::= ", show_syntax(syntax,readers)))
+             OUT SKIP
+             ESAC
+       OUT  SKIP
+       ESAC;
+       IF (help OF reader IS nilstr)  OREL  (UPB help OF reader = 0)
+       THEN  newline(out)
+       ELSE  put(out, (newline, help OF reader, lines(2)))
+       FI
+   OD;
+
+
+
+PROC  add_readers = ( REF READERS  readers,
+                      VECTOR [] STRUCT ( REF INT  no,  READER  new,
+                                         STR  name,  help)
+                          new_rules
+                    ) REF READERS:
+BEGIN
+   REF READERS  rptr:= readers;
+   FORALL  rule IN new_rules
+   DO  no OF rule:= sort OF rule OF rptr + 1;
+       rptr:= HEAP READERS:= ( ( no OF rule, new OF rule, MAKERVC name OF rule,
+                                 MAKERVC help OF rule ), rptr )
+   OD;
+   rptr
+END;
+
+
+PROC  simplify_params = (COMMANDPARAM  param) VALUES:
+BEGIN
+   VALUES  ans:= HEAP VECTOR [0] VALUE;
+   INT  n:= 0;
+
+   PROC  add = (VALUE  v) VOID:
+   BEGIN
+      IF n = UPB ans
+      THEN  HEAP VECTOR [UPB ans + 10] VALUE  new;
+            new[: n]:= ans;
+            ans:= new
+      FI;
+      ans[n PLUSAB 1]:= v
+   END;
+
+   PROC  simplify = (COMMANDPARAM  param) VOID:
+     CASE param IN
+        (VALUE  value)
+           IF sort OF value > 0 THEN  add(value)  FI,
+        (CHOICE  choice)
+           FORALL p IN params OF choice DO  simplify(p)  OD
+     ESAC;
+
+   CASE param IN
+      (VALUE  v)
+         { Avoid using add if pos and ensure that at least one item delivered }
+         HEAP VECTOR [1] VALUE:= v ,
+      (CHOICE)
+         ( simplify(param);
+           IF n = 0
+           THEN  HEAP VECTOR [1] VALUE:= VALUE (0, nullstr)
+           ELSE  ans[: n]
+           FI
+         )
+   ESAC
+END
+
+
+
+KEEP  RULE,  COMMANDSYNTAX,  VALUE,  VALUES,  COMMANDPARAM,  CHOICE,
+      READER,  ANALYSER,  READERS,  no parameters,  no_parameters,
+      prod_syn,  alt_syn,  opt_syn,  star_syn,  is_alt,  is_opt,  is_star,
+      alt,  prod,  opt,  star,  show_syntax,  show_readers,  add_readers,
+      simplify_params
+FINISH

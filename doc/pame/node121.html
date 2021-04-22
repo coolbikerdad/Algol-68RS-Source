@@ -1,0 +1,793 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Writing programs</title>
+<meta name="description" content="writing programs">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node122.html">
+<link rel="previous" href="node120.html">
+<link rel="up" href="node120.html">
+<link rel="next" href="node122.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2686"
+  href="node122.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2680"
+  href="node120.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2674"
+  href="node120.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2682"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2684"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2687"
+  href="node122.html">Non-canonical input</a>
+<b> Up:</b> <a name="tex2html2681"
+  href="node120.html">Program development</a>
+<b> Previous:</b> <a name="tex2html2675"
+  href="node120.html">Program development</a>
+ &nbsp; <b>  <a name="tex2html2683"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2685"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2688"
+  href="node121.html#section001411000000000000000">Top-down analysis</a>
+<li><a name="tex2html2689"
+  href="node121.html#section001412000000000000000">Program layout</a>
+<li><a name="tex2html2690"
+  href="node121.html#section001413000000000000000">Declarations</a>
+<li><a name="tex2html2691"
+  href="node121.html#section001414000000000000000">Procedures</a>
+<li><a name="tex2html2692"
+  href="node121.html#section001415000000000000000">Monetary values</a>
+<li><a name="tex2html2693"
+  href="node121.html#section001416000000000000000">Optimisation</a>
+<li><a name="tex2html2694"
+  href="node121.html#section001417000000000000000">Testing and debugging</a>
+<li><a name="tex2html2695"
+  href="node121.html#section001418000000000000000">Compilation errors</a>
+<li><a name="tex2html2696"
+  href="node121.html#section001419000000000000000">Arithmetic overflow</a>
+<li><a name="tex2html2697"
+  href="node121.html#section0014110000000000000000">Documentation</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001410000000000000000"></a><a name="dev-writ"></a>
+Writing programs</h1>
+
+<p>The first stage in the development of a new program consists of
+analysing the problem that the program must solve. Unfortunately,
+there is no known method or methodology which will solve any kind of
+problem.  However, a particularly good book on problem solving<a name="8368"></a>
+was written by  George P&#243;lya<a name="8369"></a>(see
+the Bibliography) and although the book is geared towards
+mathematical problems, it will help you solve most technical
+problems.</p>
+
+<p>Problem analysis<a name="8370"></a> is not usually taught to
+beginners at computer programming because, so far as we know, it is
+mainly an intuitive activity (it is a branch of
+Heuristics<a name="8371"></a>).  Learning to analyse a problem with
+the intention of writing a computer program is largely accomplished by
+writing simple programs followed by programs of increasing
+sophistication--this is sometimes called &ldquo;learning by
+doing<a name="8372"></a>&rdquo;.  When we start analysing actual
+programs later in the chapter, each such analysis will be preceded by
+a problem analysis.  You will be able to see how the program, as
+presented, accords with that analysis.</p>
+
+<p>Nevertheless, even though no definitive method can be given, there
+are guidelines which help you to appreciate and analyse problems
+suitable for computer solution. In the field of systems analysis, you
+will find various methodologies (such as SSADM<a name="8373"></a>).
+These are usually geared towards large-scale systems and are designed
+to prevent systems designers from forgetting details.  In the context
+of program design<a name="8374"></a>, knowing the data to be used by
+the program and the data to be produced by the program is the
+principal guide to knowing what manipulations the program must
+perform.  Data knowledge<a name="8375"></a> specifies the books
+accessed by the program and usually constitutes a substantial part of
+the program's documentation.</p>
+
+<p>Once you know the data your program operates on, you can determine
+the actual manipulations, or calculations, required. At this stage,
+you should be able to determine which
+data structures<a name="8376"></a> are suitable for the solution of
+your problem.  The data structures in turn lead you to the
+mode declarations<a name="8377"></a>.  The kind of data structure also helps to
+determine the kind of procedures<a name="8378"></a> required.  Some
+examples: if your data structures include a queue, then queue
+procedures will be needed; or, if you are using multiples (repeated
+data), then you will almost invariably be using loops.  Again, if an
+input book contains structured data, such as an item which is
+repeated many times, then again your program will contain a
+processing loop.  The Jackson programming<a name="8379"></a>
+methodology is a useful way of specifying procedures given the data
+structures to be manipulated (see the bibliography).</p>
+
+<h2><a name="section001411000000000000000"></a><a name="dev-top"></a>
+Top-down analysis</h2>
+
+<p>After you have determined suitable modes and procedures, you need
+to analyse the problem in a top-down manner.  Basically, <b>top-down
+analysis</b><a name="8384"></a> consists of determining the principal
+actions needed to perform a given action, then analysing each of the
+principal actions in the same way.  For example, suppose we wished to
+write a program to copy a book whose identifier is given on the
+command line.  The topmost statement of the problem could be</p>
+
+<pre>
+   copy an identified book
+</pre>
+
+<p>The next stage could be</p>
+
+<pre>
+   get the book identifier
+   open the book
+   establish the output copy book
+   copy the input book to output
+   close both books
+</pre>
+
+<p>At this stage, the process &ldquo;copy the input book to
+output&rdquo; will depend on the structure of the input book. If it is
+text, with lines of differing length, you could use a name of mode
+<code>REF STRING</code>.  If the book contains similar groupings of
+data, called <b>records</b><a name="8390"></a>, then it would be more
+appropriate to declare a structured mode and write appropriate input
+and output procedures:</p>
+
+<pre>
+   DO
+      get record from input book
+      put record to output book
+   OD
+</pre>
+
+<p>The analysis is continued until each action can be directly
+coded.</p>
+
+<h2><a name="section001412000000000000000"></a><a name="dev-layout"></a>
+Program layout</h2>
+
+<p>Before you start coding the program (writing the actual
+Algol&nbsp;68 source program), you should be aware of various
+programming strategies besides the different means of manipulating
+data structures.  The first to address is the matter of source program
+layout<a name="8396"></a>.</p>
+
+<p>In the examples given in this book, code has been indented to
+reflect program structure, but even in this matter, there are choices.
+For example, some people indent the <code>THEN</code> and
+<code>ELSE</code> clauses of an <code>IF</code>
+clause<a name="8397"></a>:</p>
+
+<pre>
+   IF ...
+     THEN ...
+     ELSE ...
+   FI
+</pre>
+
+<p>instead of</p>
+
+<pre>
+   IF   ...
+   THEN ...
+   ELSE ...
+   FI
+</pre>
+
+<p>Others regard the parts of the <code>IF</code> clause as some kind
+of bracketing:</p>
+
+<pre>
+   IF
+      ...
+   THEN
+      ...
+   ELSE
+      ...
+   FI
+</pre>
+
+<p>Some people write a procedure as:</p>
+
+<pre>
+   PROC ...
+      BEGIN
+      ...
+      END
+</pre>
+
+<p>Others never use <code>BEGIN</code> and <code>END</code>, but only
+use parentheses.</p>
+
+<p>Another point is whether to put more than one phrase on the same
+line. And what about blank lines<a name="8406"></a>--these usually
+improve a program's legibility.  Whatever you decide, keep to your
+decision throughout the program (or most of the program) otherwise the
+format of the code may prove confusing.  Of course, you will learn by
+your mistakes and usually you will change your programming style over
+the years.</p>
+
+<h2><a name="section001413000000000000000"></a><a name="dev-decs"></a>
+Declarations</h2>
+
+<p>Another matter is whether to group declarations. Unlike many
+programming languages, Algol&nbsp;68 allows you to place declarations
+wherever you wish. This does not mean that you should therefore
+sprinkle declarations throughout your program, although there is
+something to be said for declarations being as local as possible.
+There are also advantages in grouping<a name="8410"></a> all your
+global declarations so that they can be found easily.  Generally
+speaking, it is a good idea to group all global
+names<a name="8411"></a> together (those in the outermost range) and
+within that grouping, to declare together all names which use the same
+base mode (for example, group declarations of modes <code>CHAR</code>,
+<code>[]CHAR</code> and <code>STRING</code>).  Some of the exercises
+in this book only declare names when they are immediately followed by
+related procedures. If your program needs many global
+names<a name="8412"></a>, it makes sense to declare them near the
+beginning of the program, after mode declarations, so that if
+subsequent changes are required, you know that all the global name
+declarations are together and therefore you are unlikely to miss
+any.</p>
+
+<h2><a name="section001414000000000000000"></a><a name="dev-procs"></a>
+Procedures</h2>
+
+<p>The next consideration is breaking your code into
+procedures<a name="8416"></a>.
+As you analyse the problem, you will find that some of the processing
+can be specified in a single line which must be analysed further
+before it can be directly coded.  Such a line is a good indication
+that that process should be written as a procedure.  Even a procedure
+which is used once only is worth writing if the internal logic is
+more than a couple of conditional clauses, or more than one
+conditional clause even.</p>
+
+<p>You also have to decide between repeating a procedure in a loop, or
+placing the loop in the procedure.  Deciding the level at which
+logic<a name="8417"></a> should be put in a procedure is largely the
+product of experience--yours and other people's--another reason for
+maintaining existing programs.</p>
+
+<p>When you have decided where to use procedures, you should then
+consider the interface<a name="8418"></a> between the procedure and
+the code that calls it.  What parameters should it have, what yield,
+should you use a united mode for the yield, and so on.  Try to have as
+few parameters as possible, but preferably use parameters rather than
+assign to names global to the procedure.  The design of individual
+procedures is similar to the design of a complete program.</p>
+
+<p>When you are coding a procedure, be especially careful with
+compound Boolean formul&#230;. From experience, this is where most
+mistakes arise. If you are writing a procedure which manipulates a
+linked list, draw a diagram of what you are trying to do.  That is
+much easier than trying to picture the structures in your head.</p>
+
+<h2><a name="section001415000000000000000"></a><a name="dev-money"></a>
+Monetary values</h2>
+
+<p>Problems can arise when dealing with money<a name="8422"></a> in
+computer programs because the value stored must be exact.  For this
+reason, it is usually argued that only integers should be used.  In
+fact, real numbers can be used provided that the precision of the
+mantissa is not exceeded.  Real numbers are stored in two parts: the
+mantissa<a name="8423"></a>, which contains the significant digits of
+the value, and the exponent<a name="8424"></a>, which multiplies that
+value by a power of 2. In other words, using decimal arithmetic, the
+number <span class="math">3&sdot;14159&times;10<sup>-43</sup></span>
+has <span class="math">3&sdot;14159</span> as a mantissa and
+<span class="math">-43</span> as an exponent.  Because real numbers
+are stored in binary<a name="8426"></a> (radix&nbsp;2), the mantissa
+is stored as a value in the range 1 &le; value &lt; 2 with the
+exponent adjusted appropriately.</p>
+
+<p>There are a number of identifiers declared in the standard
+prelude<a name="8428"></a>, known as <b>environment
+enquiries</b><a name="8430"></a>, which serve to determine the range
+and precision of real numbers.  The <tt>real
+precision</tt><a name="8650"></a> is the number of bits used to store
+the mantissa, while the value <tt>max exp real</tt><a name="8651"></a>
+is the maximum exponent which can be stored for a binary mantissa
+(<i>not</i> the number of bits, although it is a guide to that
+number).  The <tt>real width</tt><a name="8652"></a> and <tt>exp
+width</tt><a name="8653"></a> say how many decimal digits can be
+written for the mantissa and the exponent.  The values <tt>max
+real</tt><a name="8654"></a> and <tt>min real</tt><a name="8655"></a>
+are the maximum and minimum real numbers which can be stored in the
+computer.  All these values are specified by the IEEE 754-1985
+standard on &ldquo;Binary Floating-Point
+Arithmetic&rdquo;<a name="8444"></a> which is implemented by most
+microprocessors today.</p>
+
+<p>The value of <code>real width</code> is 15 meaning that 15 decimal
+digits can be stored accurately. Leaving a margin of safety, we can
+say that an integer with 14 digits can be stored accurately, so that
+the maximum amount is</p>
+
+<div align="center" class="mathdisplay">
+99, 999, 999, 999, 999
+</div>
+
+<p>units. If the unit of currency is divided into smaller units, such
+as the sterling pound into pence, or the dollar into cents, then the
+monetary value should be stored in the smaller unit unless it is known
+that the smaller unit is not required. Thus the greatest sterling
+amount that can be handled would appear to be
+&#163;999,999,999,999.99.</p>
+
+<p>However, Algol&nbsp;68 allows arithmetic values to be stored to a
+lesser or greater precision.  The modes
+<tt>INT</tt><a name="8656"></a>, <tt>REAL</tt><a name="8657"></a>,
+<tt>COMPL</tt><a name="8658"></a> and <tt>BITS</tt><a name="8659"></a>
+can be preceded by any number of <tt>SHORT</tt><a name="8660"></a>s or
+<tt>LONG</tt><a name="8661"></a>s (but not both).  Thus</p>
+
+<pre>
+   LONG LONG LONG REAL r;
+</pre>
+
+<p>is a valid declaration for a name which can refer to an exceptionally
+precise real.  When declaring identifiers of other precisions,
+denotations of the required precision can be obtained by using a cast
+with the standard denotation of the value as in</p>
+
+<pre>
+   LONG REAL lr = LONG REAL(1);
+</pre>
+
+<p>One alternative is to use <code>LONG</code> with the
+denotation:</p>
+
+<pre>
+   LONG REAL lr = LONG 1.0;
+</pre>
+
+<p>Another is to use the <tt>LENG</tt><a name="8662"></a> operator,
+which converts a value of mode <code>INT</code> or <code>REAL</code>
+to a value of the next longer precision, as in</p>
+
+<pre>
+   LONG REAL lr = LENG 1.0;
+</pre>
+
+<p><tt>SHORTEN</tt><a name="8663"></a> goes the other way.</p>
+
+<pre>
+   SHORT SHORT INT ssi = SHORTEN SHORTEN 3;
+</pre>
+
+<p>All the arithmetic operators are valid for all the
+<code>LONG</code> and <code>SHORT</code> modes. Although you can write
+as many <code>LONG</code>s or <code>SHORT</code>s as you like, any
+implementation of Algol&nbsp;68 will provide only a limited number.
+The number of different precisions available is given by some
+identifiers in the standard prelude<a name="8471"></a> called
+environment enquiries<a name="8472"></a>. They are</p>
+
+<ul>
+<li><tt>int lengths</tt><a name="8664"></a>
+</li>
+<li><tt>int shorths</tt><a name="8665"></a>
+</li>
+<li><tt>real lengths</tt><a name="8666"></a>
+</li>
+<li><tt>real shorths</tt><a name="8667"></a>
+</li>
+<li><tt>bits lengths</tt><a name="8668"></a>
+</li>
+<li><tt>bits shorths</tt><a name="8669"></a>
+</li>
+</ul>
+
+<p>The values for complex numbers are the same as those for reals.
+For integers, where <code>int lengths</code> is greater than
+<code>1</code>, <tt>long max int</tt><a name="8670"></a> and so on are
+also declared, and similarly for <tt>short max
+int</tt><a name="8671"></a>.  If <code>int lengths</code> is
+<code>1</code>, then only the mode <code>INT</code> is available.</p>
+
+<p>For the a68toc<a name="8672"></a> compiler<a name="8673"></a></p>
+
+<pre>
+   int lengths=2
+   int shorths=3
+</pre>
+
+<p>Thus it is meaningful to write</p>
+
+<pre>
+   LONG INT long int:=long max int;
+   INT int:=max int;
+   SHORT INT sh int:=short max int;
+   SHORT SHORT INT sh sh int:=
+            short short max int;
+</pre>
+
+<p>The same applies to the mode <code>BITS</code>. Try writing a
+program which prints out the values of the environment enquiries
+mentioned in this section. The transput procedures <code>get</code>,
+<code>put</code>, <code>get</code> <code>bin</code> and <code>put
+bin</code> all handle the available <code>LONG</code> and
+<code>SHORT</code> modes.</p>
+
+<p>Although you can still write</p>
+
+<pre>
+   LONG LONG INT lli=LONG LONG 3;
+</pre>
+
+<p>the actual value created may not differ from <code>LONG INT</code>
+depending on the value of <code>int lengths</code>. Note that you
+cannot transput a value which is not covered by the available
+lengths/shorths. Use <code>LENG</code> or <code>SHORTEN</code> before
+trying to transput.</p>
+
+<p>For monetary values, <code>LONG INT</code> is available with the
+value of <code>long max int</code> being</p>
+
+<pre>
+   9,223,372,036,854,775,807
+</pre>
+
+<p>which should be big enough for most amounts.</p>
+
+<h2><a name="section001416000000000000000"></a><a name="dev-opt"></a>
+Optimisation</h2>
+
+<p>There are two well-known rules about optimisation:
+
+<ol>
+<li>Don't do it.
+</li>
+<li>Don't do it now.
+</li>
+</ol>
+
+<p>However, often there is a great temptation to optimise
+code<a name="8506"></a>, particularly if two procedures are very
+similar.  Using identity declarations is a good form of optimisation
+because not only do they save some writing, they also lead to more
+efficient code.  However, you should avoid procedure optimisation like
+the plague because it usually leads to more complicated or obscure
+code.  A good indicator of bad optimisation is the necessity of extra
+conditional clauses.  In general, optimisation is never a primary
+consideration: you might save a few milliseconds of computer time at
+the expense of a few hours of programmer time.</p>
+
+<h2><a name="section001417000000000000000"></a><a name="dev-test"></a>
+Testing and debugging</h2>
+
+<p>When<a name="8510"></a> writing<a name="8511"></a> a program, there
+is a strong tendency to write hundreds of lines of code and then test
+it all at once.  Resist it.  The actual writing of a program rarely
+occupies more than 30% of the whole development time.  If you write
+your overall logic, test it and it works, you will progress much
+faster than if you had written the whole program.  Once your overall
+logic works, you can code constituent procedures, gradually refining
+your test data (see below) so that you are sure your program works at
+each stage.  By the time you complete the writing of your program,
+most of it should already be working.  You can then test it
+thoroughly.  The added advantage of step-wise
+testing<a name="8512"></a> is that you can be sure of exercising more
+of your code.  Your test data will also be simpler.</p>
+
+<p>The idea behind devising test data<a name="8513"></a> is not just
+giving your program correct data to see whether it will produce the
+desired results.  Almost every program is designed to deal with
+exception conditions.  For example, the <code>lf</code> program has to
+be able to cope with blank lines (usually, zero-length lines) so the
+test data should contain not one blank line, but also two consecutive
+blank lines.  It also has to be able to cope with extra-long lines, so
+the test data should contain at least one of those.  Programs which
+check input data for validity need to be tested extensively with
+erroneous data.</p>
+
+<p>It is particularly important that you test your programs with data
+designed to exercise boundary conditions<a name="8514"></a>.  For
+example, suppose the creation of an output book fails due to a full
+hard disk. Have you tested it, and does your program terminate
+sensibly with a meaningful error message? You could try testing your
+program with the output book being created on a floppy disk which is
+full.</p>
+
+<p>Sometimes a program will fault with a run-time
+error<a name="8515"></a> such as</p>
+
+<pre>
+   Run time fault (aborting):
+   Subscript out of bounds
+</pre>
+
+<p>or errors associated with slicing or trimming multiples. A good way
+of discovering what has gone wrong is to write a monitor procedure on
+the lines of</p>
+
+<pre>
+   PROC monitor=(INT a,
+                 []UNION(SIMPLOUT,
+                         PROC(REF FILE)VOID)r
+                 )VOID:
+   BEGIN
+      print(("*** ",whole(a,0)));
+      print(r)
+   END
+</pre>
+
+<p>and then call <code>monitor</code> with an identifying number and
+string at various points in the program. For example, if you think a
+multiple subscript is suspect, you could write</p>
+
+<pre>
+   monitor(20,("Subscript=",whole(subscript,0)))
+</pre>
+
+<p>By placing monitors<a name="8522"></a> at judicious points, you can
+follow the action of your program. This can be particularly useful for
+a program that loops unexpectedly: monitors will tell you what has
+gone wrong. If you need to collect a large amount of monitors, it is
+best to send the output to a book. The disadvantage of this is that
+the operating system does not register a book as having a size until
+it has been closed after creating. This means that if your program
+creates a monitoring book, writes a large amount of data to it and
+fails before the book is closed, you will not be able to read any of
+the contents because, according to most operating systems, there will
+not be any contents. A way round this problem is to open the book
+whenever you want to write to it, position the writing position at the
+end of the book, write your data to it and then close the book. This
+will ensure that the book will have all the executed monitors (unless,
+of course, it is a monitor which has caused the program to fail!). The
+procedure <tt>debug</tt><a name="8674"></a> given in
+section&nbsp;<a href="node88.html#trans-bin">9.9</a> will do this.</p>
+
+<p>An alternative method of tracing the action of a program at
+run-time is to use a source-level debugger<a name="8526"></a>. The
+<code>DDD</code> program can help you debug the C&nbsp;source program
+produced by the a68toc<a name="8527"></a> compiler, but unless you
+understand the C&nbsp;programming language and the output of the
+a68toc compiler, you will not find it useful.  Monitors, although an
+old-fashioned solution to program debugging, are still the best means
+of gathering data about program execution.</p>
+
+<p>Another proven method of <b>debugging</b><a name="8529"></a> (the
+process of removing bugs) is <b>dry-running</b><a name="8531"></a>.
+This involves acting as though you are the computer and executing a
+small portion of program accordingly. An example will be given in the
+analysis of the <code>lf</code> program later.</p>
+
+<p>Sometimes<a name="8532"></a>, no matter what you do, it just seems
+impossible to find out what has gone wrong.  There are three ploys you
+can try.  The first, and easiest, is to imagine that you are
+explaining your program to a friend.  The second is to actually
+explain it to a friend!  This finds most errors.  Finally, if all else
+fails, contact the author.</p>
+
+<h2><a name="section001418000000000000000"></a><a name="dev-errors"></a>
+Compilation errors</h2>
+
+<p>You can trust the compiler to find grammatical errors in your
+program if any are there. The compiler will not display an error
+message for some weird, but legal, construction. If your program is
+syntactically correct (that is, it is legal according to the rules of
+the language), then it will parse correctly<a name="8536"></a>.</p>
+
+<p>When compiling a program of more than a hundred lines, say, you can
+use the parsing option (<code>-check</code>) which will more than
+double the speed of compilation. When your program parses without
+error, then it is worth doing a straight compilation (see the online
+documentation for program <code>mm</code> in the
+a68toc<a name="8675"></a> compilation system).</p>
+
+<p>A definitive list of error messages can be found in the file</p>
+
+<pre>
+   algol68toc-1.12/src/message.a68
+</pre>
+
+<p>You will find that most of the messages are easy to understand.
+Occasionally, you will get a message which seems to make no sense at
+all. This is usually because the actual error occurs much earlier in
+your program. By the time the compiler has discovered something wrong,
+it may well have compiled (or tried to compile) several hundred lines
+of code. A typical error of this sort is starting a comment and not
+finishing it, especially if you start the comment with an opening
+brace (<code>{</code>), which gives rise to the following error
+message:</p>
+
+<pre>
+   ERROR (112) end of file inside comment or pragmat
+</pre>
+
+<p>If you start a comment with a sharp (<code>#</code>) and forget to
+finish it likewise, the next time a sharp appears at the beginning of
+another comment, the compiler will announce all sorts of weird
+errors.<a name="tex2html41"
+href="footnode.html#foot8542"><sup><span
+class="arabic">13</span>.<span class="arabic">1</span></sup></a></p>
+
+<p>Another kind of troublesome error is to insert an extra closing
+parenthesis or <code>END</code>. This can produce lots of spurious
+errors.  For example:</p>
+
+<pre>
+   ERROR (118) FI expected here
+                  (at character 48)
+   ERROR (203) ELSE not expected here
+                  (at character 4)
+   ERROR (140) BOOL, INT or UNION required here,
+                  not VOID
+   ERROR (116) brackets mismatch
+                  (at character 2)
+   ERROR (159) elements of in-parts
+                  must be units
+   ERROR (117) FINISH expected here
+                  (at character 3)
+</pre>
+
+<p>Omitting a semicolon, or inadvertently inserting one will also cause
+the appearance of curious error messages. Messages about
+<tt>UNION</tt><a name="8676"></a>s usually mean that you should use a
+cast to ensure that the compiler knows which mode you mean. If, for
+example, you have a procedure which expects a multiple of mode</p>
+
+<pre>
+   []UNION(STRING,[]INT)
+</pre>
+
+and you present a parameter like
+<pre>
+   ((1,2),(4,2),(0,4))
+</pre>
+
+<p>then the compiler will not know whether the display is a
+row-display<a name="8551"></a> or a
+structure-display<a name="8552"></a>.  Either you should precede it
+with a suitable mode, or modify your procedure to take a single
+<code>[]INT</code> and loop through it in twos.  Having to modify your
+program because the compiler does not like what you have written is
+rare however.</p>
+
+<h2><a name="section001419000000000000000"></a><a name="dev-overflow"></a>
+Arithmetic overflow</h2>
+
+<p>Sometimes your program will fail at the time of elaboration or
+&ldquo;run-time&rdquo; due to arithmetic overflow<a name="8556"></a>.
+If, during a calculation, an intermediate result exceeds the capacity
+of an <code>INT</code>, no indication will be given other than
+erroneous results.</p>
+
+<p>Overflow of <code>REAL</code> numbers can be detected by the
+floating-point unit. The standard prelude contains the value <code>fpu
+cw algol 68 round</code> of mode <code>SHORT BITS</code> and the
+procedure</p>
+
+<pre>
+   PROC set fpu cw = (SHORT BITS cw)VOID:
+</pre>
+
+<p>The small test program <code>testov</code> (to be found with the
+a68toc<a name="8559"></a> compilation system documentation)
+illustrates testing for overflow both with integers and real
+numbers.</p>
+
+<h2><a name="section0014110000000000000000"></a><a name="dev-docs"></a>
+Documentation</h2>
+
+<p>The most tedious aspect of writing a program is documenting it.
+Even if you describe what the program is going to do before you write
+it, but after you have designed it, documentation is not usually a
+vitally interesting task. Large programming teams often have the
+services of a technical writer whose job it is to ensure that
+all<a name="8563"></a> program documentation<a name="8564"></a> is
+completed.<a name="tex2html42"
+href="footnode.html#foot8565"><sup><span
+class="arabic">13</span>.<span class="arabic">2</span></sup></a></p>
+
+<p>Existing programs are usually documented and there is no doubt that
+the best way of learning to document a program is to see how others
+have done it. There are several documentation standards in use,
+although most large companies have their own. Generally speaking, the
+documentation for a program should contain at least the following</p>
+
+<ul>
+<li>the program name
+</li>
+<li>the language used to write the program
+</li>
+<li>a short description of what the program does
+</li>
+<li>the details of all books used by, or produced by, the program,
+including the screen and the printer
+</li>
+<li>an analysis of how the program works, particularly any special
+algorithms or data structures (queues and trees are examples)
+</li>
+<li>who wrote the program, and when
+</li>
+<li>the location of the source code
+</li>
+<li>the latest listing of the source code
+</li>
+</ul>
+
+<p>but not necessarily in the order given above. The aim of program
+documentation is to make it easy to amend the program, or to use it
+for a subsequent rewrite.</p>
+
+<p>Lastly, it is worthwhile saying &ldquo;don't be rigid in program
+design&rdquo;.  If, as you reach the more detailed stages of designing
+your program, you discover that you have made a mistake in the
+high-level design, be willing to backtrack and revise it. Design
+faults are usually attributable to faulty analysis of the problem.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2686"
+  href="node122.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2680"
+  href="node120.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2674"
+  href="node120.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2682"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2684"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2687"
+  href="node122.html">Non-canonical input</a>
+<b> Up:</b> <a name="tex2html2681"
+  href="node120.html">Program development</a>
+<b> Previous:</b> <a name="tex2html2675"
+  href="node120.html">Program development</a>
+ &nbsp; <b>  <a name="tex2html2683"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2685"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

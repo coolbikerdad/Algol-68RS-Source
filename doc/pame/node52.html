@@ -1,0 +1,435 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Assigning to multiple names</title>
+<meta name="description" content="assigning to multiple names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node53.html">
+<link rel="previous" href="node51.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node53.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1488"
+  href="node53.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1482"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1476"
+  href="node51.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1484"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1486"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1489"
+  href="node53.html">Flexible names</a>
+<b> Up:</b> <a name="tex2html1483"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1477"
+  href="node51.html">Multiple names</a>
+ &nbsp; <b>  <a name="tex2html1485"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1487"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1490"
+  href="node52.html#section00741000000000000000">Individual assignment</a>
+<li><a name="tex2html1491"
+  href="node52.html#section00742000000000000000">Collective assignment</a>
+<li><a name="tex2html1492"
+  href="node52.html#section00743000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00740000000000000000"></a><a name="name-assmult"></a>
+Assigning to multiple names</h1>
+
+<p>We can assign values to the elements of a multiple either
+individually or collectively.</p>
+
+<p>
+
+<h2><a name="section00741000000000000000"></a><a name="name-indiv"></a>
+Individual assignment</h2>
+
+<p>You may remember from chapter 3 that we can access an individual
+element of a multiple by specifying the subscript(s) of that element.
+For example, suppose that we wish to access the third element of
+<code>i7</code> as declared in the last section. The rules of the
+language state that a subscripted element of a multiple name is itself
+a name.  In fact, the elaboration of a slice of a multiple name
+creates a new name. Thus the mode of <code>i7[3]</code> is <code>REF
+INT</code>. We can assign a value to <code>i7[3]</code> by placing the
+element on the left-hand side of an assignment:</p>
+
+<pre>
+   i7[3]:=4
+</pre>
+
+<p>Unless you define a new identifier for the new name, it will cease
+to exist after the above assignment has been elaborated (see below for
+examples of this).</p>
+
+<p>Since each element of <code>i7</code> has an associated name
+(created by slicing) of mode <code>REF INT</code>, it can be used in a
+formula:</p>
+
+<pre>
+   i7[2]:=3*i7[i7[1]] + ENTIER(4.0/i7[3])
+</pre>
+
+<p>As you can see, an element was used to compute a
+subscript<a name="2884"></a>. It has been presumed that the value
+obtained after dereferencing lies between <code>1</code> and
+<code>7</code> inclusive. If this were not so, a run-time
+error<a name="2885"></a> would be generated. In the above assignment,
+all three elements on the right-hand side of the assignment would be
+dereferenced<a name="2886"></a> before being used in the formula.
+Note that subscripting (or slicing or trimming) binds more tightly
+than any operator.  Thus, in the last term in the above example,
+<code>i7</code> would be sliced first, then the yielded name
+dereferenced, and finally, the new value would be divided into
+<code>4.0</code>.</p>
+
+<p> Here is a <code>FOR</code> loop<a name="2887"></a> which assigns a
+value to each element of <code>i7</code> individually:</p>
+
+<pre>
+   FOR e FROM LWB i7 TO UPB i7
+   DO
+      i7[e]:=e**3
+   OD
+</pre>
+
+<p>Using the bounds interrogation operators is useful because:</p>
+
+<ol>
+<li>The fact that the lower bound of <code>i7</code> is <code>1</code> is
+masked, but the formula <code>LWB i7</code> ensures that the
+correct value is used.
+</li>
+<li>If the bounds of <code>i7</code> are changed when the program is
+being maintained, the loop clause can remain unchanged. This simplifies
+the maintenance of Algol 68 programs.
+</li>
+<li>The compiler can omit bounds checking. For large multiples,
+this can speed up processing considerably.
+</li>
+</ol>
+
+<p> Here is a program which uses a name whose mode is
+<br><code>REF[]BOOL</code>. It computes all the prime numbers less
+than 1000 and is known as Eratosthenes' Sieve<a name="2892"></a>:</p>
+
+<pre>
+   PROGRAM sieve CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size = 1000;
+
+      REF[]BOOL flags = LOC[2:size]BOOL;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         flags[i] := TRUE
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k
+            FROM 2*i BY --i TO UPB flags
+            DO
+               flags[k] := FALSE
+               CO Remove multiples of i CO
+            OD
+         FI
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i] THEN print((i,blank)) FI
+      OD
+   END
+   FINISH
+</pre>
+<p>
+
+<h2><a name="section00742000000000000000"></a><a name="name-coll"></a>
+Collective assignment</h2>
+
+<p>There are two ways of assigning values collectively.  Firstly, it can
+be done with a row-display<a name="2898"></a> or a <code>[]CHAR</code>
+denotation. For example, using the declaration of <code>i7</code>
+above:</p>
+
+<pre>
+   i7:=(4, -8, 11, ABS "K",
+        ABS TRUE, 0, ROUND 3.4)
+</pre>
+
+<p>Notice that the bounds of both <code>i7</code> and the row-display
+are <code>[1:7]</code>. In the assignment of a multiple, the bounds of
+the multiple on the right-hand side must match the bounds of the
+multiple name on the left-hand side. If they differ, a fault is
+generated. If the bounds are known at compile-time, the compiler will
+generate an error message. If the bounds are only known at run-time
+(see section <a href="node56.html#name-dyn">5.8</a> on dynamic names),
+a run-time error will be generated. The bounds<a name="2902"></a> can
+be changed using a trimmer or the <code>@</code> symbol (or
+<tt>AT</tt><a name="3206"></a>). See chapter&nbsp;3 for details.</p>
+
+<p>The second way of assigning to the elements of a multiple
+collectively is to use an identifier of a multiple with the required
+bounds. For example:</p>
+
+<pre>
+   []INT i3 = (1,2,3);
+   REF[]INT k = LOC[1:3]INT := i3
+</pre>
+
+<p>The right-hand side has been assigned to the multiple name
+<code>k</code>.</p>
+
+<p>As mentioned above, parts of a multiple can be assigned using
+slicing<a name="2907"></a> or trimming<a name="2908"></a>. For
+example, given the declarations<a name="3207"></a></p>
+
+<pre>
+   REF[,]REAL x = LOC[1:3,1:3]REAL,
+              y = LOC[0:2,0:2]REAL
+</pre>
+
+<p>and the assignment</p>
+
+<pre>
+   x:=((1,2,3),
+       (4,5,6),
+       (7,8,9))
+</pre>
+
+<p>we can write</p>
+
+<pre>
+   y[2,0]:=x[3,2]
+</pre>
+
+<p>The multiple name <code>y</code> is sliced yielding a name of mode
+<code>REF INT</code>. Then<a name="tex2html16"
+  href="footnode.html#foot2916"><sup><span class="arabic">6</span>.<span class="arabic">5</span></sup></a> the multiple name <code>x</code> is
+sliced also yielding a name of mode <code>REF INT</code> which is then
+dereferenced yielding a new instance of the value to which it refers
+(<code>8</code>) which is then assigned to the new name on the LHS of the
+assignment.  Here is an identity-declaration which makes the new name
+permanent:</p>
+
+<pre>
+   REF INT y20 = y[2,0];  y20:=x[3,2]
+</pre>
+
+<p>which has its uses (see below).</p>
+
+<p>Here are some examples of slicing with (implied) multiple
+assignments:</p>
+
+<pre>
+   y     := x[@0,@0];
+   y[2,] := x[ 1,@0];
+   y[,1] := x[ 2,@0]
+</pre>
+
+<p>In the first example, the right-hand side is a slice of a name whose
+mode is <code>REF[,]REAL</code>. Because the slice has no trimmers its mode
+is also <code>REF[,]REAL</code>. Using the <code>@</code> symbol, the lower bounds
+of both dimensions are changed to <code>0</code>, ensuring that the bounds of
+the multiple name thus created match the bounds of the multiple name
+<code>y</code> on the left. After the assignment (and the dereferencing),
+<code>y</code> will refer to a copy of the multiple <code>x</code> and the name
+created by the slicing will no longer exist.</p>
+
+<p>In the second assignment<a name="2921"></a>, the multiple
+<code>x</code> has been sliced yielding a name whose mode is
+<code>REF[]REAL</code>.  It refers, in fact, to the first
+&ldquo;row&rdquo; of <code>x</code>.  The <code>@0</code> ensures that
+the lower bound<a name="2922"></a> of the second dimension of
+<code>x</code> is <code>0</code>. The left-hand side yields a name of
+mode <code>REF[]REAL</code> which refers to the last &ldquo;row&rdquo;
+of the multiple <code>y</code>.  The name on the right-hand side is
+dereferenced. After the assignment <code>y[2,]</code> will refer to a
+copy of the first &ldquo;row&rdquo; of <code>x</code> and the name
+produced by the slicing will no longer exist.</p>
+
+<p>In the third assignment, the second &ldquo;row&rdquo; of
+<code>x</code> is assigned to the second &ldquo;column&rdquo; of
+<code>y</code>.  Again, the <code>@0</code> construction ensures that
+the lower bound of the second dimension of <code>x</code> is zero.
+After the assignment, the name created by the slicing will no longer
+exist.</p>
+
+<p>Notice how the two declarations for <code>x</code> and
+<code>y</code> have a common formal-declarer<a name="2923"></a> on the
+left-hand side, with a comma between the two declarations. This is a
+common abbreviation. The comma means that the two declarations are
+elaborated collaterally (and on a parallel processing computer,
+possibly in parallel).</p>
+
+<p>It was stated in the section on names that names can be put on the
+right-hand side of an identity declaration.  This is particularly
+useful for accessing elements of rows.  Consider the following:</p>
+
+<pre>
+   REF[]INT r = LOC[100]INT;
+
+   FOR i FROM LWB r TO UPB r DO r[i]:=i*i OD;
+
+   FOR i FROM LWB r TO UPB r-1
+   DO
+      IF   REF INT ri=r[i], ri1=r[i+1];
+           ri &gt; ri1
+      THEN ri:=ri1
+      ELSE ri1:=ri
+      FI
+   OD
+</pre>
+
+<p>This is another example of optimisation<a name="2926"></a>, but in
+this case, we need names because the <code>THEN</code> and
+<code>ELSE</code> clauses contain assignments. Both <code>ri</code>
+and <code>ri1</code> are used thrice in the conditional
+clause<a name="2927"></a>, but the multiple <code>r</code> is only
+subscripted twice in each loop. In the condition following the
+<code>IF</code>, both <code>ri</code> and <code>ri1</code> would be
+dereferenced (but not in the identity declarations).  The values of
+<code>ri</code> and <code>ri1</code> remain constant: the names are
+assigned new values.  You can see from the identity declarations that
+the modes of the names <code>ri</code> and <code>ri1</code> are both
+<code>REF INT</code>.</p>
+
+<p>Here is a program fragment which uses a <code>REF[]REAL</code>
+identity declaration for optimisation<a name="3208"></a>:</p>
+
+<pre>
+   REF[,]REAL m = LOC[3,4]REAL;   read(m);
+   
+   FOR i FROM 1 LWB m TO 1 UPB m
+   DO
+      REF[]REAL mi = m[i,];
+      FOR j FROM LWB mi TO UPB mi
+      DO
+         REF REAL mij = mi[j];
+         mij*:=mij
+      OD
+   OD;
+   
+   print((m,newline))
+</pre>
+
+<p>As you can see, <tt>read</tt><a name="3209"></a> behaves just like
+<tt>print</tt><a name="3210"></a> in that a whole multiple can be read
+at one go (see chapter&nbsp;3 for the use of <code>print</code> with
+multiples).  The only difference between the way <code>read</code> is
+used and the way <code>print</code> is used is that the values for
+<code>read</code> must be names (or identifiers of names) whereas
+<code>print</code> can use denotations or identifiers of names or
+identifiers which are not names.</p>
+
+<hr>
+<h2><a name="section00743000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.7<a name="ex-v-vii"></a>
+<dd>After the assignments of <code>x</code> to <code>y</code> discussed above,
+what is the final value of <code>y</code> (careful)?  Ans<a href="node139.html#ans-v-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.8<a name="ex-v-viii"></a>
+<dd>Given these declarations
+<pre>
+   REF[,]INT m = LOC[3:5,-2:0]INT,
+   REF[]INT n = LOC[1:3]INT:=(1,2,3)
+</pre> Ans<a href="node139.html#ans-v-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>What is wrong with the assignment <code>m[1,]:=n</code>?  
+<p>
+<dt>(b)
+<dd>How would you assign the second &ldquo;column&rdquo; of <code>m</code> to its
+third &ldquo;row&rdquo;?  
+<p>
+</dd>
+</dl>
+<dt>5.9<a name="ex-v-ix"></a>
+<dd>Modify Eratosthenes' Sieve to compute the 365<sup>th</sup>
+ prime.  Ans<a href="node139.html#ans-v-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1488"
+  href="node53.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1482"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1476"
+  href="node51.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1484"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1486"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1489"
+  href="node53.html">Flexible names</a>
+<b> Up:</b> <a name="tex2html1483"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1477"
+  href="node51.html">Multiple names</a>
+ &nbsp; <b>  <a name="tex2html1485"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1487"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

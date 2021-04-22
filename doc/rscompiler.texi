@@ -1,0 +1,4782 @@
+\input texinfo @c -*-texinfo-*-
+@c %**start of header
+@setfilename rscompiler
+@settitle The RS Compiler for ALGOL 68
+@setchapternewpage odd
+@iftex
+@afourpaper
+@end iftex
+@c %**start of header
+
+@titlepage
+@title The RS Compiler for ALGOL 68
+@subtitle Published 1978
+@author Defence Research Agency, Malvern, UK
+@page
+@end titlepage
+
+@c  ******************************************************************
+@c  ******************************************************************
+@c  
+@c  
+@c  THE 'RS' COMPILER FOR ALGOL 68
+@c  
+@c  
+@c  ******************************************************************
+@c  ******************************************************************
+@c
+@c  (C)  Crown Copyright 1978
+@c
+@c  ******************************************************************
+@c  ******************************************************************
+@c  
+@c  
+@c  PART A   SYNOPSIS
+@c  ______   ________
+@c  
+@c  
+@c  1   Introduction
+@c  
+@c      1.1   The source language
+@c  
+@c  2   Stream language output
+@c  
+@c      2.1   The structure of stream language
+@c      2.2   The reverse Polish stack
+@c      2.3   The creation of new objects
+@c      2.4   Assignment
+@c  
+@c  3   Implementation
+@c  
+@c  
+@c  PART B   SINGLE MODULE COMPILATION
+@c  ______   _________________________
+@c  
+@c  
+@c  1   The compiler shell
+@c  
+@c      1.1   Input of source text
+@c      1.2   The charset parameter
+@c      1.3   Values of symbols
+@c      1.4   The lookup procedure
+@c      1.5   Output of fault messages
+@c      1.6   Output of stream language
+@c  
+@c  2   Stream language in outline
+@c  
+@c      2.1   The imperatives
+@c      2.2   Syntax analysis of stream language
+@c      2.3   The reverse Polish stack
+@c  
+@c  3   Stream language in detail
+@c  
+@c      3.1   The array of modes
+@c      3.2   Identifier declarations
+@c      3.3   Routine text declarations
+@c      3.4   Label declarations
+@c      3.5   XLOAD and XCHARS
+@c      3.6   Operations XOPER
+@c      3.7   The control imperatives
+@c      3.8   The XWARN imperative
+@c      3.9   The XPRAG imperative
+@c      3.10  The XCHARPOS imperative
+@c      3.11  An example of stream language
+@c  
+@c  
+@c  PART C   MODULAR COMPILATION
+@c  ______   ___________________
+@c  
+@c  
+@c  1   Introduction
+@c  
+@c  2   The source language
+@c  
+@c      2.1   Keeplists
+@c      2.2   Simple declarations modules
+@c      2.3   Simple programs
+@c      2.4   Nested modules
+@c      2.5   Composition
+@c      2.6   Partial composition
+@c      2.7   Use of environmental packages
+@c      2.8   Declarations modules in a context
+@c      2.9   Provision of Algol 68 standard environment
+@c      2.10  The void context
+@c      2.11  Summary of syntax and semantics of modules
+@c  
+@c  3   Stream language
+@c  
+@c      3.1   The imperatives
+@c      3.2   The current compilation
+@c      3.3   Parameters of the compile procedure
+@c      3.4   Information about other modules
+@c      3.5   A model for a running cc module
+@c      3.6   Constructions in the code
+@c      3.7   An example of modular compilation
+@c  
+@c  
+@c  APPENDICES
+@c  __________
+@c  
+@c  1   Values and representations of symbols
+@c  
+@c  2   Fixed mode numbers
+@c  
+@c  3   Numbering of standard prelude operators in XOPER
+@c  
+@c  4   Extensions to Algol 68
+@c  
+@c      4.1   Vectors and indexable structures
+@c      4.2   The FORALL statement
+@c      4.3   Straightening
+@c      4.4   Low level facilities
+@c      4.5   Built-in operators
+@c      4.6   Generalised modes
+@c  
+@c  5   Implementation-dependent declarations
+@c  
+@c 
+
+@c  **************************************************************
+@c  PART A   SYNOPSIS
+@c  **************************************************************
+@c  
+@c 
+
+@chapter Introduction
+The RS compiler differs from most others in producing output which
+bears very little resemblance to machine code.  The structure of the
+output is close to that of Algol 68 in many respects, and yet the work
+done by the compiler is not insubstantial.  It checks the correctness
+of the source text, as far as this is possible by syntax and mode
+analysis.  If an error is found, it outputs the diagnosis; otherwise
+the information in the source program is recast in a form suitable for
+translation.  Complicated operations are broken down into sequences
+of the simpler steps adjudged primitive for the purpose of code
+generation.  For example, as the modes of all objects in the source
+program have been determined by the compiler, it can specify every
+coercion explicitly.  The coercions will in fact make their appearance
+to the translator at the precise moments required, even though the
+compiler may have had to see much farther ahead in the program to
+determine the destination mode.  This is one of the fruits of the
+technique of using the output from the compiler as a buffer for the
+re-ordering of information.  The compiler puts its output on one or
+another of several parallel streams, and arranges that the item
+immediately required by the translator is always at the reading point
+on one of the streams.  This technique, reported by Currie to be
+widely used by compiler writers at the University of Grenoble,
+explains why we use the term stream language for the compiler's
+output.
+
+@example
+@group
+                    ^
+                    |
+         1st pass   |                          2nd pass
+        |________________|________|           |___________|
+        |      faults    |        |  streams  |           |
+        |                |        |           |           |  object
+        |______|_________| output |>->->->->->|           |   code
+source  |      |         |        |>->->->->->| translate |--------->
+ text   |      | compile |        |>->->->->->|           |
+------->|input |         |        |           |           |
+        |      |__________________|           |           |
+        |      | specifications   |           |           |
+        |      |                  |           |           |
+        ______________^____________           ____^___^____
+                      |                           |   |
+                      |                           |   |
+                      |                           |   |
+          |______________________|                |   |
+          |      library of      |<----updates ---'   |
+          |   compiled modules   |<--- assembly ------'
+          |                      |
+          ________________________
+@end group
+@end example
+
+
+In any Algol 68 system based on the RS compiler, the first pass
+compiles source text into stream language and the second pass - which
+must be a genuinely distinct pass - translates stream language into
+machine code.  Although the compiler is machine independent, this
+attribute cannot extend to the whole of the first pass, whose input
+and output arrangements will depend on hardware.  For each new
+implementation, therefore, it is necessary not only to write a
+translator, but also to write a new interfacing shell for the
+compiler.  The Figure shows the whole system diagramatically,
+including the library of compiled modules which will provide for the
+Algol 68 standard prelude and for users' own collections (``albums'' in
+Algol 68-R).  To give it the necessary interfaces, the compiler is
+written as a procedure, with parameters for the shell.
+
+
+@section The Source Language
+
+The language accepted by the compiler is Algol 68 as defined in the
+Revised Report with some deviations, principally that modes and
+identifiers must be declared before they are used.  There are
+restrictions on the use of @code{LONG} and @code{SHORT} (see Appendix 2).  Arrays
+are not copied in identity declarations and in the corresponding
+parameter situations.  The handling of flexible arrays differs from
+the report in that flexibility propagates through a mode to the right
+(ie inwards).  The use of transient references is not checked.  These
+are the main deviations.  There are also some significant extensions
+to Algol 68 which influence the design of a translator.  Two new types
+of data structure have been added to the language, mainly to increase
+efficiency in critical applications such as data processing and
+compiler writing.  Other extensions have been introduced in the light
+of experience to provide flexibility in system programming work.  Most
+extensions can be concealed from the ordinary user by restricting the
+generally available documentation.  But they cannot be concealed from
+the translator writer, who may wish to exploit them and must, in any
+case, be able to translate their stream language images into machine
+code.  The various extensions are described in Appendix 4.
+
+@chapter Stream Language Output
+
+Stream language consists of a sequence of commands ("imperatives")
+which are generated by the compiler one at a time.  One of the
+parameters supplied to the compile procedure is a procedure used for
+the output of stream language.  It has a parameter of mode @code{OUTPUT};
+this is a union which decomposes into one of a number of more
+specialised modes, each corresponding to one class of imperative, such
+as the class of all declarations.  There is one special imperative, in
+a class by itself, which can be disposed of immediately.  This tells
+the translator when to switch its reader from one stream to another.
+After the stream collation has taken place, the translator sees stream
+language as one single unbranching series of imperatives, and
+throughout the remainder of Part A, this is exactly how we shall look
+at it.
+
+@section The Structure Of Stream Language
+
+Stream language defines objects and operations to produce further
+objects.  The operations arise from the operators of Algol 68, from
+coercions and from operations such as assignment.  Operands are loaded
+on to a conceptual reverse Polish stack before the operator is
+specified.  The other facet of stream language is control structure,
+which is shaped in terms of phrases, serial clauses and closed
+clauses, like Algol 68 itself.  Clauses always deliver objects, which
+may possibly be void, and serial clauses determine localities in the
+usual technical sense.  However, in spite of the resemblance to Algol
+68, if the source text and compiled versions of a particular program
+are compared, the various structural units will not be found in exact
+one-to-one correspondence.  In its conversion of formulae to reverse
+Polish form, the compiler will have removed binding brackets (though
+not when the enclosure is a serial clause with semi-colons), and it
+may have introduced extra phrases as a consequence of breaking down
+complicated operations into successions of more primitive ones.
+
+The actual imperatives which impart to stream language its phrase
+structure reflect familiar symbols of Algol 68.  These imperatives all
+belong to the mode @code{OUTPUT(XCONTROL)}.  (Here we are using the notation
+@code{X(Y)} to serve as a reminder that @code{Y}, the mode under consideration, is a
+constituent of a union @code{X}.)  The Mode @code{XCONTROL} is a structure whose
+function is indicated in its principal field by one of the following
+mnemonic integer values.
+
+@code{
+    xbegin, xsemi, xexit, xend, xroutinend,
+    xcoll, xcollcomma, xendcoll,
+    xif, xthen, xelse, xfi,
+    xcase, xin, xcomma, xout, xesac,
+    xcaseu, xinu, xuchoice, xcommau, xoutu, xesacu,
+    xfor, xforall, xwhile, xdo, xod,
+    xfinish
+}
+
+The meanings should for the most part be obvious.  Note that
+xroutinend has no counterpart in Algol 68; it occurs immediately after
+the end of a routine text.  Note also that the compiler always
+distinguishes between different types of closed clause by supplying
+the appropriate bracket, eg xcoll to open a collateral but xbegin for
+an ordinary closed clause, xcaseu for a conformity clause but xcase
+for an ordinary case clause.        Other fields of an @code{XCONTROL} contain
+various items of supplementary information.  Whenever the @code{XCONTROL}
+initiates a serial clause or a closed clause, the mode of the result
+to be delivered is given.  At the start of a serial clause, a
+property word in the @code{XCONTROL} contains bits which show whether the
+serial clause contains a semi-colon, an @code{EXIT}, a label setting,
+variable declaration etc.  Special bits are also present in all
+relevant imperatives to assist the translator with dynamic storage
+control.
+
+We have described @code{XCONTROL} first because it is where a top-down
+examination of stream language should begin.  It is also where the
+structure of Algol 68 shows through most clearly.  The @code{OUTPUT} union
+does in fact include quite a large number of modes, of which the
+five most important are
+
+@table @code
+@item XCONTROL
+control indication
+
+@item XDEC
+declaration of identifier or label
+
+@item XLOAD
+load of operand
+
+@item XOPER
+operation
+
+@item XROUTINE
+routine text
+@end table
+
+The mode @code{XDEC} is itself a union of @code{XIDDEC} and @code{XLABDEC}.  An imperative
+of the latter mode is a label declaration, introduced by the compiler
+at the beginning of the serial clause containing the actual label
+setting - which is indicated by another form of @code{XLABDEC} imperative.
+Thus, in stream language, labels are always declared before they
+are used.  The mode @code{XDEC(XIDDEC)} corresponds to those Algol 68
+declarations which define identifiers, except that the shortened
+forms of procedure and operator declarations are handled by @code{XROUTINE}
+imperatives.  Any occurrence of a routine text in the source program
+gives rise to an @code{XROUTINE} imperative, which can be thought of as a
+declaration in stream language, whether or not it came from a
+declaration in the source-text.  A full identity declaration in the
+source program, whether for a procedure or any other object, always
+becomes an @code{XDEC(XIDDEC)} imperative.  So also does a variable
+declaration or any operator declaration of the unshortened variety.
+Priority declarations are absorbed by the compiler and used when
+converting expressions into reverse Polish.
+
+There are no mode declarations in stream language to correspond with
+those in the source text of a program, though in a sense every mode
+used in a program is declared in stream language.  At the outset of
+the collated stream, one imperative supplies the translator with a
+vector containing information about all the modes used in the program.
+Thereafter, any one of these can be represented as an index to the
+vector.
+
+For compactness and simplicity, all cross-referencing in stream
+language is done by integers.  Declarations are all numbered.  Source
+text names are passed across by the compiler in stream language
+declarations only to enable a translator to use them in run-time
+diagnostic messages.  The real stream language identifiers are the
+declaration numbers, of which there are three separate sets - one for
+@code{XLABDEC}, one for @code{XIDDEC} and one for @code{XROUTINE} declarations.
+The @code{XIDDEC}
+numbers are re-used for declarations whose ranges do not overlap.
+This keeps to a minimum the amount of information the translator holds
+about identifiers, assuming that it organises its information in the
+obvious manner.
+
+There is a special imperative at the beginning of a stream language
+program which tells the translator the sizes required for its various
+vectors.
+
+
+@section The Reverse Polish Stack
+
+In the present account of stream language, the reverse Polish stack is
+a purely conceptual device for remembering operands, and at this
+conceptual level, the loading of an operand does not imply action of
+any other kind.  In reality, most translators will find it convenient
+to maintain a real stack in some form or other, to act as a kind of
+work-bench for the generation of code.  However, the way in which
+operands would be represented on an actual translator stack lies
+wholly within the province of the translator designer, and is not
+discussed in this section.
+
+Operands appear on the reverse Polish stack in two ways.  They may
+have been placed there as a result of a previous operation, or they
+may be introduced by an @code{OUTPUT(XLOAD)} Imperative.  The mode @code{XLOAD} is a
+union whose various constituent modes describe the different forms
+of object which can be loaded.  For example, @code{XLOAD(INT)} loads a
+declaration number standing for some object which has previously been
+declared.  Other modes in @code{XLOAD} introduce undeclared objects, such as
+those expressed in the Algol 68 program as denotations.
+
+Almost every kind of object in stream language is described by its
+Algol 68 mode represented as an integer item of data - not to be
+confused with the mode of the imperative which handles it.  To the
+compiler, the mode of an object is important as a means of checking
+program consistency and selecting operator definitions correctly; to
+the translator its main importance is in determining the size of an
+object in the running machine.  This is of course impossible for an
+Algol 68 array or vector, as the number of elements is unknown at
+compile time.  However, in addition to elements, every array has a
+descriptor of fixed size, and in stream language it is the descriptor
+which is taken as the object to which an array mode applies.  This is
+not to deny that array elements exist!  Certain @code{XOPER} imperatives call
+for production of code to find space for array elements in the object
+machine, and to copy them from one place to another, and yet a set of
+array elements is never a reverse Polish operand.  This is because the
+translator can obtain all the information it needs about an array from
+the descriptor.  We may therefore conclude that stream language only
+operates directly on objects of known size.  As we shall show, this is
+the very feature of its design which enables it to break down
+complicated declarations, generators and assignments into the
+rudimentary steps which a translator can handle easily.
+
+@section The Creation Of New Objects
+
+The work entailed in creating a new object is split between compiler
+and translator, the compiler doing as much as it can without knowing
+anything about the final object machine.  It cannot do very much with
+source text denotations, as the translator must deal with machine
+representations.  Denotations are therefore passed into stream
+language almost literally, in @code{XLOAD} imperatives, though number
+denotations are tidied up into standard formats.  Routine texts are
+compiled like any other pieces of Algol 68, with formal parameters
+expressed by @code{XIDDEC} imperatives of type @code{XFDEC} the whole routine
+being preceded by an @code{XROUTINE} imperative which gives it a declaration
+number in every case.
+
+Jumps are treated as objects in stream language, and loaded by their
+label declaration numbers.  No action is taken until specified by a
+subsequent coercion (an @code{XOPER}).
+
+In Algol 68, a reference is created by a generator or a variable
+declaration; its purpose is allocation of storage space for an object
+of given mode.  The object can be described as `simple' if the
+generator or declaration contains no array bounds, for then the total
+amount of space is known from the mode, and stream language does no
+more than reflect the Algol 68 constructions.  A generator becomes an
+@code{XLOAD(XGEN)} imperative, which puts a new local or heap reference on
+the reverse Polish stack, and a variable declaration becomes an
+@code{XDEC(XIDDEC)} of type @code{XVARDEC}, or @code{Xivardec} if the declaration is
+combined with an initial assignment.  Either type creates a new
+reference and gives it a declaration number.  In addition, @code{XIVARDEC}
+will find the object for initial assignment on the reverse Polish
+stack, and remove it.  Being a declaration and not an operator, it
+leaves no result behind.
+
+When the Algol 68 generator contains array bounds, space for elements
+has to be generated dynamically.  As these may introduce further
+arrays, the task can be a protracted one.  The compiler breaks it
+down so that the translator is never called upon to deal with more
+than one array at a time.  As an example at one level only, consider
+the declaration
+@example
+    [1 : n] REAL r;
+@end example
+
+which requires the translator to
+@itemize @bullet
+@item
+generate space dynamically for n reals,
+
+@item
+create the associated fixed size object (ie the descriptor) of mode @code{[] REAL},
+
+@item
+create an object of mode @code{REF [] REAL} and assign the descriptor to it (a `static' assignment).
+@end itemize
+
+In outline (for the compiler actually does a little more), this maps
+into stream language as
+
+@table @asis
+@item @code{XLOAD} the lower bound 1 
+@itemx @code{XLOAD} the upper bound @var{n}
+@itemx @code{XOPER xbdpack}
+packs the bounds into a single object
+
+@item @code{XLOAD} a boolean for local/heap, here local
+@itemx @code{XOPER dyngrab}
+takes the boundpack and boolean operands, generates space for array elements and delivers the descriptor
+
+@item @code{XDEC(XIDDEC) xivardec}
+creates the variable, gives it a declaration number, takes
+         the descriptor from the reverse Polish stack as operand and
+         assigns it statically to the array variable
+@end table
+
+It is particularly to be noticed that an @code{xivardec} initialisation is
+always a static assignment, ie assignment of a fixed size stream
+language object only, with no regard for any array elements.
+Normally, @code{xivardec}s are used when there are initial assignments in the
+source text (eg @code{REAL X := 0.0}), but not if the object declared is an
+array variable.  Initial assignment of array elements is carried out
+separately as a standard assignment operation, described in A2.4.  An
+array generator gives the same sequence as that shown for an array
+declaration, except that the @code{XIDDEC xivardec} is replaced by the
+@code{XOPER statgrab}.  Instead of creating a reference and then declaring
+it as a variable, statgrab creates the reference but puts it on the
+reverse Polish stack after statically assigning the descriptor.
+
+In actuality, all but the final step shown above is wrapped up in a
+stream language routine invented by the compiler for the given mode.
+In the example, the routine would deliver the @code{[] REAL} as operand for
+the @code{xivardec}.  In a more general case, eg from the source declaration
+@example
+    STRUCT (BOOL b, [1 : n] REAL r) s;
+@end example
+the routine would deliver the fixed-size object of mode
+@example
+    STRUCT (BOOL b, [] REAL r)
+@end example
+as operand for the @code{ivardec}.
+
+For declarations involving array space at more than one `depth', the
+routine for the whole array mode calls similar routines for any
+contained array modes.  For example, consider the source declaration
+@example
+    [1 : m] STRUCT (BOOL b, [1 : n] REAL r) t;
+@end example
+
+The mode already considered is now contained in an array, and the
+inner routine (@code{nr}, say) will deliver the @code{STRUCT (BOOL b, [] REAL r)}
+inside the routine (@code{mr}, say) for the whole mode, where it will be
+assigned to each of the @var{m} array elements - as @var{m} fixed size objects.
+The routine @code{mr} will finally deliver the fixed size object
+@example
+    [] STRUCT (BOOL b, [] REAL r)
+@end example
+for assignment to @code{t} in the @code{ivardec}.
+
+@section Assignment
+
+The @code{XOPER xassign} takes two operands, a destination and a source.
+It leaves the first operand on the reverse Polish stack at the
+conclusion of the assignment, clearly imaging the Algol 68
+construction.  But the stream language operation gives the translator
+less work than would an Algol 68 assignment in its full generality.
+As with complicated declarations, the compiler invents and calls
+specially tailored routines to break down complicated assignments.
+
+The mode of the destination determines what @code{xassign} is called upon to
+do.  If it is a ref vector or ref array (non flexible), the actual
+elements are to be copied and the associated descriptors left
+untouched.  This is `dynamic assignment'.  For every other destination
+mode, including ref flex array and ref flex vector, @code{xassign} means
+static assignment.  The object to be copied is the stream language
+source operand, which may be a descriptor but cannot be a set of
+elements.  From a stream language point of view, dynamic assignment is
+the oddity, as the operands are not the objects directly involved in
+the copying process.  The translator's generation of code to copy
+array elements is a kind of side-effect to an otherwise inert stream
+language operation.  At this point, it is worth recalling the
+initialised variable declaration of A2.3, as the assignment embodied
+in the @code{xivardec} is always of the static type, irrespective of mode.
+It is not an absorbed xassign operation.
+
+In a dynamic assignment, the elements to be copied will always be
+objects of known size.  The translator is never asked, all in one go,
+to copy elements which themselves contain elements to be copied.  The
+invented assignment routines see to that; by the use of "forall"
+constructions, all the loops are given explicitly.
+
+One further operation is required to complete the subject of
+assignment.  An Algol 68 assignment to a flexible array or vector
+variable implies the making of a new set of elements and a new
+descriptor, and the xassign in this case deals only with the
+descriptor.  A special operation @code{xcopy} always precedes the static
+assignment to a flex variable.  This operation takes the descriptor
+from the right-hand side of the Algol 68 assignment as its one
+operand, generates the required amount of space (on the heap) for a
+new copy of the elements, copies the elements, constructs a new
+descriptor and delivers this as the result of the operation.  The
+@code{xassign} operation then picks up this new descriptor and statically
+assigns it to the flex variable as already described.
+
+
+@chapter Implementation
+
+To harness the RS compiler for use on a new machine, the obvious need
+is the translator to convert stream language into machine code, but
+one must never lose sight of the fact that the final product is a
+system and not just a collection of programs.  The importance of the
+shell for the compiler is obvious from the Figure in section A1, a
+major part of which is concerned with the updating and retrieval
+scheme for library modules.  Not least in importance here is the
+actual content of the system library, including transput.  Finally,
+proper provision must be made for run-time diagnostics, not shown in
+the Figure but clearly a crucial part of the system.
+
+The development of a system initially depends of the process known as
+bootstrapping, and we conclude with an outline of its three stages.
+
+Stage 1 begins with getting the compiler running on some machine,
+which will normally be different from the target machine.  Since the
+RS compiler is written in its own language, the simplest method is to
+use an existing RS implementation, although there is nothing to
+prevent the use of some other machine for bootstrapping provided that
+the compiler is suitably adapted.  With a temporary first pass
+actually running, the next phase of stage 1 is to produce a matching
+translator which generates code for the final object machine.  It may
+be convenient to write this translator in the bootstrapping machine
+using the same language as the compiler.  Alternatively, it can be
+written for the new machine from the start, provided that the new
+machine supports a suitable high-level language.  Either way we are
+now equipped with a means of producing code for the new machine from
+Algol 68 source text.
+
+Stage 2 uses the result of stage 1 to compile and translate a final
+version of the compiler and a shell suitable for the new machine.  The
+translator is also compiled and translated when the first of the two
+plans is adopted.  The result of stage 2 is a compiler, shell and
+translator which can be loaded in the new machine.
+
+Stage 3 consists of tidying up.  The translator probably requires
+enhancement, for up to this point it has only had to deal with the
+system itself, which is almost certainly in a subset of stream
+language.  The RS compiler produces a subset, and the other parts
+of the system can with advantage do the same.  Now the compiler and
+translator should be compiled and translated in the new machine to
+check that the whole system is self-supporting.  This may entail
+rewriting the translator, for if the second plan was adopted, it will
+probably not have been written in Algol 68.
+
+@c  *********************************************************************
+@c  PART B   SINGLE MODULE COMPILATION
+@c  *********************************************************************
+
+
+@chapter The Compiler Shell
+
+The ``compile'' procedure is specified as follows:
+@example
+PROC  compile  =
+( PROC (REF VECTOR [] CHAR, REF INT) BOOL  input,
+  PROC (OUTPUT, INT) VOID  output,
+  PROC (VECTOR [] CHAR, INT) VOID  fault,
+  PROC (INT) REF VECTOR [] CHAR  message,
+  PROC (ID, INT, BOOL) YMODINFO  give module details,
+  PROC (ID, ID, YM) YSPEC  give spec,
+  PROC (REF VECTOR [] CHAR, BOOL) INT  lookup,
+  REF [] STRUCT(INT type, value)  charset
+) BOOL:
+@end example
+
+This procedure must be called in pass 1 with actual parameters written
+to suit the translator and the hardware in which the system is to run.
+These actual parameters constitute the `shell' of pass 1 (see Figure
+in A1).
+
+The procedures @code{give module details} and @code{give spec} are concerned
+with inter-module checking and are described in Part C.  The
+remaining parameters are dealt with in this present chapter.
+
+Most one-dimensional arrays in the RS compiler have lower bound 1, so
+they have been written as vectors, which are normally more efficient
+than arrays.  Since the same will be true of most translators, vectors
+are used in the interface wherever possible.  One-dimensional arrays
+may be used throughout if desired.
+
+
+@section Input Of Source Text
+
+Source text is input by the procedure
+@example
+PROC input = (REF VECTOR [] CHAR source, REF INT size) BOOL:
+@end example
+which is called by the compiler.  In @code{source}, the compiler provides
+space for @code{linesize} characters of text (see Appendix 5).  The input
+procedure must put a line of text into this space and give the actual
+number of characters in @code{size}.  Blank lines are allowed.  The
+procedure must ordinarily deliver @code{TRUE}, but must deliver @code{FALSE} if
+nothing has been supplied in @code{source} because there were no more lines
+of text for the compilation.  A suitable amount of source text must be
+retained by the input procedure for output by the fault procedure
+(B1.5) when required.
+
+The compiler's first task is to assemble characters into the larger
+entities, such as identifiers, required for syntax analysis.  It has
+no knowledge of the character set or representations of symbols, and
+all such information has to be made available through its parameters
+@code{charset} and @code{lookup}.  These are described in sections B1.2 and
+B1.4.
+
+
+@section The @code{charset} Parameter
+
+The @code{charset} parameter is an array such that @code{charset[i]} describes the
+properties of the character whose @code{ABS} value is @code{i}.  Each element of the
+array has a type field and a value field, which must be filled in
+according to certain fixed conventions.  For the compiler to assemble
+identifiers, it needs to know which characters are the letters, which
+the digits and which the space character.  This is because identifiers
+must start with a letter and continue with letters or digits, with
+spaces ignored; the identifier is thus terminated by the first
+non-letter non-digit character encountered.  The letters a to z must
+all be given type 3 and values 10 to 35 respectively.  The digits 0-9
+are given type 4 and values 0-9.  The space character is given type 2
+and value 37.  If there are any further alphabetic characters besides
+a to z needed in identifiers, such as accented letters, they must
+be given type 3 and value 36, and cannot be used other than in
+identifiers.
+
+Bold symbols are assembled by the compiler in one of two ways.  If the
+character set contains only one alphabet, a `stropping' scheme must be
+adopted, and this can take two forms.  In `single' stropping, the bold
+symbol is simply prefixed by a strop character, whilst in "matched"
+stropping it is enclosed in a pair of identical strop characters.
+Aside from the strop characters, the form of a bold symbol is exactly
+similar to that of an identifier, except that spaces are not allowed.
+When single stropping is used, the strop character is specified as
+type 7 and the bold symbol terminates in front of a character, such
+as space, which cannot be a legal continuation of the symbol.  When
+matched stropping is used, the strop character if specified as type 8,
+and the bold symbol terminates in the same way except that the
+compiler checks that the terminator is the strop character and moves
+past it.  (If it is not, the fault procedure is called.)  The value
+field for the strop character can be set to 100 if the character is
+not to be used for any other purpose.  Provided that reasonable
+discretion is used, the strop character can be made to do double
+duty and serve as a symbol in its own right, such as the decimal
+point symbol.  The value field would then be filled in to indicate
+the required meaning as described in B1.3.
+
+If a second alphabet is available in the character set, it can be
+defined to be the bold alphabet, and there will be no need to define
+a strop character.  Bold letters must be given type 6 and the value
+field set to the negative number @var{-(n + 1)}, where @var{n} is the @code{ABS} either
+of the bold letter itself, which we shall describe as a `direct
+value' or of the corresponding ordinary letter (`indirect value').
+The choice, which must be the same throughout the alphabet, is
+governed by the way the lookup table for bold symbols is to be
+organised, as discussed later.
+
+The character used as the quote symbol must be given type 5 and value
+100, which debars it for any other purpose except inside comment or,
+doubled, inside string or character denotations.  If there are any
+characters whose use is to be restricted solely to the insides of
+strings or comment, these must be given type 1 and value 100 (`illegal
+representation').
+
+Once the characters of types 1 to 8 have been dealt with as described
+above, all the remaining characters are available, singly or in
+combination, to represent symbols.  A character which never combines
+is given type 20, while a character which can occur as part of a
+compound symbol is given type 21, 22 or 23 according to the positions
+it is allowed to occupy.  These are shown in the table set out below.
+Characters which can be used in compound symbols may be used singly as
+well (for consider @samp{:}, @samp{=} and @samp{:=)}.  The value field in charset
+is normally used to specify the meaning of the character when it is
+used as a single-character symbol (but see B1.3 for a possible
+exception to this rule).
+
+When the compiler encounters a character which may be the start of a
+compound symbol, it always tries to complete the symbol and terminates
+only when further continuation is impossible.  It is therefore
+advisable that all monadic operators be represented by characters of
+types 20 or 21, as this enables consecutive monadic operators to be
+used in a program without space separation.  To see this, consider a
+pair of monadic operators such as @samp{+-}.  If the minus can only occur
+alone or at the very beginning of a compound symbol, it cannot be the
+second character of a compound symbol starting @samp{+-}.  A space between
+the plus and minus is therefore unnecessary.
+
+In the assembly of identifiers, bold symbols, string denotations,
+numbers and compound symbols, the end of a line will always terminate
+an item.  If a string denotation is to extend over more than one line,
+a quote symbol must be given at the end of each line and the next
+line introduced by a further quote.
+
+If an implementation is to accept both upper/lower case programs and
+programs written using a stropping convention, the shell must convert
+one representation to the other.
+
+The field settings for @code{charset} are as follows (a value of 100 means @samp{invalid
+representation}).
+
+@table @asis
+@item @var{type}
+@var{meaning of type (value)}
+
+@item 1
+character which can only be used inside strings or comment (100)
+@item 2
+space (37)
+@item 3
+letter, for use in identifiers, labels and field selectors
+(a to z (10-35), any others (36))
+@item 4
+digit (0-9)
+@item 5
+string quote (100)
+@item 6
+bold letter (see B1.2)
+@item 7
+single stropping character (see B1.2)
+@item 8
+matched stropping character (see B1.2)
+@item 20
+non-combining character (see B1.3)
+@item 21
+character which, when used in combination, can only be the first character of the compound symbol (see B1.3)
+@item 22
+character which can be used anywhere in a compound symbol (see B1.3)
+@item 23
+character which, when used in combination, can only be the last character of the compound symbol (see B1.3)
+@end table
+
+@section Values Of Symbols
+
+The compiler assumes nothing about the way modes, operators or
+any other language symbols are to be represented in programs; it
+understands the meanings of symbols in terms of its own fixed integer
+values.  From the `type' information given in charset, it can assemble
+single and multiple character symbols, but cannot convert them into
+values by itself.  The shell writer must therefore decide on the
+desired character representations for all the symbols listed in
+Appendix 1, and make arrangements for supplying the corresponding
+integer values to the compiler.  (Appendix 1 includes symbols for all
+of the operators of the standard prelude, which are handled by the
+compiler rather than the library system.)  The representations for
+symbols can be single characters, bold symbols or compound symbols.
+The value fields for characters with types less than 20 have already
+been laid down in B1.2.  The values for all compound symbols or bold
+symbols - some of which might consist of a single bold letter - must
+be embodied in a special lookup table as described in B1.4.
+
+The values for the single character symbols of types 20-23 are
+normally put into the value fields of the charset array.  The reason
+for this is simply to optimise by reducing the number of calls of the
+lookup procedure - in principle all symbols could have been treated
+alike and included in one table.  The optimisation may be overridden
+by giving such characters the value 99; this causes the lookup
+procedure to be called as for compound and bold symbols.
+
+The input system as a whole has great flexibility.  The shell writer
+can choose whatever representations for symbols seem desirable,
+although he is expected to include those given in Appendix 1, which
+are taken from the Algol 68 report.  He may supplement the suggested
+representations with alternative forms for the same symbol (for
+instance, @code{&} as alternative for @code{AND}).  And he can effectively subset
+the language giving any unwanted symbol (eg @code{#}) the value 100 (`illegal
+representation').
+
+@section The Lookup Procedure
+
+When the compiler has assembled a bold or compound symbol, it calls
+the shell procedure
+@example
+PROC lookup = (REF VECTOR [] CHAR symbol, BOOL bold) INT:
+@end example
+
+The parameter @code{symbol} will provide the actual characters of the
+symbol, and incidentally must not be assigned to in the body of
+@code{lookup}.  The parameter @code{bold} will be @code{TRUE} for bold and @code{FALSE} for
+compound symbols.  The procedure must look up the symbol in its lookup
+table, and deliver the integer value which can be found from Appendix
+1.  Depending on how the lookup table is organised, the information as
+to whether the symbol is bold or compound may help in minimising
+search time.
+
+Bold symbols represented in source text by single or matched stropping
+are served up in the @code{symbol} parameter without the strop characters,
+and will look just like unspaced identifiers.  Where a bold alphabet
+is in use, the @code{symbol} parameter will use bold letters if their
+values in charset were chosen to be "direct" (as defined in B1.2), but
+will use ordinary letters if they were "indirect".  The choice of
+direct versus indirect depends on the environment in which the RS
+system is to be implemented.  Where some users' programs can use a
+bold alphabet and others must use stropping, the indirect system has
+advantages in ensuring a uniform way of keeping symbols in a library.
+However, in an environment where stropping need never be used at all,
+the direct system has the advantage that it does not transform the
+alphabet unnecessarily.
+
+
+@section Output Of Fault Messages
+
+The @code{fault} procedure deals with output of compile-time error
+messages.  The @code{VECTOR [] CHAR} parameter contains the diagnostic
+message and the INT is the character position in the input text.  The
+purpose of "fault" is to output the message in a presentable form,
+preferably with an extract of the source text indicating the location
+of the error.
+
+Since the compiler generally avoids the use of strings in its
+source-text, names and messages have to be introduced by means of its
+@code{message} parameter.  This is a procedure that delivers a reference
+to a particular string when given an integer parameter.  The strings
+must be supplied by the shell writer as defined at the front of the
+compiler.  The character @samp{%} means that the following word should
+appear in upper case, while @samp{.} followed by an integer specifies a
+"parameter" of the fault message.  The combination @samp{%.} means that the
+parameter is the name of a mode or operator.  If "indirect" values are
+being used for the bold alphabet, the fault procedure will need to
+convert letters in the following identifier.
+
+The purpose of the message parameter is to allow translation of error
+messages into languages other than English without modifying the text
+of the compiler.  Except for the removal of @samp{%}, it should not be
+altered for any other reason.
+
+
+@section Output Of Stream Language
+
+Output of stream language from the compiler is effected by its
+repeated calls of the pass 1 shell procedure @code{output},
+@example
+PROC output = (OUTPUT imperative, INT stream) VOID:
+BEGIN
+  The procedure encodes the information in the imperative
+  and outputs it on the specified stream
+END
+@end example
+
+The job of this procedure is to output the imperative in whatever form
+is most suitable for input to the translator in pass 2.  As this will
+depend strongly on the design of the particular translator, the task
+of designing the output procedure is best undertaken by the translator
+writer himself.
+
+The mode @code{OUTPUT} is a union whose constituent modes represent different
+types of imperative, and the first task of the output procedure is to
+decompose the union.  The type of the imperative and the data held
+within it must now be encoded by the procedure as an implementation-
+dependent representation of stream language.  The present document
+cannot make any assumptions about such encoding, and will therefore
+describe stream language in Algol 68 terms, starting from the mode
+@code{OUTPUT}.  But it is essential to realise that the output procedure
+gives the implementor complete control over the format and content of
+the information which is actually output from pass 1.  Some portion
+of the data provided is superfluous, being present in the @code{OUTPUT}
+imperative only for the compiler's own convenience, and this can be
+omitted from the stream language representation altogether.  Other
+information is `gratuitous', either because it is not strictly
+necessary or because it is duplicated.  However, much of this
+gratuitous information is likely to be useful to the translator, and
+the output procedure should select what is needed in any particular
+implementation.
+
+
+@chapter Stream Language In Outline
+
+An Algol 68 program is concerned with objects and operations on
+objects to produce new objects.  For the purpose of code generation, a
+translator must construct suitable representations of these objects.
+Such a representation will be termed a "translator value", or simply a
+value.  It will normally include the location and size of the item in
+the running machine.  In the case of an array or vector - whose total
+size is unknown --- a translator value can only describe explicitly the
+part which has a fixed size, ie the descriptor or "static part".
+However, translator values do form a sufficient basis for generating
+code to handle all objects, whether static or dynamic.
+
+
+@section The Imperatives
+
+Each imperative in stream language belongs to a constituent mode of
+the compiler's @code{OUTPUT} mode, which is a union.  At the first level of
+decomposition, these constituents are
+@table @code
+@item XEDIT
+used for stream control
+
+@item XDEC
+a declaration, which provides data for a new translator value and gives it a declaration number
+
+@item XROUTINE
+initiates the declaration of a routine text and gives it a declaration number in a different series
+
+@item XLOAD
+requires the translator to construct a new value, or take a given
+declared value, and stack it as a reverse Polish operand
+
+@item XCHARS
+in conjunction with @code{XLOAD}, provides a quotation from the source-text for denotations
+
+@item XOPER
+specifies an operation to be performed on the reverse Polish stack
+
+@item XWARN
+supplements @code{XOPER} by providing advance warning of certain dyadic operations
+
+@item XPRAG
+copies the start of source-text pragmats
+
+@item XCHARPOS
+indicates character positions in the source-text
+
+@item XCONTROL
+indicates the structure of the Algol 68 program
+
+@item REF VECTOR [] MDE
+a vector of the modes required for the program
+
+@item XSIZES
+giving advance notice of sizes of vectors needed by the translator, such as the above vector of modes
+
+@item XMODINFO etc
+concerning modules - see section 3 of Part C.
+@end table
+
+We now present the above in more detail.
+
+@subsection @code{XEDIT}
+
+The input section of the translator must read in the parallel streams
+of imperatives as encoded by the pass 1 output procedure, taking
+imperatives variously from one stream and another to form a single
+unbranching sequence.  The process of stream collation is performed by
+the translator in response to imperatives of mode @code{XEDIT}, which it will
+encounter on every stream.  An @code{XEDIT} is a @code{STRUCT(BOOL up)} which tells
+the translator to switch to an adjacent stream, one up or one down
+from that currently being read, according as @code{up} is @code{TRUE} or @code{FALSE}.
+Reading starts on stream 0 (which contains module information only),
+and the next streams down are 1, 2 etc.  After switching to a new
+stream, reading always continues from the place where that stream was
+last left (or from its beginning if not yet read at all) until an
+@code{XEDIT} is met.  Throughout the remainder of the present account, this
+collation will be assumed to have been done.
+
+@subsection @code{REF VECTOR [] MDE}
+
+A vector of modes is passed to the translator in a preliminary
+@code{REF VECTOR [] MDE} imperative, enabling the translator to represent
+any mode as an integer index.
+
+@subsection @code{XDEC}
+
+An imperative of mode @code{XDEC} is a stream language declaration which
+requires the translator to construct a new value, and be able to refer
+to it by means of a declaration number supplied in the @code{XDEC}.  The mode
+@code{XDEC} is itself a union of @code{XIDDEC} and @code{XLABDEC}.  When the source-text
+declares an identifier, the stream language will generally produce an
+@code{XIDDEC} containing its source mode and a declaration number @code{decno}.
+(The exception is the Algol 68 routine text declaration, which is
+handled separately --- see @code{XROUTINE}.)  At the beginning of a serial
+clause in which a label setting occurs, the stream language will
+produce an @code{XLABDEC} which provides the label with a @code{labno} (in a
+series distinct from the @code{decno} series).
+
+@subsection @code{XROUTINE}
+
+Every routine text in the source, whether or not it is part of an
+Algol 68 declaration, is given an @code{rdenno} by an @code{XROUTINE} imperative,
+which represents the start of the routine.  For certain purposes the
+compiler invents its own routines; these synthetic routines are also
+declared and numbered in the @code{rdenno} series.
+
+@subsection @code{XSIZES}
+
+Declaration numbers enable the translator to keep declared values in
+vectors for future use.  Numbers in the @code{decno} series are issued and
+re-issued by the compiler in a stack-like fashion which corresponds to
+the nesting of source-text ranges - so a given @code{decno} may correspond to
+different identifiers in different non-overlapping ranges.  This does
+not, however, apply to @code{labno}s or @code{rdenno}s.  The required vector sizes
+in the translator are given in an initial @code{XSIZES} imperative of the
+form
+@example
+STRUCT (INT norden, nomodes, nolabs, nodecnos,
+                nomodules, nolibinds )
+@end example
+
+The fields give the vector sizes for @code{rdenno}s, @code{VECTOR [] MDE}, @code{labno}s,
+@code{decno}s and two vectors concerned with modules (see Part C).
+
+@subsection @code{XLOAD}
+
+Stream language differs from Algol 68 in that it breaks down all of
+the source text into operations which are judged to be primitive for
+the production of code.  It adopts the principle that all of the
+operands necessary for any operation must be present on a stack before
+the operation can be carried out; the operation is thought of as
+replacing its operand(s) by a single result which is kept as an
+operand for some future operation.  The imperative which produces a
+new operand on the stack in @code{XLOAD}.  Any value which has been declared
+in an @code{XDEC} or @code{XROUTINE} can be the object of an @code{XLOAD} imperative.  So
+also can values corresponding to source-text denotations (see @code{XCHARS}),
+generators, and the results of alien or code insertions.
+
+@subsection @code{XCHARS}
+
+Imperatives of mode @code{XCHARS} always amplify an @code{XLOAD} for a source-text
+string or format denotation, or alien or code insertion.  The @code{XCHARS}
+imperatives provide quotations from the source-text.
+
+@subsection @code{XOPER}
+
+The actual operations which can be carried out on loaded values are
+described by imperatives of mode @code{XOPER}, which are ultimately defined
+by the object code they must produce.  They fall into the following
+categories
+
+@table @asis
+@item monadic and dyadic operators
+From the Algol 68 standard prelude.
+
+@item coercions and similar operations
+Stream language specifies these explicitly wherever they are required.
+
+@item field selection and array indexing
+For example, given the operands
+@code{a}, @code{i} and @code{j}, one operation produces a value for
+@code{a[i, j]}.
+
+@item procedure calls
+Which produce, for example, a value for the result
+of @code{f(x, y)} from the operands @code{f}, @code{x} and @code{y}.  This is not a primitive
+operation, as it needs one @code{XOPER} to set up the actual parameters and
+another to do the procedure call.
+
+@item assignment
+The primitive stream language operation assigns an object
+of known size, or a vector or one-dimensional array of such objects.
+More complicated assignments are reduced to this primitive level by
+the compiler.  An Algol 68 assignment to a flex variable is broken
+down into two separate stream language operations.  One finds new
+space for the elements, copies them into it and makes up the
+descriptor.  The other assigns the descriptor to the flex variable.
+
+@item space finding
+An @code{XOPER} generates space for elements of vectors or
+arrays whenever required as a result of a source-text declaration or
+or generator, or an assignment to a flex variable.  "Static" space is
+found in various ways.  The static space required for a named object
+is found by means of its @code{XIDDEC}.  Unnamed objects, ie generated
+objects, obviously cannot be dealt with in this way.  If they are of
+fixed size, the space is found by an @code{XLOAD} which puts the reference
+on the reverse Polish stack.  Otherwise, the fixed part of the total
+space requirement is found by an @code{XOPER}.  This particular @code{XOPER}
+is only used when some part of the static space is needed for
+descriptors.
+
+@item straightening
+Two operators provide coercion of a row, vector, struct, i-struct or
+union to a "straight" --- a language extension described in Appendix
+4.  A third operation provides indexing of the straight to pick out
+one member.
+@end table
+
+@subsection @code{XWARN}
+
+For the convenience of certain translator designs, the @code{XWARN}
+imperative defines certain dyadic operations after the loading of
+the first operand.  This is additional to the @code{XOPER} which occurs in
+the normal reverse Polish position.
+
+@subsection @code{XPRAG}
+
+The compiler normally passes the first line of a source-text pragmat
+to stream language.
+
+@subsection @code{XCHARPOS}
+
+The character positions of significant symbols in the source-text (eg
+controls) is output so that the translator will read the imperative at
+the appropriate time.
+
+@subsection @code{XCONTROL}
+
+Overall structure of Algol 68 source-text is mirrored in stream
+language down to the phrase level.  The source text symbols which
+delimit phrases appear in stream language as imperatives of mode
+@code{XCONTROL}, which is a structure with a @code{fn} field for the particular
+delimiter (@code{xif}, @code{xsemi}, etc).  The opening round bracket for an
+ordinary closed clause and that for a collateral are distinguished by
+the compiler and given different @code{fn} fields.  This is a typical
+example of advance information from the compiler.  Every @code{XCONTROL} at
+the start of a serial clause gives advance information about the
+properties of that clause, such as the presence of declarations and
+the mode of the result delivered.
+
+@section Syntax Analysis Of Stream Language
+
+An abridged syntax of stream language is shown below.  In this syntax,
+the imperatives @code{XLOAD}, @code{XOPER}, @code{XIDDEC} And @code{XLABDEC} are all grouped
+together, as they do not contribute to syntactic structure in any
+significant way.  Structure is imposed on stream language by the
+@code{XCONTROL} imperatives, whose @code{fn} fields enable the various different
+types of closed clause to be recognised and their component clauses to
+be picked out.
+
+The task of a translator is to read and act on stream language, and
+it can use procedures which mirror the syntax.  To read in a closed
+clause, it can use a procedure cclause which calls another procedure,
+sc, to read the component serial clauses, as shown in the lower half
+of the skeleton translator.  The variable @code{currentxc} holds the latest
+@code{XCONTROL} Imperative.  Similarly, the @code{sc} and @code{cclause} procedures can
+call on a phrase procedure to read the constituent phrases.  After a
+call of phrase, the current @code{XCONTROL} will obviously be one which
+terminated a phrase, and all but two of these also terminate a serial
+clause.  These two are @code{xsemi} and @code{xexit}, which correspond to @samp{;} and
+@code{EXIT} between phrases in the Algol 68 source-text.
+
+The phrase procedure does the actual reading of the imperatives,
+calling @code{cclause} when it reads an @code{XCONTROL} which is a `cclause
+starter', ie one of
+@code{
+xbegin, xif, xcase, xcaseu, xcoll, xdo (when not preceded by xwhile), xwhile
+}
+in the abridged grammar we are using.  Exit from the phrase procedure
+occurs when an @code{XCONTROL} which is a `phrase terminator' is read, ie one
+of the following:
+@example
+      xend        xcollcomma
+      xthen       xendcoll
+      xelse       xroutinend
+      xfi         xinu
+      xod         xdo (when preceded by xwhile)
+      xin         xcommau
+      xcomma      xoutu
+      xout
+      xesac       xsemi ) these phrase terminators do
+      xesacu      xexit ) not terminate serial clauses
+@end example
+
+@subsection Abridged Syntax Of Stream Language
+
+@subsubsection Notation
+
+Class names are placed on the left, with their alternative expansions
+on separate lines on the right.
+
+Square brackets enclose an optional item, which, if starred, can be
+repeated any number of times.
+
+@code{cclause} stands for closed clause, @code{sc} for serial clause, @code{enq} for
+enquiry clause.  A stream language primary is not to be confused with
+a primary in Algol 68.
+
+@code{xbegin}, @code{xend} etc are imperatives of mode @code{XCONTROL}, whose
+@code{fn} fields
+are the integers @code{xbegin}, @code{xend} etc.
+
+@subsubsection Syntax rules
+
+@example
+cclause = xbegin  sc  xend
+          xif  enq  xthen  sc  [xelse  sc]  xfi
+          xcase  enq  xin  phrase  [xcomma  phrase]*  [xout sc]  xesac
+          xcoll  phrase  [xcollcomma  phrase]*  xendcoll
+          xcaseu  enq  xinu phrase [xcommau phrase]* [xoutu sc] xesacu
+          [phrase]  [phrase]  [phrase]  xfor  [xiddec]  loop
+          [phrase]*  xforall  [xiddec]*  loop
+
+loop    = [xwhile  sc]  xdo  sc  xod
+
+sc      = phrase  [separator  phrase]*
+
+enq     = phrase  [xsemi  phrase]*
+
+phrase  = primary  [primary]*
+
+primary = XLOAD
+          XOPER
+          XIDDEC
+          XLABDEC
+          XROUTINE  phrase  xroutinend
+          cclause
+
+separator = xsemi
+            xexit
+@end example
+
+@subsubsection Skeleton translator --- stage 1
+
+@example
+XCONTROL currentxc;
+
+PROC read = OUTPUT:  "deliver next imperative";
+
+
+PROC phrase = VOID:
+BEGIN
+       DO  CASE read
+           IN  (XLOAD):
+                   ----,
+               (XOPER):
+                   ----,
+               (XIDDEC):
+                   ----,
+               (XLABDEC):
+                   -----,
+               (XROUTINE):
+                   phrase,
+               (XCONTROL xc):
+                   (currentxc := xc;
+                    IF  fn OF xc = "cclause starter"
+                    THEN  cclause
+                    ELIF  fn OF xc = "phrase terminator"
+                    THEN  GOTO out
+                    FI
+                   )
+           ESAC
+       OD;
+out:   SKIP
+END;
+
+
+PROC sc = VOID:
+WHILE  phrase;
+       fn OF currentxc = xsemi  OREL  fn OF currentxc = xexit
+DO  SKIP  OD;
+
+
+PROC cclause = VOID:
+IF  fn OF currentxc = xbegin
+THEN  sc
+ELIF  fn OF currentxc = xif
+THEN  sc;
+      sc;
+      IF  fn OF currentxc = xelse  THEN  sc  FI
+ELIF  fn OF currentxc = xcase
+THEN  sc;
+      phrase
+      WHILE  fn OF currentxc = xcomma  DO  phrase  OD;
+      IF  fn OF currentxc = xout  THEN  phrase  FI
+ELIF  fn OF currentxc = xcoll
+THEN  phrase;
+      WHILE  fn OF currentxc = xcollcomma  DO  phrase  OD
+ELSE  "see stage 2 for other controls"
+FI;
+@end example
+
+@section The Reverse Polish Stack
+
+In a reverse Polish language, operands "lie dormant" until an
+operation on them is specified, but it does not necessarily follow
+that the translator must maintain a reverse Polish stack.  For certain
+types of machine it would be feasible to generate object code from
+each @code{XLOAD} immediately it appeared, and keep no record in the
+translator.  For most types of machine, however, it will be desirable
+to be able to delay the production of code for operand settings at
+least until all the operands are present and an actual operation has
+been specified.  This delay is a simple technique for optimisation;
+decisions about the best form of code cannot always be made when a
+value is first placed on the reverse Polish stack.  Even after an
+@code{XOPER} has appeared, it may be desirable to hold up the production of
+code.  For example, when translating for a single address machine, it
+has been found best to delay the operations of dereferencing, field
+selection and array indexing.  When this is done, the resulting value
+on the reverse Polish stack has to embody enough information to enable
+the required address calculations and code production to be carried
+out later.
+
+In Algol 68, a reverse Polish stack can be implemented very simply.
+Stage 2 of the skeleton translator given below includes the
+declaration of a stack reference variable @code{vss} local to the phrase
+procedure.  More will be said about this localisation at a later
+stage, but as the translator is highly recursive, it implies that
+local sections of the overall reverse Polish stack are distributed
+in the procedural stack of the translator.  A new value must be
+constructed and put on the local stack at each @code{XLOAD} imperative and
+for the result of each closed clause.  In Algol 68, a closed clause
+always delivers its result to the phrase which contains it, and the
+translator's value for this result must therefore be loaded on the
+stack local to the phrase.  In fact, the value is constructed (at
+least in part) as soon as the @code{XCONTROL} announces the start of a
+closed clause.  Part of the value will be the mode of the result of
+the closed clause, which is given in the @code{XCONTROL} imperative.
+Another part will be the location used for the result in the object
+machine.  This may or may not be allocated immediately, but in any
+case the procedure @code{cclause} will require access to is for code
+generation purposes.  The value is therefore passed from phrase to
+@code{cclause} as a parameter, and we have made it a @code{REF VALUE} parameter
+to permit communication in either direction.  In the skeleton, this
+happens after the condition @code{m OF xc > 0}, which should be assumed
+for the time being to be @code{TRUE}.  The @code{REF VALUE} is passed from @code{cclause}
+to every subservient procedure, including recursive calls of @code{phrase}.
+
+A phrase delivers a result, possibly void, but always leaving a single
+value on its reverse Polish stack.  If ths phrase is terminated by a
+semicolon, the result is written off (by the rules of Algol 68) and
+this is mirrored in the translator by the disappearance of the stack
+on exit from the procedure.  However, if the phrase is the last in a
+serial clause - or is terminated by an @code{EXIT} in the source text --- the
+result must be preserved by the object code for future use.  A value
+already exists for it on the stack in an outer phrase and is
+accessible as the @code{answer} parameter of the inner phrase under
+discussion.  The last act before exit from @code{phrase} is therefore to
+generate code, as necessary, to ensure that the location of the result
+agrees with that in @code{answer}.  The local stack then serves no further
+purpose and can safely be allowed to pass out of scope.
+
+The test @code{m OF xc > 0} is an optimising device to deal with a closed
+clause whose result is known (by the compiler) to be the result also
+of an outer serial clause --- described in the @code{answer} parameter of
+the current phrase.  Thus at the arrow in
+@example
+            (a;  (b;  c))
+                 ^
+@end example
+
+a value for the result of @code{(b; c)} has already been constructed at the
+beginning of the outer serial clause, and can simply be passed on.  To
+indicate this optimisation, which also has implications for code
+generation, the compiler sets the @code{m} field of the opening @code{XCONTROL} at
+the arrow negative.  When this is detected in the translator, it calls
+@code{cclause(answer)} instead of @code{cclause("newly constructed value")}.  After
+the first closing bracket in the above example, the stack local to the
+phrase @code{(b; c)} will be @code{NIL}, because nothing will have been loaded.  No
+action must then be taken at the point in the skeleton labelled
+@code{result}, for it will already have been taken on exit from the phrase
+@code{c}.
+
+In expanding stage 1 of the skeleton to make stage 2, we have
+expressed the action for an @code{XROUTINE} as a call of the procedure
+@code{routine}.  Although the body of this procedure is trivial in the
+skeleton, it will of course be much larger in an actual translator.
+The call of @code{routine} in the translator corresponds to a routine-text
+in the program, not a routine call.  The body of the routine-text is
+not being obeyed, and the answer parameter for its phrase is therefore
+@code{NIL}.  Inside That phrase, the @code{NIL} should be detected at the label
+@code{result}.
+
+@subsubsection Skeleton translator --- stage 2
+
+@example
+XCONTROL currentxc;
+
+PROC read = OUTPUT:  "deliver next imperative";
+
+MODE VALUELIST = STRUCT (VALUE v, REF VALUELIST rest);
+
+
+PROC phrase = (REF VALUE answer) VOID:
+BEGIN
+       REF VALUELIST vss := NIL;
+       DO  CASE  read
+           IN  (XLOAD):
+                   vss := LOC VALUELIST := ("given value", vss),
+               (XOPER):
+                   ----,
+               (XIDDEC):
+                   ----,
+               (XLABDEC):
+                   ----,
+               (XROUTINE):
+                   routine,
+               (XCONTROL xc):
+                   (currentxc := xc;
+                    IF  fn OF xc = xwhile
+                            OREL  fn OF xc = xdo ANDTH "no xwhile"
+                    THEN  vss := LOC VALUELIST
+                              := ("value for void result", vss);
+                          cclause(v OF vss)
+                    ELIF  fn OF xc = "cclause starter"
+                    THEN  IF  m OF xc > 0
+                          THEN  vss := LOC VALUELIST
+                                    := ("value for result", vss);
+                                cclause(v OF vss)
+                          ELSE  cclause(answer)
+                          FI
+                    ELIF  fn OF xc = xsemi
+                    THEN  GOTO out
+                    ELIF  fn OF xc = xfor  OREL  fn OF xc = xforall
+                    THEN  "read and unstack information as far
+                           as xwhile or xdo"
+                    ELIF  fn OF xc = "any other phrase terminator"
+                    THEN  GOTO result
+                    FI
+                   )
+           ESAC
+       OD;
+
+result:  "ensure that, if vss isn't NIL, the object described by
+          v OF vss is properly described by answer";
+out:   SKIP
+END;
+
+PROC routine = VOID:  phrase(NIL);
+
+
+PROC sc = (REF VALUE answer) VOID:
+WHILE  phrase(answer);
+       fn OF currentxc = xsemi  OREL  fn OF currentxc = xexit
+DO  SKIP  OD;
+
+
+PROC cclause = (REF VALUE answer) VOID:
+IF  fn OF currentxc = xbegin
+THEN  sc(answer)
+ELIF  fn OF currentxc = xif
+THEN  sc("value for boolean");
+      sc(answer);
+      IF  fn OF currentxc = xelse THEN sc(answer) FI
+ELIF  fn OF currentxc = xcase
+THEN  sc("value for integer");
+      phrase(answer);
+      WHILE  fn OF currentxc = xcomma
+      DO  phrase(answer)  OD;
+      IF  fn OF currentxc = xout  THEN  sc(answer)  FI
+ELIF  fn OF currentxc = xcaseu
+THEN  sc("value for union");
+      phrase(answer);
+      WHILE  fn OF currentxc = xcommau
+      DO  phrase(answer)  OD;
+      IF  fn OF currentxc = xoutu  THEN  sc(answer)  FI
+ELIF  fn OF currentxc = xcoll
+THEN  phrase("value for first field of answer");
+      FOR i  FROM 2
+      WHILE  fn OF currentxc = collcomma
+      DO  phrase("value for ith field of answer")  OD
+ELSE  CO  xwhile or xdo  CO
+      IF  fn OF currentxc = xwhile
+      THEN  sc("value for boolean")
+      FI;
+      sc(answer)
+FI
+@end example
+
+@chapter Stream language in detail
+
+This chapter completes the account of stream language by supplying all
+the detailed factual information.  The hierarchy of imperatives is
+organised in two ways, partly by the use of unions (as @code{XIDDEC},
+@code{XROUTINE} and @code{XLABDEC} are united under the mode @code{XDEC}), and partly by
+characteristic integers (as for example the @code{fn} field of an @code{XCONTROL}
+imperative).  In this text, mnemonics are used in place of actual
+integer values, which can be discovered from the listing of the RS
+compiler.
+
+The word "mode" frequently occurs as the selector of an integer field
+in an imperative.  The integer should always be understood as an index
+to the vector of modes given in the @code{REF VECTOR [] MDE} imperative.
+
+Certain fields of the imperative are present for the convenience of
+the compiler itself.  Such fields will be enclosed in curly brackets;
+their significance for a translator is nil, and they should not
+be output by the compiler shell.
+
+Some features of stream language may vary slightly between different
+implementations of the RS compiling system.  See Appendix 5 for the
+list of implementation-dependent declarations in the text of the
+compiler.
+
+
+@section The Vector Of Modes --- @code{REF VECTOR [] MDE modes}
+
+Each different mode used in a program is represented in stream
+language by a mode number.  This is the sum of an integer, m say,
+representing a non-ref mode, and an offset (@code{refmark}) for each @code{REF}
+at its front.  The actual source mode represented by @code{m} is held in the
+element @code{modes[m]} which yields a @code{MDE}.  This is a union of constituent
+modes representing structures, procedures etc, as given in the table
+below.  These constituent modes contain further mode numbers which can
+be similarly decomposed until @code{PRIMITIVE} constituents are reached.  The
+mode number for all the @code{PRIMITIVE} modes are given in Appendix 2, and
+are fixed for all programs.  Once these mode numbers have been
+reached, the mode is completely known.  However, @code{PRIMITIVE} (defined to
+be @code{INT}) gives "type" information on the primitive mode, defined as the
+mode number for the primitive mode stripped of any @code{SHORT} or @code{LONG}
+prefixes.
+
+@subsection Constituent Modes Of @code{MDE}
+
+The mode @code{MODELIST}, defined as
+@example
+MODE  MODELIST  =  STRUCT (INT mode, REF MODELIST rest)
+@end example
+is used in the following table, although it is not itself a
+constituent of @code{MDE}.
+
+@subsection @code{REF STRCT}
+@example
+MODE  STRCT  =  STRUCT (INT @{rdenno@}, @{deflex@}, REF SELIST sels),
+@end example
+in which the mode @code{SELIST} is defined as
+@example
+MODE  SELIST  =  STRUCT (INT mode, fieldno, ID name, REF SELIST rest ).
+@end example
+This gives the mode and field number, starting with field 1, for each
+of the fields of a structure.  The @code{name} field gives the field
+selector name, truncated or space-filled to @code{maxid} characters (see
+Appendix 5), internal spaces having been removed.
+
+@subsection @code{REF ISTRUCT}
+@example
+MODE  ISTRUCT  =  STRUCT (INT @{rdenno@}, imode, length, @{deflex@}).
+@end example
+This describes an indexable structure having @code{length} elements of mode
+@code{imode}.
+
+@subsection @code{REF VCTOR}
+@example
+MODE  VCTOR  =  STRUCT (INT @{rdenno@}, vecmode, deflex)
+@end example
+This mode describes a vector or flex vector with elements of mode
+@code{vecmode}.  The @code{deflex} field is negative for a flex vector and
+positive or zero for a non-flex vector.
+
+@subsection @code{REF ARRAY}
+@example
+MODE  ARRAY  =  STRUCT (INT @{rdenno@}, mode, nods, deflex).
+@end example
+This describes an array or flex array of @code{nods} dimensions; @code{mode} is
+the mode of the array with the front row removed (ie the mode of the
+elements for a 1-dimensional array).  The @code{deflex} field is negative
+for a flex array and positive or zero for a non-flex array.
+
+For example
+@itemize @bullet
+@item
+@code{[] REAL} is represented in @code{mode} field as @code{REAL}
+
+@item
+@code{[ , ] REAL} is represented in @code{mode} field as @code{[]REAL}
+
+@item
+@code{FLEX [ , ] REAL} is represented in @code{mode} field as
+@code{[] REAL}
+@end itemize
+
+@subsection @code{REF UNN}
+@example
+MODE  UNN  =  STRUCT (INT @{rdenno@}, REF MODELIST modelist)
+@end example
+This describes a union mode, where @code{modelist} is a list of all the
+constituents (any unions within the union having been decomposed).
+
+@subsection @code{REF PROCP}
+@example
+MODE  PROCP  =  STRUCT (INT deproc, REF MODELIST pars)
+@end example
+Describes a procedure with parameters; @code{deproc} is the mode of the
+result and @code{pars} gives the modes of the parameters.
+
+@subsection @code{REF PRC}
+@example
+MODE  PRC  =  STRUCT (INT deproc)
+@end example
+Describes a procedure with no parameters and result of mode @code{deproc}.
+
+@subsection @code{REF STEN}
+@example
+MODE  STEN  =  STRUCT (INT mode, REF STENLIST @{stenlist@})
+@end example
+Describes a straight of objects of mode @code{mode}.
+
+@subsection @code{REF AMODE}
+No reference to this mode will occur in stream language.
+
+@subsection @code{SAMEAS}
+Except in the table of modes, no reference to this mode will occur in
+stream language.
+
+@subsection @code{PRIMITIVE}
+@example
+MODE  PRIMITIVE  =  INT;
+@end example
+The @code{MDE} vector contains elements for all the primitive modes, which
+always occupy fixed places at the bottom of the vector, as given in
+Appendix 2.  The index, ie the mode number, therefore determines the
+primitive mode uniquely.  When a @code{MDE} element decomposes to @code{PRIMITIVE},
+the integer value specifies the type of the mode, defined as the
+primitive mode with any @code{SHORT}s or @code{LONG}s removed.  For example, the
+@code{MDE} element @code{modes[20] (LONG REAL)} will decompose to @code{PRIMITIVE} and have
+value 19 (@code{REAL}).
+
+@section Identifier Declarations (@code{XIDDEC} from @code{XDEC})
+
+These imperatives introduce declaration numbers in the @code{decno} series
+and also imply storage allocation for the object machine.  The
+definition of an identifier in the source text gives rise to an @code{XIDDEC}
+(except in the case of routine identity declarations covered by
+@code{XROUTINE} In B3.3).  The mode @code{XIDDEC} is given by
+@example
+MODE  XIDDEC  =  STRUCT (INT type, REF IDDEC iddec)
+@end example
+The @code{iddec} field refers to information in the following structure
+@example
+MODE  IDDEC  =  STRUCT (ID name, INT decno, @{level@}, mode,
+                        INT @{scope@}, REF IDDEC @{rest@} )
+@end example
+The @code{name} field gives the source text identifier or operator symbol
+(truncated or space-filled to @code{maxid} characters, internal spaces
+having been removed), and @code{mode} gives its mode.  The declaration
+number @code{decno} is used to index a vector in which the translator can
+keep a record of values constructed in response to the @code{XIDDEC}.  The
+@code{decno}s start at 4.
+
+The @code{type} field of an @code{XIDDEC} is one of the following
+
+@table @code
+@item xiddec
+Identity declaration.  When this imperative occurs, the
+            top item on the reverse Polish stack (which must be
+            removed) will be the value for a static object or the
+            static part of a dynamic object.  Code must be generated,
+            if necessary, to preserve this object, and a value
+            constructed to describe it.
+
+@item xvardec
+Reference declaration for a static object.  Space must be
+            found for the object and a value constructed to describe
+            the reference to it.
+
+@item xivardec
+Initialised reference declaration.  The top item on the
+            reverse Polish stack (which must be removed) will be the
+            initial value for a static object or the static part of a
+            dynamic object.  Space must be found for this, and a value
+            constructed to describe the reference.
+
+@item xfdec
+Specifies a formal parameter of a procedure.
+
+@item xccdec
+Introduces the formal identifier in a conformity.
+
+@item xfordec
+Introduces the identifier after FOR in a loop clause.
+
+@item xforalldec
+Introduces an identifier defined in a FORALL statement.
+
+@item xdummydec
+A pseudo declaration introduced by the compiler in order
+            to indicate the scopes of some routines.
+@end table
+
+@section Routine Text Declarations, @code{XROUTINE}
+
+Every occurrence of a routine text (which may appear at any point in
+stream language) gives rise to an opening @code{XROUTINE} imperative, as also
+do routines invented by the compiler for certain tasks.  A routine
+text is terminated by the @code{XCONTROL} with function @code{xroutinend}.  The
+mode @code{XROUTINE} is given by
+@example
+MODE  XROUTINE  =  REF RDEN,
+@end example
+where
+@example
+MODE  RDEN  =  STRUCT (ID name, BITS props, INT mode, rdenno,
+                       INT maxname, @{level@}, REF RDEN @{rest@} )
+@end example
+The @code{name} field contains one of the following
+
+@table @asis
+@item @emph{the identifier}
+from a brief declaration of a procedure or operator, as shown below
+@example
+PROC  p  =  routine text
+OP  P  =  routine text
+@end example
+Such declarations do not give rise to @code{XIDDEC} imperatives.
+The identifier is truncated or space-filled to @code{maxid} characters, internal
+spaces having been removed.
+
+@item @code{" anonymous  "}
+when the Algol 68 routine text was not the subject of a brief
+declaration.
+The routine may have been declared fully, as in
+@example
+PROC (INT) INT p  =  (INT n) INT: ... ,
+@end example
+in which case an @code{XIDDEC} imperative is produced for @code{p}.
+
+@item @code{" generator  "}
+for a synthetic space generation routine (ie invented by the compiler).
+
+@item @code{" assignment "}
+for a synthetic assignment routine.
+
+@item @code{" straight   "}
+for a synthetic routine for indexing a straight.
+
+@item @code{" format     "}
+for a synthetic routine containing the bodies of @code{n}, @code{f} and @code{g} patterns from a format.
+@end table
+
+The @code{props} field is made up as a conjunction of bits values of the
+form @emph{2**n}.  These are denoted mnemonically (eg @code{ccbit}) and represent
+attributes of a particular routine-text.
+
+The bits values are
+@table @code
+@item ccbit
+routine has a body consisting of a closed clause
+
+@item operatorbit
+routine is part of a brief operator declaration
+
+@item valbit
+routine is to be loaded onto the translator stack, despite the absence
+of an @code{XLOAD} imperative
+
+@item holebit
+routine contains a @code{HERE} clause (see Part C)
+
+@item globscopebit
+routine is a straightening or assignment procedure with no non-locals
+
+@item genprocbit
+routine is a synthetic generation routine
+@end table
+
+The @code{mode} field is the mode of the routine and its declaration number
+is @code{rdenno}.  Declaration numbers for routines are in a separate
+series which starts at @code{startrd + 1} (see Appendix 5).
+
+The field @code{maxname} is less than 3 for a routine text of unlimited
+lifetime and 3 if its only external identifiers are declared in
+modules compiled at @code{CONTEXT VOID} (See C2.10).  Otherwise, @code{maxname} is
+the @code{decno} of an identifier of smallest lifetime used within the
+routine but not declared in it.  This, in combination with
+information given in any @code{XLABDEC}s at the beginning of the routine,
+can be used to determine the lifetime of the routine.  However,
+@code{XLABDEC} imperatives are not given at the start of synthetic routines.
+
+@section Label Declarations (@code{XLABDEC} from @code{XDEC})
+
+In Algol 68, label identifiers can be re-used for different label
+settings, but in stream language each different label setting has a
+different label number (@code{Labno}).  @code{XLABDEC} imperatives occur at
+positions where labels must be set and also at the beginnings of
+serial clauses and routines.
+
+The mode @code{XLABDEC} is given by
+@example
+MODE  XLABDEC  =  STRUCT (REF LABEL lab, BOOL notsetting),
+@end example
+where
+@example
+MODE  LABEL  =  STRUCT (ID name, INT labno, status, REF LABEL @{rest@} )
+@end example
+At an actual label setting, @code{notsetting} is @code{FALSE} and @code{status} is
+undefined.  All other occurrences of an @code{XLABDEC} are at the beginnings
+of serial clauses or routines, and @code{notsetting} is @code{TRUE}.  The purpose
+of the imperative then depends on the value of @code{Status}.  If @code{status}
+is 0, the @code{XLABDEC} is at the start of a serial clause and gives the
+@code{labno} of a label which will be set in it.  If @code{status} is @code{s}, where
+@code{s > 1}, the @code{labno} is to be taken as a new label number for the label
+previously numbered @code{s}.  If @code{status} is 1, the @code{XLABDEC} is at the start
+of a user-written routine, and gives the @code{labno} of an external label
+in a @code{GOTO label} occurring in the body of the routine.  This
+information is required for defining the scope of the routine.
+
+The field @code{name} is the source-text identifier, truncated or
+space-filled to @code{maxid} characters, internal spaces having been
+removed.
+
+@section The Loading Imperative, @code{XLOAD}, And @code{XCHARS}
+
+An @code{XLOAD} imperative requires a value to be loaded on the reverse
+Polish stack.  The mode XLOAD is a union of the following modes.
+
+@subsection @code{BOOL}
+
+This derives from a boolean denotation in the source-text, and the
+value will be @code{TRUE} for @code{TRUE} and @code{FALSE} for @code{FALSE}.
+
+@subsection @code{INT}
+
+The integer is the @code{decno} or @code{rdenno} of a previously declared value to
+be loaded.
+
+@subsection @code{REF LABEL}
+
+This is the @code{lab} field of an @code{XLABDEC} imperative.  The value
+corresponding to the @code{labno} must be loaded.
+
+@subsection @code{STRUCT (INT Nse)}
+
+A value for @code{NIL}, @code{SKIP} or @code{EMPTY}, according as @code{Nse} is
+@code{nilmode},
+@code{skipmode} or @code{voidmode}.
+
+@subsection @code{XGEN  =  STRUCT (INT mode, BOOL loc)}
+
+The @code{mode} field will be a ref to the mode of a static object.  Space
+must be dynamically generated for the object, locally or on the heap
+according as @code{loc} is @code{TRUE} or @code{FALSE}.  A value must be loaded to
+describe the reference.
+
+@subsection @code{XNUMBER =  STRUCT (INT mode, REF VECTOR [] CHAR nu)}
+
+This imperative represents a number denotation in the source-text.
+The @code{mode} field will be @code{bits}, @code{int} or @code{real}
+(possibly with @code{LONG} or @code{SHORT} prefixes) and the
+@code{nu} field refers to the actual denotation in a standard format
+as follows.
+
+For a value of mode @code{BITS}, the format is:
+
+@example
+radix digits
+@end example
+
+where @code{radix} is the character @samp{2}, @samp{4}, @samp{8} or
+@samp{g} (for sixteen)@footnote{The characters dchar, nchar and pchar
+are implementation dependent (see Appendix 5).  These, together with
+the characters used at the start of denotations, originate from
+literals in the compiler.  By contrast, other digits, together with
+the letters a to f used in hexadecimals, belong to the user's
+source-text character set as specified by the compiler's charset
+parameter.  Care should be taken that, during bootstrapping, the two
+character sets are the same.} and digits is a digit sequence using
+the letters @samp{a} to @samp{f} for the digits ten to fifteen as
+required in hexadecimal numbers.
+
+For an integer, the format is:
+@example
+a  digits     (where the character "a" means radix 10)*
+@end example
+
+For a real, the format is:
+@example
+r  [digits]  [dchar digits]  [signletter digits]
+@end example
+The square brackets (not part of the denotation) indicate parts which
+may be absent, though at least one will be present.  The character @code{r}
+indicates "real", @code{dchar} denotes decimal point, and @code{signletter} is
+the character @code{pchar} for plus or @code{nchar} for minus*.  The digits
+after this are the exponent.
+
+There are no space characters in the above number representations.
+
+The following imperatives are each followed by one or more
+@code{OUTPUT(XCHARS)} imperatives giving the relevant source-text quotations
+(see @code{XCHARS}).
+
+@subsection @code{XSTRING  =  STRUCT (INT strmode)}
+
+For a string denotation containing one character only, @code{strmode} is
+@code{char}.  For a denotation containing @code{n} characters (@code{n /= 1}),
+@code{strmode} is
+@code{STRUCT n CHAR} (including when @code{n} is zero).
+
+@subsection @code{XFORMAT  =  STRUCT (INT nochars, nocases, w)}
+
+The text of a format denotation is introduced by an @code{XLOAD(XFORMAT)}
+imperative, after which there are one or mode @code{XCHARS} imperatives, each
+corresponding to a line of the source-text.  If there are any @code{n}, @code{f} or
+@code{g(uc)} patterns in the format, The @code{XFORMAT} is preceded by the loading
+of a routine text, whose body consists of a case-clause.  The cases
+are the enclosed clauses from the @code{n} and @code{f} patterns, together with any
+unitary clauses used in @code{g} patterns.  The order is identical to that
+of the source-text.
+
+@code{nochars} is the number of chars in the succeeding @code{XCHARS} imperatives.
+@code{nocases} is the number of @code{n}, @code{f} or @code{g(uc)} patterns in the
+format.
+@code{w} is the maximum nesting depth of collection lists in formats.
+
+For example,
+@code{w = 2}  for  @code{$ 2 (G, 3 ("LINE" A L)) $},
+@code{w = 0}  for  @code{$ d $}
+
+@subsection @code{XALIEN  =  STRUCT (INT almode)}
+
+Describes the source-text construction
+@example
+ALIEN "insertion"
+@end example
+which occurs on the right of an identity declaration.  The field
+@code{almode} gives the mode, and succeeding @code{XCHARS} imperatives contain
+the insertion.
+
+@subsection @code{XCODE  =  STRUCT (INT mode, nopars)}
+
+A source-text code insertion has the form
+@example
+mode CODE (unc, unc, ... ) "code"
+@end example
+where mode is optional, absence implying @code{VOID}.  Stream language for
+the unitary clauses (uncs) comes first, and their results will be on
+the stack when the @code{XLOAD(XCODE)} imperative is given.  The @code{mode} field
+gives the mode and @code{nopars} the number of uncs.  The succeeding @code{XCHARS}
+imperatives give the code.
+
+@subsection @code{XCHARS  =  STRUCT (INT nochars, base, REF VECTOR [] CHAR chars)}
+
+This imperative is not a constituent of the mode @code{XLOAD}, but
+is included in this section because it always follows an @code{XLOAD} or a
+previous @code{XCHARS} of which it is a continuation.
+
+Successive @code{XCHARS} imperatives represent the successive instalments of
+one source-text string or format denotation, which may have been
+broken, for instance by new lines.  In the case of a format, these are
+the only source of breaks.  In the case of strings, a new instalment
+occurs when, in the source-text, a closing quote character is
+followed, after spaces or new lines or a new radix, by an opening
+quote character.  However, any instalments containing no characters
+are skipped over, unless final.
+
+@table @code
+@item nochars
+For the final instalment, this is @code{UPB chars} (and may of
+           course be 0).  For all preceding instalments, it is
+           @code{- UPB chars} (/= 0).
+
+@item base
+f the @code{chars} field contains a "radix string", the @code{base}
+           field gives the base, which will be 2, 4, 8, 10 or 16.
+           Otherwise, the base is 0.  In particular, it is 0 for a
+           format denotation.
+
+@item chars
+n string denotations (following @code{XSTRING}, @code{XALIEN} or @code{XCODE}),
+           the enclosing quote characters in the source-text are
+           excluded.  Any doubled quote within the source-text
+           denotation appears as a single quote character in @code{chars}.
+           However, these remarks do not apply to string denotations
+           inside formats, which are reproduced literally.
+
+           In format denotations, the opening @code{$} is replaced by a space
+           but the closing @code{$} is included.  Otherwise, spaces are
+           removed except where meaningful.  Thus if two successive
+           string denotations within a format are separated in the
+           source-text by one or more spaces, one space is retained.
+           Similarly, if the strings are separated by a new line in
+           the source-text, the break will introduce a space as the
+           final character in the @code{chars} field of the @code{XCHARS} which
+           finishes at the new line.  The format will then continue
+           in a new @code{XCHARS}.  Thus, when the format interpreter
+           concatenates the "chars" fields of successive @code{XCHARS}
+           imperatives, quote characters will not be brought into
+           contact and be misinterpreted as a quote character within
+           a string.
+
+           Comments within formats are also removed.  The body of an @code{n}
+           or @code{f} pattern is replaced by an integer giving its position
+           in the format, eg the second pattern would become @code{n(2)} or
+           @code{f(2)}.  This applies to clauses in @code{g} patterns, which are also
+           replaced by @code{n(x)}, where @code{x} is an integer giving its position
+           in the format.  All three types are numbered from 1 in the
+           same series.
+@end table
+
+@section Operations, @code{XOPER}
+
+The mode @code{XOPER} is defined as
+@example
+MODE  XOPER  =  STRUCT (INT fn, m, param)
+@end example
+
+The @code{fn} field specifies an operation for which code must usually be
+generated.  The operation applies to one or more objects (operands)
+for which translator values will exist on the reverse Polish stack.
+These values must be removed from the stack and replaced by a value
+for the result of the operation (except for @code{xparampack} which gives
+no result).
+
+The @code{m} field gives the mode of the result, unless otherwise stated.
+
+The @code{param} field is used for additional information, but if not
+mentioned in the tables below, it can be assumed undefined.
+
+@subsection Standard prelude operators
+
+@table @code
+@item xmonop
+1 operand. @code{param} = 16 * opnumber + version number.
+         The operators and corresponding opnumbers are listed in 
+         Appendix 3 (monadic operators).  A given operator has 
+         different versions for different modes of operand.
+
+@item xdyop
+2 operands. @code{param} = 16 * opnumber + version number.
+The opnumbers and version numbers are given in Appendix 3 
+         (dyadic operators).  The mode given at the head of the table
+         applies to one operand and is sufficient to identify what is
+         required for a particular version.  Versions for arithmetic
+         and relational operators between ints, reals and complexes
+         need only deal with operands of like mode, as the compiler
+         will supply a widening coercion for one operand where
+         necessary.
+@end table
+
+@subsection Coercions and similar operations
+
+@table @code
+@item xderef
+1 operand, an object to be dereferenced.
+
+@item xunite
+1 operand, an object to be united.  The mode of the object
+           will not itself be a union; it will be the @code{param}th mode
+           (starting at 1) of the union @code{m}.
+
+@item xuniteu
+1 operand, an object having a union mode, to be united in mode @code{m}.
+
+@item xdeunite
+1 operand, a ref union to become a ref to its current constituent mode, but flexed as given by @code{m}.
+
+@item xwrc*
+1 operand, a real to be widened to complex.
+
+@item xwir*
+1 operand, an int to be widened to real.
+
+@item xwbvb*
+1 operand, a bits to be widened to vector of bool.
+
+@item xarr
+1 operand, a (ref) M to become a (ref) array of M.
+
+@item xarrarr
+1 operand, a (ref) array to become a (ref) array with an extra dimension.
+
+@item xvecarr
+1 operand, a (ref) vector to become a one-dimensional (ref) array.
+
+@item xisarr
+1 operand, an object of mode
+@example
+(REF) STRUCT i STRUCT j STRUCT k  ...  M
+@end example
+where @code{param} is the number of i-structs before the mode M.
+The object is to be coerced to a param-dimensional (ref) array.
+
+@item xvec
+1 operand, a (ref) m to become a (ref) vector of @code{m}.
+
+@item xisvec
+1 operand, a (ref) i-struct to become a (ref) vector.
+
+@item xis
+1 operand, an object to become a @code{STRUCT 1 X} or a
+@code{REF STRUCT 1 X} as given by @code{m}.  The mode of the operand is
+@code{X} in the former case and @code{REF X} in the latter.
+
+@item xniltom
+1 operand, a @code{NIL} to be coerced to mode @code{m}.
+
+@item xvac
+1 operand, an @code{EMPTY} to be coerced to a vector or array.
+
+@item xmtoxtype
+1 operand, a (ref) m to be coerced to (ref) xtype.
+
+@item xytypetom
+1 operand, a (ref) ytype to be coerced to mode m.
+
+@item xskiptom
+1 operand, a @code{SKIP} to be coerced to mode @code{m}
+(@code{m} /= @code{voidmode}).
+
+@item xgotoproc
+1 operand, a jump to be procedured to mode @code{m}.
+
+@item xgotom
+1 operand, a jump to be coerced to mode @code{m}.
+
+@item xvoid
+1 operand to be coerced to @code{voidmode}.
+@end table
+
+* The mode of the operand may be preceded by @code{SHORT} or @code{LONG} prefixes,
+  in which case the mode of the result also starts in this way.
+
+@subsection Field selection and array indexing
+@table @code
+@item xselect
+      1 operand, a structure or array of structures from which
+              the @code{param}th field must be selected (starting from 1).
+
+@item xsimpleindex
+ 1 + @code{param} operands comprising an array or vector and
+              param subscripts (1 for a vector) to produce a single
+              array or vector element.
+
+@item xtrimindex
+   1 + @code{param} operands comprising an array or vector and
+              param trimscripts (1 for a vector) to produce a subset
+              of the array or vector.  If the operands are a vector
+              and a trimmer containing @code{AT}, The result is an array.
+
+@item xtrim
+@code{param} operands comprising none, some or all of @code{a}, @code{b} and
+              @code{c} in @code{a:b AT c} to produce (a value for) the trimmer.
+              @code{m} = 1  if @code{a} is present
+                + 2  if @code{b} is present
+                + 4  if @code{AT c} is present
+                + 8  if lower bound needs setting (to 1 or @code{c})
+
+@end table
+Note: when selection or indexing operations are applied to a (single)
+reference, the result is a reference.
+
+@subsection Procedure calls
+@table @code
+@item xparampack
+@code{param} operands comprising the actual parameters of a
+            procedure which is about to be called (if already on the
+            stack) or loaded and then called (with no intervening
+            imperative).  The values for the parameters must be
+            removed from the stack, and there is no resulting value to
+            be put on.
+
+            @code{m} = the mode of the procedure for which the operands are
+                the actual parameters.
+
+@item xcall
+     1 operand, a procedure.  The procedure must be called and
+            a value for its result (mode @code{m}) put on the stack.
+            
+@code{param} = 
+@table @asis
+@item 0
+when the procedure to be called is not a generator routine or an
+operator
+@item 1
+for a call of an invented routine which generates dynamic local space
+@item 2
+for a call of an invented routine which generates dynamic space on the heap
+@item 3
+for a call of an invented generator routine occurring within another such generator routine
+@item 4
+for a call of a user-defined (or library) operator
+@end table
+@end table
+
+@subsection Assignment
+@table @code
+@item xassign
+  2 operands, the destination and source for a simple
+          assignment operation, which must be carried out leaving the
+          value for the destination on the stack.  For assignments of
+          fixed-size objects, @code{param} is 1.  For vector or array
+          assignments (restricted to one dimension), the source
+          will be a descriptor.  If the destination mode is a ref flex
+          array or ref flex vector, @code{param} will be 1 and code must be
+          generated to assign the descriptor only.  If the destination
+          mode is a non-flex ref vector or ref array, @code{param} will be 2,
+          and code must be generated to assign the elements, which
+          will be objects of fixed size.
+@end table
+
+@subsection Space finding
+@table @code
+@item xbdpack
+     @code{param} operands, which, if even in number, comprise the
+            lower and upper bounds for each dimension of an array; if
+            @code{param} is 1, the operand is the upper bound of a vector
+            (for which the lower bound is always 1).  The operands on
+            the stack are to be replaced by a value for the bound
+        pack, used by @code{xdyngrab} Below.  For the operation @code{xbdpack},
+            @code{m} is undefined.
+
+@item xdyngrab
+  [always following @code{xbdpack} and load of a bool value inside
+             an invented routine]
+            2 operands, a bound pack and a value for a bool.  Code
+            must be produced to generate the space for the elements
+            of an array or vector, locally or on the heap according as
+            the boolean at run time is true or false.  The operation
+            @code{xdyngrab} delivers the descriptor of the array or vector,
+            and @code{m} is its mode.
+
+@item xstatgrab
+  1 operand, the static part of a generated dynamic object
+            of mode @code{X}, where @code{M} = @code{REF X}.  Code must be produced to
+            create the space (if necessary) for the static part of
+            the object, assign the operand to it and deliver the
+            reference.
+            @code{param = ABS TRUE} or @code{ABS FALSE} for local or heap generation
+            respectively.
+
+@item xcopy
+      [preparatory to @code{xassign} for a flex vector or flex array]
+            1 operand, the descriptor of an array of any dimensions,
+            or the descriptor of a vector.  Code must be produced to
+            generate heap space and copy the elements of the array or
+            vector into it.  The operation delivers the descriptor; @code{m}
+            is the corresponding mode and @code{param = ABS FALSE}.
+
+@item xdefaultbd
+ No operand.  The operation is to tuck, under the top item
+            on the stack, a value for a default lower bound of 1,
+            arising from constructions like @code{[n] INT} in the source
+            text.  @code{m} is undefined.
+
+@end table
+
+@subsection Straightening
+@table @code
+@item xprestraight
+ [preparatory to @code{xstraight} whenever necessary]
+              1 operand, an object to be adjusted to have mode @code{m} in
+              readiness for straightening, which is carried out by
+              the operation @code{xstraight} described below.  The mode
+              adjustment will entail provision of an initial ref, if
+              the original object was not a reference, and will
+              introduce @code{FLEX} as given in @code{m}, if not already present.
+              The resulting object, for which a value must be put on
+              the stack, need exist only within the current scope.
+
+@item xstraight
+    2 operands, the @code{composite} and @code{index} fields for the
+              @code{STRUCT} displayed below.  A straight of mode @code{m} must be
+              constructed and a value for it put on the reverse Polish
+              stack.  The @code{param} field gives information about the
+              object to be straightened and is used as follows
+
+@table @asis
+@item 1
+union
+@item @var{number of elements}
+struct or i-struct
+@item -1
+vector
+@item @var{-1-n}
+array of n dimensions
+@end table
+
+@item xstrindex
+    2 operands, a straight, @code{s}, and an integer, @code{i} (say).  The
+              operation gives rise to the procedure call 
+
+@example
+(index OF s)(i, composite OF s)
+@end example
+              The result of this procedure is the @code{i}th member of the
+              straight @code{s}, having mode @code{m}, and a value for it must be
+              put on the reverse Polish stack.
+
+@end table
+
+A straight, of mode @code{STRAIGHT X} (say), is a descriptor --- distinct from
+an array descriptor --- containing a reference to the original composite
+object.  It also contains a procedure which is provided by the
+compiler for indexing, and an integer for the number of members of the
+straight.  Thus a straight descriptor is likely to have the form
+
+@example
+STRUCT (REF COMP composite, PROC (INT, REF COMP) X index, INT upb)
+@end example
+
+where @code{COMP} is the original row, vector, struct, i-struct or union mode
+(but with @code{FLEX} introduced wherever applicable).
+
+@section The Control Imperatives (@code{XCONTROL})
+
+The mode @code{XCONTROL} is defined as
+@example
+MODE  XCONTROL  =  STRUCT (INT fn, m, BITS props, INT param);
+@end example
+
+@table @code
+@item fn
+Distinguishes the various @code{XCONTROL}s, as listed below, and reflects the
+structure of Algol 68 in stream language.
+
+@item m
+In an @code{XCONTROL} at the start of a serial clause (or an enquiry clause, or
+the remainder of a serial clause after an @code{EXIT} in the source text), the
+@code{m} field gives the mode of the result of the clause.  The mode number is
+negated when the result of the closed clause is also the result of the
+surrounding serial clause.  @code{m} is defined only where indicated in the table
+below.
+
+@item props
+The letters in the table refer to properties detailed on the next section,
+which are concerned with the implementation of lifetimes and the handling of
+results.  Furthermore, any @code{XCONTROL} generated by the compiler has the
+@code{compgenbit} set.
+
+@item param 
+Additional information, defined in the following section.
+@end table
+
+@subsection Fields of an @code{XCONTROL} 
+@table @asis
+@item @code{xcase}, etc [1]
+@code{m} defined; @code{props = a}; @code{param = } mode of result of
+closed clause [7]
+
+@item @code{xin}, etc [2]
+@code{m} defined;@code{props = a b};@code{param = } total number of cases [8]
+
+@item @code{xcomma}, etc [3]
+@code{m} defined; @code{props = a b e [6]};@code{param = } case no of ensuing serial clause
+
+@item @code{xwhile}, @code{xdo} [4]
+@code{m} defined;@code{props = a}; @code{param = }  mode of result of closed clause
+
+@item @code{xesac}, etc [5]
+@code{props = b}; @code{param = }  undefined
+
+@item @code{xroutinend}
+@code{props =  b g}; @code{param = }  undefined
+
+@item @code{xsemi}
+@code{props = s}; @code{param = }  undefined
+
+@item @code{xexit}
+@code{m} defined;@code{props =  b};@code{param = }  first exit in a serial clause is
+                                  treated like an @code{xin}, subsequent
+                                  exits like @code{xcomma}
+
+@item @code{xfinish}
+ the final imperative from a successful compilation
+
+@end table
+
+@strong{Notes}
+@table @asis
+@item 1
+closed clause starters: @code{xbegin}, @code{xif}, @code{xcase}, @code{xcaseu},
+@code{xcoll}
+@item 2
+  @code{xthen}, @code{xin}, @code{xinu}
+@item 3
+  serial clause separators: @code{xelse}, @code{xcomma}, @code{xout},
+@code{xcommau}, @code{xoutu}, @code{xcollcomma}
+@item 4
+  if @code{xwhile} is present, it is the closed clause starter; otherwise
+   @code{xdo} is the closed clause starter
+@item 5
+  closed clause terminators: @code{xend}, @code{xfi}, @code{xesac}, @code{xesacu},
+@code{xendcoll}, @code{xod} (which is immediately preceded by an @code{xsemi}, so
+bit @code{b} will in this case be absent).
+@item 6
+  this property applies to @code{xelse}, @code{xout} and @code{xoutu} only.
+@item 7
+ the mode number is negated when the result of the closed clause is
+   also the result of the surrounding closed clause
+@item 8
+  in an if clause, then and else count as "cases" 1 and 2; in a case
+   clause with an out part, the @code{param} field at the @code{xin} is minus the
+   number of cases between in and out.
+@end table
+
+@subsection The @code{props} field of an @code{XCONTROL}
+
+As with the corresponding field of @code{XROUTINE}, the props field is made
+up as a conjunction of bits values of the form @var{2**n}.  These are
+denoted mnemonically (eg @code{iddbit}), and represent attributes of the
+context at which they are given.  The contexts (a, b, s, e, g) are
+those given in the above table.  Bits not mentioned for a particular
+context (or bits of the @code{props} field which have no mnemonics) must be
+assumed undefined.
+
+@subsubsection General preliminary information
+
+The meaning of individual bits is as follows
+@table @code
+@item priobit
+an Algol 68 priority declaration in the source text
+@item semibit
+semicolon
+@item decbit
+an Algol 68 declaration (except priority)
+@item vardecbit
+an @code{xvardec} or @code{xivardec}
+@item labbit
+a label setting
+@item exitbit
+an @code{EXIT}
+@item locgenbit
+an explicit local generator
+@item locdydecbit
+a declaration containing a dynamic part
+@end table
+
+@subsubsection Dynamic result bits 
+
+Table @code{a}
+
+Presence of bit means that the following serial clause contains a
+discarded dynamic result @dots{}
+@table @code
+@item dyprocbit
+@dots{} from a procedure
+@item dyvardecbit
+@dots{} from a closed clause containing an @code{xvardec} or an @code{xivardec}
+@item dydecbit
+@dots{} from a closed clause containing an Algol 68 declaration in the source-text
+@end table
+
+Table @code{b}
+
+Presence of bit means @dots{}
+@table @code
+@item dontpullbit
+@dots{} that there is a dynamic result from the preceding
+                   serial clause (or part of serial clause before an
+                   @code{EXIT})
+@end table
+
+Table @code{s}
+
+Presence of bit means (at an @code{xsemi} only) @dots{}
+@table @code
+@item dontpullbit
+@dots{} that the preceding phrase was a declaration
+@item dyprocbit
+@itemx dyvardecbit
+@itemx dydecbit
+@dots{} that a dynamic result can now be discarded unless the @code{dontpullbit} is
+also present
+@end table
+
+@subsubsection Routine bits
+
+Table @code{g}
+
+Presence of bit means that @dots{}
+
+@table @code
+@item genprocbit
+@dots{} the foregoing routine was an invented generator routine
+@item globscopebit
+@dots{} the foregoing routine was an invented
+                   assignment or straightening routine that used no
+                   non-local names
+@item valbit
+@dots{} the foregoing routine is to be loaded
+                   onto the reverse Polish stack; there is no @code{XLOAD}
+                   following
+
+@end table
+
+@iftex
+\subsubsection{Special bit}
+@end iftex
+
+Table @code{e}
+
+Presence of bit means that @dots{}
+@table @code
+@item elifousebit
+@dots{} @code{xelse}, @code{xout} or @code{xoutu} are derived from
+                   elided source-text constructions @code{ELIF} or @code{OUSE}
+
+@end table
+
+
+@subsection Other control imperatives
+@iftex
+\subsubsection{@code{fn} = @code{xfor}}
+@end iftex
+
+Introduces a do-statement.  Values for the @code{FROM}, @code{BY} and @code{TO}
+parts (if any) will have been loaded, in that order.
+
+@table @code
+@item m
+undefined
+
+@item props
+@table @asis
+@item 1
+if an identifier has been given for the loop counter,
+               in which case the next imperative will be an @code{XIDDEC}
+               for the identifier with type @code{xfordec}
+@item +2
+if a value for @code{FROM} is present
+@item +4
+if a value for @code{BY} is present
+@item +8
+f a value for @code{TO} is present
+@end table
+
+@item param
+gives the number of values on the stack
+@end table
+
+@subsubsection @code{fn} = @code{xforall}
+
+Introduces a forall-statement.  Values for the arrays or vectors to be
+sequenced through will have been loaded, in the order in which they
+were given in the source text.
+
+@table @code
+@item m
+undefined
+@item props
+undefined
+@item param
+the number of values on the stack
+@end table
+
+The @code{xforall} imperative will be followed by a series of @code{xiddec}
+imperatives for the identifiers declared by the @code{forall} statement.
+Each of these refers to the array or vector value on top of the
+stack, which must be removed.
+
+@subsubsection @code{fn} = @code{xuchoice}
+
+Occurs immediately after an @code{xinu} or @code{xcommau} (except for the
+possibility of intervening labels), and represents the declarer in
+a choice.
+
+@table @code
+@item m
+mode of the declarer
+@item props
+setting of the @code{decbit} indicates that a formal
+               identifier has been given, in which case the next
+               imperative will be an @code{XIDDEC} for the identifier, with
+               type @code{xccdec}
+@item param
+the serial number of @code{m} in the union mode under test
+               (say @code{n}), or @code{-n} if @code{m} is itself a union
+@end table
+
+@section The @code{XWARN} Imperative
+
+The @code{XWARN} imperative gives advance warning of various stream language
+imperatives.  Most of these are certain types of dyadic operation,
+for which the @code{XWARN} is given between the loading of the two operands
+and is additional to the @code{XOPER} which will come when both operands have
+been loaded.  @code{XWARN} has the form
+
+@example
+MODE  XWARN  =  STRUCT (INT w)
+@end example
+
+where @code{w} takes one of the mnemonic values specified below
+indicating what operation is being forewarned.
+
+@table @code
+@item xwass
+@code{xassign} operation
+@item xwandth
+@code{xdyop} operation @code{ANDTH} (see Appendix 1)
+@item xworel
+@code{xdyop} operation @code{OREL} (see Appendix 1)
+@item xwindex
+@code{xsimpleindex}, @code{xtrimindex}, @code{xtrim} and @code{xstrindex} operations
+@item xwplusabetc
+@code{xdyop} operations @code{PLUSAB}, @code{MINUSAB}, @code{TIMESAB}, @code{OVERAB},
+                 @code{MODAB} and @code{DIVAB}
+@item xwforall
+forall-statement.  The warning occurs after each loading of a vector or an array
+@item xwloop
+for-statement.  The warning occurs at the beginning,
+                 ie before the loading of the @code{FROM}, @code{BY} or @code{TO} parts if
+                 present
+
+@end table
+
+@section The @code{XPRAG} Imperative
+
+This is defined as
+
+@example
+MODE  XPRAG  =  STRUCT (BOOL all, REF VECTOR [] CHAR pr)
+@end example
+where @code{pr} refers to a vector containing the first line of a pragmat
+in the source-text.  The @code{all} field is @code{TRUE} if @code{pr} contains the whole
+of the pragmat, otherwise @code{FALSE}.  If the first line contains an
+opening comment symbol, @code{pr} will contain only the characters preceding
+the comment symbol.
+
+
+@section The @code{XCHARPOS} Imperative
+
+The @code{XCHARPOS} imperative allows the shell to keep track of the character
+position within a line of Algol 68 source-text.  It is defined as
+
+@example
+MODE  XCHARPOS  =  STRUCT (INT charpos)
+@end example
+
+where @code{charpos} indicates the character position of a significant
+symbol.  Such information may be required for diagnostic purposes.
+The @code{XCHARPOS} imperative will normally be output so that when read back,
+it immediately precedes an @code{XCONTROL}; the significant symbol will be the
+source-text analogue of the @code{XCONTROL}.  However, if the @code{XCONTROL} is a
+closing control, there may be coercions between the @code{XCHARPOS} and the
+@code{XCONTROL}.
+
+The imperatives @code{xfor} and @code{xforall} are not output at positions
+corresponding to the @code{FOR} and @code{FORALL} symbols; for these the symbol
+position is output preceding the @code{XWARN (Xwloop)}.  A symbol position is
+also output before an @code{XROUTINE} imperative and an @code{XLABDEC} (where
+@code{notsetting = FALSE}).
+
+
+@section An example of stream language
+
+@example
+ 0    PROGRAM  p10
+ 1    CONTEXT  VOID
+ 2    BEGIN  INT i;   INT k = 80;
+ 3           REAL rrr := 2.34e5;
+ 4           MODE V = VECTOR [3] INT;
+ 5           V v := (k, i, ENTIER rrr);
+ 6           FLEX V fv := v;
+ 7
+ 8           PROC p = (INT n) INT:
+ 9           IF  n > 0
+10           THEN  n * (v[n] - i)
+11           ELSE  0
+12           FI;
+13
+14           p(i := -4)
+15    END
+16    FINISH
+@end example
+
+When the above program is compiled by the RS compiler, the following
+stream language is obtained:
+
+@subsection Sizes
+
+module contains 130 outputs, 2 routines, 35 modes, 1 labels,
+                    11 identifiers, 1 modules and 0 libinds
+
+@subsection Modes
+
+@example
+31   VECTOR [] INT
+32   PROC  ( BOOL ) 31
+33   STRUCT  3  INT
+34   FLEX  VECTOR [] INT
+35   PROC  ( INT )  INT
+@end example
+
+@subsection Other imperatives
+
+@example
+         xtdtype(902)
+2:       begin(5, 8r361, 5)
+3:       dummydec(0, 4, " anonymous")    vardec(1039, 5, "i")
+         semi(0, 8r4000, 0)    number(15, "a80")    iddec(15, 6, "k")
+4:       semi(0, 8r4000, 0)    number(19, "r2d34p5")
+         ivardec(1043, 7, "rrr")
+5:       semi(0, 8r4000, 0)
+         vardec(1056, 8, " anonymous")
+         load(8)      warn-assign
+
+         routine(1001, 32, 32778, 8, " generator")
+         fdec(7, 9, " anonymous")
+         begin(31, 8r420, 31)    number(15, "a3")    bdpack(0, 1)
+         load(9)    dyngrab(31, 0)
+         end(0, 8r4400, 31)
+         endrd(0, 8r100410, 0)
+
+         assign(1056, 1)    void(5, 0)    semi(0, 8r400, 0)
+6:       semi(0, 8r4000, 0)    load(8)    deref(32, 0)    true
+         ppack(32, 1)    call(31, 1)
+         ivardec(1055, 9, "v")
+         semi(0, 8r4000, 0)    load(9)    warn-assign
+         coll(15, 8r41, 33)    load(6)
+         collcomma(15, 8r41, 2)    load(5)    deref(15, 0)
+         collcomma(15, 8r41, 3)    load(7)    deref(19, 0)
+         monop(15, 209)
+         endcoll(0, 8r0, 33)    isvec(31, 0)    assign(1055, 2)
+         void(5, 0)    semi(0, 8r0, 0)
+7:       semi(0, 8r4000, 0)    load(8)    deref(32, 0)    true
+         ppack(32, 1)
+         call(34, 1)
+         ivardec(1058, 10, "fv")
+         semi(0, 8r4000, 0)    load(10)    warn-assign     load(9)
+         deref(31, 0)    copy(31, 0)    assign(1058, 1)    void(5, 0)
+         semi(0, 8r0, 0)
+9:       semi(0, 8r4000, 0)
+
+         routine(1002, 35, 2, 9, "p")
+         fdec(15, 11, "n")
+10:      if(7, 8r41, 15)    load(11)
+11:      number(15, "a0")    diop(7, 114)
+         then(15, 8r41, 2)    load(11)    load(9)    warn-index
+         load(11)    simpleindex(1039, 1)    deref(15, 0)    load(5)
+         deref(15, 0)
+         diop(15, 17)
+12:      diop(15, 194)
+         else(15, 8r41, 2)    number(15, "a0")
+13:      fi(0, 8r0, 15)
+         endrd(0, 8r0, 0)
+
+15:      semi(0, 8r4000, 0)    load(1002)    load(5)    warn-assign
+         number(15, "a4")    monop(15, 17)    assign(1039, 1)
+         deref(15, 0)
+16:      ppack(35, 1)    call(15, 0)    void(5, 0)
+         end(0, 8r0, 5)
+         finish(0, 8r0, 0)
+@end example
+
+The above is merely a visual representation of the output from a
+`standard' shell.  The @code{XEDIT} imperatives have been absorbed in
+order to produce a continuous series of other imperatives.
+
+@c  *****************************************************************
+@c  PART C - MODULAR COMPILATION
+@c  *****************************************************************
+
+
+@chapter Introduction
+
+A program can be compiled in portions known as modules, of which there
+are three different types.  The basic type is the @dfn{closed clause} or @dfn{cc}
+module which consists of an Algol 68 closed clause with a suitable
+heading and the word @code{FINISH}.  This could be a complete program or one
+of a number of cc modules which are to be nested one within another.
+In the actual Algol text of a cc module, any place at which some
+inner module is later to be inserted is marked by a new type of
+unitary clause known as a @dfn{here-clause}.
+
+A nest of modules will be described as a @dfn{composition}.  The selection
+and placement of modules to make a composition is specified in a
+composition module, which contains no Algol 68 text of its own.  A
+composition need not be completed all at once.  A program can be
+partially composed in one composition module, leaving spaces for
+further cc modules to be inserted later on by other composition
+modules.
+
+A third type of module, the @dfn{declarations} module, enables modes,
+procedures and other items to be declared and compiled in advance of
+their use in other modules.  Declarations modules are used in a very
+straightforward way requiring no composition, but they can never make
+a program by themselves.  To make this distinction clear, the other
+types of module (cc and composition) will be described as program
+modules.
+
+@chapter The Source Language
+
+@section keeplists
+
+Interaction between modules demands that source-text indicators
+(identifiers, modenames and operators) declared in one module shall
+be usable with the same meanings in another module.  The source-text
+of a module must always specify which of its indicators are to be
+kept after compilation for use in modules to be compiled later.  A
+keeplist is a sequence of such indicators, separated by commas.  To
+distinguish between versions of operators, the modes of operands
+must always be included, as in the keeplist here:
+
+@example
+MAN, WOMAN, = (MAN, WOMAN), = (WOMAN, MAN), adam, eve
+@end example
+
+The order of the items in a keeplist is never significant.
+
+
+@section Simple declarations modules
+
+The sole purpose of a declarations module is to make declared items
+available for use in other modules.  Consequently, a declarations
+module must invariably have a keeplist for such items, and if it uses
+no indicators from other modules itself (other than from automatically
+incorporated library modules), its form is
+
+@example
+DECS decstitle:
+body
+KEEP keeplist
+FINISH
+@end example
+
+In the first line, @code{decstitle} stands for an identifier chosen to be the
+title of the module.  The body is not enclosed in @code{BEGIN}-@code{END} brackets
+but is introduced by a colon.  It consists of Algol 68 declarations
+and other phrases which may be convenient for setting things up.
+Certain restrictions are enforced to ensure that declarations modules
+can be obeyed in any order without giving rise to side-effects.  Thus
+no procedures or user-defined operators may be called, except within
+routine texts.  Also, no labels may be declared in the outermost
+level.  These are the only restrictions for a self-sufficient
+declarations module, but we must now turn attention to a more general
+class of module which has an added restriction.
+
+A @code{DECS} module can use indicators kept from previously compiled @code{DECS}
+modules. There are two requirements for the passage of an item from
+one module to another.  Its indicator must be included in the keeplist
+of the source module and the title of that module must be included in
+the heading of the using module, as shown in the second line below:
+
+@example
+DECS decstitle
+USE decstitlelist:
+body
+KEEP keeplist
+FINISH
+@end example
+
+The @code{decstitlelist} is simply a list of the titles of all the other @code{DECS}
+modules required, separated by commas.  The body can now use kept
+items from these modules, with one further restriction to ensure
+complete absence of side-effects.  No kept item which is a reference
+(or a structure, array or union containing a reference) may be used,
+except within a routine text.  These restrictions on the use of
+external references and calls of procedures or user-defined operators
+are peculiar to @code{DECS} modules and free the user from having to consider
+at what stage his @code{DECS} modules are actually obeyed.
+
+
+@section Simple Programs
+
+Simple programs will usually consist of one closed clause module,
+possibly supported by previously compiled declarations modules.  Using
+square brackets to indicate this option, the form in which the cc
+module is written is:
+
+@example
+PROGRAM progtitle
+[ USE decstitlelist ]
+closed clause
+FINISH
+@end example
+
+@section Nested Modules
+
+Within any program module, a place can be held for a separately
+compiled program module to be inserted later.  This is done by the
+new unitary clause
+
+@example
+HERE place(keeplist)
+@end example
+
+where @code{place} stands for some identifier to name the place, and the
+keeplist contains any indicators currently in scope which are to be
+kept for the of the inserted program module.  If there are several
+@code{HERE} clauses in the same module, the place identifiers must all be
+distinct.
+
+The form of a cc module which contains @code{HERE}-clauses is similar to that
+of the simple program shown in C2.3, except that each place defined
+in a @code{HERE}-clause must also be listed in the module heading before the
+title, ie
+
+@example
+PROGRAM (placelist) progtitle
+[ USE decstitlelist ]
+closed clause including HERE-clauses
+FINISH
+@end example
+
+The places in the placelist are listed, with comma separation, in any
+order.
+
+A simple cc module suitable for insertion at a given place would be
+
+@example
+PROGRAM title
+[ CONTEXT place IN progtitle ]
+closed clause
+FINISH
+@end example
+
+The @code{CONTEXT} part of the heading, if present, makes the keeplist at the
+given place accessible in the closed clause.  It also prevents the
+module being used in any other context.        (By contrast, a module with
+no context specification could be inserted at any place, but would be
+denied access to the associated keeplist.  This may seem a pointless
+construction, but a realistic example of its use is given in C2.7.)
+
+Example of nesting
+
+@example
+PROGRAM (detail) frame
+BEGIN MODE FORM = ... ;
+      OP CONV = (FORM f)INT: ... ;
+      FORM f1, f2, g1, g2;
+      - - -
+      HERE detail(FORM, CONV(FORM), g2);
+      - - -
+END
+FINISH
+
+PROGRAM  insert
+CONTEXT  detail IN frame
+BEGIN  FORM f := g2;
+       INT n := CONV f;
+       - - -
+END
+FINISH
+@end example
+
+Although @code{insert} is compiled in the context of the first module so as
+to pick up its kept indicators, it remains a separate module.  A
+program combining the two modules has to be expressed as a composition
+module,
+
+@example
+PROGRAM whole
+COMPOSE frame(detail = insert)
+FINISH
+@end example
+
+@section Composition
+
+The purpose of a composition module is to assemble a nest of modules
+by pairing up formal place names (the ones in the Algol 68 @code{HERE}
+clauses) with actual names of program modules.
+
+The form of module which completes a nesting, inwards from some given
+starting module @code{x}, say, is
+
+@example
+PROGRAM progtitle
+COMPOSE nest
+FINISH
+@end example
+
+where @code{progtitle} is a new identifier to act as the title of the
+composition and nest starts with the title, @code{x}, of the starting module,
+continuing with a bracketed list of substitutions having a place on
+the left and on the right a further nest or the name of a program
+module.
+
+@subsection Example
+
+Given a program module starting
+
+@example
+PROGRAM (x1, x2) x
+@end example
+
+and a set of inner modules with the headings
+
+@example
+PROGRAM a
+CONTEXT x1 IN x
+
+PROGRAM (b1, b2, b3) b
+CONTEXT x2 IN x
+
+PROGRAM (c1) c
+CONTEXT b1 IN b
+
+PROGRAM d
+CONTEXT b2 IN b
+
+PROGRAM e
+CONTEXT b3 IN b
+
+PROGRAM f
+CONTEXT c1 IN c
+@end example
+
+the following composition module combines them all into one:
+
+@example
+PROGRAM compo
+COMPOSE x(x1 = a,
+          x2 = b(b1 = c(c1 = f),
+                 b2 = d,
+                 b3 = e))
+FINISH
+@end example
+
+This composition module may still not be a complete runnable program,
+for @code{x} may specify some context.  If so, it will obviously apply to
+@code{compo} as well.  Composition modules cannot have context
+specifications in their headings; the context which applies to such
+a module is that specified in its outermost cc module.
+
+
+@section Partial Composition
+
+A composition module may leave some places to be filled by other
+program modules in a further composition later.  It does this by
+pairing a place name with a new place name of its own instead of an
+actual program module title.  A new place name in a composition module
+is introduced by the word @code{HERE}, even though it is not in an Algol text
+setting.  As an example, let us omit module @code{c} from the composition
+given above, and make the partial composition
+
+@example
+PROGRAM (hole) p
+COMPOSE x(x1 = a,
+          x2 = b(b1 = HERE hole,
+                 b2 = d,
+                 b3 = e))
+FINISH
+@end example
+
+Observe that there is no explicit keeplist at @code{HERE} in a partial
+composition.  The available indicators are all those kept en route
+from the outermost module to the word @code{HERE} in the composition.  Thus,
+any module now compiled at
+
+@example
+CONTEXT hole IN p
+@end example
+
+has available to it all the indicators kept at @code{x2} in @code{x}, as well as
+those at @code{b1} in @code{b}.  Combination of keeplists is the main purpose
+of partial composition, enabling programs to exploit several
+`environmental packages' simultaneously, as we shall now see.
+
+@section Use of environmental packages
+
+Many packages (eg for simulation or graph-plotting), besides declaring
+modes and procedures, have to set up some starting position before the
+user's program is obeyed, and tidy up afterwards (eg close files which
+were opened at the start).  The basis of any such package must be a cc
+module with a @code{HERE} for the rest of the program.
+
+For instance,
+
+@example
+PROGRAM (userprog) package1
+BEGIN - - -;
+      - - -;
+      HERE userprog(keeplist1);
+      - - -;
+      - - -
+END
+FINISH
+
+PROGRAM myprog
+CONTEXT userprog IN package1
+closed clause
+FINISH
+@end example
+
+with
+
+@example
+PROGRAM runner
+COMPOSE package1(userprog = myprog)
+FINISH
+@end example
+
+as the composition.
+
+Now consider writing a program, @code{ourprog} say, which requires the
+services of two packages, designed independently along the lines of
+@code{package1}.  The question will be, in what context to compile @code{ourprog}?
+It cannot be @code{userprog IN package1}, which brings in only @code{keeplist1}, nor
+can it be @code{userprog IN package2} for a similar reason.  The only answer
+is a context like @code{user IN both}, set up specially by the partial
+composition:
+
+@example
+PROGRAM (user) both
+COMPOSE package1(userprog = package2(userprog = HERE user))
+FINISH
+@end example
+
+The context @code{user IN both} combines the keeplists of both packages, as
+explained in C2.6.  Before leaving this example, it is worth remarking
+that @code{package2} fits at @code{userprog IN package1} because @code{package2}
+specifies no particular context.  Being an independent package, it
+needs no access to @code{package1}'s keeplist.
+
+@section Declarations Modules In A Context
+
+@code{DECS} modules, like cc modules, can specify a context in their heading:
+
+@example
+DECS decstitle
+CONTEXT place IN progtitle:
+body using kepts at above place
+FINISH
+@end example
+
+The @code{CONTEXT} line makes the kepts at @code{place IN progtitle} accessible
+for use in the body of the @code{DECS} module, with the same restrictions
+as given in C2.2 earlier.  No kept item which is a reference (or a
+structure, array or union containing a reference) may be used except
+within routine texts.  And as with all @code{DECS} modules, there can be no
+procedure calls, or calls of user-defined operators.
+
+Any module which has access to the same kepts (ie those at @code{place IN
+progtitle}) can @code{USE} this declarations module.  The context specified
+by the using module must therefore be the same as that of the @code{DECS}
+module or be a dependent context resulting from partial composition ---
+which, by the combination rule, would supply the same kepts and more
+besides.  To see this clearly, consider once more the composition
+
+@example
+PROGRAM (hole) p
+COMPOSE x(x1 = a,
+          x2 = b(b1 = HERE hole,
+                 b2 = d,
+                 b3 = e))
+FINISH
+@end example
+
+The context @code{hole IN p} is derived from @code{b1 IN b} which is in turn
+derived from @code{x2 IN x}.  It follows that any module specifying
+@code{CONTEXT hole IN p} can @code{USE} declaration modules specifying one of
+@code{hole IN p}, @code{b1 IN b}, @code{x2 IN x}, or, of course, no context at all.
+
+@section Provision For ALGOL 68 Standard Environment
+
+Any cc module or declarations module having no explicit context
+specification in its heading is assumed by the compiler to have
+specified a standard default context.  For descriptive purposes only,
+we shall refer to this as
+
+@example
+CONTEXT %program IN %stdprelude
+@end example
+
+Thus, a program which appears to be complete, such as
+
+@example
+PROGRAM pmw
+closed clause
+FINISH
+@end example
+
+can only be run when nested in @code{%stdprelude}.  The intention is that
+the necessary composition should be effected automatically.  The
+@code{%stdprelude} will go some part of the way towards providing the Algol
+68 standard environment and will do so without any action by the user.
+(Its kepts are accessible to all modules without need for partial
+composition, see 2.10.)
+
+The remainder of the standard environment will be provided by library
+@code{DECS} modules.  With the cooperation of its shell, the compiler will
+supply a default @code{USE} for any library declarations modules required in
+a program.
+
+@section The @code{VOID} Context
+
+A truly outermost cc module specifies @code{CONTEXT VOID} and is, by that
+token, a prelude.  (Absence of any context specification, as we have
+already seen, does not imply a void context.)  The compiler treats
+preludes in a special way.  For simplicity of explanation, it will
+be assumed that a prelude has only one @code{HERE} clause.
+
+The first special property of a prelude is that it provides what may
+be described as a @emph{universal context} for composition purposes.
+A cc module which specifies a prelude context (explicitly or by
+default) can be inserted directly in the prelude or in any dependent
+context.  An example of this is to be found at the end of C2.7
+(environmental packages).
+
+The second property of a prelude is that its kepts are universal.  Its
+own keeplist and those of any @code{DECS} modules compiled at that context
+are freely accessible to all dependent modules.  This is shown below
+for a chain of cc modules.
+
+@example
+PROGRAM (prog) ownprelude
+CONTEXT VOID
+closed clause
+FINISH
+@end example
+can accept cc keeplists from nowhere.
+
+@example
+PROGRAM (a1) a
+CONTEXT prog IN ownprelude
+closed clause
+FINISH
+@end example
+can accept cc keeplists from @code{prog IN ownprelude}.
+
+@example
+PROGRAM (b1) b
+CONTEXT a1 IN a
+closed clause                       
+FINISH
+@end example
+can accept cc keeplists from @code{prog IN ownprelude} and @code{a1 IN
+a}.
+
+@example
+PROGRAM c
+CONTEXT b1 IN b
+closed clause        
+FINISH
+@end example
+can accept cc keeplists from @code{prog IN ownprelude} and @code{b1 IN b}.
+
+The last of these modules, @code{c}, shows the accessible kepts to be those
+from the immediately surrounding context and the outermost one.  The
+keeplist at @code{a1 IN a} is @emph{not} accessible.
+
+Declarations modules, like cc modules, can be compiled at @code{CONTEXT VOID}.
+Any module can @code{USE} such a @code{DECS} module.  This is a consequence
+of the general rule given in C2.8, and in fact the limiting case of it.
+
+Finally, the context for a composition will be @code{VOID} if the composition
+starts from a prelude.  This means that systems programmers will be
+able to modify @code{%stdprelude} if they wish, without losing any of its
+special properties.
+
+@section Summary Of Syntax And Semantics Of Modules
+
+@subsection @code{DECS} Module
+
+@example
+DECS decstitle
+[ CONTEXT place IN progtitle ]*
+[ USE decstitlelist ]
+:
+body
+KEEP keeplist
+FINISH
+@end example
+
+    Except within routine texts, the body must not use any externally
+    declared references or call any procedures or user-defined
+    operators.
+
+@subsection @code{PROGRAM} Modules
+
+@example
+PROGRAM [ (placelist) ] progtitle
+[ CONTEXT place IN progtitle ]*
+[ USE decstitlelist ]
+closed clause
+FINISH
+@end example
+
+    The above is a closed clause or cc module.  The closed clause can
+    include @dfn{here-clauses} of the form @code{HERE place(keeplist)}.  This
+    makes a hole which can be filled by another cc module, as
+    specified in a composition module:
+
+@example
+PROGRAM [ (placelist) ] progtitle
+COMPOSE nest
+FINISH
+@end example
+
+@subsection Notes
+
+@code{decstitle}, @code{place} and @code{progtitle} all stand for identifiers.
+An itemlist is a sequence of items with comma separation.  For the definition
+of a keeplist, see C2.1.  For definition of nest, see C2.5.
+
+* Omission of an explicit context introduces the default context:
+
+@example
+CONTEXT %program IN %stdprelude
+@end example
+
+For absolutely no context at all, @code{CONTEXT VOID} must be written.
+
+
+@section Composition Rules
+
+A program module can be composed at @code{p IN q} if its context
+specification (explicitly or by default) is one of the following
+three possibilities
+
+@itemize @bullet
+@item
+@code{p IN q}
+@item
+the prelude context from which @code{q} is derived
+@item
+@code{VOID} (applicable only to prelude writers)
+@end itemize
+
+The context specification of a composition module is that of its
+starting module.
+
+
+@section Accessibility Of Kepts For Use In A Cc Module
+
+If the context specification is @code{CONTEXT p IN q}, the cc module can use
+kept indicators from
+
+@itemize @bullet
+@item
+@code{p IN q} and any @code{DECS} compiled at @code{p IN q}
+@item
+if @code{q} is a partial composition, from any hierarchical context
+embracing @code{p}, and any @code{DECS} compiled at any of those contexts
+@item
+the prelude context of @code{q} and any @code{DECS} compiled there
+@item
+any @code{DECS} compiled at context @code{VOID}
+@end itemize
+
+Any DECS modules required must be mentioned in the heading of
+the using module (in @code{USE decstitlelist}), unless they are library
+@code{DECS} which may be incorporated in the final program automatically as
+needed.
+
+
+@section Accessibility Of Kepts For Use In A DECS Module
+
+The sources are the same as for cc modules, but any kept references
+are debarred from use in the body of the @code{DECS} module except within
+routine texts.  This restriction extends to objects such as
+structures, arrays and unions containing references.
+
+@chapter Stream Language
+
+This chapter may be regarded as a continuation of B3, which specified
+the details of stream language for a single module.
+
+@iftex
+\section{The imperatives}
+@end iftex
+
+The constituent modes of OUTPUT needed for the compilation of single
+modules have been described in B2.1.  The remaining imperatives can
+be divided into three groups
+
+@enumerate
+@item Giving information about the current compilation
+@table @code
+@item XMODINFO
+gives the name and type of the current module
+@item XSPEC
+gives information about a @code{HERE} clause, or the
+current module if it is a @code{DECS} module
+@item XTDTYPE
+contains the local number and type of a cc module
+@item XBUTYPE
+gives advance notice of items to be kept from a @code{DECS} module
+@item XCOMPTYPE
+describes the properties of a composition module
+@item XKEEPS
+contains the decnos of items kept from a @code{DECS} module
+@end table
+
+@item Giving information about other modules
+@table @code
+@item XTDEC
+defines a kept identifier available to the current module
+@item XTMODULE
+introduces an external module
+@item XINTERF
+describes a keeplist and introduces a series of @code{XTDEC}s
+@end table
+
+@item Representing constructions in the code
+@table @code
+@item XOPENMODULE
+gives information about the code of a module and marks its beginning
+@item XCLOSEMODULE
+marks the end of the code of a cc module
+@item XCLOSURE
+deals with a composition module
+@item XCALLMODULE
+starts a new cc-module running (produced by a @code{HERE} clause in the source-text)
+@end table
+@end enumerate
+
+@section The Current Compilation
+
+The output to stream 0 is
+
+@example
+XMODINFO   [XSPEC]*
+@end example
+@noindent
+followed by the @code{XEDIT} @code{down}, regardless of the type of the module.
+The mode definitions are as follows
+
+@example
+MODE  XMODINFO  =  STRUCT (ID name, CAT l, g, INT type),
+      XSPEC  =  STRUCT (ID f, INT no, nl, ng,
+                        UNION (REF VECTOR [] CHAR,
+                               REF VECTOR [] CAT
+                              ) u
+                       ),
+@end example
+@noindent
+where
+@example
+MODE  CAT  =  STRUCT (ID n, f, INT level)
+@end example
+
+The mode @code{CAT} (an abbreviation for `Compiled AT') is used to hold
+context information and corresponds to @code{CONTEXT f IN n}
+in some module.  The @code{name} field of @code{XMODINFO} contains the name of
+the module and @code{type} is the number of @code{HERE} clauses or -1 for a
+declarations module.  The contexts described by the other fields are
+defined below.
+
+If the module is being compiled at @code{CONTEXT VOID}, both @code{l}
+and @code{g} will be null.
+Otherwise, suppose that the local context is @code{CONTEXT a IN b}
+(where for a simple program @code{b} will be the standard prelude).
+Then the first two items in the @code{l} field will be @code{(b, a)}.  If @code{b} was
+compiled at @code{CONTEXT VOID}, @code{g} will be null.  If not, @code{g}
+describes the prelude context from which @code{b} was derived.
+
+For a cc-module or composition module, there will be one @code{XSPEC}
+corresponding to each @code{HERE} Clause.  The name of the @code{HERE} clause is
+@code{f} and @code{no} is its number.  The remaining fields contain information
+on the keeplist (normally given in brackets after @code{HERE} in the source
+text) available to the module to be inserted.
+
+If the module is a declarations module, the @code{XSPEC} contains its own
+name and the @code{no} field is 0.
+
+The fields @code{nl} and @code{ng} are the number of modules accessible at the
+local and global levels respectively.  The mode of @code{u} depends on the
+type of the module; for a cc-module or declarations module it refers
+to a @code{VECTOR [] CHAR} containing a coded form of the keeplist.  The @code{u}
+field of a composition module contains a @code{REF VECTOR [] CAT}, allowing
+access to all of its context information.
+
+The output to level 1 depends on the type of module
+
+@table @asis
+@item composition
+@code{XCOMPTYPE}
+@item cc
+@code{XSIZES}, @code{REF VECTOR [] MDE}, @code{XTDTYPE}
+@item declarations
+@code{XSIZES},  @code{REF VECTOR [] MDE}, @code{XBUTYPE}
+@end table
+
+In each case an @code{XEDIT} @code{down} switches the reader to stream 2.  @code{XSIZES}
+and @code{MDE} have been described in part B, except for the last two fields
+of @code{XSIZES}.  The field @code{nomodules} contains the total number of modules
+involved and @code{nolibinds} gives the size of the array required to hold
+details of identifiers kept from other modules.
+
+The modes @code{XCOMPTYPE}, @code{XTDTYPE} and @code{XBUTYPE} are given by
+
+@example
+MODE  XCOMPTYPE  =  STRUCT (INT moduleno, type, maxmodule),
+      XTDTYPE  =  STRUCT (INT moduleno, type),
+      XBUTYPE  =  STRUCT (REF VECTOR [] INT decnos, modes)
+@end example
+
+The type fields are the same as in @code{XMODINFO} (-1 for a declarations
+module, otherwise the number of @code{HERE} clauses) and the @code{moduleno} is the
+local number given to the module.  @code{maxmodule} is the maximum number of
+modules directly involved in the composition.  The purpose of @code{XBUTYPE}
+is to give advance notice of the identifiers and routine texts that
+are to be kept.  The @code{decnos} array contains the declaration numbers and
+the modes array, which is the same size, contains the modes of these
+kept objects.  The @code{decnos} are repeated at the end of the compilation
+of a declarations module, where they are output as an @code{XKEEPS}
+(= @code{REF VECTOR [] INT}).
+
+@section Parameters Of The Compile Procedure
+
+@example
+PROC give module details = (ID name, INT mn, BOOL comp) YMODINFO:
+
+PROC give spec = (ID n, f, YM ym) YSPEC:
+@end example
+
+The above procedures are the parameters of the compile procedure that
+are concerned with modules, where
+
+@example
+MODE  YMODINFO  =  STRUCT (XMODINFO xmi, YM ym),
+      YSPEC  =  STRUCT (XSPEC xs, YS ys),
+      YM  =  STRUCT (INT version, address),
+      YS  =  INT
+@end example
+
+The modes @code{YM} and @code{YS} are implementation dependent and may be extended;
+the above definitions are chosen so that they may contain the minimum
+amount of information.
+
+The action of @code{givemoduledetails} depends on the value of the second
+parameter.  If it is 0, the procedure must return a @code{YMODINFO}, whose
+@code{xmi} field is identical to the @code{XMODINFO} output on some previous
+compilation of the module @code{x}, or has illegal type (-2) if not found.
+If the second parameter is non-zero, the compiler is looking for a
+library declarations module whose keeplist contains the name @code{x}, as
+specified by the second parameter below:
+
+@table @asis
+@item 1
+identifier
+@item 2
+compound symbol (operator)
+@item 3
+bold symbol (mode or operator)
+@end table
+
+The third parameter is @code{TRUE} if the module currently being compiled is
+a composition module, otherwise @code{FALSE}.  The @code{ym} field of @code{YMODINFO}
+has a version field which must change whenever the module @code{x} changes
+significantly.  It also contains information to allow the translator
+efficient access to the library.  It may be output as part of an
+@code{XTMODULE} (see next section) to check that the module concerned has not
+changed significantly between compilation and loading; it could also
+be output in an @code{XINTERF} as a help in its other possible role as a fast
+look-up.
+
+When the compiler calls @code{givespec(n, f, ym)}, the result must be a @code{
+YSPEC} whose @code{xs} field (of mode @code{XSPEC}) has name @code{f} and was
+output by a previous compilation of module @code{n}; @code{ym} is the @code{ym}
+field of @code{givemoduledetails(N, 0, )}.  The @code{ys} field contains the
+version number (as for @code{ym}) and must change if the @code{XSPEC} changes in
+any way.  A module @code{x} changes significantly if its stream 0 is altered in any
+way.
+
+@section Information About Other Modules
+
+Stream 2 contains information defining the kept names, if any,
+available to the current module as a result of its context.  This
+will be given by
+
+@example
+XINTERF   XTDEC   [XTDEC]*, where
+
+MODE  XINTERF  =  STRUCT (ID name, YM ym, ID formal, YS ys,
+                          INT level, ownlevel
+                         ),
+      XTDEC  =  STRUCT (BOOL bu, INT level, REF IDDEC id),
+      IDDEC  =  STRUCT (ID name, INT decno, level, mode, scope,
+                        REF IDDEC rest
+                       )
+@end example
+
+Each keeplist contributing to the context will produce one @code{XINTERF}
+(only in this position), immediately followed by a series of @code{XTDEC}s.
+Each @code{XTDEC} defines one identifier kept in this keeplist available
+to the current module.  The fields @code{name} and @code{ym} identify the module
+containing the keeplist, with the next two fields being provided so
+that the translator may check that this is compatible with the
+following @code{XTDEC}s, which were derived from a keeplist at compilation.
+The level field of @code{XINTERF} is the same as in the following @code{XTDEC}s;
+this and @code{ownlevel} will be discussed more fully later.
+
+The above applies only to modules connected by means of a @code{CONTEXT}
+specification.  Names derived from declarations modules, that arise
+from the @code{USE} construction or the default library, are introduced on
+stream 2 by
+
+@example
+XTMODULE   XTDEC   [XTDEC]*,
+@end example
+@noindent
+where
+
+@example
+MODE  XTMODULE  =  STRUCT (INT type, moduleno, ID name, YM ym)
+@end example
+
+The @code{XTMODULE} is a general construction introducing an external module
+and giving it a local module number.  The @code{name} and @code{ym} fields are used
+to locate and check the module, with the @code{type} being the same as that
+of its @code{XMODINFO}.  In the present case, the @code{type} will be -1 since the
+module is a declarations module; this is the only situation in which
+it will be followed by @code{XTDEC}s as above.  The @code{bu} field will be @code{TRUE}
+if the @code{XTDEC} is introduced by an @code{XTMODULE}, otherwise @code{FALSE}.
+
+The @code{IDDEC} pointed to by the @code{id} field of an @code{XTDEC} has the
+same form as that of an @code{XIDDEC} (See B3.2).  If the @code{XTDEC} describes
+a declaration from a declarations module in the default library, the @code{
+decno} of the @code{IDDEC} is in a series which starts at @code{startlib + 1}.
+Each @code{decno} is used only once in a compilation and refers to an entry in
+the @code{libinds} array.  For @code{XTDEC}s arising from a @code{CONTEXT}
+specification or the @code{USE} construction, the declaration numbers are
+normally included in the series for the current module (ie identifiers start
+at 4 and procedures at @code{startrd + 1}).  However, the treatment is
+different for an @code{XTDEC} corresponding to a variable which refers to a
+generating routine for a kept mode.  Firstly, the translator must arrange for
+the variable to be dereferenced; secondly, @code{startkmp} is added to its
+declaration number.  The values of @code{startlib}, @code{startrd} and @code{
+startkmp} are implementation dependent (see Appendix 5).
+
+The stream language corresponding to the code of the module starts on
+stream 3.  There is an @code{XEDIT} @code{down} at the end of stream 2.
+
+
+@section A Model For A Running CC Module
+
+The model given below describes the context information that is
+available to a running cc module.  The simplest way to present it is
+by means of Algol 68 mode declarations, even though they would not
+appear in any translator.  The current module may be thought of as a
+@code{CONINFO} current, where
+
+@example
+MODE  CONINFO  =  STRUCT( REF CONINFO last, REF [] CLOSURE holes,
+                          [] REF CONINFO condisp, [] VALUE keeps
+                        ),
+      CLOSURE  =  STRUCT (CODE code, REF [] CLOSURE holes)
+@end example
+
+Suppose the current context is @code{CONTEXT p IN q}.  Then the @code{last}
+field refers to the @code{CONINFO} of the module @code{q}, with @code{keeps}
+providing information about the keeplist given at the @code{HERE} clause @code{
+p}.  @code{holes} are the @code{HERE} clauses of this module, while the @code{
+condisp} field contains the @code{CONINFO}s of all modules accessible to this one.
+There is in the @code{condisp} and @code{keeps} arrays because indexing should be possible
+without requiring descriptors.
+
+A @code{CONINFO} is rather similar to a procedure environment, with holes and
+keeps being like parameters and @code{condisp} like a procedure display.  New
+@code{CONINFO}s are added to this array dynamically by means of @code{XCALLMODULE}
+(see next section, while @code{CLOSURE}s may be constructed at load-time by
+means of @code{XCLOSURE}s.
+
+The @code{level} fields of the modes in the previous section can be defined
+most easily in terms of this model.  The @code{level} field of @code{XINTERF} is the
+index into @code{condisp OF current} that gives the @code{CONINFO} of the relevant
+module. This @code{CONINFO} contains the @code{VALUE}s which are the kepts defined
+by the @code{XTDEC}s following the @code{XINTERF}; the level of the @code{XINTERF} is
+repeated in the succeeding @code{XTDEC}S.  The @code{ownlevel} field of an @code{XINTERF}
+is the size of the @code{condisp} of the @code{CONINFO} of this module.
+
+There is a level associated with each @code{XTMODULE}, but this is given only
+in the succeeding @code{XTDEC}s and is not part of the mode @code{XTMODULE}.  The
+level fields of the @code{XTDEC}s define the context under which the module
+was compiled as being 0 for @code{CONTEXT VOID} or equal to the level of some
+previously introduced @code{XINTERF}.
+
+@section Constructions In The Code
+
+The code of a cc-module is introduced by an @code{XOPENMODULE} and terminated
+by an @code{XCLOSEMODULE}, where
+
+@example
+MODE  XOPENMODULE  =  STRUCT (ID name,
+                              INT maxlevel, nof, moduleno
+                             ),
+      XCLOSEMODULE  =  STRUCT (INT moduleno, nof)
+@end example
+
+The @code{name} field of @code{XOPENMODULE} gives the name of the module, with
+the fields common to both modes, @code{nof} and @code{moduleno}, giving the number
+of formals and local module number respectively.  The @code{maxlevel}
+field is similar to the @code{ownlevel} of an @code{XINTERF}, containing
+@code{UPB condisp OF current}; this could be used to combine the @code{condisp}
+with the normal procedure display by allowing space for a copy of
+the @code{condisp} at its base.  A composition module may include several
+open-close pairs around each synthetically generated module, whereas
+a normal cc-module has only one pair round its code.
+
+The mode @code{XCLOSURE}, defined by
+
+@example
+MODE  XCLOSURE  =  STRUCT (INT body, REF VECTOR [] INT actuals,
+                           INT moduleno
+                          ),
+@end example
+@noindent
+is used to make up a new @code{CLOSURE newcl}, with the @code{moduleno} field
+giving it a local module number.  The other fields contain local
+module numbers that have been previously introduced by @code{XTMODULE}s,
+@code{XOPENMODULE}s or other @code{XCLOSURE}s.  The @code{body} field refers to the
+module containing the instructions that become @code{code OF newcl}.  The
+elements of @code{actuals} refer to the modules that are supplied to the
+@code{HERE} clauses; these are set up as the @code{holes OF newcl}.
+
+The code produced by a @code{HERE} clause will be an @code{XCALLMODULE}, where
+
+@example
+MODE  XCALLMODULE  =  STRUCT (INTPAIR body,
+                              REF VECTOR [] INTRIPLE kset,
+                              REF VECTOR [] INT keeps, INT last
+                             ),
+      INTPAIR  =  STRUCT (INT i, j),
+      INTRIPLE  =  STRUCT (INT i, j, k)
+@end example
+
+Its purpose is to start running a new cc-module, having set up a new
+@code{CONINFO newcon}, created as shown below.  It will be helpful to first
+define a recursive procedure:
+
+@example
+PROC l = (INT n) CONINFO:
+IF  n = 0
+THEN  current
+ELSE  last OF l(n - 1)
+FI
+@end example
+
+The @code{Body} field is used to construct the @code{CLOSURE} for the module to be
+run, given by
+
+@example
+CLOSURE m = (holes OF l(j OF body OF c))[i OF body OF c],
+@end example
+@noindent
+where @code{c} is the @code{XCALLMODULE} concerned.  The fields of the @code{CONINFO
+newcon} are set up as follows:
+
+@table @code
+@item holes OF newcon
+@code{:= holes OF m}
+@item last OF newcon
+@code{ := l(last OF c)}
+@item keeps OF newcon
+consists of the values corresponding to @code{decno}s given in @code{keeps OF c}
+@item condisp OF newcon
+is constructed by the concatenation in order of
+@code{(condisp OF l(k))[i:j]} for each of the triples @code{I}, @code{J},
+@code{k} in @code{kset OF c}, with @code{newcon} added as its final element
+@end table
+
+@section An Example Of Modular Compilation
+
+The basis of this example is the use of two environmental packages, as
+in C2.7.  There are altogether 10 modules, a brief description of
+which is given below.
+
+@table @code
+@item package1
+cc, contains 2 @code{HERE} clauses for user programs
+@item package2
+cc, contains @code{HERE} clause for user program
+@item comp2
+composition, contains 2 @code{HERE} clauses, one of which allows the
+user program to use both packages, as in C2.7.
+@item cc1
+cc, the module to be inserted into the first hole in the above context.
+It also contains a @code{HERE} clause and uses two @code{DECS} modules.
+@item decs3
+declarations, uses no other modules
+@item decs4
+declarations, uses @code{decs3} and @code{package1}
+@item cc3
+cc, the module to fill the hole in @code{cc1}
+@item comp1
+composition, composes @code{cc1} to incorporate @code{cc3}
+@item cc2
+cc, the module to be inserted into the second hole in @code{comp2}
+@item starter
+composition, runs the complete program
+
+@end table
+
+The source texts take the following forms:
+
+@example
+(1)  PROGRAM (userprog, results) package1
+     BEGIN ....
+           ....
+           HERE userprog(keeplist1)
+           ....
+           HERE results(keeplistr)
+           ....
+     END
+     FINISH
+
+(2)  PROGRAM (userprog) package2
+     BEGIN ....
+           ....
+           HERE userprog(keeplist2)
+           ....
+     END
+     FINISH
+
+(3)  PROGRAM (user1, user2) comp2
+     COMPOSE package1(userprog = package2(userprog = HERE user1),
+                      results = HERE user2)
+     FINISH
+
+(4)  PROGRAM (hole) cc1
+     CONTEXT user1 IN comp2
+     USE decs3, decs4
+     BEGIN ....
+           ....
+           HERE hole(keeplist)
+           ....
+     END
+     FINISH
+
+(5)  DECS decs3:
+     ....
+     ....
+     KEEP keeplist3
+     FINISH
+
+(6)  DECS decs4
+     CONTEXT userprog IN package1
+     USE decs3:
+     ....
+     ....
+     KEEP keeplist4
+     FINISH
+
+(7)  PROGRAM cc3
+     CONTEXT hole IN cc1
+     USE decs3
+     BEGIN ....
+           ....
+     END
+     FINISH
+
+(8)  PROGRAM comp1
+     COMPOSE cc1(hole = cc3)
+     FINISH
+
+(9)  PROGRAM cc2
+     CONTEXT user2 IN comp2
+     BEGIN ....
+           ....
+     END
+     FINISH
+
+(10) PROGRAM starter
+     COMPOSE comp2(user1 = comp1, user2 = cc2)
+     FINISH
+@end example
+
+
+@subsection Stream Language Produced For The Above Modules
+
+The outputs are given in the order in which they would be read by the
+translator.  @code{XTDEC*} indicates an arbitrary number of @code{XTDEC}s.  The
+values of the fields (except for version fields) are shown on the right-hand
+side.  The @code{u} field of @code{XSPEC} has mode @code{REF VECTOR [] CHAR} if
+it refers to a keeplist - otherwise it has mode @code{REF VECTOR [] CAT}.
+
+The following declarations are used:
+
+@example
+CAT c = (%stdprelude, %program, 1)     @{default context@}
+CAT n = ("", "", 0)                    @{VOID context@}
+CAT u1 = (package1, userprog, 1)
+CAT ur = (package1, results, 1)
+CAT u2 = (package2, userprog, 1)
+ID item = description of a kept identifier
+ID lastid = description of the last declared identifier
+@end example
+
+modes: the @code{REF VECTOR [] MDE} imperative
+
+
+@example
+(1)  PACKAGE1
+
+XMODINFO       name = package1, l = c, g = n, type = 2
+XSPEC          f = userprog, no = 1, nl = 1, ng = 1, u -> keeplist1
+XSPEC          f = results, no = 2, nl = 1, ng = 1, u -> keeplistr
+XSIZES
+modes
+XTDTYPE        moduleno = 1, type = 2
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XOPENMODULE    name = package1, maxlevel = 1, nof = 2, moduleno = 1
+XCALLMODULE    body = (1,0), kset = (1,1,0), keeps = keeplist1,
+               last = 0
+XCALLMODULE    body = (2,0), kset = (1,1,0), keeps = keeplistr,
+               last = 0
+XCLOSEMODULE   moduleno = 1, nof = 2
+
+
+(2)  PACKAGE2
+
+XMODINFO       name = package2, l = c, g = n, type = 1
+XSPEC          f = userprog, no = 1, nl = 1, ng = 1, u -> keeplist2
+XSIZES
+modes
+XTDTYPE        moduleno = 1, type = 1
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XOPENMODULE    name = package2, maxlevel = 1, nof = 1, moduleno = 1
+XCALLMODULE    body = (1,0), kset = (1,1,0), keeps = keeplist2,
+               last = 0
+XCLOSEMODULE   moduleno = 1, nof = 1
+
+
+(3)  COMP2
+
+XMODINFO       name = comp2, l = c, g = n, type = 2
+XSPEC          f = user1, no = 1, nl = 2, ng = 1, u -> (u1,u2)
+XSPEC          f = user2, no = 2, nl = 1, ng = 1, u -> ur
+XCOMPTYPE      moduleno = 6, type = 2, maxmodule = 6
+XTMODULE       type = 2, moduleno = 1, name = package1
+XTMODULE       type = 1, moduleno = 2, name = package2
+XOPENMODULE    name = user1, maxlevel = 2, nof = 0, moduleno = 3
+XCALLMODULE    body = (1,2), kset = ((1,2,2), (0,2,2)), keeps = NIL,
+               last = 2
+XCLOSEMODULE   moduleno = 3, nof = 0
+XCLOSURE       body = 2, actuals = (3), moduleno = 4
+XOPENMODULE    name = user2, maxlevel = 2, nof = 0, moduleno = 5
+XCALLMODULE    body = (2,1), kset = (0,1,2), keeps = NIL, last = 1
+XCLOSEMODULE   moduleno = 5, nof = 0
+XCLOSURE       body = 1, actuals = (4,5), moduleno = 6
+
+
+(4)  CC1
+
+XMODINFO       name = cc1, l = (comp2, user1, 3), g = c, type = 1
+XSPEC          f = hole, no = 1, nl = 1, ng = 1, u -> keeplist
+XSIZES
+modes
+XTDTYPE        moduleno = 3, type = 1
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XINTERF        name = package1, formal = userprog, level = 2,
+               ownlevel = 2
+XTDEC*         bu = FALSE, level = 2, id = item
+XINTERF        name = package2, formal = userprog, level = 3,
+               ownlevel = 2
+XTDEC*         bu = FALSE, level = 3, id = item
+XINTERF        name = comp2, formal = user1, level = 4, ownlevel = 3
+XTDEC*         bu = FALSE, level = 4, id = lastid
+XTMODULE       type = -1, moduleno = 1, name = decs3
+XTDEC*         bu = TRUE, level = 3, id = item
+XTMODULE       type = -1, moduleno = 2, name = decs4
+XTDEC*         bu = TRUE, level = 3, id = item
+XOPENMODULE    name = cc1, maxlevel = 4, nof = 1, moduleno = 3
+XCALLMODULE    body = (1,0), kset = (1,1,0), keeps = keeplist,
+               last = 0
+XCLOSEMODULE   moduleno = 3, nof = 1
+
+
+(5)  DECS3
+
+XMODINFO       name = decs3, l = c, g = n, type = -1
+XSPEC          f = decs3, no = 0, nl = 1, ng = 0, u -> keeplist3
+XSIZES
+modes
+XBUTYPE        keeplist3
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XKEEPS         keeplist3
+
+
+(6)  DECS4
+
+XMODINFO       name = decs4, l = u1, g = c, type = -1
+XSPEC          f = decs4, no = 0, nl = 1, ng = 1, u -> keeplist4
+XSIZES
+modes
+XBUTYPE        keeplist4
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XINTERF        name = package1, formal = userprog, level = 2,
+               ownlevel = 2
+XTDEC*         bu = FALSE, level = 2, id = item
+XTMODULE       type = -1, moduleno = 1, name = decs3
+XTDEC*               bu = TRUE, level = 3, id = item
+XKEEPS         keeplist4
+
+
+(7)  CC3
+
+XMODINFO       name = cc3, l = (cc1, hole, 1), g = c, type = 0
+XSIZES
+modes
+XTDTYPE        moduleno = 2, type = 0
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XINTERF        name = cc1, formal = hole, level = 2, ownlevel = 2
+XTDEC*         bu = FALSE, level = 2, id = item
+XTMODULE       type = -1, moduleno = 1, name = decs3
+XTDEC*         bu = TRUE, level = 3, id = item
+XOPENMODULE    name = cc3, maxlevel = 2, nof = 0, moduleno = 2
+XCLOSEMODULE   moduleno = 2, nof = 0
+
+
+(8)  COMP1
+
+XMODINFO       name = comp1, l = (comp2, user1, 3), g = c, type = 0
+XCOMPTYPE      moduleno = 3, type = 0, maxmodule = 3
+XTMODULE       type = 1, moduleno = 1, name = cc1
+XTMODULE       type = 0, moduleno = 2, name = cc3
+XCLOSURE       body = 1, actuals = (2), moduleno = 3
+
+
+(9)  CC2
+
+XMODINFO       name = cc2, l = (comp2, user2, 2), g = c, type = 0
+XSIZES
+modes
+XTDTYPE        moduleno = 1, type = 0
+XINTERF        name = %stdprelude, formal = %program, level = 1,
+               ownlevel = 1
+XTDEC*         bu = FALSE, level = 1, id = item
+XINTERF        name = package1, formal = userprog, level = 2,
+               ownlevel = 2
+XTDEC*         bu = FALSE, level = 2, id = item
+XINTERF        name = comp2, formal = user2, level = 3, ownlevel = 2
+XTDEC*         bu = FALSE, level = 3, id = lastid
+XOPENMODULE    name = cc2, maxlevel = 3, nof = 0, moduleno = 1
+XCLOSEMODULE   moduleno = 1, nof = 0
+
+
+(10) STARTER
+
+XMODINFO       name = starter, l = c, g = n, type = 0
+XCOMPTYPE      moduleno = 4, type = 0, maxmodule = 4
+XTMODULE       type = 2, moduleno = 1, name = comp2
+XTMODULE       type = 0, moduleno = 2, name = comp1
+XTMODULE       type = 0, moduleno = 3, name = cc2
+XCLOSURE       body = 1, actuals = (2,3), moduleno = 4
+@end example
+
+@appendix Values and representations of symbols
+
+@strong{Note:} symbols marked with a * must have a single-character
+      representation provided for them.
+
+The values of the symbols are given in brackets.
+
+@ignore
+
+@table @asis
+@item elided else if (43)
+@code{ELIF} to be used with if, then and fi symbols
+@item elided out case (44)
+@code{OUSE}, to be used with case, in and out symbols
+@item bang (45)
+@code{!} or @code{|}, must be used with ord and crd symbols.
+@code{!:} and @code{|:} are treated as two separate symbols
+@item then (46)
+@code{THEN}, must be used with if and fi symbols
+@item in (47)
+@code{IN}, must be used with case and esac symbols
+@item else (48) @code{ELSE} & must be used with if, then and fi symbols
+@item out (49) @code{OUT} & must be used with case, in and esac symbols
+@item opening round bracket (*50) @code{(} &  a distinct sub symbol must be
+provided (see below)
+@item begin (51)
+ &  @code{BEGIN} &      must be matched by end symbol
+@item if (52)
+ & @code{IF} & must be matched by then, else (if required) and fi
+symbols
+@item case (53)
+ & @code{CASE} & must be matched by in, out (if required) and esac
+symbols
+@item closing round bracket (*54)
+ & @code{)} &           a distinct bus symbol must
+                                          be provided (see below)
+@item end  (55)
+ &  @code{END}
+@item fi (56)
+ &  @code{FI}
+@item esac (57)  & @code{ESAC}
+@item comment symbols
+ 60 \\ 61 \\ 62-66
+@code{CO} \\  {\Tt COMMENT}
+   at least one comment symbol must be provided; a 60 must be matched with a
+      60, etc
+@item opening comment symbol &  67 &  \{ &          a 67 must be matched with a 68
+@item closing comment symbol &  68 &  \}
+@item opening comment symbol &  69/71/73/75 & &  a 69 must be matched with a 70, a 71
+with a 72, etc
+@item closing comment symbol &  70/72/74/76  \\   
+@item opening comment symbol &  77 & &              a 77 must be matched with a 78
+@item closing comment symbol &  78
+@item colon  &                  84 &  @code{:} &  includes use in label settings
+@item pragmat symbols &
+ 90 \\ 91 \\ 92-94
+ @code{PR} \\ {\Tt PRAGMAT}
+     Only the first line is copied to stream language
+@item illegal &                100  & &             see note at end of table
+@item semi-colon &             111 &  @code{;}
+@item alien &                  112 &  @code{ALIEN}
+@item keep &                   113 &  @code{KEEP}
+@item go  &                    115 &  @code{GO}  & part of GO TO (alternative to GOTO)
+@item of   &                   116 &  @code{OF}
+@item true &                   119 &  @code{TRUE}
+@item false &                  120 &  @code{FALSE}
+@item nil &                    121 &  @code{NIL}
+@item skip     &               122 &  @code{SKIP}
+@item exit   &                 123 &  @code{EXIT}
+@item go to  &                 126 &  @code{GOTO}
+@item comma &                 *128 &  @code{,}
+@item decimal point &         *130 &  @code{.} 
+@item flex &                   131 &  @code{FLEX}
+@item void &                   133 &  @code{VOID}
+@item bool &                   134 &  @code{BOOL}
+@item char &                   135 &  @code{CHAR}
+@item format &                 136 &  @code{FORMAT}
+@item bits &                   137 &  @code{BITS}
+@item int &                    138 &  @code{INT}
+@item real &                   139 &  @code{REAL}
+@item complex &                140 &  @code{COMPL}
+@item ref &                    141 &  @code{REF}
+@item union &                  142 &  @code{UNION}
+@item struct &                 143 &  @code{STRUCT}
+@item proc   &                 144 &  @code{PROC}
+@item od  &                    145 &  @code{OD}
+@item do  &                    147 &  @code{DO}
+@item for &                    148 &  @code{FOR}
+@item from  &                  149 &  @code{FROM}
+@item by  &                    150 &  @code{BY}
+@item to &                     151 &  @code{TO}
+@item while &                  152 &  @code{WHILE}
+@item at &                     154 &  @code{AT}
+@item long &                   155 &  @code{LONG} &        see Appendix 2
+@item other bold  &            156 & &              see note at end of table
+@item loc &                    157 &  @code{LOC}
+@item sub  &                   159 &  @code{[}
+@item format bracket  &        160 &  @code{\$}
+@item bus &                    161 &  @code{]}
+@item code &                   162 &  @code{CODE}
+@item assignment   &           163 &  @code{:=}
+@item vector &                 164 &  @code{VECTOR}  &   language extension
+@item mode &                   165 &  @code{MODE}
+@item priority   &             166 &  @code{PRIO}
+@item op   &                   167 &  @code{OP}
+@item straight   &             169 &  @code{STRAIGHT} &  language extension
+@item for all &                170 &  @code{FORALL} &    language extension
+@item short &                  172 &  @code{SHORT} &     see Appendix 2
+@item finish compiling &       174 &  @code{FINISH}
+@item other op  &              176 & &             see note at end of table
+@item heap  &                  178 &  @code{HEAP}
+@item program  &               179 &  @code{PROGRAM}
+@item decs  &                  180 &  @code{DECS}
+@item compose  &               181 &  @code{COMPOSE}
+@item context  &               182 &  @code{CONTEXT}
+@item use  &                   183 &  @code{USE}
+@item here  &                  184 &  @code{HERE}
+@item empty  &                 189 &  @code{EMPTY}
+@item built in operator  &     192 &  @code{BIOP} &       language extension
+@item xtype &                  194 &  @code{XTYPE} &       language extension
+@item ytype &                  195 &  @code{YTYPE} &      language extension
+@item plus  &                  *200 &  @code{+}
+@item minus &                  *201 & @code{-} 
+@item upper bound &            202 &  @code{UPB}
+@item lower bound  &           203 &  @code{LWB}
+@item optimised and  &         204 &  @code{ANDTH} & right operand evaluated only
+                                          when necessary (language
+                                          extension)
+@item optimised or &           205 &  @code{OREL} & right operand evaluated only
+                                          when necessary (language
+                                          extension)
+@item less than &              206 &  @code{<  LT}
+@item greater than &           207 &  @code{>  GT}
+@item less than or equals &    208 &  @code{<=  LE}
+@item greater than or equals & 209 &  @code{>=  GE}
+@item equals &                 210 &  @code{=   EQ}
+@item not equals  &            211 &  @code{/=  NE}
+@item times   &                212 &  @code{*}
+@item divided by &             213 &  @code{/}
+@item over   &                 214 &  @code{\%  OVER}
+@item modulo &                 215 &  @code{\%*  MOD}
+@item to the power  &          216 &  @code{**  UP}
+@item plus i times &           217 &  @code{+*  I}
+@item shift left   &           218 &  @code{SHL}  {\Tt UP}
+@item shift right   &          219 &  @code{SHR}  {\Tt DOWN}
+@item element   &              220 &  @code{ELEM}
+@item plus and becomes  &      221 &  @code{+:=  PLUSAB}
+@item minus and becomes   &    222 &  @code{-:=  MINUSAB}
+@item times and becomes   &    223 &  @code{*:=  TIMESAB}
+@item over and becomes   &     224 &  @code{\%:=  OVERAB}
+@item modulo and becomes  &    225 &  @code{\%*:=  MODAB}
+@item divided by and becomes & 226 &  @code{/:=  DIVAB}
+@item reference equals  &      227 &  @code{:=:  IS}
+@item reference not equals  &  228 &  @code{:/=:  ISNT}
+@item and  &                   229 &  @code{AND} &   both operands evaluated
+@item or &                     230 &  @code{OR} &    both operands evaluated
+@item plus and assign to  &    231 &  @code{+=:  PLUSTO}
+@item cycle array dimensions & 232 &  @code{CYCLE} &     language extension
+@item power / shift left &     233 &  @code{UP} &  altered to 216 or 218 depending on
+  mode of left operand
+@item not  &                   240 &  @code{NOT}
+@item absolute value of &      241 &  @code{ABS}
+@item binary value of &        242 &  @code{BIN}
+@item representation &         243 &  @code{REPR}
+@item lengthen  &              244 &  @code{LENG} &            see Appendix 2
+@item shorten  &               245 &  @code{SHORTEN} &        see Appendix 2
+@item odd   &                  246 &  @code{ODD}
+@item sign    &                247 &  @code{SIGN}
+@item round off  &             248 &  @code{ROUND}
+@item integral part of  &      249 &  @code{ENTIER}
+@item real part of  &          250 & @code{RE}
+@item imaginary part of &      251 &  @code{IM}
+@item argument of   &          252 &  @code{ARG}
+@item conjugate  &             253 &  @code{CONJ}
+@end table
+@end ignore
+
+@section Note
+
+Any representation whose meaning is undefined must be given one of
+the following values in the @code{charset} array or @code{lookup}
+procedure:
+
+@table @asis
+@item 156 (other bold)
+if the representation is to be an acceptable form for a user-defined
+mode name or operator
+
+@item 176 (other op)
+if the representation is to be acceptable as a user-defined operator
+symbol but unacceptable as a mode name
+
+@item 100 (illegal)
+if the representation is to be illegal
+@end table
+
+@appendix Fixed Mode Numbers
+
+The mode numbers given below are fixed for all programs.
+For 1 to 21, 29 and 30, the mode @code{MDE} decomposes to @code{PRIMITIVE}.
+
+These mode numbers assume that there may be up to 1 @code{SHORT} or 2 @code{
+LONG} symbols before a mode or denotation (although these are not all required
+to represent different lengths).  It is possible to allow @code{SHORT SHORT}
+(at the expense of @code{LONG LONG}) by interchanging @code{LONG} and
+@code{SHORT} in the following table.  If this is done, the values for
+the symbols 
+@code{LONG} and @code{SHORT}, @code{LENG} and @code{SHORTEN} must also be
+interchanged.
+
+@table @asis
+@item  1
+@code{vacmode}
+@item  2
+@code{skipmode}
+@item  3
+@code{nilmode}
+@item  4
+@code{gotomode}
+@item  5
+@code{voidmode}
+@item  6
+@code{faultmode} (does not occur in stream language)
+
+@item  7
+@code{BOOL}
+@item  8
+@code{CHAR}
+@item  9
+@code{FORMAT}
+
+@item 10
+@code{SHORT BITS}
+@item 11
+@code{BITS}
+@item 12
+@code{LONG BITS}
+@item 13
+@code{LONG LONG BITS}
+@item 14
+@code{SHORT INT}
+@item 15
+@code{INT}
+@item 16
+@code{LONG INT}
+@item 17
+@code{LONG LONG INT}
+@item 18
+@code{SHORT REAL}
+@item 19
+@code{REAL}
+@item 20
+@code{LONG REAL}
+@item 21
+@code{LONG LONG REAL}
+
+@item 22
+@code{SHORT COMPL  =  STRUCT (SHORT REAL re, im)}
+@item 23
+@code{COMPL  =  STRUCT (REAL re, im)}
+@item 24
+@code{LONG COMPL  =  STRUCT (LONG REAL re, im)}
+@item 25
+@code{LONG LONG COMPL  =  STRUCT (LONG LONG REAL re, im)}
+
+@item 26
+@code{VECTOR [] CHAR}
+@item 27
+@code{[] CHAR}
+@item 28
+@code{collatmode}
+
+@item 29
+@code{XTYPE}
+@item 30
+@code{YTYPE}
+@end table
+
+@appendix Numbering of standard prelude operators in @code{XOPER}
+
+Key to headings:
+
+@table @code
+@item BL
+@code{BOOL}
+@item C 
+@code{CHAR}
+@item LB
+@code{BITS} (possibly with @code{LONG} or @code{SHORT} prefixes)
+@item I 
+@code{INT}
+
+@item LI
+@code{INT} (possibly with @code{LONG} or @code{SHORT} prefixes)
+@item LR
+@code{REAL} (possibly with @code{LONG} or @code{SHORT} prefixes)
+@item LC
+@code{COMPL} (possibly with @code{LONG} or @code{SHORT} prefixes)
+@item VC
+@code{VECTOR [] CHAR} (@code{REF FLEX} for @code{+:=, *:=)}
+
+@item AC
+@code{] CHAR} (@code{REF FLEX} for @code{+:=, *:=)}
+@item V
+ Any vector
+@item A 
+Any array
+S 
+Any straight
+@end table
+
+
+@appendixsec Monadic operators
+
+@example
+                BL C  LB I    LI LR LC VC   AC V  A  S
+          op                  version number
+      number
++         0     -  -  -  -    1  2  3  -    -  -  -  -
+-         1     -  -  -  -    1  2  3  -    -  -  -  -
+UPB       2     -  -  -  -    -  -  -  -    -  1  2  3
+LWB       3     -  -  -  -    -  -  -  -    -  1  2  3
+NOT       4     1  -  2  -    -  -  -  -    -  -  -  -
+
+ABS       5     1  2  3  -    4  5  6  -    -  -  -  -
+BIN       6     -  -  -  -    1  -  -  -    -  -  -  -
+REPR      7     -  -  -  1    -  -  -  -    -  -  -  -
+LENG      8     -  -  1  -    2  3  4  -    -  -  -  -
+SHORTEN   9     -  -  1  -    2  3  4  -    -  -  -  -
+
+ODD      10     -  -  -  -    1  -  -  -    -  -  -  -
+SIGN     11     -  -  -  -    1  2  -  -    -  -  -  -
+ROUND    12     -  -  -  -    -  1  -  -    -  -  -  -
+ENTIER   13     -  -  -  -    -  1  -  -    -  -  -  -
+RE       14     -  -  -  -    -  -  1  -    -  -  -  -
+
+IM       15     -  -  -  -    -  -  1  -    -  -  -  -
+ARG      16     -  -  -  -    -  -  1  -    -  -  -  -
+CONJ     17     -  -  -  -    -  -  1  -    -  -  -  -
+@end example
+
+@appendixsec Dyadic operators
+
+@example
+                BL C  LB I    LI LR LC VC   AC V  A  S
+         op                   version number
+       number
++         0     -  1  -  -    2  3  4  5    6  -  -  -
+-         1     -  -  -  -    1  2  3  -    -  -  -  -
+UPB       2     -  -  -  -    -  -  -  -    -  -  1  -
+LWB       3     -  -  -  -    -  -  -  -    -  -  1  -
+ANDTH     4     1  -  -  -    -  -  -  -    -  -  -  -
+
+OREL      5     1  -  -  -    -  -  -  -    -  -  -  -
+<         6     -  1  -  -    2  3  -  4    5  -  -  -
+>         7     -  1  -  -    2  3  -  4    5  -  -  -
+<=        8     -  1  2  -    3  4  -  5    6  -  -  -
+>=        9     -  1  2  -    3  4  -  5    6  -  -  -
+
+=        10     1  2  3  -    4  5  6  7    8  -  -  -
+/=       11     1  2  3  -    4  5  6  7    8  -  -  -
+*        12     -  1  -  -    2  3  4  5    6  -  -  -
+/        13     -  -  -  -    1  2  3  -    -  -  -  -
+OVER     14     -  -  -  -    1  -  -  -    -  -  -  -
+
+MOD      15     -  -  -  -    1  -  -  -    -  -  -  -
+**       16     -  -  -  -    1  2  3  -    -  -  -  -
+I        17     -  -  -  -    1  2  -  -    -  -  -  -
+SHL      18     -  -  1  -    -  -  -  -    -  -  -  -
+SHR      19     -  -  1  -    -  -  -  -    -  -  -  -
+
+ELEM     20     -  -  1  -    -  -  -  -    -  -  -  -
+PLUSAB   21     -  -  -  -    1  2  3  4    5  -  -  -
+MINUSAB  22     -  -  -  -    1  2  3  -    -  -  -  -
+TIMESAB  23     -  -  -  -    1  2  3  4    5  -  -  -
+OVERAB   24     -  -  -  -    1  -  -  -    -  -  -  -
+
+MODAB    25     -  -  -  -    1  -  -  -    -  -  -  -
+DIVAB    26     -  -  -  -    -  1  2  -    -  -  -  -
+IS       27       (only version number = 1)
+ISNT     28       (only version number = 1)
+AND      29     1  -  2  -    -  -  -  -    -  -  -  -
+
+OR       30     1  -  2  -    -  -  -  -    -  -  -  -
+PLUSTO   31     -  -  -  -    -  -  -  1    2  -  -  -
+CYCLE    32     -  -  -  -    -  -  -  -    -  -  1  -
+@end example
+
+@appendix Extensions To ALGOL 68
+
+@appendixsec Vectors and indexable structures
+
+A vector is a one-dimensional array with an understood lower bound of
+1.  A typical declaration would be
+
+@example
+VECTOR [n] INT v;
+@end example
+@noindent
+where the size @code{n} can be any unitary clause.  A vector can be flexible
+or not, and subscripted and trimmed like an array, though the use of
+@code{AT} results in an array.  In strong contexts, a single object can
+be @dfn{rowed} to a vector.  The overheads associated with vectors are
+smaller than arrays, and assignment of vectors is simpler than for
+arrays because the elements are always contiguous.
+
+The indexable structure or more briefly @dfn{i-struct} represents the
+ultimate step in removing array overheads while preserving the
+facility of indexing.  It groups together a fixed number of objects of
+any specified mode; for example, a @code{STRUCT 30 REAL} consists of 30 reals
+and the size 30 is part of the mode.  The size must therefore be an
+integer denotation; the permissible range of values is from 1 to
+@code{maxistruct} (see Appendix 5).  An i-struct can be indexed with the
+same notation as for an array, and the indexing starts at 1.  If
+trimmed, it normally gives rise to a vector (although the @code{AT}
+construction produces an array).  In strong contexts, a single object
+can be @dfn{rowed} to an i-struct.  The i-struct enables fixed length rows
+of characters to be handled with the efficiency expected for Algol 68
+@code{BYTES}, @code{LONG BYTES} etc, but without any restrictions on length.
+
+Coercions on i-structs and vectors are all in the direction i-struct
+to vector to array.  All such coercions (including ref i-struct to ref
+vector etc) are allowed before uniting.  However, i-structs, vectors
+and arrays of the same mode can exist side by side in the same union,
+and any seeming ambiguity when uniting is avoided by preference for
+minimum travel in the ``i-struct to vector to array'' direction.  The
+same preference rule applies to operator selection, as shown in the
+following example:
+
+@example
+OP  Y2  =  (VECTOR [] REAL p) ... ... ;
+OP  Y2  =  ([] REAL p) ... ... ;
+@end example
+
+With these two declarations in force, an operand of mode @code{STRUCT 4 REAL}
+would be coerced to @code{VECTOR [] REAL} and the first operator definition
+would be selected.
+
+String denotations are i-structs (eg @code{"ABC"} is @code{STRUCT 3 CHAR}), but the
+above coercions ensure that users wishing to avoid the language
+extensions need not be aware of them.  The word @code{VECTOR} does not appear
+in compile-time diagnostic messages unless it has already been
+explicitly used in the source-text, while strings like @code{"ABC"} are
+typically described as @code{3 CHAR} rather than @code{STRUCT 3 CHAR}.  The
+mode of the empty string @code{""} is @code{STRUCT 0 CHAR}, even though i-structs
+with zero size cannot be declared.
+
+@appendixsec The @code{FORALL} statement
+
+The @code{FORALL} statement has been introduced for efficiency in sequencing
+through all the elements in one dimension of an array, or all the
+elements of a vector.  As an example, in the unitary clause
+
+@example
+FORALL  xi IN x  DO  xi *:= xi  OD
+@end example
+
+the new identifier @code{xi} (declared by @code{FORALL}) successively takes each of
+the values @code{x[i]} with @code{i} going @code{FROM LWB x TO UPB x}.  The effect of this
+example, therefore, is to square all the elements of @code{x}.  It avoids
+explicit indexing and the associated overheads in the compiled code.
+There can be a sequence of parts like @code{xi IN x} provided each has the
+same bounds.  For example,
+
+@example
+VECTOR [10] INT v;
+[10, n : m] REAL w;
+FORALL  elemv IN v,  elemw IN w
+DO  f(elemv, elemw)  OD
+@end example
+@noindent
+applies the function @code{f} to all pairs of arguments @code{(v[i], w[i, ])}
+for @code{i} @code{FROM 1 TO 10}.
+
+A @code{FORALL} statement can have a while part, and the range of the
+identifiers declared by @code{ FORALL} (eg @code{elemv}, @code{elemw}) is the @code{WHILE} clause
+and the @code{DO} clause.
+
+Primarily for use in conjunction with the @code{FORALL} statement, a new
+dyadic operator, @code{CYCLE}, is defined to act on (ref) multi-dimensional
+arrays.  The expression @code{n CYCLE w} delivers the (ref) array @code{w} with
+a new descriptor, in which the dimensions are cycled to bring the
+@code{(n+1)}th to the front.
+
+@appendixsec Straightening
+
+A `straightening' facility is provided to enable Algol 68 programmers
+to write transput procedures with arbitrarily structured parameters.
+Straightening is the reduction of any type of data structure to a
+simple sequence - which we shall describe as a @dfn{straight}.  The basic
+step is the coercion of a simple row or structure to a straight;
+applied recursively, the method can be used to straighten data
+structures of arbitrary complexity.
+
+The mode @code{STRAIGHT U}, where @code{U} is any Algol 68 mode (but most commonly a
+union), describes a set of objects of mode @code{U}.  In this respect it is
+similar to @code{[] U}, but in other respects it is quite different and must
+be treated as a new type of mode.  An actual straight is brought into
+existence by strong coercion of a row, vector, structure, i-struct or
+union.  Such modes are strongly coercible to @code{STRAIGHT U} if their
+"members' can be coerced to @code{U} by uniting, straightening or any of the
+coercions i-struct to vector to array (A4.1).  The coercions excluded
+are dereferencing, deproceduring, widening and rowing.
+
+Example 1
+
+@example
+STRAIGHT UNION (INT, CHAR) s1 = "ABCD"
+@end example
+
+As @code{CHAR} is coercible to @code{UNION(INT, CHAR)}, the i-struct @code{"ABCD"} can be
+coerced to the @code{STRAIGHT}.  If @code{s1} were the formal parameter of an output
+procedure, acceptable actuals would be a row of characters, row of
+integers, structure with integer and character fields or a union of
+integer and character.  However, a single @code{INT} or a single @code{CHAR} would
+not be accepted.
+
+Example 2
+
+@example
+STRUCT (INT i, REAL r) p;
+STRAIGHT UNION (REF REAL, REF INT, REF CHAR) s2 = p
+@end example
+
+The members of @code{p} have modes @code{REF INT} and @code{REF REAL}, both of which are
+coercible to the given union, so @code{p} will be coercible to the mode of
+@code{s2}.  Clearly, @code{s2} might be the formal parameter of an input procedure
+and @code{p} its actual parameter.  The actual could not be a simple real,
+integer or character variable.
+
+Example 3
+
+@example
+[3] INT v := (1, 2, 3);
+STRAIGHT INT s = v;
+@end example
+
+In this example, the members of the variable @code{v} have mode @code{REF INT},
+but @code{s} is a straight of plain integers.  As it stands, @code{v} cannot be
+straightened to @code{s} because dereferencing of members is not allowed.
+But as @code{v} can be dereferenced before straightening, the example is
+correct.  Considered as a formal parameter for an output procedure, @code{s}
+would handle any row or structure of integers, but not a single
+integer by itself.
+
+As a straight cannot represent an unstructured value, most
+applications will demand that it be combined with basic modes in a
+union, eg
+
+@example
+UNION (INT, REAL, ... , STRAIGHT UNION (INT, REAL, ... ))
+@end example
+
+This mode will handle an object of data which possesses structure at
+no level (eg an @code{INT}) or one level (eg @code{[] REAL}, @code{STRUCT 17 INT}) but not
+more.  When an object is being united to the above mode, then ---
+regardless of the order in which the constituent modes have been
+written --- the fit will be sought from the non-@code{STRAIGHT} modes first,
+so as to avoid any possible ambiguities of coercion.
+
+To handle one object structured at any number of levels, a recursive
+mode is needed.
+
+@example
+MODE  PRINTMODE  =  UNION (INT, REAL, ... , STRAIGHT PRINTMODE)
+@end example
+
+The definition of @code{STRAIGHT} is such as permits this recursion.
+@code{PRINTMODE} will handle an integer, real, etc, or any row or structure
+built up from all these to any depth.  For a corresponding input
+parameter mode, the basic modes would each be preceded by a @code{REF}.
+
+The parameter of the standard @code{print} procedure has mode @code{VECTOR [] PRINTMODE}
+rather than @code{PRINTMODE}.  This allows the use of a collateral as the
+actual parameter.
+
+A straight cannot be handled with the full generality applicable to
+other Algol 68 modes.  The manipulations are confined to subscripting
+and interrogation by the operator @code{UPB}.  Let @code{m} stand for any mode, and
+let @code{s} have mode @code{STRAIGHT M}.  Then @code{UPB s} gives the number of objects in
+the straight, and @code{s[i]} picks out the @code{i}th object (@code{i} >= 1).  There is no
+such thing as a @code{STRAIGHT} generator or variable because objects of mode
+@code{REF STRAIGHT} do not exist.
+
+@appendixsec Low level facilities
+
+Code can be inserted in an Algol 68 program by the construction
+
+@example
+mode CODE (unc, unc, ...) " code "
+@end example
+@noindent
+which is treated as a primary of the specified mode (absence of which
+implies mode @code{VOID}).  The unitary clauses, to which no coercions are
+applied, supply Algol 68 objects for use in the code.  Other alien
+insertions, such as non-Algol procedures, must take the form
+
+@example
+mode identifier = ALIEN " insertion "
+@end example
+
+@code{ALIEN} is allowed only in this identity declaration context.
+
+An alternative method of expressing a string denotation is provided.
+This uses the @code{ABS} values of the characters rather than the
+characters themselves, which might be non-printing characters.  The
+@code{ABS} values can be to radix 2, 4, 8, 10 or 16, and must be
+separated by spaces; the string must be preceded by @code{10r} or
+@code{16r} or whatever the case may be.  Thus the following
+3-character strings (or more strictly @code{STRUCT 3 CHAR}S) are
+equivalent: @code{8r "1 15 251"}, @code{16r "1 d a9"}, where
+@code{a}-@code{f} represent the digits 10-15.
+
+
+@appendixsec Built-in operators
+
+The declaration
+
+@example
+OP (INT, INT) INT  ** = BIOP 1013
+@end example
+@noindent
+declares the operator @code{**} in the usual way, but the definition is built
+into the translator.  The integer after @code{BIOP} corresponds to the param
+field of a @code{dyop} or @code{monop} (in @code{XOPER}).
+
+The @code{BIOP} construction may also be used in declarations of the form
+
+@example
+M x = BIOP 671
+@end example
+@noindent
+where @code{M} is any mode, most usefully a procedure with three or more
+parameters.  The integer corresponds to the @code{decno} of an identifier
+declaration.
+
+If built-in operators or identifiers are to be used in other modules,
+the integer after @code{BIOP} must be less than @code{Maxchar*maxchar} (see Appendix
+5).
+
+@appendixsec Generalised modes
+
+The primitive modes @code{XTYPE} and @code{YTYPE} have been introduced as
+representations for any simple mode.  For the purpose of this
+definition, a `simple' mode is one which contains no vectors, arrays
+or references or which is a vector of such objects.  They may be used
+in transput routines to avoid the overheads of straightening.  For
+scope reasons objects of modes @code{XTYPE} and @code{YTYPE} may not be assigned.
+
+The coercions associated with these modes are in the direction @code{YTYPE}
+to @code{M} to @code{XTYPE} or @code{REF YTYPE} to @code{REF M} to @code{REF
+XTYPE}, where @code{M} is any
+simple mode.  The coercions from @code{REF YTYPE} and @code{REF M} may also remove
+the initial @code{REF}; the compiler does not output an @code{xderef} in this case.
+Thus a procedure dealing with objects of various simple modes might
+have the specification
+
+@example
+PROC p = (VECTOR [] XTYPE x) YTYPE:
+@end example
+@noindent
+so that the parameters and result could be handled easily.  If
+coercions in the opposite direction are required, the translator must
+incorporate the relevant @code{BIOP}s.
+
+The coercion to @code{XTYPE} is allowed before uniting, but as with i-structs
+and vectors, @code{XTYPE} may exist side by side in the same union with a
+simple mode or a @code{STRAIGHT}.  Possible ambiguities are resolved by
+preference for minimum travel in the `simple to @code{XTYPE} to @code{STRAIGHT}'
+direction.
+
+@appendixsec Implementation dependent declarations
+
+One section of the text of the RS compiler is marked as
+implementation-dependent and may be changed freely by implementors.
+The modes and values given below are used in the Algol 68 to C translator
+implementation.
+
+@table @code
+@item MODE ID = STRUCT 12 CHAR
+mode used to store an identifier, label, mode or operator
+@item INT maxid = 12
+maximum significant length of (1)
+@item INT maxchar = 64
+size of character set
+@item MODE YM = STRUCT (INT album, index, version)
+description of module
+@item MODE YS = INT
+description of spec
+@item INT startrd = 1000
+integer added to routine numbers
+@item INT startlib = 2000
+integer added to numbers of library identifiers
+@item INT startkmp = 10000
+integer added to numbers of kept modeprocs
+@item INT upbofmodes = 500
+size of modes array in compiler
+@item INT upbofsidstack = 250
+size of analyser stack
+@item INT maxistruct = 512
+maximum allowable size of indexable structures
+@item CHAR dchar = "d", pchar = "p", nchar = "n"
+for @code{REAL} denotations in stream language
+@item INT linesize = 160
+maximum length of a line of source-text
+@end table
+
+@shortcontents
+@contents
+@bye

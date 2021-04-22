@@ -1,0 +1,62 @@
+DECS incid CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incid.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1992
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.0 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+    INT global id no = 2,
+        min id no = 3,
+        max id no = 2000,
+        min rd no = 2001,
+        max rd no = 4000,
+        min libid = 4001,
+        max libid = 6000,
+        kept generator proc correction = 6000,
+        min lab = 16384,
+        max lab = 16384+1024,
+        min op id no = 32768,
+        max op id no = 65536;
+
+    INT min kept generator proc = min id no + kept generator proc correction,
+        max kept generator proc = max id no + kept generator proc correction
+KEEP
+    global id no, kept generator proc correction, max id no,
+    max kept generator proc, max lab, max libid, max op id no, max rd no,
+    min id no, min kept generator proc, min lab, min libid, min op id no,
+    min rd no
+FINISH

@@ -1,0 +1,163 @@
+\initial {A}
+\entry{\code {a68config}}{7}
+\entry{\code {A_GC_AREA_DEFAULTS}}{29}
+\entry{\code {A_GC_STACK_DEFAULTS}}{30}
+\entry{\code {A_GC_STATIC_DEFAULTS}}{30}
+\entry{\code {A_GC_TRACINGAREA_DEFAULTS}}{30}
+\entry{\code {A_GC_TRACINGSTACK_DEFAULTS}}{29}
+\entry{\code {A68_CDIR}}{17}
+\entry{\code {A68_DIR}}{17}
+\entry{\code {A68_GC_DEBUG}}{17}
+\entry{\code {A68_GC_POLICY}}{17}
+\entry{\code {A68_LIB}}{17}
+\entry{\code {A68_NAMESEED}}{17}
+\entry{\code {A68_STAREDIT}}{17}
+\entry{\code {A68INCLUDE}}{11}
+\entry{\code {A68LIB}}{11}
+\entry{\code {A68TOC}}{11}
+\entry{\code {Aalloc.h}}{27}
+\entry{\code {Aassign.c}}{27}
+\entry{\code {Aassign.h}}{26}
+\entry{\code {Acoerce.c}}{27}
+\entry{\code {Acoerce.h}}{27}
+\entry{\code {Aconfig.h}}{27}
+\entry{\code {adicops.a68}}{22}
+\entry{\code {Aerror.c}}{27}
+\entry{\code {Afirst.c}}{27}
+\entry{\code {Agc_1alloc}}{31}
+\entry{\code {Agc_alloc4}}{31}
+\entry{\code {Agc_allocations}}{33}
+\entry{\code {Agc_b_allocated}}{33}
+\entry{\code {Agc_b_grabbed}}{33}
+\entry{\code {Agc_collections}}{33}
+\entry{\code {Agc_e_examined}}{33}
+\entry{\code {Agc_nalloc}}{31}
+\entry{\code {Agc_s_examined}}{33}
+\entry{\code {Agc_s_freed}}{33}
+\entry{\code {Agc_s_grabbed}}{33}
+\entry{\code {Ah1alloc.c}}{31}
+\entry{\code {Ah1alloc.h}}{31}
+\entry{\code {Ahalloc.c}}{31}
+\entry{\code {Ahalloc.h}}{31}
+\entry{\code {Aharea.h}}{29, 34}
+\entry{\code {Ahbasic.h}}{34}
+\entry{\code {Ahbasics.h}}{30}
+\entry{\code {Ahbitmap.h}}{30}
+\entry{\code {Ahclr.h}}{30}
+\entry{\code {Ahcollec.c}}{31}
+\entry{\code {Ahcollec.h}}{31}
+\entry{\code {Ahdebug.c}}{31}
+\entry{\code {Ahdebug.h}}{31}
+\entry{\code {Ahdesc.h}}{30}
+\entry{\code {Ahparam.c}}{31}
+\entry{\code {Ahparam.h}}{31}
+\entry{\code {Ahpolicy.c}}{32}
+\entry{\code {Ahpolicy.h}}{32}
+\entry{\code {Ahptr.h}}{30, 34}
+\entry{\code {Ahseg.h}}{31, 34}
+\entry{\code {Ahstats.c}}{32}
+\entry{\code {Ahstats.h}}{32}
+\entry{\code {Ahsweep.c}}{32}
+\entry{\code {Ahsweep.h}}{32}
+\entry{\code {Ahtrace.c}}{32}
+\entry{\code {Ahtrace.h}}{32}
+\entry{\code {Aindex.c}}{28}
+\entry{\code {Alibrary.h}}{27}
+\entry{\code {ALIGN_NEXT}}{30}
+\entry{\code {alloc_1}}{33}
+\entry{\code {alloc_n}}{33}
+\entry{\code {Amacros.h}}{27}
+\entry{\code {Amath.c}}{28}
+\entry{\code {Astrings.c}}{28}
+\entry{\code {Astrings.h}}{27}
+\entry{\code {Asupport.h}}{27}
+\entry{\code {Atypes.h}}{27, 34}
+\initial {B}
+\entry{\code {biops.a68}}{22}
+\initial {C}
+\entry{\code {centities.a68}}{23}
+\entry{\code {cif}}{7}
+\entry{\code {clauses.a68}}{23}
+\entry{\code {COLLECTION THRESHOLD}}{33}
+\entry{\code {common.a68}}{23}
+\entry{\code {compiler.a68}}{23}
+\entry{\code {coutput.a68}}{23}
+\entry{\code {ctrans directory}}{21}
+\entry{\code {ctrans_version.a68}}{23}
+\entry{\code {ctype}}{25}
+\initial {D}
+\entry{\code {declare c temporary}}{25}
+\entry{\code {denotations.a68}}{23}
+\initial {E}
+\entry{\code {elements}}{33}
+\entry{\code {entryandreturn.a68}}{23}
+\entry{\code {environ.a68}}{23}
+\entry{\code {environment.a68}}{23}
+\entry{\code {evalbase.a68}}{23}
+\entry{\code {evaluator.a68}}{24}
+\initial {F}
+\entry{\code {find deflexed mode}}{25}
+\initial {H}
+\entry{\code {HEAP INCREMENT}}{33}
+\initial {I}
+\entry{\code {identifiers.a68}}{24}
+\entry{\code {idtable.a68}}{24}
+\entry{\code {incenviron.a68}}{24}
+\entry{\code {incid.a68}}{24}
+\entry{\code {incimperatives.a68}}{24}
+\entry{\code {incinstallation.a68}}{24}
+\entry{\code {include directory}}{21}
+\entry{\code {incmode.a68}}{24}
+\entry{\code {incoperfn.a68}}{24}
+\entry{\code {incvalue.a68}}{25}
+\entry{\code {initialiser.a68}}{25}
+\initial {L}
+\entry{\code {liba68prel}}{34}
+\entry{\code {liba68prel directory}}{21}
+\entry{\code {liblookup.a68}}{25}
+\entry{\code {library directory}}{21}
+\entry{\code {loads.a68}}{25}
+\entry{\code {lookup.a68}}{25}
+\entry{\code {loops.a68}}{25}
+\initial {M}
+\entry{\code {MAX HEAP SIZE}}{32}
+\entry{\code {message.a68}}{25}
+\entry{\code {messageproc}}{7}
+\entry{\code {MIN HEAP SIZE}}{32}
+\entry{\code {MIN SEGMENT SIZE}}{32}
+\entry{\code {mnemonics.a68}}{25}
+\entry{\code {modes.a68}}{25}
+\entry{\code {modules.a68}}{25}
+\entry{\code {moduletracer.a68}}{26}
+\initial {O}
+\entry{\code {oper.a68}}{26}
+\entry{\code {operators.a68}}{26}
+\entry{\code {oscommon}}{7}
+\entry{\code {oserrors}}{7}
+\entry{\code {osfiles}}{7}
+\entry{\code {osgc}}{7}
+\entry{\code {osif}}{7}
+\entry{\code {osmisc}}{7}
+\entry{\code {osshell}}{7}
+\entry{\code {ossignals}}{7}
+\initial {P}
+\entry{\code {POLICY}}{32}
+\initial {R}
+\entry{\code {refills}}{33}
+\entry{\code {RESIZE1ALLOCATION}}{30}
+\entry{\code {RESIZENALLOCATION}}{31}
+\entry{\code {rscompiler.a68}}{26}
+\initial {S}
+\entry{\code {shell.a68}}{26}
+\entry{\code {strops}}{7}
+\initial {T}
+\entry{\code {tracer.a68}}{26}
+\initial {U}
+\entry{\code {unionaids.a68}}{26}
+\entry{\code {uniquenameserver.a68}}{26}
+\entry{\code {usefulops}}{7}
+\initial {V}
+\entry{\code {VALIDPTR}}{30}
+\entry{\code {values.a68}}{26}
+\initial {W}
+\entry{\code {write c typedef}}{25}

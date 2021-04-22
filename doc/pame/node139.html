@@ -1,0 +1,516 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 5</title>
+<meta name="description" content="chapter 5">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node140.html">
+<link rel="previous" href="node138.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node140.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3091"
+  href="node140.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3085"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3079"
+  href="node138.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3087"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3089"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3092"
+  href="node140.html">Chapter 6</a>
+<b> Up:</b> <a name="tex2html3086"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3080"
+  href="node138.html">Chapter 4</a>
+ &nbsp; <b>  <a name="tex2html3088"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3090"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001650000000000000000"></a><a name="app-v"></a>
+<br>
+Chapter 5
+</h1><dl>
+<dt><strong><a href="node49.html#ex-v-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-i"></a>5.1</strong></dt>
+<dd><code>REF INT</code>
+</dd>
+<dt><strong><a href="node49.html#ex-v-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-ii"></a>5.2</strong></dt>
+<dd><code>REAL</code>
+</dd>
+<dt><strong><a href="node49.html#ex-v-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-iii"></a>5.3</strong></dt>
+<dd>The right-hand side of the identity declaration
+should yield a value of mode <code>INT</code>. Insert <code>ENTIER</code> or
+<code>ROUND</code> before the <code>r</code>.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node50.html#ex-v-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-iv"></a>5.4</strong></dt>
+<dd>No value has been assigned to <code>x</code> when the second
+assignment is elaborated.
+</dd>
+<dt><strong><a href="node50.html#ex-v-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-v"></a>5.5</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>A name with mode <code>REF REAL</code>.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>The real number denoted by <code>2.5</code> with
+mode <code>REAL</code>.
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node50.html#ex-v-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-vi"></a>5.6</strong></dt>
+<dd><code>1.166666</code><span class="math">...</span>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node52.html#ex-v-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-vii"></a>5.7</strong></dt>
+<dd>A name with mode
+<code>REF[,]REAL</code>.
+</dd>
+<dt><strong><a href="node52.html#ex-v-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-viii"></a>5.8</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>The
+bounds of the slice on the left-hand side of the assignment are
+<code>[-2:0]</code>, but the bounds of <code>n</code> are <code>[1:3]</code>. The
+assignment will cause a run-time error.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>You could write <code>m[5,]:=m[,-1]</code>, but it
+is unlikely that you would get what you wanted because the second
+column overlaps the third row. Here is a solution guaranteed to work:-
+<pre>
+   []INT temp = m[,-1];
+   m[5,]:=temp[@-2]
+</pre>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node52.html#ex-v-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-ix"></a>5.9</strong></dt>
+<dd>There is no known formula
+which will tell you how big the sieve must be to find the
+365<sup>th</sup> prime; you just have to guess. A sieve with <code>size</code>
+equal to 5000 suffices. You need a counter for the primes. The
+complete program is:-
+<pre>
+   PROGRAM ex5 9 CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size=5000;
+      REF[]BOOL flags = LOC[2:size]BOOL;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         flags[i]:=TRUE
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k FROM i*2 BY --i TO UPB flags
+            DO
+               flags[k]:=FALSE
+               CO Remove multiples of i CO
+            OD
+         FI
+      OD;
+
+      REF INT count = LOC INT:=0;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i] ANDTH (count+:=1)=365
+         THEN print(i)
+         FI
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node53.html#ex-v-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-x"></a>5.10</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>A name of mode
+<code>REF FLEX[]CHAR</code>.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>1 and 5.
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node54.html#ex-v-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xi"></a>5.11</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 11 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING ss = LOC STRING;
+      FOR c FROM ABS "a" TO ABS "z"
+      DO
+         ss:="a"-REPR c;  print((ss,newline))
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node54.html#ex-v-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xii"></a>5.12</strong></dt>
+<dd> <pre>
+   REF FLEX[,]REAL f=
+      LOC FLEX[1:0,1:0]REAL;
+   f:=(5.0,10.0,15.0,20.0);
+   print((1 LWB f,1 UPB f,
+          2 LWB f,2 UPB f))
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node55.html#ex-v-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xiii"></a>5.13</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 13 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF REAL a = LOC REAL,
+            b = LOC REAL;
+
+      print(Enter two real numbers-&gt;");
+      read((a,b,newline));
+      print(("Their sum is",a+b,newline,
+           "Their product is",a*b))
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node55.html#ex-v-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xiv"></a>5.14</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING line = LOC STRING;
+
+      DO
+        read((line,newline));
+        IF UPB line = 0
+        THEN stop #terminate the program#
+        ELSE
+          FOR i
+          FROM UPB line BY -1 TO LWB line
+          DO
+            print(line[i])
+          OD;
+          print(newline)
+        FI
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node56.html#ex-v-xv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xv"></a>5.15</strong></dt>
+<dd> <pre>
+REF[]REAL r=
+   LOC[(REF INT s=LOC INT; read(s); s)]REAL
+</pre>
+</dd>
+<dt><strong><a href="node56.html#ex-v-xvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xvi"></a>5.16</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 16 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT number=LOC INT;
+      read(number);
+
+      REF[]INT multiple=LOC[number]INT;
+      read(multiple);
+      REF INT sum=LOC INT:=0;
+
+      FOR i TO number
+      DO
+        sum+:=multiple[i]
+      OD;
+      print(sum)
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node57.html#ex-v-xvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xvii"></a>5.17</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 17 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT neg = LOC INT:=0,
+              pos = LOC INT:=0;
+
+      WHILE
+         REF INT i=LOC INT;
+         read((i.newline));
+         i /= 0
+      DO
+         (i &lt; 0|neg|pos) +:= i
+      OD;
+
+      print(("Sum of negative integers =",
+             neg,newline,
+             "Sum of positive integers =",
+             pos,newline))
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node57.html#ex-v-xviii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xviii"></a>5.18</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 18 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING line = LOC STRING;
+
+      WHILE
+         read((line,newline));
+         UPB line /= 0
+      DO
+        REF INT v=LOC INT:=0;
+
+        FOR i TO UPB line
+        DO
+          v+:=ABS line[i]*i
+        OD;
+
+        print((line,v,newline))
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node58.html#ex-v-xix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xix"></a>5.19</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>[100]CHAR rc</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>FLEX[1:0]INT fi</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>BOOL b:=TRUE</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node58.html#ex-v-xx"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xx"></a>5.20</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF INT a=LOC INT, b=LOC INT, c=LOC INT</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF REAL x=LOC REAL;</code>
+<br>
+<code>REF[]CHAR y=LOC[5]CHAR;</code>
+<br>
+<code>REF[,]REAL z=LOC[3,3]REAL</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REF FLEX[]CHAR s=LOC FLEX[1:0]CHAR</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node59.html#ex-v-xxi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xxi"></a>5.21</strong></dt>
+<dd><code>REF[]INT m=LOC[1000]INT;</code> <code>[1000]INT m</code>
+</dd>
+<dt><strong><a href="node59.html#ex-v-xxii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xxii"></a>5.22</strong></dt>
+<dd> <pre>
+   PROGRAM ex5 22 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL sum:=0.0, salary, INT num:=0;
+
+      WHILE read(salary);  salary /= -1.00
+      DO
+        sum+:=salary;  num+:=1
+      OD;
+
+      print(("Average salary=",sum/num))
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node59.html#ex-v-xxiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-v-xxiii"></a>5.23</strong></dt>
+<dd>When writing a program as involved as this, do not expect to get
+it right first time. In practice, a programmer adds fine details to a
+program after she has designed the main structure.
+<a name="name-ex5-12-3"></a><pre>
+   PROGRAM ex5 23 CONTEXT VOID
+   USE standard
+   BEGIN
+      BOOL in word:=FALSE,
+      STRING line;
+      INT line start, line finish;
+      INT word start, word finish;
+
+      read((line,newline));
+      line start:=LWB line;
+      line finish:=UPB line;
+
+      WHILE line[line start]=blank
+                   &amp;
+            line start&lt;=UPB line
+      DO
+        line start+:=1
+      OD;
+
+      WHILE line[line finish]=blank
+                   &amp;
+            line finish&gt;=line start
+      DO
+        line finish-:=1
+      OD;
+
+      line:=line[line start:line finish]
+                       +blank;
+
+      FOR c FROM LWB line
+      WHILE c &lt;= UPB line
+      DO
+        CHAR lc = line[c];
+
+        IF   lc /= blank &amp; NOT in word
+        THEN word start:=c;  in word:=TRUE
+        ELIF lc = blank &amp; NOT in word
+        THEN SKIP
+        ELIF lc /= blank &amp; in word
+        THEN SKIP
+        ELSE #lc = blank &amp; in word#
+          word finish:=c-1;
+          in word:=FALSE;
+          print((line[
+                  word start:word finish],
+                 newline))
+        FI
+      OD
+   END
+   FINISH
+</pre>
+Notice that both <code>word start</code> and <code>word finish</code> are
+made to refer to new values before being used. This is a good check
+that you are writing the program properly. Notice also that the four
+possible states of the compound condition on line 26 are carefully
+spelled out on lines&nbsp;28, 30 and&nbsp;32.
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3091"
+  href="node140.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3085"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3079"
+  href="node138.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3087"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3089"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3092"
+  href="node140.html">Chapter 6</a>
+<b> Up:</b> <a name="tex2html3086"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3080"
+  href="node138.html">Chapter 4</a>
+ &nbsp; <b>  <a name="tex2html3088"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3090"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

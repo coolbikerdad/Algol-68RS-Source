@@ -1,0 +1,887 @@
+DECS  environment  CONTEXT VOID  USE
+*L    cif, osif, usefulops,
+      incinstallation, moduletracer, message, ctrans_version:
+
+configinfo A68CONFIG "$Id: environment.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.28 
+31:01:95  33.002  DCT   PCPort-1  	-n inverted, -f <n> filename truncation added
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+  ENVIRONMENT
+
+  Command line parsing and flag setting.
+  Error reporting.
+  05:10:93  -V and -version options added - compilation continues...  DCT
+}
+
+MODE STR = VECTOR [0] CHAR,
+     RVC = REF VECTOR [] CHAR ;
+RVC nullstr = HEAP VECTOR [0] CHAR ; { zero length string }
+RVC nilstr = NIL ; { null pointer }
+
+{ COMMAND LINE OPTIONS }
+
+{ ... flags and defaults}
+
+BOOL
+  verbose option := FALSE,            { -v, controls generation of C comments }
+  line option := FALSE,               { -n, generates #line directive }
+  dot option := FALSE,                { enables dot stropping }
+  quote option := FALSE,              { enables quote stropping }
+  skip option := FALSE,               { suppresses run-time error when missing
+                                        VOID OUT-part selected }
+  tilde option := FALSE,              { allows tilde as valid identifier
+                                        character }
+  stream option := FALSE,             { enables tracing of RS compiler
+                                        stream language }
+  stream out option := FALSE,         { *** need to review this *** }
+  optbool option := FALSE,            { maps AND->ANDTH OR->OREL }
+  trace option 	:= FALSE,             { *** need to review this *** }
+  keeplist option := FALSE,           { allows extension of keeplist to
+                                        maintain compatibility }
+  portable option := FALSE,           { enables warnings of portability
+                                        problems *** review this ***}
+  long long option := FALSE,          { -l, (-s) makes translator accept
+                                       LONG LONG modes instead of SHORT SHORT }
+  no struct result option := TRUE,    { -r, generated C passes struct function
+                                        results as extra reference parameter }
+  closure mark option := FALSE,       { -c, causes closures (on heap) to be
+                                        marked with a special value for
+                                        debugging }
+  closure on stack option := FALSE,   { -C, causes closures to be (unsafely)
+                                        put on stack instead of heap }
+  check option := FALSE,              { -check, don't generate C file }
+  old alien option := FALSE,          { -oldalien, allows old-fashioned ALIEN declarations }
+  tempfile option := FALSE;           { -tmp, causes .c and C stream files to be 
+                                        created in /tmp which is usually memory-mapped
+                                        on Suns }
+
+BOOL filename_expected := TRUE;       { suppresses usage error for missing source filename when
+                                        set to FALSE }
+{
+  C stream policy -- implemented in coutput
+  The currently supported policies are:
+}
+INT
+  file_cstreams = 1,      { "-cstream file" => all C streams implemented as files }
+  memory_cstreams = 2;    { "-cstream memory" => all C streams implemented in memory }
+ 
+INT cstream_policy := memory_cstreams;
+
+{ file names etc. }
+RVC source file name := nilstr,      { as supplied as argument }
+    basename source file := nilstr,  { without directory and suffix }
+    source file suffix := nilstr,    { just the suffix, including "." }
+    seed file name := nilstr;
+
+RVC current_directory := nilstr;
+
+{ directory paths for module information and C files }
+MODE DIRLIST = STRUCT(REF VECTOR [] CHAR dir,REF DIRLIST next);
+REF DIRLIST nil_dirlist = NIL;
+REF DIRLIST modinfo_dirlist := nil_dirlist;
+REF DIRLIST cfile_dirlist := nil_dirlist;
+
+{ directory containing modinfo files of library modules }
+REF DIRLIST library_directory := nil_dirlist;
+
+{ staredit flags }
+[ABS "0":ABS "Z"] BOOL stars;
+FORALL star IN stars DO star := FALSE OD;
+
+{ unique name option and default }
+MODE
+  FROMCFILE = STRUCT(INT cfile),
+  FROMSEEDFILE = STRUCT(INT seedfile),
+  NAMESEEDSPEC = UNION(FROMCFILE,FROMSEEDFILE,UNAME {from -uname option directly},VOID);
+
+FROMCFILE fromcfile;
+FROMSEEDFILE fromseedfile;
+NAMESEEDSPEC uname_option := fromseedfile;
+
+{ file name truncation for FAT (DOS) filestore &c }
+
+INT  filename truncate:= maxid;	{ default value = maxid = 32 characters }
+
+{ ... tracing options 
+trace levels:
+	1	trace tree
+	2	trace tree and ids
+	3	trace tree and ids at all levels
+	4	trace tree before and after evaluation, and ids
+	5	trace tree before and after evaluation, and ids; at all levels
+	6	Undefined
+	7	Fullest possible tracing
+}
+
+INT trace level  := 0 ;
+INT default trace level = 2,
+    max trace level     = 7 ;
+
+INT debug level := 0; 
+
+
+{ ERROR REPORTING }
+
+INT line number := 0;
+
+INT	comment severity	= 0,
+	warning severity	= 1,
+	recoverable error severity = 2,
+	error severity		= 3,
+	terminal error severity = 4;
+
+INT	greatest severity { error in compilation } := 0;
+
+INT	comment_count := 0,	{ counts of different kinds of error }
+	warning_count := 0,
+	error_count := 0;
+
+PROC  type line on terminal = ( VECTOR [] CHAR line ) VOID:
+  ( write_buffer(stdout, line, ignore_msg); write_buffer(stdout, newline_char, ignore_msg) );
+
+PROC (VECTOR [] CHAR) VOID list = type line on terminal;
+
+PROC list_nonl = ( VECTOR [] CHAR line ) VOID: write_buffer(stdout, line, ignore_msg);
+
+PROC	finish message = VOID:
+{	Print diagnostic message referring to the number of errors, warnings
+	or comments in the compilation.
+}
+BEGIN
+	INT	number;
+	VECTOR [] CHAR type =
+	CASE greatest severity + 1 IN
+		IF   	comment_count > 0
+		THEN	number := comment_count; "comment(s)"
+		ELSE	number := 0; ""
+		FI,
+		( number := warning_count; "warning(s)" ),
+		( number := 0; "" ),
+		( number := error_count; "error(s)" )
+	OUT	number := 0; ""
+	ESAC;
+	IF number > 0
+	THEN	type line on terminal(
+		"End of diagnostics: " + whole( number, 0 ) + " " + type +
+		" in compilation" )
+	FI
+END;
+
+{ Aborts Translator - called at end if compilation errors }
+PROC	abort = VOID:	exit(1);	
+
+PROC	terminate normally = VOID: exit(0);
+
+PROC	primitive fault =
+( INT this severity, VECTOR [] CHAR message, INT char position ) VOID:
+BEGIN
+	IF	this severity > greatest severity
+	THEN	greatest severity := this severity
+	FI;
+	CASE this severity + 1
+	IN	comment_count PLUSAB 1,
+		warning_count PLUSAB 1,
+		SKIP,
+		error_count PLUSAB 1
+	OUT
+		SKIP
+	ESAC;
+	write_buffer(stderr,
+                """" + source file name + """" +
+		IF this severity /= comment severity
+                THEN ", line " + whole( line number, 0 )
+                ELSE ""
+                FI + ": " +
+		CASE this severity + 1
+		IN	"COMMENT ",
+			"WARNING ",
+			"RECOVERABLE ERROR ",
+			"ERROR ",
+			"FATAL ERROR "
+		OUT	"ERROR OF UNKNOWN SEVERITY "
+		ESAC +
+		message
+		+
+		IF	char position = 0
+		THEN	""
+		ELSE	" (at character " + whole( char position, 0 ) + ")"
+		FI,
+                ignore_msg
+	);
+        write_buffer(stderr,newline_char,ignore_msg)
+END;
+
+{--------------------------------------------------------------------}
+
+PROC	parameterised message =
+( INT message number, [] VECTOR [] CHAR parameters, INT this severity ) VOID:
+{
+Performs string substitution on the parameterised message identified by 
+'message number'.  When the control string "^a" is encountered in the 
+parameterised message the next 'parameter' is substituted.  'This severity' is 
+passed on to primitive fault
+}
+BEGIN
+    VECTOR[] CHAR mess = message(message number);
+    VECTOR[240] CHAR m; { only a single line of text allowed - no upper bound
+                          checking ! }
+    INT mind := 0;
+    BOOL hat := FALSE;
+    CHAR c;
+                        
+    INT paramcount = UPB parameters ;
+    INT nextparam := 0 ;
+
+    PROC outchars = ( VECTOR[] CHAR v) VOID:
+    BEGIN INT u = UPB v;
+	  m[mind + 1 : mind + u] := v;
+	  mind +:= u
+    END;
+
+    FOR i TO UPB mess
+    DO c := mess[i];
+         IF hat ANDTH c /= "^"
+         THEN hat := FALSE;
+	      IF c = "a"
+              ANDTH (nextparam +:= 1) <= paramcount
+	      THEN outchars( parameters[ nextparam ] )
+	      ELSE {print out literally}
+                   m[mind + 1 : mind + 2] := "^" + c ;
+                   mind +:= 2
+	      FI
+         ELIF NOT hat ANDTH c = "^"
+         THEN hat := TRUE
+         ELSE m[mind +:= 1] := c;
+	      hat := FALSE
+         FI
+    OD;
+    primitive fault( this severity, m[ : mind], 0 )
+END; {parameterised message}
+
+PROC pmessage = ( INT message number, [] VECTOR [] CHAR parameters ) VOID:
+{
+Calls parameterised message with error severity; presents the same 
+interface as the original Multics procedure; used by other modules
+}
+    parameterised message( message number, parameters, error severity ) ;
+
+PROC (INT,[]VECTOR [] CHAR)VOID perror = pmessage;
+
+PROC pcomment = ( INT message number, [] VECTOR [] CHAR parameters ) VOID:
+{
+Calls parameterised message with comment severity
+}
+    parameterised message( message number, parameters, comment severity ) ;
+
+PROC pwarning = ( INT message number, [] VECTOR [] CHAR parameters ) VOID:
+{       
+Calls parameterised message with warning severity
+}
+    parameterised message( message number, parameters, warning severity ) ;
+
+PROC pportabilitywarning = ( INT message number, [] VECTOR [] CHAR parameters ) VOID:
+{       
+Calls parameterised message with warning severity
+}
+IF	portable option
+THEN
+    parameterised message( message number, parameters, warning severity )
+FI;
+
+PROC pterminal error = ( INT message number,
+                         [] VECTOR [] CHAR parameters ) VOID:
+{
+Calls parameterised message with terminal error severity
+}
+BEGIN
+	{ only used in environment }
+	parameterised message
+	( message number,
+	  parameters,
+	  terminal error severity
+	);
+	exit( 1 )
+END ;
+
+PROC	fault = ( VECTOR [] CHAR message, INT char position ) VOID:
+	{ For RS compiler interface }
+	primitive fault( error severity, message, char position );
+
+PROC	comment = ( INT message number ) VOID: 
+	primitive fault( comment severity, message( message number ), 0 );
+
+PROC	warning = ( INT message number ) VOID: 
+	primitive fault( warning severity, message( message number ), 0 );
+
+PROC	portability warning = ( INT message number ) VOID:
+IF	portable option
+THEN
+    	primitive fault( warning severity, message( message number ), 0 )
+FI;
+
+PROC	error = ( INT message number ) VOID: 
+	primitive fault( error severity, message( message number ), 0 );
+
+PROC	terminal error = ( INT message number ) VOID:
+BEGIN
+	primitive fault( terminal error severity, message(message number), 0 );
+	exit( 1 )
+END;
+
+OP	ASSERT = (VECTOR [] CHAR assertion,BOOL valid) VOID:
+IF	NOT valid
+THEN	type line on terminal(assertion);
+	terminal error( 661 {invalid assertion } )
+FI;
+
+PROC  write_stdout = (STR  s) VOID:
+BEGIN
+	write_buffer(stdout, s, ignore_msg);
+	write_buffer(stdout, newline_char, ignore_msg)
+END;
+
+{
+  CONFIGURATION INFORMATION
+
+  Configuration management information to be included in generated C
+}
+
+MODE
+  MODINFOLIST = STRUCT( REF VECTOR [] CHAR modinfo_file, REF MODINFOLIST next),
+  ENVINFO = STRUCT(REF VECTOR [] CHAR env_name, env_value, REF ENVINFO next),
+  CONFIGINFO = STRUCT(
+    REF VECTOR [] CHAR version,
+    LONG INT translation time,
+    REF VECTOR [] CHAR source file,
+    UNAME name seed,
+    NAMESEEDSPEC name seed origin,
+    REF MODINFOLIST used_modules,
+    REF VECTOR [] CHAR command line,
+    REF ENVINFO environment
+  );
+
+REF MODINFOLIST nil_modinfolist = NIL;
+REF ENVINFO nil_envinfo = NIL;
+
+CONFIGINFO config_info := (
+  CASTRVC ctrans_version,
+  LONG 0,
+  nilstr,
+  "       ",
+  EMPTY,
+  nil_modinfolist,
+  nilstr,
+  nil_envinfo
+);
+  
+
+{ COMMAND LINE AND ENVIRONMENT PROCESSING }
+
+PROC set params = VOID:
+{
+  Validates command line arguments (called once only, from 'shell') and environment
+    variables.
+  Sets 'source file name' and 'basename source file'.
+  Sets option flags and values.
+}
+BEGIN
+    PROC set filename = (STR filespec) VOID:
+    {
+    Sets internal variables 'source file name' and 'basename source file'
+    from the filespec provided.
+    }                                   
+    BEGIN
+        source file name := CASTRVC filespec;
+	    
+        INT start := UPB source file name;
+	WHILE start >= 1 ANDTH source file name[start] /= "/"
+	DO
+	  start -:= 1
+	OD;
+	IF start = 0 THEN start := 1 FI;
+        IF source file name[start] = "/" THEN start +:= 1 FI;
+
+	INT end := UPB source file name;
+	WHILE end > start ANDTH source file name[ end ] /= "."
+	DO end -:= 1 OD;
+	IF start /= end THEN end -:= 1 FI;
+
+        basename source file := CASTRVC source file name[ start : end ];
+        source file suffix := CASTRVC source file name [end+1:]
+    END;
+
+    PROC read env variables = VOID:
+    {
+      Initialise options from environment variables.
+      They may be modified by command line arguments.
+    }
+    BEGIN
+      PROC read env = (VECTOR [] CHAR envname) REF VECTOR [] CHAR:
+      { read env variable and keep value for output in C file }
+      ( RVC value = CASTRVC get_env_var(envname);
+        environment OF config_info := HEAP ENVINFO :=
+          (CASTRVC envname, value, environment OF config_info);
+        value
+      );
+
+      { Unique name seed }
+      IF
+        seed file name := read env("CTRANS_NAMESEED");  { for backwards compatibility }
+        RVC a68_nameseed = read env("A68_NAMESEED");  { "approved" name }
+        UPB a68_nameseed > 0
+      THEN
+        seed file name := a68_nameseed
+      FI;
+
+      { staredit flags, may be overridden or added to by '-staredit' option }
+      IF
+        REF VECTOR [] CHAR a68_staredit = read env("A68_STAREDIT");
+        UPB a68_staredit > 0
+      THEN
+        pcomment(284,a68_staredit);
+        FORALL c IN a68_staredit
+        DO
+          IF NOT ( (c >= "0" ANDTH c <= "9") OREL (c >= "A" ANDTH c <= "Z"))
+          THEN
+            pterminal error(282,c)
+          ELSE
+            stars[ABS c] := TRUE
+          FI
+        OD
+      FI;
+
+      { directories for finding modinfo files }
+      IF
+        PROC pushdir = (REF VECTOR [] CHAR dir) VOID:
+          modinfo_dirlist := HEAP DIRLIST := (dir,modinfo_dirlist);
+
+        pushdir(current_directory);  { always search current directory last }
+
+        REF VECTOR [] CHAR a68_dir = read env("A68_DIR");
+        UPB a68_dir > 0
+      THEN { read colon-separated list backwards, pushing dirs onto list as found }
+
+        INT i := UPB a68_dir;  { index }
+        INT end := i;          { end of dir currently being read }
+
+        FROM i BY -1 TO 1
+        DO
+          IF a68_dir[i] = ":"
+          THEN
+            pushdir(a68_dir[i+1:end]);
+            end := i-1
+          FI;
+          i -:= 1
+        OD;
+
+        pushdir(a68_dir[:end])
+      FI;
+
+      { directories for finding C files }
+      IF
+        PROC pushdir = (REF VECTOR [] CHAR dir) VOID:
+          cfile_dirlist := HEAP DIRLIST := (dir,cfile_dirlist);
+
+        pushdir(current_directory);  { always search current directory last }
+
+        REF VECTOR [] CHAR a68_cdir = read env("A68_CDIR");
+        UPB a68_cdir > 0
+      THEN { read colon-separated list backwards, pushing dirs onto list as found }
+
+        INT i := UPB a68_cdir;  { index }
+        INT end := i;          { end of dir currently being read }
+
+        FROM i BY -1 TO 1
+        DO
+          IF a68_cdir[i] = ":"
+          THEN
+            pushdir(a68_cdir[i+1:end]);
+            end := i-1
+          FI;
+          i -:= 1
+        OD;
+
+        pushdir(a68_cdir[:end])
+      FI;
+
+      { directory for finding library modinfo files }
+      IF
+        REF VECTOR [] CHAR libdir = read env("A68_LIB");
+        UPB libdir > 0
+      THEN
+        library_directory := HEAP DIRLIST := (libdir,nil_dirlist)
+      FI
+    END;
+
+    VECTOR [] VECTOR [] CHAR argv = get_args;
+    INT argc = UPB argv;
+
+    { various config items .. }
+    translation time OF config_info := get_time;
+    current_directory := CASTRVC get_working_directory;
+
+    read env variables;
+
+    INT file arg index := 0; { set on termination of flag loop }
+    INT arg index := 2;      { index into argv -- skip 1st element (= progname) }
+
+    WHILE file arg index = 0 ANDTH arg index <= argc
+    DO
+      VECTOR [] CHAR this arg = argv[arg index];
+
+      IF
+        this arg[1] = "-"
+      THEN
+        arg index +:= 1;
+
+        IF   this arg = "-v" OREL this arg = "-verbose"
+        THEN verbose option := TRUE
+
+        ELIF this arg = "-n" OREL this arg = "-line"
+        THEN line option := TRUE
+
+	ELIF this arg = "-f" OREL this arg = "-filename_truncate"
+	THEN   IF NOT (filename truncate VCDECTOINT argv[arg index])
+               THEN  pterminal error(277, argv[arg index])
+               FI;
+	       arg index PLUSAB 1
+
+        ELIF this arg = "-l" OREL this arg = "-long"
+        THEN long long option := TRUE
+
+        ELIF this arg = "-s" OREL this arg = "-short"
+        THEN long long option := FALSE
+
+        ELIF this arg = "-r" OREL this arg = "-return_structs"
+        THEN no struct result option := FALSE
+
+        ELIF this arg = "-c" OREL this arg = "-mark_closures"
+        THEN closure mark option := TRUE
+
+        ELIF this arg = "-C" OREL this arg = "-stack_closures"
+        THEN closure on stack option := TRUE
+
+        ELIF this arg = "-V"
+        THEN
+          write_stdout(ctrans_version);
+          filename_expected := FALSE
+
+        ELIF this arg = "-Version"  OREL  this arg = "-version"
+        THEN
+      	  write_stdout(ctrans_version);
+      	  show_a68config(write_stdout);
+          write_stdout("");
+          filename_expected := FALSE
+
+        ELIF this arg = "-staredit"
+        THEN
+          VECTOR [] CHAR starflags = argv[arg index];
+          INT first flag; BOOL setting;
+
+          IF (starflags[1] = "+") OREL (starflags[1] = "-")
+          THEN { amend A68_STAREDIT setting }
+            first flag := 2;
+            setting := starflags[1] = "+"
+          ELSE { override A68_STAREDIT settings }
+            first flag := 1;
+            setting := TRUE;
+            FORALL b IN stars DO b := FALSE OD
+          FI;
+
+          FORALL c IN starflags[first flag:]
+          DO
+            IF NOT ( (c >= "0" ANDTH c <= "9") OREL (c >= "A" ANDTH c <= "Z"))
+            THEN
+              pterminal error(283,c)
+            ELSE
+              stars[ABS c] := setting
+            FI
+          OD;
+          arg index +:= 1
+
+        ELIF this arg = "-dir"
+        THEN
+          modinfo_dirlist := HEAP DIRLIST := (CASTRVC argv[arg index],modinfo_dirlist);
+          arg index +:= 1
+
+        ELIF this arg = "-cdir"
+        THEN
+          cfile_dirlist := HEAP DIRLIST := (CASTRVC argv[arg index],cfile_dirlist);
+          arg index +:= 1
+
+        ELIF this arg = "-lib"
+        THEN
+          library_directory := HEAP DIRLIST := (CASTRVC argv[arg index],nil_dirlist);
+          arg index +:= 1
+
+        ELIF this arg = "-nolib"
+        THEN
+          library_directory := nil_dirlist
+
+        ELIF this arg = "-uname"
+        THEN
+          IF
+            VECTOR [] CHAR uname = argv[arg index];
+            arg index +:= 1;
+            uname = "seedfile"
+          THEN
+            uname_option := fromseedfile
+          ELIF uname = "cfile"
+          THEN
+            uname_option := fromcfile
+          ELSE
+            { It's a unique name -- check length }
+            IF
+              INT uname_len = UPB uname;
+              uname_len >= maxuname
+            THEN
+              UNAME u; REF VECTOR [] CHAR (u) := uname[:maxuname];
+              uname_option := u
+            ELIF
+              uname_len < maxuname
+            THEN
+              UNAME u; REF VECTOR [] CHAR (u) := uname + ("A" * (maxuname - uname_len));
+              uname_option := u
+            FI;
+            { check all uppercase chars (assumes ASCII) }
+            BOOL ok := TRUE;
+            FORALL c IN (uname_option|(UNAME uname):uname) WHILE ok
+            DO
+              ok := (ABS c >= ABS "A") ANDTH (ABS c <= ABS "Z")
+            OD;
+
+            IF NOT ok THEN pterminalerror(286,(uname_option|(UNAME uname):uname)) FI
+          FI
+        ELIF this arg = "-stream" THEN stream option := TRUE
+        ELIF this arg = "-dot" THEN dot option := TRUE
+        ELIF this arg = "-quote" THEN quote option := TRUE
+        ELIF this arg = "-skip" THEN skip option := TRUE
+        ELIF this arg = "-tilde" THEN tilde option := TRUE
+        ELIF this arg = "-optbool" THEN optbool option := TRUE
+        ELIF this arg = "-keeplist" THEN keeplist option := TRUE
+        ELIF this arg = "-t" OREL this arg = "-trace"
+        THEN
+          IF NOT (trace level VCDECTOINT argv[arg index])
+          THEN
+            pterminal error(277, argv[arg index])
+          FI;
+          arg index +:= 1
+        ELIF this arg = "-d" OREL this arg = "-debug_level"
+        THEN
+          IF NOT (debug level VCDECTOINT argv[arg index])
+          THEN
+            pterminal error(277, argv[arg index])
+          FI;
+          arg index +:= 1
+        ELIF this arg = "-m" OREL this arg = "-debug_module"
+        THEN
+          VECTOR [] CHAR module = argv[arg index];
+          BOOL found module = debug level SETTRACELEVEL module;
+          arg index +:= 1;
+          IF NOT found module THEN pwarning( 280, module) FI
+        ELIF this arg = "-cstream"
+        THEN
+          IF
+            VECTOR [] CHAR policy = argv[arg index];
+            arg index +:= 1;
+            policy = "file"
+          THEN cstream_policy := file_cstreams
+          ELIF policy = "memory"
+          THEN cstream_policy := memory_cstreams
+          ELSE
+            pterminal error( 285 {bad policy}, policy )
+          FI
+
+        ELIF this arg = "-tmp"
+        THEN
+          tempfile option := TRUE
+
+        ELIF this arg = "-check"
+        THEN
+          check option := TRUE
+
+        ELIF this arg = "-oldalien"
+        THEN
+          old alien option := TRUE
+
+        ELSE
+          pterminal error( 271 {Unrecognised option}, this arg )
+        FI
+      ELSE
+        file arg index := arg index
+      FI
+    OD;      
+
+    IF
+	argc = file arg index
+    THEN
+	set filename(argv[argc])
+    ELIF filename_expected
+    THEN
+	terminal error( 274 {Usage} )
+    ELSE
+        terminate normally
+    FI;
+
+    initialise messages( long long option )  { chooses correct strings for mode names }
+END ; {set params}
+
+
+{
+  DIRECTORY PATH SEARCHING
+}
+
+PROC find_and_open_file = ( VECTOR [] CHAR basename, REF DIRLIST dirlist, REF REF VECTOR [] CHAR full_filename ) FILE:
+{
+  Search for file on directory search path and open it.
+  Returns nil_file on failure.
+}
+BEGIN
+  REF DIRLIST this_dir := dirlist;
+  FILE file;
+
+  WHILE
+    this_dir ISNT nil_dirlist
+  DO
+    IF
+      REF REF VECTOR [] CHAR (full_filename) := CASTRVC (dir OF this_dir + "/" + basename);
+      file :=
+        open_file( full_filename, read_access, ignore_msg);
+      file ISNT nil_file
+    THEN
+      GOTO file_found
+    FI;
+    this_dir := next OF this_dir
+  OD;
+
+  nil_file
+  EXIT
+file_found:
+  file
+END;
+
+
+{ EXPRESSION TREE TRACING }
+
+BOOL trace on := FALSE;
+INT start line;
+
+PROC initialise trace = VOID:
+{
+Called by 'translate' to read the external ALGOL68_STARTLINE_ (Multics),
+and initialise 'start line' and 'trace on' accordingly.
+}
+BEGIN
+     start line := IF trace level > 0 
+                   THEN 1 {CCC or something you read from somewhere} 
+                   ELSE -1 {trace off} 
+                   FI;
+     trace on := start line >= 0
+END;
+
+
+PROC trace level flags = BITS:
+BEGIN
+{CCC	From tracer }
+    BITS { Trace options }
+       trace all levels = 16r800000,
+       trace space      = 16r400000,
+       trace ids        = 16r1000000,
+       long iddec       = 16r2000000,
+       trace tree       = 16r4000000,
+       trace tree after = 16r8000000,
+       trace regs before= 16r10000000,
+       trace regs after = 16r20000000,       
+       all reg environs = 16r100000,
+       full register    = 16r200000;
+
+     CASE trace level
+     IN
+	{1} trace tree,
+	{2} trace tree OR trace ids,
+	{3} trace tree OR trace all levels OR trace ids OR long iddec,
+	{4} trace tree OR trace ids OR trace tree after,
+	{5} trace tree OR trace all levels OR trace ids OR long iddec OR trace tree after,
+	{6} 8r0 {undefined yet},
+	{7} NOT 8r0
+     OUT
+	{0} 8r0 { no tracing }
+     ESAC
+
+END;
+
+SKIP
+
+KEEP
+    ASSERT ( VECTOR [] CHAR, BOOL ), RVC, 
+    abort, terminate normally, basename source file, source file suffix,
+    comment, debug level,
+    dot option, error, fault, 
+    finish message,
+    greatest severity, initialise trace, keeplist option, line number,
+    long long option, 
+    message, line option,
+    optbool option, pmessage, portability warning,
+    perror, pcomment, pwarning, pportabilitywarning, pterminal error,
+    quote option, set params, skip option, source file name, start line, 
+    stream option, stream out option,
+    terminal error, tilde option, filename truncate, trace level flags,
+    trace level, trace on, trace option, verbose option, warning,
+    no struct result option, closure mark option, closure on stack option,
+    cstream_policy, file_cstreams, memory_cstreams, check option,
+    tempfile option, old alien option,
+
+    FROMCFILE, FROMSEEDFILE, NAMESEEDSPEC, uname_option, 
+
+    list, list_nonl,
+    type line on terminal, 
+    stars, seed file name,
+    config_info, MODINFOLIST, nil_modinfolist, ENVINFO, nil_envinfo,
+    current_directory, find_and_open_file,
+    DIRLIST, modinfo_dirlist, cfile_dirlist,
+    library_directory, nil_dirlist
+FINISH
+
+{
+Local Variables:
+eval:(auto-fill-mode 0)
+End:
+}
+

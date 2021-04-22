@@ -1,0 +1,355 @@
+DECS  oper  CONTEXT VOID  USE
+      environment, incimperatives, incmode, incoperfn, values:
+
+configinfo A68CONFIG "$Id: oper.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT	one op		= 1,
+	two op		= 2,
+	param op	= 3,
+	param plus one op = 4,
+	default bound	= 5,
+	bound pack	= 6,
+	trim		= 7,
+	parameter pack	= 8,
+	call		= 9,
+	null op		= 10,
+	zero op		= 11,
+	format op	= 12;
+
+[] INT oper type =
+    (
+    {   1  statgrab	 } one op,
+    {   2  parampack	 } parameter pack,
+    {   3  select	 } one op,
+    {   4  copy 	 } one op,
+    {   5  trim 	 } trim,
+    {   6  simpleindex   } param plus one op,
+    {   7  trimindex     } param plus one op,
+    {   8  dyngrab	 } two op,
+    {   9  boundpack     } bound pack,
+    {  10  dyadic op     } two op,
+    {  11  monadic op    } one op,
+    {  12  straight      } two op,
+    {  13  prestraight   } null op,
+    {  14  strindex      } two op,
+    {  15  assign	 } two op,
+    {  16  default bound } default bound,
+    {  17  deref	 } one op,
+    {  18  call		 } call,
+    {  19  void		 } one op,
+    {  20  niltom	 } one op,
+    {  21  gotoproc      } one op,
+    {  22  gotom	 } one op,
+    {  23  realtocompl   } one op,
+    {  24  inttoreal     } one op,
+    {  25  68R inttobits } one op,
+    {  26  arrarr	 } one op,
+    {  27  vecarr	 } one op,
+    {  28  isvec	 } one op,
+    {  29  is		 } one op,
+    {  30  unite	 } one op,
+    {  31  uniteu	 } one op,
+    {  32  isarr	 } one op,
+    {  33  skiptom	 } one op,
+    {  34  vec		 } one op,
+    {  35  arr		 } one op,
+    {  36  deunite	 } one op,
+    {  37  bitstov[]bool } one op,
+    {  38  vac		 } one op,
+    {  39  ytypetom      } one op,
+    {  40  mtoxtype      } one op,
+    {  41  SPARE	 } 999,
+    {  42  SPARE	 } 999,
+    {  43  SPARE	 } 999,
+    {  44  SPARE	 } 999,
+    {  45  SPARE	 } 999,
+    {  46  SPARE	 } 999,
+    {  47  SPARE	 } 999,
+    {  48  SPARE	 } 999,
+    {  49  SPARE	 } 999,
+    { translator introduced ops: }
+    {  50  static generator } zero op,
+    {  51  format	    } format op
+    );
+
+MODE PARAMETERINFO = STRUCT( INT number, proc mode, REF VALUELIST parameters);
+
+PARAMETERINFO no parameterinfo = ( 0, no mode, NIL );
+
+PARAMETERINFO parameters := no parameterinfo;
+
+PROC break valuelist =
+( REF VALUELIST list, new back of front list,
+  INT index,
+  REF REF VALUELIST back list pointer
+) REF VALUELIST {front}:
+{
+	Breaks "list" into two.
+	"new back of first list" (commonly NIL) is joined to the back of the
+	first "index" elements of "list" and delivered.
+	The rest of "list" is assigned to "back list pointer".
+	e.g. to take the two top elements off value stack:-
+	two values := break valuelist( value stack, NIL, 2, value stack )
+}
+BEGIN
+    REF VALUELIST front := list;
+    REF REF VALUELIST break point := front;
+    TO index DO break point := rest OF break point OD;
+    back list pointer := break point;
+    REF REF VALUELIST ( break point ) := new back of front list;
+    front
+END;
+
+PROC oper =
+( OPER oper,
+  REF REF VALUELIST value stack,
+  REF VALUELIST new space
+) VOID:
+COMMENT
+
+        Takes an oper imperative and puts it into the value tree, which is left on top
+        of "value stack" after the operands of the "oper" are taken off.
+
+        "new space" is one element which we can use to build tree with.
+
+        Default bound and parameter pack opers are not put into the tree, but handled here.
+
+        "null op" operators (e.g. prestraight) leave "value stack" unchanged.
+
+        Note that the param field of a treeoper is split into 2 fields.
+        Bottom 18 bits for pram, top 18 bits give number of operands in treeoper,
+        which the evaluator wants to know.
+        18 bits is not adequate for the straight semantic's param for very large
+        i structs, as is the 2 bytes used in stream.
+        The straight semantic is coded not to use the param field for i structs.
+
+        This proc could be speeded up by doing "break valuelist" in-line, which is
+        especially easy when there are a constant number of operands.
+
+COMMENT
+BEGIN
+
+	PROC new stack item =
+		( INT mode, fn, param, REF VALUELIST operands ) VOID:
+	BEGIN
+		value stack := new space :=
+		( ( mode, 
+		    default info,	{may need to give this as param to newstackitem - KEES}
+		    TREEOPER( fn, param, operands ) 
+		  ), 
+		  value stack 
+		)
+	END;
+
+PROC simple oper =
+( REF REF VALUELIST value stack,
+  INT  mode, oper fn, number operands { > 0 },
+  BITS param,
+  REF VALUELIST new space
+) VOID:
+{
+	Puts simple oper on stack, with operands taken from stack.
+	Space is used for oper, and should have adequate scope.
+}
+BEGIN
+     { remove operands }
+     REF VALUELIST operands = value stack;
+     REF REF VALUELIST break point := value stack;
+     TO number operands DO break point := rest OF break point OD;
+     value stack := break point;
+     REF REF VALUELIST ( break point ) := NIL;
+
+ 	new stack item
+	( mode,
+	  oper fn,
+	  ABS ((BIN number operands SHL operands shift) OR param),
+	  operands
+	)
+END;
+    BITS param = BIN ( param OF oper ) AND param mask;
+    INT oper fn = fn OF oper, oper mode = mode OF oper;
+    CASE oper type[ oper fn ]
+    IN
+    { one op: }
+        BEGIN
+	  REF VALUELIST operands = value stack;
+	  value stack := rest OF value stack;
+	  rest OF operands := NIL;
+
+	  new stack item
+	  ( oper mode,
+	    oper fn,
+	    ABS (8r1 SHL operands shift OR param),
+	    operands
+	  )
+        END
+    ,
+    { two op: }
+        BEGIN
+	  REF VALUELIST operands = value stack;
+	  value stack := rest OF rest OF value stack;
+	  rest OF rest OF operands := NIL;
+	  new stack item
+	  ( oper mode,
+	    oper fn,
+	    ABS (8r2 SHL operands shift OR param),
+	    operands
+	  )
+        END
+    ,
+    { param op: }
+        BEGIN
+	  REF VALUELIST operands =
+		break valuelist( value stack, NIL, ABS param, value stack );
+	  new stack item
+	  ( oper mode,
+	    oper fn,
+	    ABS (param SHL operands shift OR param),
+	    operands
+	  )
+        END
+    ,
+    { param plus one op: }
+        BEGIN
+	  REF VALUELIST operands =
+		break valuelist( value stack, NIL, ABS param + 1, value stack );
+	  new stack item
+	  ( oper mode,
+	    oper fn,
+	    ABS ( BIN (ABS param + 1) SHL operands shift OR param ),
+	    operands
+	  )
+        END
+    ,
+    { default bound op: }
+        BEGIN
+	  value OF new space := ( int mode, default info, LENG 2r1 );
+	  break valuelist( value stack, new space, 1, rest OF new space )
+        END
+    ,
+    { bound pack op: }
+        BEGIN
+	  REF VALUELIST operands =
+		break valuelist( value stack, NIL, ABS param , value stack );
+	  new stack item
+	  ( fault mode { no mode appropriate for bound pack; but cannot be "nomode" },
+	    bound pack fn,
+	    ABS (param SHL operands shift OR param),
+	    operands
+	  )
+        END
+    ,
+    { trim op: }
+        BEGIN
+	  REF VALUELIST operands =
+		break valuelist( value stack, NIL, ABS param , value stack );
+	  new stack item
+	  ( fault mode { no mode appropriate for trim; but cannot be "nomode" },
+	    trim fn,
+	    ABS (param SHL operands shift OR BIN oper mode),
+	    operands
+	  )
+        END
+    ,
+    { parampack: }
+        BEGIN
+	  "parampack without call"
+		ASSERT (parameters OF parameters IS REF VALUELIST( NIL ));
+	  parameters :=
+	  (   ABS param,
+	      oper mode,
+	      break valuelist( value stack, NIL, ABS param, value stack )
+	  )
+        END
+    ,
+    { call: }
+        BEGIN
+	  REF INT proc mode = mode OF value OF value stack;
+	  IF	proc mode = long long compl mode
+		{ FRIG for bioped procs, e.g P p = BIOP 2001 }
+	  THEN	proc mode := proc mode OF parameters
+	  ELSE	"wrong parampack for a call" ASSERT
+		proc mode OF parameters = no mode { proc without parameters }
+		OR proc mode OF parameters = proc mode
+		OR param = 8r1
+		OR param = 8r2
+		OR param = 8r3
+			{ To allow compiler generated routines some lattitude }
+	  FI;
+	  REF VALUELIST operands = break valuelist( value stack, parameters OF parameters, 1, valuestack);
+	  new stack item
+	  ( oper mode,
+	    call fn,
+	    ABS ( BIN (number OF parameters + 1) SHL operands shift OR param ),
+	    operands
+	  );
+	  parameters := no parameterinfo
+        END,
+
+    { null op: }
+        SKIP,
+    { zero op: }
+	  new stack item
+	  ( oper mode,
+	    oper fn,
+	    ABS param,
+	    NIL
+	  ),
+
+     { format fn: }
+	simple oper
+	( value stack,
+	  oper mode,
+	  oper fn,
+	  ( param = 2r0
+	  | 2 { depth ('w') and text }
+	  | 3 { plus proc for insertions }
+	  ),
+	  param,
+	  new space
+	)
+    OUT "invalid type in oper" ASSERT FALSE
+    ESAC
+
+END
+
+KEEP
+    oper
+FINISH

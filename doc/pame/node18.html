@@ -1,0 +1,235 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Multiplication</title>
+<meta name="description" content="multiplication">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node19.html">
+<link rel="previous" href="node17.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node19.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html932"
+  href="node19.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html926"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html920"
+  href="node17.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html928"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html930"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html933"
+  href="node19.html">Division</a>
+<b> Up:</b> <a name="tex2html927"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html921"
+  href="node17.html">Dyadic operators</a>
+ &nbsp; <b>  <a name="tex2html929"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html931"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html934"
+  href="node18.html#section00431000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00430000000000000000"></a><a name="form-mul"></a>
+<br>
+Multiplication
+</h1>
+
+<p>The operand <tt>*</tt><a name="1064"></a> (often said "star")
+represents normal arithmetic multiplication<a name="815"></a> and
+takes <code>INT</code> operands yielding an <code>INT</code> result.
+For example:</p>
+
+<pre>
+   INT product = 45 * 36
+</pre>
+
+<p>Likewise, <code>*</code> is also defined for multiplication of two
+values of mode <code>REAL</code>:</p>
+
+<pre>
+   REAL real product = 2.4e-4 * 0.5
+</pre>
+
+<p>It is important to note that although the actions of the two
+operators are quite different, they both represent multiplication so
+they both use the same symbol.</p>
+
+<p>Like <code>+</code> and <code>-</code>, multiplication can occur
+several times:</p>
+
+<pre>
+   INT factorial six = 1 * 2 * 3 * 4 * 5 * 6
+</pre>
+
+<p>the order of elaboration being left-to-right<a name="822"></a>.</p>
+
+<p>You can also combine multiplication with addition and subtraction.
+For example, the value of the formula <code>2+3*4</code> is
+<code>14</code>.  At school, you were probably taught that
+multiplication should be done before addition (your teachers may have
+used the mnemonic BODMAS<a name="823"></a> to show the order in which
+operations are done.  It stands for Brackets, Over, Division,
+Multiplication, Addition and Subtraction).  In Algol&nbsp;68, the same
+sort of thing applies and it is done by operators having a
+<span class="textbf">priority</span><a name="825"></a>.  The priority
+of multiplication is higher than the priority for addition or
+subtraction.  The priority of the dyadic <code>+</code> and
+<code>-</code> operators is&nbsp;6, and the priority of the
+<code>*</code> operator is&nbsp;7.</p>
+
+<p>Here are identity declarations<a name="826"></a> using a
+combination of multiplication and addition and subtraction:</p>
+
+<pre>
+   INT  i1 = 3, i2 = -7;
+   INT  result1 = i1 * i2 - 8;
+   REAL r1 = 35.2, r2 = -0.04;
+   REAL result2 = r1 * -r2 + 12.67 * 10.0
+</pre>
+
+<p>In the elaboration of <code>result2</code>, the multiplications are
+elaborated first, and then the addition.</p>
+
+<p> Remember from chapter 1 that widening<a name="829"></a> is allowed
+in the context of the right-hand side of an identity declaration, so
+the following declaration is valid:</p>
+
+<pre>
+   REAL a = 24 * -36
+</pre>
+
+<p>It is important to note that an operand is not in a strong
+context<a name="832"></a>, so no widening is allowed. The context of
+an operand is <b>firm</b>.  Because widening is not allowed in a firm
+context<a name="834"></a>, it is possible for the compiler to examine
+the modes of the operands of an operator and determine which
+declaration of the operator is to be used in the elaboration of the
+formula. This also applies to monadic operators (see
+<a href="node62.html#rout-idops">6.2.1</a> for details).</p>
+
+<p> Looking again at the above identity declaration, the context of
+the denotation <code>36</code> is firm (it is the operand of the
+monadic <code>-</code>), the contexts of the <code>24</code> and the
+<code>-36</code> are also firm because they are the operands of the
+dyadic <code>*</code>, but the value yielded<a name="836"></a> by the
+formula is on the right-hand side of the identity declaration, so it
+is in a strong context<a name="837"></a>.  It is this value which is
+coerced to a value of mode <code>REAL</code> by the widening.  Note
+that the value of the formula (which has mode <code>INT</code>) does
+not change.  Instead, it is replaced by the coercion<a name="838"></a>
+with a value of mode <code>REAL</code> whose whole number part has the
+same value as the <code>INT</code> value.  It is worth saying that the
+value of the formula obtained by elaboration is lost after the
+coercion. You could hang on to the intermediate integer value by using
+another identity declaration:</p>
+
+<pre>
+    INT intermediate value = 24 * -36;
+    REAL a = intermediate value
+</pre>
+
+<hr>
+<h2><a name="section00431000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.4<a name="ex-ii-iv"></a>
+<dd>In this exercise, these declarations are assumed to be in force:
+<pre>
+   INT  d1 = 12, d2 = -5;
+   REAL d3 = 4.0 * 3.5, d4 = -3.0
+</pre>
+
+What is the value of each of the following formul&#230;? Ans<a href="node136.html#ans-ii-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>ABS d2</code>  
+<p>
+<dt>(b)
+<dd><code>- ABS d4 + d3 * d4</code>  
+<p>
+<dt>(c)
+<dd><code>d2 - d1 * 3 + d2 * 4</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html932"
+  href="node19.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html926"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html920"
+  href="node17.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html928"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html930"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html933"
+  href="node19.html">Division</a>
+<b> Up:</b> <a name="tex2html927"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html921"
+  href="node17.html">Dyadic operators</a>
+ &nbsp; <b>  <a name="tex2html929"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html931"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

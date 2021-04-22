@@ -1,0 +1,504 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Multiples</title>
+<meta name="description" content="multiples">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node30.html">
+<link rel="previous" href="node28.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node30.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1111"
+  href="node30.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1105"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1099"
+  href="node28.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1107"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1109"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1112"
+  href="node30.html">Slicing</a>
+<b> Up:</b> <a name="tex2html1106"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1100"
+  href="node28.html">Repetition</a>
+ &nbsp; <b>  <a name="tex2html1108"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1110"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1113"
+  href="node29.html#section00511000000000000000">Row-displays</a>
+<li><a name="tex2html1114"
+  href="node29.html#section00512000000000000000">Dimensions</a>
+<li><a name="tex2html1115"
+  href="node29.html#section00513000000000000000">Subscripts and bounds</a>
+<li><a name="tex2html1116"
+  href="node29.html#section00514000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00510000000000000000"></a><a name="rep-mult"></a>
+<br>
+Multiples
+</h1>
+
+<p>A <b>multiple</b><a name="1321"></a> consists of a number of
+<b>elements</b><a name="1323"></a>, each of which have the same mode
+(sometimes known as the <b>base mode</b><a name="1325"></a>).  The
+mode<a name="1326"></a> of a multiple consists of the mode
+indicant<a name="1327"></a> for each element preceded by brackets, and
+is said &ldquo;row of mode&rdquo;.  For example, here is an identity
+declaration of a row of <code>CHAR</code>
+multiple<a name="1769"></a>:</p>
+
+<pre>
+   []CHAR a = "abcd"
+</pre>
+
+<p>The phrase on the left-hand side of the equals symbol is read
+&ldquo;row of car a&rdquo;.  The phrase on the right-hand side of the
+equals symbol is the denotation<a name="1770"></a> of a value whose
+mode is <code>[]CHAR</code>.  Spaces can, of course, appear before,
+between or after the brackets.</p>
+
+<p> Multiples of mode <code>[]CHAR</code> are so common that this
+denotation was devised as a kind of shorthand. The maximum number of
+elements in a multiple is equal to the maximum positive integer
+(<tt>max int</tt><a name="1771"></a>), although in practice, your
+program will be limited by the available memory.  The denotation of a
+<code>[]CHAR</code> may extend over more than one line. There are two
+ways of doing this. You can simply write the denotation on more than
+one line in which case every character &ldquo;between&rdquo; the
+starting and ending quote characters is included except the newline
+characters, or you can split the denotation with quote characters at
+the end of one line and at the start of the continuation of the
+denotation on the next line. Here are two declarations which exemplify
+these rules:</p>
+
+<pre>
+   []CHAR long1 = "The first stage in the develo
+   pment of a new program consists of analysing 
+   the problem that the program must solve.";
+   []CHAR long2 = "The first stage in the "
+              "development of a new "
+              "program consists of "
+              "analysing the problem "
+              "that the program must "
+              "solve."
+</pre>
+
+<p>Notice that the second method is neater because you can indent the
+subsequent parts of the denotation. Everything &ldquo;between&rdquo;
+the second and third quote characters and &ldquo;between&rdquo; the
+fourth and fifth quote characters is ignored, although you should not
+put anything other than spaces or tabs and newlines there.  If you
+want to place a quote character ("<a name="1772"></a>) in the
+denotation, you must double it, just as in the character denotation.
+Here are two <code>[]CHAR</code> denotations, each containing two
+quote characters:</p>
+
+<pre>
+   []CHAR rca = """Will you come today?""",
+          rcb = "The minority report stated "
+                "that ""in their opinion""";
+</pre>
+
+<p>The repeated quote characters are different from the quote
+characters which chain the two parts of the denotation of
+<code>rcb</code>.</p>
+
+<h2><a name="section00511000000000000000"></a><a name="rep-rowdisp"></a>
+Row-displays</h2>
+
+<p>Multiples of other modes cannot be denoted as shown above, but use
+a construct called a <b>row-display</b><a name="1343"></a>.  A
+row-display consists of none or two or more units<a name="1344"></a>
+separated by commas and enclosed by parentheses<a name="1345"></a> (or
+<tt>BEGIN</tt><a name="1773"></a> and
+<tt>END</tt><a name="1774"></a>).  Here is the identity
+declaration<a name="1775"></a> for <code>a</code> written using a
+row-display:</p>
+
+<pre>
+   []CHAR a = ("a","b","c","d")
+</pre>
+
+<p>It is important to note that the units in the row-display could be
+quite complicated. For example, here is another declaration for a
+multiple with mode <code>[]CHAR</code>:</p>
+
+<pre>
+   []CHAR b = ("a","P",REPR 36,"""")
+</pre>
+
+<p>In each of these two declarations, the number of elements is
+<code>4</code>.</p>
+
+<p>Here are identity declarations<a name="1355"></a> for a multiple
+of mode <code>[]INT</code> and a multiple of mode
+<code>[]REAL</code>:</p>
+
+<pre>
+   []INT  c = (1, 2+3, -2**4, 7, -11, 2, 1);
+   []REAL d = (1.0, -2.9, 3e4, -2e-2, -5)
+</pre>
+
+<p>Note that the last unit of the row-display for <code>c</code> has
+the same value as the first unit. In a multiple of mode
+<code>[]INT</code>, the individual elements can have any value of mode
+<code>INT</code>: that is to say, any integer or formula yielding an
+integer.  In <code>d</code>, the unit yielding the last element is
+written as a formula yielding a value of mode <code>INT</code>.  Since
+the context of the row-display is strong<a name="1358"></a> (because
+it occurs on the right-hand side of an identity declaration), this
+context is passed on to its constituent units<a name="1359"></a>.
+Thus, the context of the formula is also strong, and so the value
+yielded by the formula is widened to yield
+<tt>-5.0</tt><a name="1361"></a>.</p>
+
+<p> An empty row-display can be used to yield a <b>flat</b>
+multiple<a name="1363"></a> (one with no elements). For example, here
+is an identity declaration using an empty
+row-display<a name="1364"></a>:</p>
+
+<pre>
+   []REAL empty = ()
+</pre>
+
+<p>The denotation for a flat <code>[]CHAR</code> is used in the identity
+declaration</p>
+
+<pre>
+   []CHAR none = ""
+</pre>
+
+<p>A multiple can also have a single element. However, a row-display
+cannot have a single unit<a name="1369"></a> (because it would be an enclosed
+clause<a name="1370"></a>, which is a different construct). In
+this case, we use a unit (or a formula<a name="1371"></a>, which is another kind of
+unit) for the only element, and the value of that unit is coerced to
+a multiple with a single element using the <b>rowing</b>
+coercion<a name="1373"></a>. For example,</p>
+
+<pre>
+   []INT ri = 4
+</pre>
+
+<p>yields a multiple with one element. An enclosed clause can be used
+instead:</p>
+
+<pre>
+   []INT ri1 = (4)
+</pre>
+
+<p>since an enclosed clause is also a unit (see section
+<a href="node96.html#gram-enc">10.4</a>).</p>
+
+<p> Rowing can only occur in strong contexts<a name="1379"></a> (and
+the right-hand side of an identity declaration is a strong context).
+Here is another example:</p>
+
+<pre>
+   []CHAR rc = "p"
+</pre>
+
+<p>A row-display can only be used in a strong context. Because the
+context of an operand is firm<a name="1382"></a>, a row-display cannot
+appear in a formula (but there is a way round this, see section
+<a href="node97.html#gram-prim">10.5</a>). The shorthand denotation
+for a <code>[]CHAR</code> is not a row-display and so does not suffer
+from this limitation.</p>
+
+<h2><a name="section00512000000000000000"></a><a name="rep-dim"></a>
+Dimensions</h2>
+
+<p>One of the properties of a multiple is its number of
+<b>dimensions</b><a name="1388"></a>. All the multiples declared so far have one
+dimension. The number of dimensions affects the mode.  A
+two-dimensional multiple of integers has the mode</p>
+
+<pre>
+   [,]INT
+</pre>
+
+<p>(said &ldquo;row-row-of-int&rdquo;), while a 3-dimensional multiple of reals
+(real numbers) has the mode</p>
+
+<pre>
+   [,,]REAL
+</pre>
+
+<p>Note that the number of commas<a name="1393"></a> is always one
+less than the number of dimensions. In Algol&nbsp;68, multiples of any
+number of dimensions can be declared.<a name="tex2html5"
+href="footnode.html#foot1776"><sup><span
+class="arabic">4</span>.<span class="arabic">1</span></sup></a></p>
+
+<p>To cater for more than one dimension, each of the units of a
+row-display<a name="1395"></a> can also be a row-display. For example,
+the row-display for a multiple with mode <code>[,]INT</code> could
+be</p>
+
+<pre>
+   ((1,2,3),(4,5,6))
+</pre>
+
+<p>The fact that this is the row-display for a 2-dimensional multiple
+would be clearer if it were written</p>
+
+<pre>
+   ((1,2,3),
+    (4,5,6))
+</pre>
+
+<p>For two dimensions, it is convenient to talk of &ldquo;rows<a name="1400"></a>&rdquo; and
+&ldquo;columns&rdquo;. Here<a name="1401"></a> is an identity declaration using
+the previous row-display:</p>
+
+<pre>
+   [,]INT e = ((1,2,3),
+               (4,5,6))
+</pre>
+
+<p>The first &ldquo;row&rdquo; of <code>e</code> is yielded by the
+row-display <code>(1,2,3)</code> and the second &ldquo;row&rdquo; is
+yielded by <code>(4,5,6)</code>.  The first &ldquo;column&rdquo; of
+<code>e</code> is yielded by the row-display <code>(1,4)</code>, the
+second &ldquo;column&rdquo; by <code>(2,5)</code> and the third
+&ldquo;column&rdquo; by <code>(3,6)</code>.  Note that the number of
+elements in each &ldquo;row&rdquo; is the same, and the number of
+elements in each &ldquo;column&rdquo; is also the same, but that the
+number of &ldquo;rows&rdquo; and &ldquo;columns&rdquo; differ.  We say
+that <code>e</code> is a <b>rectangular</b><a name="1405"></a>
+multiple. If the number of &ldquo;rows&rdquo; and
+&ldquo;columns&rdquo; are the same, the multiple is said to be
+<b>square</b><a name="1407"></a>.  Here is an
+identity<a name="1408"></a> declaration for a square multiple:</p>
+
+<pre>
+   [,]CHAR f = (("a","b","c"),
+                ("A","B","C"),
+                ("1","2","3"))
+</pre>
+
+<p>All square multiples are also rectangular, but the converse is not
+true. Note that in the row-display for a multi-dimensional multiple
+of characters, it is not possible to use the special denotation for a
+<code>[]CHAR</code>.</p>
+
+<p>The base mode<a name="1411"></a> of a multiple can be any mode,
+including another row mode. For example:</p>
+
+<pre>
+   [][]CHAR days =
+      ("Monday","Tuesday","Wednesday",
+       "Thursday","Friday","Saturday",
+       "Sunday")
+</pre>
+
+<p>The mode is said &ldquo;row of row of <code>CHAR</code>&rdquo;. Note that <code>days</code>
+is one-dimensional, each element consisting of a one-dimensional
+<code>[]CHAR</code>. The shorthand denotation for a <code>[]CHAR</code> can be
+used in this case. Because the base mode is <code>[]CHAR</code>, the
+individual <code>[]CHAR</code>s can have different lengths. Here is another
+example using integers:</p>
+
+<pre>
+   [][]INT trapezium = ((1,2),(1,2,3),(1,2,3,4))
+</pre>
+<p>
+
+<h2><a name="section00513000000000000000"></a><a name="rep-bound"></a>
+<br>
+Subscripts and bounds</h2>
+
+<p>Each element of a multiple has one integer associated with it for
+each dimension. These integers increase by <code>1</code> from the
+first to the last element in each dimension. For example, in the
+declaration</p>
+
+<pre>
+   []INT r1 = (90,95,98)
+</pre>
+
+<p>the integers associated with the elements are <code>[1]</code>,
+<code>[2]</code> and <code>[3]</code> (see the next section for an
+explanation of why the integers are written like this). Remember that
+the first element in a row-display always has an associated integer of
+<code>[1]</code>. These integers are known as
+subscripts<a name="1421"></a><a name="tex2html6"
+href="footnode.html#foot1422"><sup><span
+class="arabic">4</span>.<span class="arabic">2</span></sup></a> or
+indexers.  Thus the subscript of <code>98</code> in <code>r1</code> is
+<code>[3]</code>. In the two-dimensional multiple</p>
+
+<pre>
+   [,]INT r2 = ((-40, -30, -20),
+                (100, 130, 160))
+</pre>
+
+<p>the subscripts for <code>-40</code> are <code>[1,1]</code> and the subscripts for
+<code>160</code> are <code>[2,3]</code>.</p>
+
+<p>We say that the <b>lower bound</b><a name="1426"></a> of
+<code>r1</code> is <code>1</code>, and its <b>upper
+bound</b><a name="1428"></a> is&nbsp;<code>3</code>.  The multiple
+<code>r2</code> has a lower bound of <code>1</code> for both the first
+and second dimensions, an upper bound of <code>2</code> for the first
+dimension (2 &ldquo;rows&rdquo;) and an upper bound of <code>3</code>
+for the second dimension (3 &ldquo;columns&rdquo;). We shall write the
+bounds of <code>r1</code> and <code>r2</code> as <code>[1:3]</code>
+and <code>[1:2,1:3]</code> respectively.  The bounds of a flat
+multiple, unless specified otherwise (see the section on trimming),
+are <code>[1:0]</code>.</p>
+
+<p>The bounds of a multiple can be interrogated<a name="1429"></a>
+using the operators <tt>LWB</tt><a name="1777"></a> for the lower
+bound, and <tt>UPB</tt><a name="1778"></a> for the upper bound.  The
+bounds of the first, or only, dimension can be interrogated using the
+monadic<a name="1434"></a> form of these operators.  For example,
+using <code>days</code> defined above, <code>LWB days</code> yields
+<code>1</code>, and <code>UPB days</code> yields <code>7</code>. Where
+the multiple is multi-dimensional, the bounds are interrogated using
+the dyadic<a name="1435"></a> form of <code>LWB</code> and
+<code>UPB</code>: the left operand is the dimension while the right
+operand is the identifier of the multiple.  For example, <code>1 UPB
+r2</code> yields <code>2</code> and <code>2 UPB r2</code> yields
+<code>3</code>.  The priority of the dyadic operators
+is&nbsp;<code>8</code>.</p>
+
+<hr>
+<h2><a name="section00514000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.1<a name="ex-iii-i"></a></dt>
+<dd>What is wrong with the following identity declarations?
+   Ans<a href="node137.html#ans-iii-i"><img  align="bottom"
+   border="1" alt="[*]" src="answer.png"></a></dd>
+</dl>
+<dl compact>
+<dt>(a)</dt>
+<dd><code>()CHAR c1 = "Today"</code></dd>
+<dt>(b)</dt>
+<dd><code>[]CHAR c2 = 'Yesterday'</code></dd>
+<dt>(c)</dt>
+<dd><code>[]INT i1 = (1, 2.0, 3)</code></dd>
+</dl>
+<dl>
+<dt>3.2<a name="ex-iii-ii"></a></dt>
+<dd>Using the identifier <code>first 4 odd numbers</code>, write an
+appropriate identity declaration.
+ Ans<a href="node137.html#ans-iii-ii"><img  align="bottom" border="1"
+ alt="[*]" src="answer.png"></a></dd>
+<dt>3.3<a name="ex-iii-iii"></a></dt>
+<dd>Given the identity declarations</dd>
+
+<pre>
+   []CHAR s = "abcdefgh";
+   []REAL r = (1.4e2, 3.5e-1, -4.0);
+   [,]INT t = ((2,3,5),
+               (7,11,13),
+               (17,19,23))
+</pre>
+
+<p>what is the value of the following:
+Ans<a href="node137.html#ans-iii-iii"><img  align="bottom" border="1"
+alt="[*]" src="answer.png"></a></p>
+
+<dl compact>
+<dt>(a)</dt>
+<dd><code>UPB s</code></dd>
+<dt>(b)</dt>
+<dd><code>LWB r</code></dd>
+<dt>(c)</dt>
+<dd><code>2 UPB t - 1 LWB t + 1</code></dd>
+</dl>
+<dl>
+<dt>3.4<a name="ex-iii-iv"></a></dt>
+<dd>Write the formul&#230; which give the upper and lower bounds of
+each of the following multiples:
+Ans<a href="node137.html#ans-iii-iv"><img  align="bottom" border="1"
+alt="[*]" src="answer.png"></a></dd>
+<dl compact>
+<dt>(a)</dt>
+<dd>[,,]REAL a</dd>
+<dt>(b)</dt>
+<dd><code>[]REAL b = ()</code></dd>
+</dl>
+</dl>
+</dl>
+
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1111"
+  href="node30.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1105"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1099"
+  href="node28.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1107"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1109"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1112"
+  href="node30.html">Slicing</a>
+<b> Up:</b> <a name="tex2html1106"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1100"
+  href="node28.html">Repetition</a>
+ &nbsp; <b>  <a name="tex2html1108"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1110"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

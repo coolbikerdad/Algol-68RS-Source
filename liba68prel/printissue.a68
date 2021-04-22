@@ -1,0 +1,116 @@
+DECS  printissue  CONTEXT VOID  USE  putstrings,  osinterface:
+
+configinfo A68CONFIG "$Id: printissue.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+28:10:93  Extracted from version / globalcommands / environ to define
+             title, copyright and disclaimer notices for ELLA.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.002 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+PROC  title = (INT  mode) VOID:
+BEGIN
+   PROC  centred = (STR  str) VOID:
+   BEGIN
+      IF UPB str < width OF screen - 1
+      THEN  put(screen, spaces((width OF screen - UPB str) OVER 2))
+      FI;
+      put(screen, (str, newline))
+   END;
+
+   IF mode /= 2  { NOT silent start }
+   THEN  newline(screen);
+         centred("E L L A   2 0 0 0");
+         centred("Defence Research Agency (Malvern)");
+         centred("UK Crown Copyright, (c) 1985, 1993.  All rights reserved");
+         centred(give_version);
+         newline(screen)
+   FI;
+
+
+   IF mode = 3  ANDTH  UPB msg OF version > 0 { printissue - give version msg }
+   THEN  centred(concat(("Version details:  ", msg OF version)));
+         newline(screen)
+   FI;
+
+   STR  study = "This software may only be used for study purposes";
+
+   IF mode = 1  { Normal title }
+   THEN  centred(study);
+         centred("- invoke the ""printissue"" command for details");
+         newline(screen)
+   ELIF mode = 3  { printissue mode }
+   THEN  centred(concat(("*****  ",study, "  *****")));
+         put( screen,
+              ( newline,
+                concat(( facility, " has United Kingdom Crown Copyright (c) "
+                         "1993.  All rights are reserved. Permission is "
+                         "granted for this version of the ", facility,
+                         " software to be copied for personal use, or given "
+                         "to third parties subject to the conditions given "
+                         "in the release notice."
+                      )), lines(2),
+                "The Secretary of State for Defence (acting through his "
+                "Defence Research Agency) gives no warranty that any element "
+                "of the Software is suitable for any purpose and he shall "
+                "not be liable for any loss or damage including loss or "
+                "damage resulting in injury or death howsoever caused which "
+                "results from the use of the Software, or any developments "
+                "adaption modifications translations and enhancements "
+                "thereof.", lines(2),
+                "Any queries, comments or suggestions relating to this "
+                "Software should be addressed to the ELLA office at DRA "
+                "Malvern:", lines(2),
+                "Email:  ella@dra.hmg.gb", lines(2),
+                "The ELLA Office", newline,
+                "DRA Malvern", newline,
+                "St Andrews Road", newline,
+                "Great Malvern", newline,
+                "Worcestershire", newline,
+                "WR14 3PS,  UK", lines(2)
+            ) )
+   FI
+END;
+
+PROC  print_title = (BOOL  silent) VOID:
+   title(IF silent THEN  2  ELSE  1  FI);
+
+PROC  print_issue = VOID:  title(3)
+
+
+KEEP  print_title,  print_issue
+FINISH

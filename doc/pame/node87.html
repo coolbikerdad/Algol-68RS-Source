@@ -1,0 +1,256 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Writing reports</title>
+<meta name="description" content="writing reports">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node88.html">
+<link rel="previous" href="node86.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node88.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2108"
+  href="node88.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2102"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2096"
+  href="node86.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2104"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2106"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2109"
+  href="node88.html">Binary books</a>
+<b> Up:</b> <a name="tex2html2103"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2097"
+  href="node86.html">Environment strings</a>
+ &nbsp; <b>  <a name="tex2html2105"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2107"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2110"
+  href="node87.html#section001181000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001180000000000000000"></a><a name="trans-conv"></a>
+Writing reports</h1>
+
+<p>One of the problems of using the rather primitive facilities given
+so far for the output of real and integer numbers is that although
+they allow numbers to be printed in columns, the column widths are
+fixed.  You might not always want 18 decimal places. To print reports
+where numbers must be neatly tabulated, it is necessary to have some
+other means of controlling the size of the resulting strings. The
+procedures <tt>whole</tt>, <tt>fixed</tt> and <tt>float</tt> provide
+this capability.</p>
+
+<p>The procedure <tt>whole</tt><a name="6020"></a> has the header</p>
+
+<pre>
+   PROC whole = (NUMBER v, INT width)STRING:
+</pre>
+
+<p>and takes two parameters. The first is a real or integer value
+(modes <code>REAL</code> or <code>INT</code>)<a name="tex2html31"
+href="footnode.html#foot6021"><sup><span
+class="arabic">10</span>.<span class="arabic">4</span></sup></a> and
+the second is an integer which tells <code>whole</code> the field
+width of the output number (the space in your output book required to
+accommodate a value is often called a
+<b>field</b><a name="5814"></a>). If <code>width</code> is zero, then
+the number is printed with the minimum possible width and this will be
+wider for larger numbers. A positive value for <code>width</code> will
+give numbers preceded by a "+" if positive and a "-" if negative and
+the number output right-justified within the field with spaces before
+the sign. A negative value for <code>width</code> will only provide a
+minus sign for negative numbers and the width will be <code>ABS
+width</code>.</p>
+
+<p>Try writing a program with the following fragment included:</p>
+
+<pre>
+   []INT ri = (0,99,-99,9 999,99 999);
+   []CHAR wh pr = "Parameter for whole is";
+   
+   FOR wi FROM -6 BY --3 TO 6
+   DO
+      print((wh pr,wi,newline));
+      FOR i TO UPB ri
+      DO
+         write((whole(ri[i],wi),newline))
+      OD
+   OD
+</pre>
+
+<p>Notice that where the integer is wider than the available space,
+the output field is filled with the character denoted by <tt>error
+char</tt><a name="6022"></a> (which is declared in the standard
+prelude as the asterisk (<code>*</code>) with mode <code>CHAR</code>),
+so it is wise to ensure that your output field is large enough to
+accommodate the largest number you might want to print.</p>
+
+<p>If you give a real number to <tt>whole</tt><a name="6023"></a>, it
+calls the procedure <code>fixed</code> with parameters
+<code>width</code> and <code>0</code>.</p>
+
+<p>The procedure <tt>fixed</tt><a name="6024"></a> has the header</p>
+
+<pre>
+   PROC fixed = (NUMBER v,
+                 INT width, after)STRING:
+</pre>
+
+<p>and takes three parameters.  The first two are the same as those
+for <code>whole</code> and the third specifies the number of decimal
+places required.  The rules for <code>width</code> are the same as the
+rules for <code>width</code> for <code>whole</code>.</p>
+
+<p>When you want to print numbers in scientific
+format<a name="5825"></a> (that is, with an exponent), you should use
+<tt>float</tt><a name="6025"></a> which takes four parameters and has
+the header</p>
+
+<pre>
+    PROC float = (NUMBER v,
+                  INT width, after, exp)STRING:
+</pre>
+
+<p>The first three are the same as the parameters for
+<code>fixed</code>, while the fourth is the width of the exponent
+field.  The version of <code>float</code> supplied in the transput
+library uses <code>e</code> to separate the exponent from the rest of
+the number. Thus the call</p>
+
+<pre>
+   print(("[",float(pi*10,8,2,-2),"]"))
+</pre>
+
+<p>produces the output <code>[+3.14e 1]</code>. The parameter
+<code>exp</code> obeys the same rules as <code>width</code>.</p>
+
+<p>Note that the transput of data in Algol 68 is so organised that
+values output by an Algol&nbsp;68 program can be input by another (or
+the same) program.</p>
+
+<p>Here are some exercises which test you on your understanding of
+<tt>whole</tt><a name="6026"></a>, <tt>fixed</tt><a name="6027"></a>
+and <tt>float</tt><a name="6028"></a>.</p
+
+<hr>
+<h2><a name="section001181000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.13<a name="ex-ix-xiii"></a>
+<dd>The monthly rainfall for a particular location is given by the
+following figures:
+<pre>
+    6.54  12.3   10.1   13.83  5.04  9.15
+   14.34  16.38  13.84  10.45  8.49  7.57
+</pre>
+
+Write a program which will print the figures vertically, each preceded
+by the name of the month. The months and the figures should line up
+vertically, the months left-justified, the figures with decimal points
+aligned.  Ans<a href="node143.html#ans-ix-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.14<a name="ex-ix-xiv"></a>
+<dd>Write a program which will print the square roots of all the
+integers from 1 to 100 to 4 decimal places. Each number should be
+preceded by the corresponding integer. So, for example, the program
+should print <code> 2  1.4142</code> as a column-pair. Print the whole table
+in four columns with 25 entries in each column, the numbers 1-25 being
+in the first column.  Ans<a href="node143.html#ans-ix-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.15<a name="ex-ix-xv"></a>
+<dd>Write a program which will list the terms in the series <span class="math"><img
+ width="15" height="18" align="bottom" border="0"
+ src="img5.png"
+ alt="$ \pi$"></span>,
+<span class="math"><img
+ width="22" height="39" align="middle" border="0"
+ src="img16.png"
+ alt="$ \pi^{2}_{}$"></span>, <span class="math"><img
+ width="22" height="39" align="middle" border="0"
+ src="img17.png"
+ alt="$ \pi^{3}_{}$"></span>, <span class="math">...</span>, <span class="math"><img
+ width="29" height="39" align="middle" border="0"
+ src="img18.png"
+ alt="$ \pi^{{10}}_{}$"></span>. Each value should be written in
+scientific notation with 6 decimal places, and should be preceded by
+the value of the power (<i>i.e.</i>, the numbers 1 to 10). Use a field
+width of 12.  Ans<a href="node143.html#ans-ix-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2108"
+  href="node88.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2102"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2096"
+  href="node86.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2104"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2106"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2109"
+  href="node88.html">Binary books</a>
+<b> Up:</b> <a name="tex2html2103"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2097"
+  href="node86.html">Environment strings</a>
+ &nbsp; <b>  <a name="tex2html2105"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2107"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

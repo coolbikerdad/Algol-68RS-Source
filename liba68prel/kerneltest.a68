@@ -1,0 +1,90 @@
+PROGRAM  kerneltest  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface,
+         cif  { used by simulator modules so must be compiled even with *4 },
+         testmode,  commandsyntax,  commandreader,  command,  kernelreader,
+         ioprocs,  commandcaller,  globalcommands,  printissue
+BEGIN
+
+configinfo A68CONFIG "$Id: kerneltest.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1988
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+??:??:88  Created.  DCT
+08:11:91  Modified for Ctrans test.  DCT
+13:08:93  Updated to new OSIF and modified as ostools test programme.  DCT
+18:08:93  Add cif to USE list.  DJS
+27:09:93  Startup reworked.  DCT
+26:10:93  Change to globalcommands.  DCT
+29:11:93  Version changed again.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.007 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+STR  name = "KERNEL TEST",  ellasysdir = "ELLSYSDIR";
+
+initialise_osinterface( ( name { facility name - used in error messages },
+                          "93.11", "30:11:93", "",
+                          "Too bad, its failed - Ha ha ha !!!!!!!!!" ), TRUE );
+
+COMMANDENV  env;   { holds information about the current command context }
+PROC get_prompt = RVC: prompt OF current_context OF stack OF env;
+
+VECSTR  args = get_args;
+BOOL  testmode = UPB args > 1  ANDTH  args[2] = "-t";
+
+initialise_ioprocs(get_prompt);
+set_testmode(testmode);
+print_title(FALSE);
+
+REF COMPOUND  outer_command =
+   make_compound
+      ( HEAP SIMPLE:= ( MAKERVC "OUTER", nullstr, no parameters,
+                        normal access, finish,
+                        MAKERVC "Kernel test programme", nullcommand ) ,
+        "Kernel Test",
+        HEAP RVC:= MAKERVC "Kernel",
+        make_globalcommands( ellasysdir, ".lis", print_issue,
+                             REF COMMANDENV: env ),
+        nullcommands,
+        nullcommand
+      );
+
+env:= initialise_commands( report_error, set_default_msg, global_msg,
+                           call_command, make_kernel_readers, outer_command,
+                           no_parameters );
+
+REF BOOL (private OF env):= TRUE;
+interpret_commands(env);
+put(screen, (name, " finished", newline))
+
+END  FINISH

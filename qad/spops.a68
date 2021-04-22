@@ -1,0 +1,367 @@
+DECS spops CONTEXT VOID
+USE spmodes, spaliens:
+
+COMMENT
+   $Log: spops.a68,v $
+   Revision 1.5  2012/01/04 17:20:55  sian
+   *** empty log message ***
+
+   Revision 1.4  2004-11-07 15:59:29  sian
+   Removed PLUS, MINUS and TIMES
+
+   Revision 1.3  2001/06/18 11:04:27  sian
+   1. Replaced non-standard hexadecimal string denotations with REPR n.
+   2. Added code to resolve symbolic Internet addresses.
+   3. Replaced the temporary file generation in create.
+
+   Revision 1.2  2001/05/11 08:34:32  sian
+   Added C files and QAD socket inet addr
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.2  2000/07/05 14:55:53  sian
+   Ready for release 0.1.0
+
+   Revision 1.1  2000/01/10 05:56:26  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   All the interfacing operators in the QAD standard prelude are here,
+   except for the transput operators defined in `transput.a68'.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+OP(INT)CPTR                     TOCPTR = BIOP 99;
+OP(CPTR)CSTR                    TOCSTR = BIOP 99;
+
+OP(CCHARPTR)CSTR        CCHARPTRTOCSTR = BIOP 99;
+OP(CSTR)CCHARPTR        CSTRTOCCHARPTR = BIOP 99;
+OP(CSTR)INT                  CSTRTOINT = BIOP 99;
+OP(CSTR)CCHARPTRPTR      TOCCHARPTRPTR = BIOP 99;
+
+CPTR nil func ptr = TOCPTR -1;
+
+OP(STR)VDESC                   TOVDESC = BIOP 99;
+OP(VECTOR[]BITS)VBDESC        TOVBDESC = BIOP 99;
+OP(VECTOR[]INT)VIDESC         TOVIDESC = BIOP 99;
+
+OP(REF PROC VOID)REF PDESC    TORPDESC = BIOP 99;
+OP(PROC VOID)PDESC             TOPDESC = BIOP 99;
+OP(PROC(INT)VOID)PDESC         TOPDESC = BIOP 99;
+OP(PROC(INT,CPTR)VOID)PDESC    TOPDESC = BIOP 99;
+OP(PROC(INT,RVC)VOID)PDESC     TOPDESC = BIOP 99;
+
+OP(REAL)STRUCT 8 CHAR             FLAT = BIOP 99;
+OP(SHORT REAL)STRUCT 4 CHAR       FLAT = BIOP 99;
+OP(STRUCT 8 CHAR)REAL             FLAT = BIOP 99;
+OP(STRUCT 4 CHAR)SHORT REAL       FLAT = BIOP 99;
+
+OP(LONG BITS)STRUCT 8 CHAR        FLATB = BIOP 99;
+OP(BITS)STRUCT 4 CHAR             FLATB = BIOP 99;
+OP(SHORT BITS)STRUCT 2 CHAR       FLATB = BIOP 99;
+OP(SHORT SHORT BITS)STRUCT 1 CHAR FLATB = BIOP 99;
+
+OP(STRUCT 8 CHAR)LONG BITS        FLATB = BIOP 99;
+OP(STRUCT 4 CHAR)BITS             FLATB = BIOP 99;
+OP(STRUCT 2 CHAR)SHORT BITS       FLATB = BIOP 99;
+OP(STRUCT 1 CHAR)SHORT SHORT BITS FLATB = BIOP 99;
+OP(LONG BITS)STRUCT 2 BITS        FLATT = BIOP 99;
+OP(STRUCT 2 BITS)LONG BITS        FLATT = BIOP 99;
+
+OP(REAL)STRUCT 2 BITS             FLATR = BIOP 99;
+OP(STRUCT 2 BITS)REAL             FLATR = BIOP 99;
+
+BITS
+   fp32 sign mask    = 16r 800 0 0000,
+   fp32 exp  mask    = 16r 7f8 0 0000,
+   fp32 mant mask    = 16r   7 f ffff,
+   fp32 mant top bit = 16r   4 0 0000;
+
+INT
+   fp32 bits after exp = 23;
+
+BITS
+   fp64 sign mask    = 16r 800 0 0000,
+   fp64 exp  mask    = 16r 7ff 0 0000,
+   fp64 mant mask    = 16r     f ffff,
+   fp64 mant top bit = 16r     8 0000;
+INT
+   fp64 bits after exp = 20,
+   fp64 mant word      = 1,
+   fp64 exp word       = 2;
+
+OP VALID = (REAL x)BOOL:
+BEGIN #Algol 68 equivalent of the C library "finite"#
+   STRUCT 2 BITS xx = FLATR x;
+   BITS xe=xx[fp64 exp word];
+   2r1=BIN(ABS(xe&16r7fff ffff)-ABS 16r7ff0 0000)SHR 31
+END; #VALID#
+
+OP ** = (COMPL a, INT n)COMPL:
+IF COMPL b=n;
+   COMPL c=b* COMPL(ln(ABS a),ARG a);
+   COMPL raw result = exp(RE c)*COMPL(cos(IM c),sin(IM c));
+   VALID re OF raw result ANDTH VALID im OF raw result
+THEN raw result
+ELSE 0
+FI; #**#
+
+PRIO &* = 1;
+
+OP &* = (REAL a, INT e)REAL:
+BEGIN
+   STRUCT 2 BITS b:=FLATR a;  REF BITS bexp=b[fp64 exp word];
+   bexp:=bexp & NOT fp64 exp mask
+                  OR
+         BIN(ABS((bexp&fp64 exp mask)SHR fp64 bits after exp)+e)
+                                     SHL fp64 bits after exp;
+   FLATR b
+END; #&*#
+
+OP MAKERVC = (CHAR c)RVC: HEAP VECTOR[1]CHAR:=c;
+OP MAKERVC = (STR s)RVC:  HEAP VECTOR[UPB s]CHAR:=s;
+OP MAKERVC = ([]CHAR s)RVC:
+BEGIN
+   HEAP VECTOR[UPB s-LWB s+1]CHAR v;
+   FOR i FROM LWB s TO UPB s
+   DO
+      v[i-LWB s+1]:=s[i]
+   OD;
+   v
+END; #MAKERVC#
+
+OP CSTRTORVC = (CSTR s)RVC:
+# Converts a C string to an RVC using the standard RS Algol 68
+  compiler REF STRUCT n CHAR to RVC coercion. Mainly used to
+  access C strings yielded by C library routines. The string
+  must be null-terminated. #
+IF s:=:NIL THEN NIL ELSE s[:posix strlen(s)] FI;
+
+OP VCTOCHARPTR = (STR buf)CCHARPTR:
+# Yields the C pointer from a Ctrans descriptor. If a C string
+  is expected, a null byte must be appended to the data before
+  this routine is called. This need not be done with string
+  denotations, however, as they will be represented as string
+  literals in C. This routine may be used to yield a C pointer
+  from an RVC, as the C representation is the same. #
+data OF TOVDESC buf;
+
+OP VBTOCPTR = (VECTOR[]BITS buf)CPTR: data OF TOVBDESC buf;
+OP VITOINTPTR = (VECTOR[]INT buf)CINTPTR:  data OF TOVIDESC buf;
+OP STRTOCSTR = (STR s)CSTR: CCHARPTRTOCSTR VCTOCHARPTR s;
+
+OP FLATRVR  = (RVC v)REAL:
+(
+   STRUCT 8 CHAR s;
+   FOR i TO 8 DO s[i]:=v[i] OD;
+   FLAT s
+); #FLATRVR#
+
+OP FLATRVSR  = (RVC v)SHORT REAL:
+(
+   STRUCT 4 CHAR s;
+   FOR i TO 4 DO s[i]:=v[i] OD;
+   FLAT s
+); #FLATRVSR#
+
+OP FLATRVLB = (RVC v)LONG BITS:
+(
+   STRUCT 8 CHAR s;
+   FOR i TO 8 DO s[i]:=v[i] OD;
+   FLATB s
+); #FLATRVLB#
+
+OP FLATRVB = (RVC v)BITS:
+(
+   STRUCT 4 CHAR s;
+   FOR i TO 4 DO s[i]:=v[i] OD;
+   FLATB s
+); #FLATRVB#
+
+OP FLATRVSB = (RVC v)SHORT BITS:
+(
+   STRUCT 2 CHAR s;
+   FOR i TO 2 DO s[i]:=v[i] OD;
+   FLATB s
+); #FLATRVSB#
+
+OP FLATRVSSB = (RVC v)SHORT SHORT BITS:
+(
+   STRUCT 1 CHAR s;
+   s[1]:=v[1];
+   FLATB s
+); #FLATRVSSB#
+
+
+OP Z = (STR str)STR:
+(
+   VECTOR[UPB str+1]CHAR v;
+   v[:UPB str]:=str;  v[UPB v]:=REPR 0;
+   v
+); #Z#
+CO IF # Yields a null terminated STR from a STR (for use with the C library).
+     First looks to see whether there is a null at UPB + 1 - there will
+     be if STR was a STR literal - there will not be if it was derived
+     from a trim or allocation.  It is possible (?) that a STR allocated from
+     the last part of a segment will cause an access violation in this test -
+     review.  If there is not a null, the string is copied and one is
+     appended.    DCT  09:09:93
+   #
+   CSTR ptr = STRTOCSTR str;
+   ptr[UPB str + 1] = nul ch
+THEN  str # already NULL terminated #
+ELSE  VECTOR [UPB str + 1] CHAR  ans;
+         ans[: UPB str]:= str;
+         ans[UPB ans]:= nul ch;
+         ans
+FI; #Z# CO
+
+OP CPTRTORVC = (CPTR cptr)RVC: CSTRTORVC TOCSTR cptr;
+
+PRIO MIN=9, MAX=9;
+OP MIN = (SHORT SHORT INT a,b)SHORT SHORT INT:
+   SHORT SHORT INT CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (SHORT INT a,b)SHORT INT: SHORT INT CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (INT a,b)INT: INT CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (LONG INT a,b)LONG INT: LONG INT CODE(a,b) "RESULT=A_MIN(a,b);";
+
+OP MIN = (REAL a,INT b)REAL: REAL CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (INT a,REAL b)REAL: REAL CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (REAL a,b)REAL: REAL CODE(a,b) "RESULT=A_MIN(a,b);";
+OP MIN = (SHORT REAL a,b)SHORT REAL: SHORT REAL CODE(a,b) "RESULT=A_MIN(a,b);";
+
+OP MAX = (SHORT SHORT INT a,b)SHORT SHORT INT: SHORT SHORT INT CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (SHORT INT a,b)SHORT INT: SHORT INT CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (INT a,b)INT: INT CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (LONG INT a,b)LONG INT: LONG INT CODE(a,b) "RESULT=A_MAX(a,b);";
+
+OP MAX = (REAL a,INT b)REAL: REAL CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (INT a,REAL b)REAL: REAL CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (REAL a,b)REAL: REAL CODE(a,b) "RESULT=A_MAX(a,b);";
+OP MAX = (SHORT REAL a,b)SHORT REAL:
+   SHORT REAL CODE(a,b) "RESULT=A_MAX(a,b);";
+
+OP SYSBUFF = (INT bytes)RVC:  HEAP VECTOR[bytes]CHAR;
+
+OP(REF TERMIOS)CCHARPTR RTERMIOSTOCCHARPTR = BIOP 99;
+
+OP ELEM = (INT n)BITS: 16r8000 0000 SHR (n-1);
+
+OP ELEM = (INT n, LONG BITS lb)BOOL:
+IF STRUCT 2 BITS s2t = FLATT lb;  n<=32
+THEN n ELEM s2t[2]
+ELSE (n-32) ELEM s2t[1]
+FI; #ELEM(INT,LONG BITS)#
+
+OP ELEM = (INT n, SHORT BITS sb)BOOL:
+(BITS b = LENG sb; (n+16) ELEM b); #ELEM(INT,SHORT BITS)#
+
+OP ELEM = (INT n, SHORT SHORT BITS ssb)BOOL:
+(BITS b = LENG LENG ssb; (n+24) ELEM b); #ELEM(INT,SHORT SHORT BITS)#
+
+OP + = (CHARBAG s, t)CHARBAG:
+(
+   CHARBAG r;
+   FOR i TO UPB r
+   DO
+      r[i]:=s[i] OR t[i]
+   OD;
+   r
+); #+#
+
+OP ROUND = (REAL r)INT:
+BEGIN
+	REAL lr;
+	IF r > max int
+	THEN lr:=max int
+	ELIF r < -max int
+	THEN lr:=-max int
+	ELSE lr:=r
+	FI; #clamp r to [-maxint:maxint]#
+
+  INT method=fe get round;
+  fe set round(fe tonearest);
+  INT i=lrint(lr);
+  fe set round(method);
+  i
+END; #ROUND#
+
+OP ENTIER = (REAL r)INT:
+BEGIN
+	REAL lr;
+	IF r > max int
+	THEN lr:=max int
+	ELIF r < -max int
+	THEN lr:=-max int
+	ELSE lr:=r
+	FI; #clamp r to [-maxint:maxint]#
+
+  INT method=fe get round;
+  fe set round(fe downward);
+  INT i=lrint(r);
+  fe set round(method);
+  i
+END; #ENTIER#
+
+SKIP
+KEEP
+
+TOCPTR(INT),              TOCSTR(CPTR),
+CCHARPTRTOCSTR(CCHARPTR), CSTRTOCCHARPTR(CSTR),
+CSTRTOINT(CSTR),          TOCCHARPTRPTR(CSTR),
+
+nil func ptr,
+TOVDESC(STR),
+TOVBDESC(VECTOR[]BITS),  TOVIDESC(VECTOR[]INT),
+TORPDESC(REF PROC VOID), TOPDESC(PROC VOID),
+TOPDESC(PROC(INT)VOID),  TOPDESC(PROC(INT,CPTR)VOID),
+TOPDESC(PROC(INT,RVC)VOID),
+
+FLAT(REAL), FLAT(SHORT REAL), FLAT (STRUCT 8 CHAR), FLAT(STRUCT 4 CHAR),
+
+FLATB(LONG BITS), FLATB(BITS), FLATB(SHORT BITS), FLATB(SHORT SHORT BITS),
+FLATB(STRUCT 8 CHAR), FLATB(STRUCT 4 CHAR),
+FLATB(STRUCT 2 CHAR), FLATB(STRUCT 1 CHAR),
+
+FLATR(REAL),          FLATR(STRUCT 2 BITS),
+FLATT(LONG BITS),     FLATT(STRUCT 2 BITS),
+fp32 sign mask, fp32 exp mask, fp32 mant mask, fp32 mant top bit,
+fp32 bits after exp,
+
+fp64 sign mask, fp64 exp mask, fp64 mant mask, fp64 mant top bit,
+fp64 bits after exp, fp64 mant word, fp64 exp word,
+
+ROUND(REAL), ENTIER(REAL),
+
+VALID(REAL), **(COMPL,INT), &*(REAL,INT),
+MAKERVC(CHAR), MAKERVC(STR), MAKERVC([]CHAR),
+CSTRTORVC(CSTR), VCTOCHARPTR(STR),
+VBTOCPTR(VECTOR[]BITS), VITOINTPTR(VECTOR[]INT),
+STRTOCSTR(STR),
+FLATRVR(RVC),  FLATRVSR(RVC),
+FLATRVLB(RVC), FLATRVB(RVC), FLATRVSB(RVC), FLATRVSSB(RVC),
+Z(STR),        CPTRTORVC(CPTR),
+
+MIN(SHORT SHORT INT,SHORT SHORT INT),
+MIN(SHORT INT,SHORT INT), MIN(INT,INT), MIN(LONG INT,LONG INT),
+MIN(REAL,INT), MIN(INT,REAL), MIN(REAL,REAL),
+MIN(SHORT REAL,SHORT REAL),
+
+MAX(SHORT SHORT INT,SHORT SHORT INT),
+MAX(SHORT INT,SHORT INT), MAX(INT,INT), MAX(LONG INT,LONG INT),
+MAX(REAL,INT), MAX(INT,REAL), MAX(REAL,REAL),
+MAX(SHORT REAL,SHORT REAL),
+
+SYSBUFF(INT),
+RTERMIOSTOCCHARPTR(REF TERMIOS),
+
+ELEM(INT), ELEM(INT,LONG BITS),
+ELEM(INT,SHORT BITS), ELEM(INT,SHORT SHORT BITS),
+
++(CHARBAG,CHARBAG)
+
+FINISH

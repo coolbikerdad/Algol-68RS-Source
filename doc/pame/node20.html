@@ -1,0 +1,163 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Exponentiation</title>
+<meta name="description" content="exponentiation">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node21.html">
+<link rel="previous" href="node19.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node21.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html962"
+  href="node21.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html956"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html950"
+  href="node19.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html958"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html960"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html963"
+  href="node21.html">Mixed arithmetic</a>
+<b> Up:</b> <a name="tex2html957"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html951"
+  href="node19.html">Division</a>
+ &nbsp; <b>  <a name="tex2html959"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html961"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html964"
+  href="node20.html#section00451000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00450000000000000000"></a><a name="form-exp"></a>
+<br>
+Exponentiation
+</h1>
+
+<p>If you want to compute the value of <code>3*3*3*3</code> you can do
+so using the multiplication operator, but it would be clearer and
+faster if you used the exponentiation operator
+<tt>**</tt><a name="1068"></a>.  The mode of its left operand can be
+either <code>REAL</code> or <code>INT</code>, but its right operand
+must have mode <code>INT</code>. If both its operands have the mode
+<code>INT</code>, the yield will have mode <code>INT</code> (in this
+case the right operand must not be negative), otherwise the yield will
+have mode <code>REAL</code>.  Thus the formula <code>3**4</code>
+yields the value <code>81</code>, but <code>3.0**4</code> yields the
+value <code>81.0</code>.  Its priority is&nbsp;8.  In a formula
+involving exponentiation as well as multiplication or division, the
+exponentiation is elaborated first.  For example, the formula
+<code>3*2**4</code> yields <code>48</code>, not <code>1296</code>.</p>
+
+<p> Every dyadic<a name="899"></a> operator has a priority of between
+1 and&nbsp;9 inclusive, and all monadic<a name="900"></a> operators
+bind more tightly than all dyadic operators.  For example, the formula
+<code>-2**2</code> yields <code>4</code>, not <code>-4</code>.  Here
+the monadic minus is elaborated first, followed by the
+exponentiation.</p>
+
+<hr>
+<h2><a name="section00451000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.8<a name="ex-ii-viii"></a>
+<dd>Given these declarations:
+<pre>
+   INT two = 2, m2 = -2;
+   REAL x = 3.0 / 2.0, y = 1.0
+</pre>
+
+what is the value and mode yielded by the following formul&#230;? Ans<a href="node136.html#ans-ii-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>two ** -m2</code>  
+<p>
+<dt>(b)
+<dd><code>x ** two + y ** two</code>  
+<p>
+<dt>(c)
+<dd><code>3 * m2 ** two</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html962"
+  href="node21.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html956"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html950"
+  href="node19.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html958"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html960"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html963"
+  href="node21.html">Mixed arithmetic</a>
+<b> Up:</b> <a name="tex2html957"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html951"
+  href="node19.html">Division</a>
+ &nbsp; <b>  <a name="tex2html959"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html961"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

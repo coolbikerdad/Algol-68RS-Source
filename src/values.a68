@@ -1,0 +1,614 @@
+DECS  values  CONTEXT VOID  USE
+*L    usefulops,
+      centities, environ, environment,
+      coutput, { required by GETCFRAGMENT to emit proc values }
+      idtable, { required for id ref level }
+      incmode, incoperfn, incid, { incid is only required for GETCFRAGMENT }
+      incvalue, modes:
+
+configinfo A68CONFIG "$Id: values.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.7 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC	tree =( INT mode, fn, BITS param, VECTOR []REF VALUE operands )REF VALUE:
+{
+Returns a pointer to a TREEOPER value of the given 'mode' representing the
+operator specified by 'fn' and 'param', together with its 'operands'.
+'param' can be either the RSRE or translator form.
+}
+BEGIN
+	REF VALUELIST operand list := NIL;
+	INT upb operands = UPB operands;
+
+	FORALL	operand IN operands
+	DO	operand list := HEAP VALUELIST := ( operand, operandlist )
+	OD;                           
+
+	HEAP VALUE :=
+	( mode,
+	  default info,
+	  TREEOPER
+	  ( fn,
+	    ABS( BIN upb operands SHL operands shift OR (param AND param mask)),
+	    operand list
+	  )
+	)
+END;                                                 
+
+{
+	Operations defined for the attributes field of a VALUE
+}
+
+OP XOR = (BITS a,b) BITS: (a OR b) AND NOT (a AND b);
+
+PROC	has attribute	= ( REF VALUE value, BITS a ) BOOL:
+{ This proc is just to avoid human error in choosing the operator }
+	info OF value >= a;
+
+{
+	Operations defined for REF VALUES
+}
+
+{ At present equality is only defined on constants and empty values }
+        
+OP =	= ( REF VALUE v1, v2 ) BOOL:
+CASE	extra OF v1 IN
+( VOID ):	CASE extra OF v2 IN
+		( VOID ):	mode OF v1 = mode OF v2
+		OUT	FALSE
+		ESAC,
+( LONG BITS b1): ( extra OF v2 | ( LONG BITS b2 ): b1 = b2 | FALSE )
+OUT	FALSE           
+ESAC;
+
+OP /= = ( REF VALUE v1, v2 ) BOOL:	NOT ( v1 = v2 );
+
+{ Operators for handling values representing constants }
+
+PRIO ISCONSTANT = 4;
+
+OP ISCONSTANT = ( REF VALUE value ) BOOL:
+  ( extra OF value | ( CONSTANT ): TRUE, ( CFRAGMENT ): has attribute(value, constant) | FALSE );
+
+OP ISCONSTANT = ( REF VALUE value, LONG BITS const ) BOOL:
+	( extra OF value | ( LONG BITS b ): b = const | FALSE );
+
+OP ISROUTINEINFO = ( REF VALUE value ) BOOL:
+	( extra OF value | ( ROUTINEINFO ): TRUE | FALSE );
+
+OP ISATOMIC =	( REF VALUE value ) BOOL: {ie, is bracketed}
+	( extra OF value
+	| ( CONSTANT   ): TRUE,
+	  ( TEMPORARY  ): TRUE,
+          ( IDENTIFIER ): TRUE,
+          ( CFRAGMENT  ): has attribute(value,constant) OREL has attribute(value,atomic)
+	| FALSE
+	);
+
+{
+	Predicates operating on REF VALUES
+}
+OP ISIDENT =	( REF VALUE value ) BOOL:
+	( extra OF value | ( IDENTIFIER ): TRUE | FALSE );
+
+OP ISTEMP =	( REF VALUE value ) BOOL:
+	( extra OF value | ( TEMPORARY ): TRUE | FALSE );
+
+OP ISCFRAGMENT = ( REF VALUE value ) BOOL:
+	( extra OF value | ( CFRAGMENT ): TRUE | FALSE );
+
+OP ISSKIP = ( REF VALUE value ) BOOL:
+	( extra OF value | (TREENSE tn): nse OF tn = 2 | FALSE );
+
+OP ISANAME	= ( REF VALUE op ) BOOL:
+	CASE	extra OF op  IN
+	( IDENTIFIER ):	TRUE,
+	( TEMPORARY  ): TRUE
+	OUT	FALSE
+	ESAC;  
+
+OP GETCONSTANT = ( REF VALUE value ) LONG BITS:
+	( extra OF value
+	| ( LONG BITS b ): b
+	| "VALUES - GETCONSTANT, value has no such component" ASSERT FALSE; SKIP
+	);
+
+{
+	Operations defined for modes.
+	These are included here bacause of scope problems
+}
+PROC	ref string  = ( INT level ) CFRAGMENT:
+{	
+	C Fragment representing correct de- or en-reference, depending
+	on 'level', or empty string if level = 0.  Used in conjunction with
+	'id ref level'.
+}
+BEGIN	"VALUES - ref string: level is invalid"
+	ASSERT level >= -1 ANDTH level < 32;
+	ABS level * ( level > 0 | "*" | "&" )
+END;
+
+PROC	id ref level = ( INT mode, c type ) INT:
+BEGIN
+	BOOL	firm array = is firm array( mode );
+	INT	diff =
+		( ( c type OVER ref mark )
+		  + ABS firm array
+		) -
+		( ( mode OVER ref mark )
+		  + ABS( firm array AND NOT has refs( mode ) )
+		);
+	"IDENTIFIERS - id ref level: ref levels are incompatable"
+	ASSERT ( diff >= 0 OREL diff = -1 );
+	diff
+END;
+   
+{
+	Operations defined for REF VALUES returning CFRAGMENTS
+}
+PROC	nl macro = ( CFRAGMENT cf ) CFRAGMENT:  concat(("NL(", cf, ")"));
+
+OP	GETCFRAGMENT = ( REF VALUE value ) CFRAGMENT:
+BEGIN
+	PROC	make proc value = ( CFRAGMENT name, INT mode ) CFRAGMENT:
+	BEGIN
+		CFRAGMENT tempname = name OF declare c temporary( mode, "procedure value" );
+		write c stream
+		( ( tempname, ".fn.fn_global = ", name, ";", cnewline,
+		   tempname, ".nonlocals = A68_NIL;", cnewline
+		  ), CODESTREAM current level
+		);              
+   	    	tempname
+	END;
+
+	CASE	extra OF value  IN
+
+	( CFRAGMENT c ):	c, { c fragments must be bracketed correctly }
+
+	( TEMPORARY t ):            
+	BEGIN	INT vmode = mode OF value;
+		INT rmode =
+		    ( has attribute(value, lvalue)
+		    | deref mode( vmode )  { trap invalid derefs }
+		    | vmode                
+		    );
+		INT diff = id ref level( rmode, mode OF t );
+		"VALUES - GETCFRAGMENT: attempt to take address of temporary"
+		ASSERT	( diff >= 0 );
+	  	CFRAGMENT result = ref string( diff ) + name OF t;
+		( diff > 0 | bracket( result ) | result )
+	END,
+
+	( LONG BITS b ):  	lwhole( ABS b, 0 ),
+
+	( TREENSE nihil ):
+		CASE	nse OF nihil
+		IN	"A68_NIL", "/*SKIP*/", "/*EMPTY*/"
+		OUT	"/* UNDEFINED NSE */"
+		ESAC,
+
+	( ROUTINEINFO r ):
+	BEGIN	IF	INT rd = rdenno OF r;
+			rd <= max rd no
+		AND	rd >= min rd no
+		THEN
+			REF RDINFO rdinfo = rds[ rd ];
+       			IF 	flags OF rdinfo >= rd global flag
+			THEN    make proc value( idfullname(rd), mode OF rdinfo) 
+	       		ELIF	has attribute( value, nonloc )
+			THEN	nl macro( id full name( rd ))
+			ELSE	id full name( rd )
+			FI
+		ELSE	""
+		FI
+	END, 
+                            
+   	( IDENTIFIER i ):
+	BEGIN
+		BOOL	brackets required := FALSE;
+		BOOL	non local = has attribute( value, nonloc );
+
+		INT  id = id no OF i;
+		"VALUES: GETCRAGMENT: invalid id no"
+                  ASSERT (id <= max id no) OREL ( (id >= min libid) ANDTH (id <= max libid));
+		REF IDINFO idinfo = get_idinfo(id);
+		BOOL	is gproc = flags OF idinfo >= id gproc flag;
+		CFRAGMENT body =
+		IF	is gproc
+		THEN    "VALUES: GETCFRAGMENT: non-local used gproc"
+			ASSERT NOT non local;
+			make proc value( idfullname(id), mode OF idinfo)
+		ELSE	{ Generate appropriate number of *s or &
+			  by comparing mode OF value (expected mode),
+			  with mode OF idinfo or cvariabletype OF idinfo
+			  for nonlocals and ordinary ids respectively.
+			}                        
+			INT	reqd a68 mode =
+				( has attribute( value, lvalue )
+				| deref mode( mode OF value )
+				| mode OF value
+				);
+			INT	reqd c mode =
+				( non local
+				| give c variable type(mode OF get_idinfo(id),TRUE)
+				| cvariabletype OF get_idinfo(id)
+				);    
+			INT diff = id ref level( reqd a68 mode, reqd c mode );
+			brackets required := ( diff /= 0 );
+			ref string( diff )
+		FI  	+       
+		IF	non local                                   
+		THEN	nl macro( id full name( id no OF i ) )
+		ELIF	is gproc
+		THEN    ""
+		ELSE	id full name( id no OF i )
+		FI;
+		( brackets required
+		| bracket( body )
+		| body
+		)
+	END,
+
+	( LABNO label ):
+	BEGIN     
+	 	INT	l = labno OF label;
+		"VALUES - GETCFRAGMENT: attempt to evaluate undeclared label"
+		+ whole( l, 0 )
+		ASSERT	label is declared( l );
+		IF	current level = level OF label environ( l )
+		THEN	label full name( l )
+		ELSE	IF	has attribute( value, nonloc )
+			THEN	nl macro( label buffer name( l ) )
+			ELSE 	label buffer name( l )
+			FI
+		FI	
+	END           
+
+      	OUT	"VALUES - GETCFRAGMENT, value has no such component"
+		ASSERT FALSE; SKIP
+	ESAC
+END;
+                                                                              
+PROC	bracket cfragment   = ( REF VALUE value ) CFRAGMENT:
+BEGIN
+	( ISATOMIC value
+	| GETCFRAGMENT value
+	| bracket( GETCFRAGMENT value )
+	)
+END;
+
+{ General handling of valuelists }
+
+PROC	index valuelist = ( REF VALUELIST list, INT index ) REF VALUE:
+{
+	Delivers the value of the "index"'th element in "list".
+}
+BEGIN
+        REF VALUELIST position := list;
+        TO index - 1 DO position := rest OF position OD;
+        value OF position
+END;
+
+PROC	reverse valuelist = ( REF VALUELIST list ) REF VALUELIST:
+{
+	Delivers reversed "list".
+}
+BEGIN
+	REF VALUELIST last := NIL, this := list, next;
+	WHILE	this ISNT nil valuelist
+	DO
+		next := rest OF this;
+		rest OF this := last;
+		last := this;
+		this := next
+        OD;
+	last
+END;
+
+{ Operator for getting operands of treeopers }
+
+OP	OPERANDSOF = ( TREEOPER treeoper ) INT:
+{
+	Returns the number of operands in the specified 'tree oper'.
+}
+	ABS( BIN param OF treeoper SHR operands shift );
+
+
+OP	PARAMOF = ( TREEOPER treeoper ) INT:
+{
+	Returns the 'param' information for the specified 'tree oper'.
+}
+	ABS( BIN param OF treeoper AND param mask );
+
+PRIO	OPERAND = 5;
+OP	OPERAND = ( REF VALUE oper, INT rand ) REF VALUE:
+	CASE	extra OF oper  IN
+	( TREEOPER rator ):
+	BEGIN
+	      INT total rands = OPERANDSOF rator;
+	      index valuelist ( operands OF rator, total rands + 1 - rand )
+	END
+	OUT	"OPERAND - VALUE parameter is not a TREEOPER." ASSERT FALSE; SKIP
+	ESAC;
+                          
+PROC	deref value = ( REF VALUE value ) VOID:
+BEGIN
+	"VALUES - deref value: cannot deref value"
+	ASSERT mode OF value > refmark;
+	mode OF value -:= ref mark
+END;
+
+PROC	enref value = ( REF VALUE value ) VOID:
+BEGIN               
+	mode OF value +:= refmark
+END;
+
+PROC	fn name = ( INT fn ) VECTOR []CHAR:
+CASE                  
+	VECTOR [] CHAR spare = "SPARE op";
+	fn
+IN
+	{  1 }  "statgrab",
+	{  2 }  "tree generator",
+	{  3 }  "select",
+	{  4 }  "copy",
+	{  5 }  "trim",
+	{  6 }  "simpleindex",
+	{  7 }  "trimindex",
+	{  8 }  "dyngrab",
+	{  9 }  "boundpack",
+	{ 10 }  "dyadic op",
+	{ 11 }  "monadic op",
+	{ 12 }  "straight",
+	{ 13 }  "prestraight",
+	{ 14 }  "strindex",
+	{ 15 }  "assign",
+	{ 16 }  "!! RS def. bnd",
+	{ 17 }  "deref",
+	{ 18 }  "call",
+	{ 19 }  "void",
+	{ 20 }  "niltom",
+	{ 21 }  "gotoproc",                          
+	{ 22 }  "gotom",
+	{ 23 }  "realtocompl",
+	{ 24 }  "inttoreal",
+	{ 25 }  "68R inttobits",
+	{ 26 }  "arrarr",
+	{ 27 }  "vecarr",
+	{ 28 }  "isvec",
+	{ 29 }  "is",
+	{ 30 }  "unite",
+	{ 31 }  "uniteu",
+	{ 32 }  "isarr",
+	{ 33 }  "skiptom",
+	{ 34 }  "vec",
+	{ 35 }  "arr",
+	{ 36 }  "deunite",
+	{ 37 }  "bitstov[]bool",
+	{ 38 }  "vac",
+	{ 39 }  "ytypetom",
+	{ 40 }  "mtoxtype",
+	{ 41 }  spare,
+	{ 42 }  spare,
+	{ 43 }  spare,
+	{ 44 }  spare,
+	{ 45 }  spare,
+	{ 46 }  spare,
+	{ 47 }  spare,
+	{ 48 }  spare,
+	{ 49 }  spare,
+{ translator introduced ops: }
+	{ 50 }  "static generator",
+	{ 51 }  "format"
+OUT	whole(fn,0)+" ?"
+ESAC;
+
+OP (VALUE) LONG INT  VALUETOLONG = BIOP 99;
+
+PROC	value string = ( REF VALUE value, BOOL brief ) VECTOR [] CHAR:
+IF	value IS NIL
+THEN	"NIL"
+ELIF	VALUETOLONG ( value ) = LONG INT ( SKIP )
+	{ It's SKIP, mustn't CASE on it orelse we get 'unset union' fault }
+THEN	"SKIP value"
+ELIF	value = (LOC VALUE := skip value)
+THEN	"skip value"
+ELSE	"( " +
+	   mode name  (  mode OF value ) + ", " +
+	   CASE	extra OF value IN
+	   ( VOID ):		"EMPTY",
+	   ( LONG BITS  bb  ):	"constant: "  +hex( bb, 24 ),
+	   ( LABNO	l   ):  "label: "     +id full name(labno OF l+min lab),
+	   ( IDENTIFIER id  ):	"identifier: "+id full name( id no OF id ),
+	   ( TEMPORARY  tmp ):	"temporary: " +name OF tmp,
+	   ( CFRAGMENT  c   ):  "cfragment: " +c,
+	   ( STRUCT ( INT nse ) s ):
+		( nse OF s
+		| "empty or vac", "skip", "nil"
+		| "TRACER - Unknown nse constituent"
+		),
+	   ( ROUTINEINFO r ):
+		" routineinfo: "+ id full name( rdenno OF r ) +
+		"("+ whole( rdenno OF r,0 ) +")",
+	   ( TREEOPER o ):
+		IF	brief
+		THEN	" ( " + fn name( fn OF o ) + ", .... )"
+		ELSE	" ( " + fn name( fn OF o ) +
+			", no ops: " +
+			whole ( ABS ( BIN param OF o SHR operands shift ), 0 ) +
+			", param: " +
+			whole ( ABS ( BIN param OF o AND param mask ), 0 ) +
+			" )"
+		FI
+	   OUT	"TRACER - Unknown EXTRA in value"
+	   ESAC
+	+ " )"
+FI;
+
+{
+	The mode UVALUE encapsulate the output of macro invocations
+	and provides a means of generalising the interface to routines
+	which output to the C streams.
+}
+
+MODE	UVALUE = UNION( REF VALUE, CFRAGMENT, TEMPORARY );
+
+PROC	uvalue to cfragment = ( UVALUE u ) CFRAGMENT:
+	CASE	u  IN
+	( REF VALUE rv ):	GETCFRAGMENT rv,
+	( CFRAGMENT c  ):       c,
+	( TEMPORARY t  ):	name OF t { required mode = declared mode }
+	OUT	"VALUES - uvalue to cfragment: unknown constituent of union"
+		ASSERT FALSE; SKIP
+	ESAC;
+
+PROC	join uvalue	= ( VECTOR []UVALUE items ) CFRAGMENT:
+BEGIN
+	"VALUES - join uvalue: no parameters" ASSERT UPB items >= 1;
+	FLEX VECTOR[0]CHAR result;
+	FORALL	i IN items
+	DO 	result +:= uvalue to cfragment( i )
+	OD;
+	result
+END;
+
+PROC   	comma separate	= ( VECTOR []UVALUE items ) CFRAGMENT:
+BEGIN
+    	"VALUES - comma separate: no parameters" ASSERT UPB items >= 1;
+{
+	uvalue to cfragment( items[ 1 ] ) +
+	( UPB items > 1
+	| ", " + comma separate( items[ 2: ] )
+	| ""               
+	)
+}	FLEX VECTOR[0]CHAR result;
+	result := uvalue to cfragment( items[1] );
+	IF	UPB items > 1
+	THEN	FORALL	i IN items[ 2: ]
+		DO	result +:= ","+uvalue to cfragment( i )
+		OD
+	FI;
+	result
+END;
+
+PROC	comma list	= ( VECTOR []UVALUE items ) CFRAGMENT:
+	bracket( comma separate( items ) );
+
+PROC	use macro = ( CFRAGMENT macro, VECTOR []UVALUE arguments ) CFRAGMENT:
+	macro + bracket( comma separate( arguments ) );
+
+PROC	emit line = ( VECTOR []UVALUE uv ) VOID:
+{	Emit a line of C immediately	}
+	write c stream
+	( ( join uvalue(uv), c newline ),
+	  CODESTREAM current level
+	);
+
+PROC	yield temporary =
+( CFRAGMENT comment,
+  INT mode,
+  VECTOR []UVALUE op
+) TEMPORARY:
+BEGIN     
+	TEMPORARY t = new( mode, comment );
+     	emit line(( t, " = ", join uvalue( op ), " ;"));
+	t                                        
+END;                               
+
+OP	YIELD	= ( REF VALUE op ) REF VALUE:
+BEGIN	IF	NOT ISANAME op
+	THEN	extra OF op := yield temporary( "YIELD", mode OF op, op );
+		info  OF op := info OF op AND fxwarn OR atomic
+	FI;
+	op
+END;
+
+OP	YIELD	= ( CFRAGMENT comment, REF VALUE op ) REF VALUE:
+BEGIN	IF	NOT ISANAME op
+	THEN	extra OF op := yield temporary( comment, mode OF op, op );
+		info  OF op := info OF op AND fxwarn OR atomic
+	FI;
+	op
+END;
+
+SKIP
+        
+KEEP
+	{ Operations on REF VALUEs }
+	= ( REF VALUE, REF VALUE ), /= ( REF VALUE, REF VALUE ),
+	ISCONSTANT ( REF VALUE ),  ISCONSTANT ( REF VALUE, LONG BITS ),
+	ISCFRAGMENT( REF VALUE ),
+	ISIDENT    ( REF VALUE ),
+	ISSKIP ( REF VALUE ),
+	ISTEMP ( REF VALUE ),
+	GETCONSTANT( REF VALUE ),  GETCFRAGMENT( REF VALUE ),
+	OPERAND ( REF VALUE, INT ),
+
+	{ Operations on TREEOPERs }
+     	OPERANDSOF ( TREEOPER ), PARAMOF ( TREEOPER ),
+
+	{ VALUE constituents kept from INCVALUE }
+	ANSWER, CONSTANT, EXTRA,
+	LABEL, ROUTINEINFO, IDENTIFIER, TEMPORARY,
+	TREENSE, TREEOPER, VALUE, VALUELIST,
+
+	{ Attribute Constants kept from INCVALUE }
+	default info, 
+	constant, atomic, effects, nonloc, voided, lvalue, is nil, fxwarn,
+	{ Operation on attributes in VALUEs }
+	has attribute,
+
+	nil value, nil value list,
+  	index valuelist,
+	no idno, id ref level,
+	reverse valuelist, skipvalue, tree, enref value, deref value,
+	value string, VALUETOLONG( VALUE ),
+ 	bracket cfragment, nl macro,
+
+	{ UVALUE mode and operations }
+	UVALUE, uvalue to cfragment, join uvalue, comma list, use macro,
+	emit line, yield temporary,
+	ISANAME( REF VALUE ), YIELD( REF VALUE ), YIELD( CFRAGMENT, REF VALUE )
+FINISH                                   
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

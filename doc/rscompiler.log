@@ -1,0 +1,191 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020/Debian) (preloaded format=etex 2021.4.2)  18 APR 2021 17:37
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**\nonstopmode \input ./rscompiler.texi
+(./rscompiler.texi (/usr/share/texmf/tex/texinfo/texinfo.tex
+Loading texinfo [version 2019-09-20.22]:
+\outerhsize=\dimen16
+\outervsize=\dimen17
+\topandbottommargin=\dimen18
+\bindingoffset=\dimen19
+\normaloffset=\dimen20
+\txipagewidth=\dimen21
+\txipageheight=\dimen22
+\defaultoutput=\toks13
+\headlinebox=\box16
+\footlinebox=\box17
+\savedtopmark=\toks14
+\margin=\insert252
+\EMsimple=\toks15
+\groupbox=\box18
+\groupinvalidhelp=\toks16
+\mil=\dimen23
+\exdentamount=\skip18
+\inmarginspacing=\skip19
+\centerpenalty=\count27
+ pdf,
+\tempnum=\count28
+\lnkcount=\count29
+\filename=\toks17
+\filenamelength=\count30
+\pgn=\count31
+\toksA=\toks18
+\toksB=\toks19
+\toksC=\toks20
+\toksD=\toks21
+\boxA=\box19
+\boxB=\box20
+\countA=\count32
+\nopdfimagehelp=\toks22
+ fonts,
+\textleading=\dimen24
+\sffam=\fam8
+ markup,
+\fontdepth=\count33
+ glyphs,
+\errorbox=\box21
+
+page headings,
+\titlepagetopglue=\skip20
+\titlepagebottomglue=\skip21
+\evenheadline=\toks23
+\oddheadline=\toks24
+\evenfootline=\toks25
+\oddfootline=\toks26
+ tables,
+\tableindent=\dimen25
+\itemindent=\dimen26
+\itemmargin=\dimen27
+\itemmax=\dimen28
+\itemno=\count34
+\multitableparskip=\skip22
+\multitableparindent=\skip23
+\multitablecolspace=\dimen29
+\multitablelinespace=\skip24
+\colcount=\count35
+\everytab=\toks27
+ conditionals,
+\doignorecount=\count36
+ indexing,
+\dummybox=\box22
+\whatsitskip=\skip25
+\whatsitpenalty=\count37
+\entryrightmargin=\dimen30
+\thinshrinkable=\skip26
+\partialpage=\box23
+\doublecolumnhsize=\dimen31
+\balancedcolumns=\box24
+ sectioning,
+\unnumberedno=\count38
+\chapno=\count39
+\secno=\count40
+\subsecno=\count41
+\subsubsecno=\count42
+\appendixno=\count43
+\absseclevel=\count44
+\secbase=\count45
+\chapheadingskip=\skip27
+\secheadingskip=\skip28
+\subsecheadingskip=\skip29
+ toc,
+\tocfile=\write0
+\contentsrightmargin=\skip30
+\savepageno=\count46
+\lastnegativepageno=\count47
+\tocindent=\dimen32
+ environments,
+\lispnarrowing=\skip31
+\envskipamount=\skip32
+\lskip=\skip33
+\rskip=\skip34
+\circthick=\dimen33
+\cartouter=\dimen34
+\cartinner=\dimen35
+\normbskip=\skip35
+\normpskip=\skip36
+\normlskip=\skip37
+\nonfillparindent=\dimen36
+\tabw=\dimen37
+\verbbox=\box25
+
+defuns,
+\defbodyindent=\skip38
+\defargsindent=\skip39
+\deflastargmargin=\skip40
+\defunpenalty=\count48
+\parencount=\count49
+\brackcount=\count50
+ macros,
+\paramno=\count51
+\macname=\toks28
+ cross references,
+\auxfile=\write1
+\savesfregister=\count52
+\toprefbox=\box26
+\printedrefnamebox=\box27
+\infofilenamebox=\box28
+\printedmanualbox=\box29
+ insertions,
+\footnoteno=\count53
+\SAVEfootins=\box30
+\SAVEmargin=\box31
+\noepsfhelp=\toks29
+ localization,
+\nolanghelp=\toks30
+\countUTFx=\count54
+\countUTFy=\count55
+\countUTFz=\count56
+ formatting,
+\defaultparindent=\dimen38
+
+and turning on texinfo input format.) [1] [2] Chapter 1
+\openout0 = `rscompiler.toc'.
+
+ [1] Chapter 2 [2]
+Underfull \hbox (badness 10000) in paragraph at lines 286--287
+[]@texttt xbegin, xsemi, xexit, xend, xroutinend, xcoll, xcollcomma, xendcoll, 
+xif,
+
+@hbox(6.69167+2.43333)x455.24408
+.@hbox(0.0+0.0)x15.0
+.@texttt x
+.@texttt b
+.@texttt e
+.@texttt g
+.etc.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 286--287
+@texttt xthen, xelse, xfi, xcase, xin, xcomma, xout, xesac, xcaseu, xinu, xucho
+ice,
+
+@hbox(6.69167+1.52081)x455.24408
+.@texttt x
+.@texttt t
+.@texttt h
+.@texttt e
+.@texttt n
+.etc.
+
+[3] [4] [5] [6] Chapter 3 [7] [8] Chapter 4 [9] [10] [11] [12] [13] [14]
+Chapter 5 [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] Chapter 6 [25]
+[26] [27] [28] [29] [30] [31] [32] [33] [34] [35] [36] [37] [38] [39] [40]
+[41] Chapter 7 [42] Chapter 8 [43] [44] [45] [46] [47] [48] [49] [50] [51]
+Chapter 9 [52] [53] [54] [55] [56] [57] [58] [59] [60] [61] [62] Appendix A
+[63] [64] Appendix B [65] [66] Appendix C [67] [68] [69] Appendix D [70]
+[71] [72] [73] [74] [75] [76]
+(/home/neil/Algol-68RS/algol68toc-1.20/doc/rscompiler.toc) [-1] [-2]
+(/home/neil/Algol-68RS/algol68toc-1.20/doc/rscompiler.toc [-3] [-4]) [-5]
+[-6] ) 
+Here is how much of TeX's memory you used:
+ 2986 strings out of 497104
+ 28807 string characters out of 6207132
+ 82844 words of memory out of 5000000
+ 4181 multiletter control sequences out of 15000+600000
+ 34203 words of font info for 119 fonts, out of 8000000 for 9000
+ 51 hyphenation exceptions out of 8191
+ 15i,5n,16p,331b,460s stack positions out of 5000i,500n,10000p,200000b,80000s
+
+Output written on rscompiler.dvi (84 pages, 278380 bytes).

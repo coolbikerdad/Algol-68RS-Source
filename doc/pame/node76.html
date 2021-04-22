@@ -1,0 +1,224 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>United modes in procedures</title>
+<meta name="description" content="united modes in procedures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node77.html">
+<link rel="previous" href="node75.html">
+<link rel="up" href="node74.html">
+<link rel="next" href="node77.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1917"
+  href="node77.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1911"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1905"
+  href="node75.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1913"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1915"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1918"
+  href="node77.html">Conformity clauses</a>
+<b> Up:</b> <a name="tex2html1912"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1906"
+  href="node75.html">United mode declarations</a>
+ &nbsp; <b>  <a name="tex2html1914"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1916"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1919"
+  href="node76.html#section001021000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001020000000000000000"></a><a name="union-proc"></a>
+United modes in procedures</h1>
+
+<p>We can now partly address the problem of the parameters for
+<tt>print</tt><a name="5400"></a> and
+<tt>read</tt><a name="5401"></a>.  If we extend the answer to the last
+exercise, we should be able to construct a united mode which will
+accept all the modes accepted by those two procedures.  In fact, the
+united modes used are almost the same as the two following
+declarations:</p>
+
+<pre>
+   MODE SIMPLOUT = UNION(CHAR, []CHAR,
+                         INT,  []INT,
+                         REAL, []REAL,
+                         COMPL,[]COMPL,
+                         BOOL, []BOOL,
+                        ),
+
+        SIMPLIN  = UNION(REF CHAR, REF[]CHAR,
+                         REF INT,  REF[]INT,
+                         REF REAL, REF[]REAL,
+                         REF COMPL,REF[]COMPL,
+                         REF BOOL, REF[]BOOL,
+                        );
+</pre>
+
+<p>As you can see, the mode <tt>SIMPLIN</tt><a name="5402"></a> used
+for <code>read</code> is united from modes of names.</p>
+
+<p>The modes <tt>SIMPLOUT</tt><a name="5403"></a> and
+<code>SIMPLIN</code> are a little more complicated than this because
+they include modes we have not yet met (see chapters&nbsp;9
+and&nbsp;11), but you now have the basic idea.</p>
+
+<p>The uniting coercion is available in a firm
+context<a name="5307"></a>.  This means that operators which accept
+operands with united modes will also accept operands whose modes are
+any of the constituent modes.  We shall return to this in the next
+section.</p>
+
+<p>Here is an example of the uniting coercion in a call of the
+procedure <code>print</code>.  If <code>a</code> has mode <code>REF
+INT</code>, <code>b</code> has mode <code>[]CHAR</code> and
+<code>c</code> has mode <code>PROC REAL</code>, then the call</p>
+
+<pre>
+   print((a,b,c))
+</pre>
+
+<p>causes the following to<a name="5310"></a>
+happen<a name="5311"></a>:</p>
+
+<ol>
+<li><code>a</code> is dereferenced to mode <code>INT</code> and then united to
+mode <code>SIMPLOUT</code>.
+</li>
+<li><code>b</code> is united to mode <code>SIMPLOUT</code>.
+</li>
+<li><code>c</code> is deprocedured to produce a value of mode <code>REAL</code>
+and then united to mode <code>SIMPLOUT</code>.
+</li>
+<li>The three elements are regarded as a row-display for a
+<code>[]SIMPLOUT</code>.
+</li>
+<li><code>print</code> is called with its single parameter.
+</li>
+</ol>
+
+<p><code>print</code> uses a <b>conformity
+clause</b><a name="5315"></a> (see next section) to extract the actual
+value from each element in the row.</p>
+
+<p>In section <a href="node63.html#rout-chinstr">6.3.2</a>, we gave
+the declaration of a procedure identified as <code>char in
+string</code>. The header of that procedure was</p>
+
+<pre>
+   PROC char in string=
+      (CHAR ch,REF INT pos,[]CHAR s)BOOL:
+</pre>
+
+<p>The procedure yielded <code>TRUE</code> if <code>ch</code> was present in <code>s</code>,
+in which case <code>pos</code> contained the position. Otherwise, the
+procedure yielded <code>FALSE</code>. The same procedure could be written to
+yield the position of <code>ch</code> in <code>s</code> if it is present, and
+<tt>VOID</tt><a name="5404"></a> if not:</p>
+
+<pre>
+   PROC ucis = (CHAR ch,[]CHAR s)
+                    UNION(INT,VOID):
+</pre>
+
+<p>The body of the procedure has been left as an exercise.</p>
+
+<hr>
+<h2><a name="section001021000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>8.5<a name="ex-viii-v"></a>
+<dd>A procedure has the header
+<pre>
+   PROC pu = ([]UNION(CHAR,[]CHAR) up)VOID:
+</pre>
+
+Explain what happens to the parameters if it is called by the phrase
+<pre>
+   pu((CHAR: REPR(ABS"a"+1),LOC[4]CHAR))
+</pre>
+Ans<a href="node142.html#ans-viii-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>8.6<a name="ex-viii-vi"></a>
+<dd>Write the body of the procedure <code>ucis</code>
+given in the text.   Ans<a href="node142.html#ans-viii-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1917"
+  href="node77.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1911"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1905"
+  href="node75.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1913"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1915"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1918"
+  href="node77.html">Conformity clauses</a>
+<b> Up:</b> <a name="tex2html1912"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1906"
+  href="node75.html">United mode declarations</a>
+ &nbsp; <b>  <a name="tex2html1914"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1916"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

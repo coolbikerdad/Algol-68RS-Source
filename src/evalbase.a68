@@ -1,0 +1,93 @@
+DECS  evalbase  CONTEXT VOID  USE
+*L    usefulops,
+      environment, values, moduletracer:
+
+configinfo A68CONFIG "$Id: evalbase.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.2 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC ( REF VALUE ) VOID evaluate;
+	{ Set up by initialise evaluator to be a suitable evaluation proc }
+
+PROC	eval1 = ( REF VALUE root, REF REF VALUE op1 ) VOID:
+BEGIN
+	op1 := root OPERAND 1;
+	evaluate ( op1 );
+	IF	TRACELEVEL "evalbase" /= 0
+	THEN	list( "EVALBASE - eval1 result : " + value string(op1,FALSE) )
+	FI
+END;
+
+PROC	eval_pass_left = ( REF VALUE root, REF REF VALUE op, BITS info ) VOID:
+BEGIN
+	op := root OPERAND 1;
+	info OF op ORAB info;
+	evaluate ( op );
+	IF	TRACELEVEL "evalbase" /= 0
+	THEN	list( "*eval_pass_left result: " + value string(op,FALSE) )
+	FI
+END;
+
+PROC	eval_pass_right = ( REF VALUE root, REF REF VALUE op, BITS info ) VOID:
+BEGIN
+	op := root OPERAND 2;
+	info OF op ORAB info;
+	evaluate ( op );
+	IF	TRACELEVEL "evalbase" /= 0
+	THEN	list( "*eval_pass_right result: " + value string(op,FALSE) )
+	FI
+END;
+
+PROC	eval2 = ( REF VALUE root, REF REF VALUE left, right ) VOID:
+BEGIN
+	left  := root OPERAND 1;
+	right := root OPERAND 2;
+	evaluate ( left  );
+	evaluate ( right );
+	IF	TRACELEVEL "evalbase" /= 0
+	THEN	VECTOR[]CHAR trace = "*eval2 ";
+		list(trace+"(left) : "+value string(left,FALSE));
+		list(trace+"(right): "+value string(right,FALSE))
+	FI
+END;
+
+SKIP
+
+KEEP	eval1, eval_pass_left, eval_pass_right, eval2, evaluate
+
+FINISH

@@ -1,0 +1,125 @@
+DECS  incinstallation  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incinstallation.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.4 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+$Log: incinstallation.a68,v $
+Revision 1.1.1.1  2001-05-07 10:16:10  sian
+Import of Ctrans v1.0.4
+
+Revision 1.1.1.1  1999/10/07 14:43:46  sian
+Original Ctrans from ELLA
+
+# Revision 34.2  1995/03/29  13:01:58  ella
+# Change copyright header
+#
+# Revision 33.1  1994/08/25  12:43:08  snell
+# Entered in new config system previous version number 2.4
+#
+Revision 2.4  1993/11/17  11:26:42  aap
+Added 'id force use flag' to cope with kept declarations appearing on RHS of
+kept identities.
+
+Revision 2.3  1993/05/04  13:53:45  aap
+Operating system interface changes (Ctrans_3_4_ctypes) merged back.
+
+Revision 2.2  1993/03/10  11:28:53  aap
+time of spec change added to MODE YMSPEC and module information.
+
+Revision 2.1  1993/01/21  15:54:59  aap
+ALIEN extension; no header files generated
+
+}
+
+
+MODE
+  ID = STRUCT 32 CHAR,                 { Algol identifier, space filled }
+
+  UNAME	= STRUCT  7 CHAR,              { Unique name introduced by translator}
+
+  TRANSKEPTINFO = STRUCT               { Extra info required by Ctrans for kept items: }
+    ( UNAME prefix,                    {   Unique name }
+      BOOL optimised,                  {   Was id's definition an #define ? }
+      BOOL iddec,                      {   Is id an identity ? }
+      BOOL global proc,                {   Is id represented as a C function (ie no env)? }
+      BOOL kept genproc,               {   Is id a generator proc ? }
+      BOOL force use,                  {   Has id appeared as rhs of optimised identity? }
+      REF VECTOR [] CHAR definition,   {   C that defines optimised id }
+      REF VECTOR [] CHAR rhs           {   C that defines rhs (eg extern, #define, #include) }
+    ),
+
+  YS= UNAME,
+
+  YMSPEC= STRUCT
+    ( STRUCT {XSPEC}
+        ( ID f,
+          INT no, nl, ng,
+          UNION ( REF VECTOR [] CHAR, REF VECTOR [] {CAT} STRUCT( ID n, f, INT level ) ) u
+         ) xs,
+      YS ys,
+      LONG INT time of last change,
+      REF VECTOR [] TRANSKEPTINFO keptinfo,
+      REF VECTOR [] UNAME cnames
+    ),
+
+  YM= STRUCT
+    ( UNAME uname, lname, gname,
+      REF VECTOR [] YMSPEC specs
+    );
+
+INT
+  upbofmodes= 1023,
+  upbofsidstack= 999,
+  maxid= 32,
+  maxuname= 7,
+  maxchar= 256,
+  maxistruct= 16777215  { STRUCT n BOOL segment }
+
+KEEP
+  ID, TRANSKEPTINFO, UNAME, YM, YMSPEC, YS,
+  maxchar, maxid, maxistruct, maxuname,
+  upbofmodes, upbofsidstack
+FINISH
+
+{
+Local Variables:
+eval: (auto-fill-mode 0)
+End:
+}

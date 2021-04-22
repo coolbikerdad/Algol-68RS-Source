@@ -1,0 +1,567 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Standard procedures</title>
+<meta name="description" content="standard procedures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node130.html">
+<link rel="previous" href="node128.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node130.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2909"
+  href="node130.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2903"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2897"
+  href="node128.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2905"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2907"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2910"
+  href="node130.html">a68toc extensions</a>
+<b> Up:</b> <a name="tex2html2904"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2898"
+  href="node128.html">Standard operators</a>
+ &nbsp; <b>  <a name="tex2html2906"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2908"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2911"
+  href="node129.html#section001541000000000000000">Mathematical procedures</a>
+<li><a name="tex2html2912"
+  href="node129.html#section001542000000000000000">Other procedures</a>
+<li><a name="tex2html2913"
+  href="node129.html#section001543000000000000000"><tt>ALIEN</tt> declarations</a>
+<li><a name="tex2html2914"
+  href="node129.html#section001544000000000000000"><tt>ALIEN</tt> routines</a>
+<ul>
+<li><a name="tex2html2915"
+  href="node129.html#section001544100000000000000">Routines conforming to Ansi C</a>
+<li><a name="tex2html2916"
+  href="node129.html#section001544200000000000000">Routines conforming to BSD4.4</a>
+<li><a name="tex2html2917"
+  href="node129.html#section001544300000000000000">Routines conforming to an ISO standard</a>
+<li><a name="tex2html2918"
+  href="node129.html#section001544400000000000000">Routines peculiar to Linux</a>
+<li><a name="tex2html2919"
+  href="node129.html#section001544500000000000000">Routines conforming to POSIX</a>
+<li><a name="tex2html2920"
+  href="node129.html#section001544600000000000000">Local routines</a>
+</ul></ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001540000000000000000"></a><a name="stan-proc"></a>
+Standard procedures</h1>
+
+<p>These mainly consist of mathematical procedures. All the procedures
+associated with interfacing with alien procedures appear in the a68toc
+section and all the transput procedures appear in the transput section.
+Procedures associated with floating-point, process and
+garbage-collector control appear in
+section&nbsp;<a href="node131.html#stan-cont">13.6</a>.</p>
+
+<h2><a name="section001541000000000000000"></a><a name="stan-math"></a>
+Mathematical procedures</h2>
+
+<p>Strictly speaking, there are as many precisions of each of the
+mathematical functions as there are for real numbers. However, in the
+standard prelude provided with the a68toc compiler, the only extra
+precision implemented is that for <code>short real</code>. The <code>L</code>
+shorthand is used to simplify the list of procedures. All these
+procedures depend on the corresponding C&nbsp;library functions, so consult
+the manual pages for details.<p>
+
+<ol>
+<li><tt>PROC l sqrt = (L REAL x)L REAL:</tt><a name="11036"></a> <br>
+Yields<a name="11037"></a> the square root of
+<i>x</i> provided that <i>x</i>&nbsp;&ge;&nbsp;0.</li>
+<li><tt>PROC l exp = (L REAL x)L REAL:</tt><a name="11038"></a> <br>
+Yields<a name="11039"></a> <span class="math"><i>e</i><sup>x</sup></span> if such a value exists.
+</li>
+<li><tt>PROC l ln = (L REAL x)L REAL:</tt><a name="11040"></a> <br>
+Yields<a name="11041"></a> the natural (or Napierian) logarithm of <span class="math"><i>x</i></span>
+provided that <span class="math"><i>x</i> &gt; 0</span>, otherwise the procedure fails and <code>errno</code>
+is set (see section&nbsp;<a href="node131.html#stan-cont">13.6</a> for details).
+</li>
+<li><tt>PROC l log = (L REAL x)L REAL:</tt><a name="11042"></a> <br>
+Yields<a name="11043"></a> the logarithm of <code>x</code> to base 10.
+</li>
+<li><tt>PROC l cos = (L REAL x)L REAL:</tt><a name="11044"></a> <br>
+Yields<a name="11045"></a> the cosine of <span class="math"><i>x</i></span>, where <span class="math"><i>x</i></span> is in radians.
+</li>
+<li><tt>PROC l arccos = (L REAL x)L REAL:</tt><a name="11046"></a>
+<br>
+Yields<a name="11047"></a> the inverse cosine of <span class="math"><i>x</i></span> as a value
+between <code>L 0</code> and <code>2 l pi</code> inclusive. If <code>ABS x &gt; 1</code>
+then the procedure yields an erroneous result, but <code>errno</code> is
+set (see section&nbsp;<a href="node131.html#stan-cont">13.6</a> for details).
+</li>
+<li><tt>PROC l sin = (L REAL x)L REAL:</tt><a name="11048"></a>
+<br>
+Yields<a name="11049"></a> the sine of <span class="math"><i>x</i></span>, where <span class="math"><i>x</i></span> is in radians.
+</li>
+<li><tt>PROC l arcsin = (L REAL x)L REAL:</tt><a name="11050"></a>
+<br>
+Yields<a name="11051"></a> the inverse sine of <span class="math"><i>x</i></span> as a value
+between <code>L 0</code> and <code>2 l pi</code> inclusive. If <code>ABS x &gt; 1</code>
+then the procedure yields an erroneous result, but <code>errno</code> is
+set (see section&nbsp;<a href="node131.html#stan-cont">13.6</a> for details).
+</li>
+<li><tt>PROC l tan = (L REAL x)L REAL:</tt><a name="11052"></a>
+<br>
+Yields<a name="11053"></a> the tangent of <span class="math"><i>x</i></span>, where <span class="math"><i>x</i></span> is in radians.
+</li>
+<li><tt>PROC l arctan = (L REAL x)L REAL:</tt><a name="11054"></a>
+<br>
+Yields<a name="11055"></a> the inverse tangent of <span class="math"><i>x</i></span> as a value
+between <code>L 0</code> and <code>2 l pi</code> inclusive.
+</li>
+<li><tt>PROC next random = (REF INT a)REAL:</tt><a name="11056"></a> <br>
+The next <code>INT</code> value after <span class="math"><i>a</i></span> in a pseudo-random sequence
+uniformly distributed in the range <code>L 0</code> to <code>max int</code> is
+assigned to <span class="math"><i>a</i></span>. The yield <span class="math"><i>x</i></span> is in the range <span class="math">0 <img
+ width="18" height="34" align="middle" border="0"
+ src="img50.png"
+ alt="$ \leq$"> <i>x</i> &lt; 1</span> obtained by
+a uniform mapping of <span class="math"><i>a</i></span>.
+</li>
+<li><tt>INT last random</tt><a name="11057"></a> <br>
+<tt>LONG INT long last random</tt><a name="11058"></a> <br>
+Names initialised to fixed values and used by other random procedures
+as a seed.
+</li>
+<li><tt>PROC random = REAL:</tt><a name="11059"></a> <br>
+A call of <code>next random(last random)</code>.
+</li>
+<li><tt>PROC short random = SHORT REAL:</tt><a name="11060"></a>
+<br>
+As for <code>random</code> with the yield shortened.
+</li>
+<li><tt>PROC l random int = (L INT n)L INT:</tt><a name="11061"></a>
+<br>
+Yields<a name="11062"></a> a<a name="11063"></a>
+pseudo-random<a name="11064"></a> sequence of
+integers in the range 1&nbsp;&le;&nbsp;x&nbsp;&le;&nbsp;n</li>
+</ol>
+<p>
+
+<h2><a name="section001542000000000000000"></a><a name="stan-procoth"></a>
+Other procedures</h2>
+
+<p>The procedures <code>whole</code>, <code>fixed</code> and
+<code>float</code> are dealt with in the transput section
+(<a href="node132.html#stan-trans">13.7</a>).</p>
+
+<ol>
+<li><tt>PROC l bits pack = ([]BOOL a)L BITS:</tt><a name="11065"></a>
+<br>
+Packs<a name="11066"></a> <code>l bits width</code>
+booleans<a name="11067"></a> into<a name="11068"></a>
+a<a name="11069"></a> value of mode <code>L BITS</code>.
+</li>
+<li><tt>PROC char in string =</tt><a name="11070"></a>
+
+<pre>
+<code>       (CHAR c,REF INT i,STRING s)BOOL:</code>
+</pre>
+
+If the character i>c</i> occurs in the string <i>s</i>, the procedure
+yields <code>TRUE</code> and assigns the position of <i>c</i> in
+<i>s</i> to <i>i</i>, otherwise it yields <code>FALSE</code> when no
+assignment to <i>i</i> takes place.</li>
+</ol>
+
+<h2><a name="section001543000000000000000"></a><a name="stan-decalien"></a>
+<tt>ALIEN</tt> declarations</h2>
+
+<p>This section contains all those values which are declared as
+<code>ALIEN</code> values, but which are not mentioned in the Revised
+Report.</p>
+
+<ol>
+<li><tt>erange err</tt><a name="11072"></a> is one Linux system error used in the QAD
+standard prelude.
+</li>
+<li>The following integer values are used in the transput.
+
+<ol>
+<li><tt>INT posix seek cur</tt><a name="11073"></a>
+<br>
+Used in <code>posix lseek</code> to specify the current position.
+</li>
+<li><tt>INT posix seek end</tt><a name="11074"></a>
+<br>
+Used in <code>posix lseek</code> to specify the end of the file.
+</li>
+<li><tt>INT posix seek set</tt><a name="11075"></a>
+<br>
+Used in <code>posix lseek</code> to specify a direct offset.
+</li>
+</ol>
+</li>
+<li>These values are used in the manipulation of the <tt>kbd channel</tt><a name="11076"></a>.
+
+<ol>
+<li><tt>INT termios vtime</tt><a name="11077"></a>
+<br>
+The offset in the <code>termios</code> structure.
+</li>
+<li><tt>INT termios vmin</tt><a name="11078"></a>
+<br>
+The offset in the <code>termios</code> structure.
+</li>
+<li><tt>INT tcsanow</tt><a name="11079"></a>
+<br>
+Used in the call to <tt>linux tc set attr</tt><a name="11080"></a>.
+</li>
+<li><tt>INT isig</tt><a name="11081"></a>
+<br>
+Used in the call to <tt>linux tc set attr</tt><a name="11082"></a>.
+</li>
+<li><tt>INT icanon</tt><a name="11083"></a>
+<br>
+Used in the call to <tt>linux tc set attr</tt><a name="11084"></a>.
+</li>
+<li><tt>INT echo</tt><a name="11085"></a>
+<br>
+Used in the call to <tt>linux tc set attr</tt><a name="11086"></a>.
+</li>
+</ol>
+</li>
+<li><tt>nil func ptr</tt><a name="11087"></a> has mode <code>CPTR</code> and is used to provide
+a <code>NIL</code> pointer to C functions.
+</li>
+<li><tt>null c charptr</tt><a name="11088"></a> is equivalent to the C value <code>NULL</code>.
+</li>
+<li><tt>prelude</tt><a name="11089"></a> is a dummy declaration used to access the
+parameters provided to a program when called. It should not be used.
+</li>
+<li>The signal names in Linux are given in the following table:
+<div align="center">
+<table cellpadding=3 border="1">
+<tr><td align="left">sighup</td>
+<td align="left">sigstkflt</td>
+<td align="left">sigint</td>
+<td align="left">sigchld</td>
+</tr>
+<tr><td align="left">sigquit</td>
+<td align="left">sigcont</td>
+<td align="left">sigill</td>
+<td align="left">sigstop</td>
+</tr>
+<tr><td align="left">sigtrap</td>
+<td align="left">sigtstp</td>
+<td align="left">sigabrt</td>
+<td align="left">sigttin</td>
+</tr>
+<tr><td align="left">sigbus</td>
+<td align="left">sigttou</td>
+<td align="left">sigfpe</td>
+<td align="left">sigurg</td>
+</tr>
+<tr><td align="left">sigkill</td>
+<td align="left">sigxcpu</td>
+<td align="left">sigusr1</td>
+<td align="left">sigxfsz</td>
+</tr>
+<tr><td align="left">sigsegv</td>
+<td align="left">sigvtalrm</td>
+<td align="left">sigusr2</td>
+<td align="left">sigprof</td>
+</tr>
+<tr><td align="left">sigpipe</td>
+<td align="left">sigwinch</td>
+<td align="left">sigalrm</td>
+<td align="left">sigio</td>
+</tr>
+<tr><td align="left">sigterm</td>
+<td align="left">sigpwr</td>
+<td align="left">&nbsp;</td>
+<td align="left">&nbsp;</td>
+</tr>
+</table>
+</div>
+See <code>signal(7)</code> for details of each signal.
+</li>
+<li><tt>errno</tt><a name="11090"></a> identifies a value of mode <code>REF INT</code> and
+contains the error number of the latest Linux system error.
+</li>
+</ol>
+
+<h2><a name="section001544000000000000000"></a><a name="stan-procalien"></a>
+<tt>ALIEN</tt> routines</h2>
+
+<p>All the <code>ALIEN</code> routines made available by the QAD
+standard prelude can be found in this section. No attempt has been
+made to give details of their function: consult the &ldquo;man&rdquo;
+pages on your Linux system for that (the appropriate page is given
+after the header of each routine with the section of the Linux
+programming manual given in parentheses). The <code>ALIEN</code>
+declarations have been classified by the first word of their
+identifiers which gives the standard which specifies them. For
+example, the routine <tt>bsd mkstemp</tt><a name="11092"></a> is
+specified by the BSD4.4 standard.</p>
+
+<p>Many of the routines are used in the definition of other,
+higher-level routines. They are made available so that implementers of
+other preludes will not have to redefine them.</p>
+
+<h3><a name="section001544100000000000000"></a><a name="stan-ansi"></a>
+Routines conforming to Ansi C</h3>
+
+<ol>
+<li><tt>PROC(INT)INT ansi raise</tt><a name="11093"></a>
+<br>
+See <code>raise(3)</code>.
+</li>
+<li><tt>PROC(INT,CPTR)CPTR ansi signal</tt><a name="11094"></a>
+<br>
+See <code>signal(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHARJ)REAL ansi strtod</tt><a name="11095"></a>
+<br>
+See <code>strtod(3)</code>.
+</li>
+</ol>
+<p>
+
+<h3><a name="section001544200000000000000"></a><a name="stan-bsd"></a>
+<br>
+Routines conforming to BSD4.4
+</h3>
+<ol>
+<li><tt>PROC(INT,VECTOR[]CHAR,REF INT)INT bsd accept</tt><a name="11096"></a>
+<br>
+See <code>accept(2)</code>.
+</li>
+<li><tt>PROC(INT,VECTOR[]CHAR,INT)INT bsd bind</tt><a name="11097"></a>
+<br>
+See <code>bind(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,INT)INT bsd chmod</tt><a name="11098"></a>
+<br>
+See <code>chmod(2)</code>.
+</li>
+<li><tt>PROC(INT,VECTOR[]INT,INT)INT bsd connect</tt><a name="11099"></a>
+<br>
+See <code>connect(2)</code>.
+</li>
+<li><tt>PROC(INT,INT)INT fchmod</tt><a name="11100"></a>
+<br>
+See <code>fchmod(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR)CCHARPTRPTR bsd gethostbyname</tt><a name="11101"></a>
+<br>
+See <code>gethostbyname(3)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,REF BITS)INT bsd inet aton</tt><a name="11102"></a>
+<br>
+See <code>inet_aton(3)</code>.
+</li>
+<li><tt>PROC(INT)INT bsd is a tty</tt><a name="11103"></a>
+<br>
+See <code>isatty(3)</code>.
+</li>
+<li><tt>PROC(INT,INT)INT bsd listen</tt><a name="11104"></a>
+<br>
+See <code>listen(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR)INT bsd mkstemp</tt><a name="11105"></a>
+<br>
+See <code>mkstemp(3)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,VECTOR[]CHAR,REAL,INT,INT)INT bsd real snprintf</tt><a name="11106"></a>
+<br>
+Although the underlying routine can be used for the transput of any
+plain value, it is used here for the transput of a <code>REAL</code> only.
+See <code>snprintf(3)</code>.
+</li>
+<li><tt>PROC(INT,INT)INT bsd shutdown</tt><a name="11107"></a>
+<br>
+See <code>shutdown(2)</code>.
+</li>
+<li><tt>PROC(INT,INT,INT)INT bsd socket</tt><a name="11108"></a>
+<br>
+See <code>socket(2)</code>.
+</li>
+</ol>
+
+<h3><a name="section001544300000000000000"></a><a name="stan-iso"></a>
+Routines conforming to an ISO standard</h3>
+
+<ol>
+<li><tt>PROC(CPTR)INT iso at exit</tt><a name="11109"></a>
+<br>
+See <code>atexit(3)</code>.
+</li>
+</ol>
+
+<h3><a name="section001544400000000000000"></a><a name="stan-linux"></a>
+Routines peculiar to Linux</h3>
+
+<ol>
+<li><tt>PROC(CPTR,CSTR)INT linux on exit</tt><a name="11110"></a>
+<br>
+See <code>on_exit(3)</code>.
+</li>
+<li><tt>PROC(INT,CCHARPTR)INT linux tc get attr</tt><a name="11111"></a>
+<br>
+See <code>tcgetattr(3)</code>.
+</li>
+<li><tt>PROC(INT,BITS,CCHARPTR)INT linux tc set attr</tt><a name="11112"></a>
+<br>
+See <code>tcsetattr(3)</code>.
+</li>
+</ol>
+
+<h3><a name="section001544500000000000000"></a><a name="stan-posix"></a>
+<br>
+Routines conforming to POSIX
+</h3>
+<ol>
+<li><tt>PROC(INT)INT posix close</tt><a name="11113"></a>
+<br>
+See <code>close(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,INT)INT posix creat</tt><a name="11114"></a>
+<br>
+See <code>creat(2)</code>.
+</li>
+<li><tt>PROC(INT)VOID posix exit</tt><a name="11115"></a>
+<br>
+See <code>exit(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR)CSTR posix get env</tt><a name="11116"></a>
+<br>
+See <code>getenv(3)</code>.
+</li>
+<li><tt>PROC INT posix getpid</tt><a name="11117"></a>
+<br>
+See <code>getpid(2)</code>.
+</li>
+<li><tt>PROC(INT,INT,INT)INT posix lseek</tt><a name="11118"></a>
+<br>
+See <code>lseek(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,INT,INT)INT posix open</tt><a name="11119"></a>
+<br>
+See <code>open(2)</code>.
+</li>
+<li><tt>PROC(INT,VECTOR[]CHAR,INT)INT posix read</tt><a name="11120"></a>
+<br>
+See <code>read(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR,VECTOR[]CHAR)INT posix rename</tt><a name="11121"></a>
+<br>
+See <code>rename(2)</code>.
+</li>
+<li><tt>PROC(INT)CSTR posix strerror</tt><a name="11122"></a>
+<br>
+See <code>strerror(3)</code>.
+</li>
+<li><tt>PROC(CSTR)INT posix strlen</tt><a name="11123"></a>
+<br>
+See <code>strlen(3)</code>.
+</li>
+<li><tt>PROC(REF INT)INT posix time</tt><a name="11124"></a>
+<br>
+See <code>time(2)</code>.
+</li>
+<li><tt>PROC(VECTOR[]CHAR)INT posix unlink</tt><a name="11125"></a>
+<br>
+See <code>unlink(2)</code>.
+</li>
+<li><tt>PROC(INT,VECTOR[]CHAR,INT)INT posix write</tt><a name="11126"></a>
+<br>
+See <code>write(2)</code>.
+</li>
+</ol>
+
+<h3><a name="section001544600000000000000"></a><a name="stan-local"></a>
+Local routines</h3>
+
+<ol>
+<li><tt>PROC(REF SHORT BITS)VOID get fpu cw</tt><a name="11127"></a>
+<br>
+Gets the control word of the floating point unit.
+</li>
+<li><tt>PROC(SHORT BITS)VOID set fpu cw</tt><a name="11128"></a>
+<br>
+Sets the control word of the floating point unit.
+</li>
+<li><tt>PROC(REAL,REF INT)VOID ph round</tt><a name="11129"></a>
+<br>
+Rounds a <code>REAL</code> to an <code>INT</code>.
+</li>
+</ol>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2909"
+  href="node130.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2903"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2897"
+  href="node128.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2905"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2907"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2910"
+  href="node130.html">a68toc extensions</a>
+<b> Up:</b> <a name="tex2html2904"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2898"
+  href="node128.html">Standard operators</a>
+ &nbsp; <b>  <a name="tex2html2906"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2908"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

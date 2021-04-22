@@ -1,0 +1,1261 @@
+DECS  operators  CONTEXT VOID  USE
+*L    usefulops, cif,
+      centities, coutput, denotations, environ, environment, evalbase, idtable,
+      incoperfn, uniquenameserver, unionaids, incmode, modes, incvalue, values:
+
+configinfo A68CONFIG "$Id: operators.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.8 
+05:12:94  33.002  DJS   CmplxNos   STRAIGHT bug - no account for "no struct
+                                   result option", REAL -> complex coerecion
+                                   added. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+CFRAGMENT module name = "OPERATORS - ";
+
+CFRAGMENT
+{
+	This is the set of string which will output by the verbose option
+	for the constructs generated in this module
+}
+	 qselect            = module name + "select",
+	 qcopy to flex      = module name + "copy to flex",
+	 qsimple index      = module name + "simple index",
+{	 qtrim              = module name + "trim",}
+	 qtrimindex         = module name + "trim index",
+	 qdynamic generator = module name + "dynamic generator",
+	 qassign op         = module name + "assign op",
+	 qnil to mode       = module name + "nil -> mode",
+	 qrows to row rows  = module name + "rows -> row rows",
+	 qvector to row     = module name + "vector -> row",
+	 qmode to struct1   = module name + "mode -> struct 1 mode",
+	 qunite simple      = module name + "mode -> union mode",
+	 qunite union       = module name + "unite union",
+	 qistruct to vec    = module name + "istruct -> vector",
+	 qistruct to row    = module name + "istruct to row",
+	 qscalars to array  = module name + "scalar -> [] or VEC[]",
+	 qskip to mode      = module name + "skip to mode",
+	 qbits to row bool  = module name + "bits -> row bool",
+	 qvacuum            = module name + "vacuum";
+
+PROC	allocate space	= ( BOOL loc, INT mode ) CFRAGMENT:
+{
+	Simple loc/heap generators
+}                         
+	( loc | "A_LOC" | "A_HEAP" ) + bracket( c type( mode ) );
+          
+PROC	staticpart generator	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{                                             
+	'param' is a boolean indicating heap/loc allocation
+	If the mode is a FLEX row - generate space for a descriptor.
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+	BOOL	local = ( PARAMOF rator = ABS TRUE );
+	( mode OF root,
+	  info OF op AND (fxwarn OR atomic), { preserves bracketing }
+	  ( HASONEREF mode OF root ANDTH is firm array( mode OF root )
+	  | extra OF op
+	  | use macro
+	    ( ( local | "A_LOC_STATIC" | "A_HEAP_STATIC" ),
+	      ( c type( deref mode( mode OF root ) ),
+		new( mode OF root,"staticpart generator" ),
+	        op 
+	      )
+	    )
+	  )
+	)   
+END;                    
+
+PROC	select op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Select 'param'th field from struct or []struct.
+	[]struct not implemented initially.
+}          
+BEGIN
+	REF VALUE op := root OPERAND 1;
+	{ attributes esp lvalue should not be passed on }
+	evaluate( op );
+	INT	op mode = mode OF op;
+	qselect+": []struct not implemented"
+	ASSERT NOT is array( op mode );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( has refs( op mode )
+	  | CFRAGMENT body =
+	    bracket
+	    ( bracket cfragment( op ) +"->"+ select(mode OF op,PARAMOF rator)
+     	    ) ;
+	    ( HASONEREF op mode AND HASONEREF mode OF root
+	      AND is firm array( mode OF root )
+	    | body
+	    | bracket( "&"+body )
+	    )
+	  | bracket cfragment( op ) +"."+ select(mode OF op,PARAMOF rator)
+	  )   
+	)
+END;                          
+                  
+
+PROC	copy to flex		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Prior to assignment of flex vector or flex array.
+	1 operand, a descriptor of the n-dimensional array or vector.
+	Generate heap space for it and copy the elements into the space.
+	Different macros for vectors and rows are needed.
+}
+BEGIN
+	REF VALUE op;  eval1( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic OR effects,
+	  use macro
+	  ( ( is vector (mode OF root)
+	    | "A_VCOPY"
+	    | "A_R" + whole (dimensions (mode OF root), 0) + "COPY"
+	    ),
+	    ( YIELD op,
+	      new( mode OF root, qcopy to flex ),
+	      c type( element mode( mode OF root ))
+	    )                            
+	  )
+	)     
+END;
+          
+PROC	parameter list = ( REF VALUELIST list, REF BITS fx warnings ) CFRAGMENT:
+{
+	This recursively constructs a comma separated list of arguments.
+	Each of the VALUEs in the list is evaluated and concatenated to
+	the result.
+}
+	( list IS nil value list
+	| ""	{ special case : there are no parameters }
+	| evaluate( value OF list );
+	  fx warnings ORAB ( info OF value OF list AND fxwarn );
+	  ( rest OF list ISNT nil value list 
+	  | parameter list( rest OF list, fx warnings ) + ", "
+	  | ""
+	  ) +
+	  GETCFRAGMENT  YIELD value OF list
+	);
+             
+
+PROC	simple index op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Generate and index to a vector or row
+}
+BEGIN                                        
+	REF VALUE array;  REF REF VALUELIST rands, scripts;
+	TREEOPER myrator := rator;
+	scripts := rands := operands OF myrator;
+	FOR i	TO PARAMOF rator  { skip over 'param' subscripts }
+	WHILE	rands ISNT nil value list
+	DO	rands := rest OF rands
+	OD;                              
+	qsimple index+": operand missing" ASSERT (rands ISNT nil value list);
+	array := value OF rands;  evaluate( array );
+	REF REF VALUELIST(rands) := nil value list; { chop off array name }
+	CFRAGMENT macro name =
+		( is vector (mode OF array)     
+		| { vector } "A_VINDEX"
+		| { []->A_R1INDEX, [,]->A_R2INDEX etc }
+		  "A_R"+ whole( PARAMOF rator, 0 )+"INDEX"
+	       	);
+	CFRAGMENT descriptor = { indirect if flex }
+		( is flex array( mode OF array )
+		| "*" + bracket cfragment( YIELD array )
+		| GETCFRAGMENT ( qsimple index YIELD array )
+		);
+	BITS	is fx warning := 2r0;
+	CFRAGMENT indecies = parameter list(scripts,is fx warning);
+	CFRAGMENT body =
+	  use macro
+	  (  macro name, (descriptor, indecies)
+	  );
+	( mode OF root,
+	  (info OF array AND fxwarn) OR is fx warning OR atomic,
+	  ( has refs(mode OF array) AND
+	    NOT( HASONEREF mode OF root AND is firm array( mode OF root ) )
+	  | bracket( "&"+body )
+	  | body
+	  )
+	)
+END;
+             
+
+PROC	trim	=
+( TREEOPER	rator,
+  CFRAGMENT	old, new,
+  BOOL		vec lhs, vec result,
+  REF BITS	is fx warning
+) CFRAGMENT:
+{
+	Evaluate the parts a,c,b (a:b@c) of the trim and emit one of:
+
+-	Vec (a:b)   ->	Vec
+	new.upb	    = b -a +1;
+
+-	Vec (a:b@c) ->	Row
+	new.lwb     = c;
+	new.upb     = new.lwb + old.upb -1;
+	new.stride  = 1;
+
+-	Row (a:b@c) ->	Row
+	new.lwb    = c;
+	new.upb    = new.lwb + b -a;
+	new.stride = old.stride;
+
+	Finally return (a) to the calling proc to compute the new base address
+}       
+BEGIN
+	REF VALUELIST rands      := operands OF rator;
+	BITS	      b           = BIN PARAMOF rator;
+	BOOL	      revised lwb = (bits width -3) ELEM b;
+	[0:2] REF VALUE ops;
+
+	{ look at the 3 least significant bits to check the presence of a,b,c }
+	FOR	i FROM 2 BY -1 TO 0
+	DO	
+		(	(bits width -i) ELEM b
+		|	ops [i] := value OF rands; rands := rest OF rands;
+			evaluate( ops[i] );
+			is fx warning ORAB ( info OF ops[i] ORAB fxwarn )
+		|	ops [i] := nil value                               
+		)
+	OD;
+
+	[] CFRAGMENT trims =
+	( ( ops[0] IS nil value
+	  | ( vec lhs | "1" | old +".lwb" ) 
+	  | bracket cfragment( ops[0] )
+	  ),
+	  ( ops[1] IS nil value
+	  | old +".upb"   
+	  | bracket cfragment( ops[1] )
+	  ),
+	  ( revised lwb
+	  | ( ops[2] IS nil value
+	    | "1"    
+	    | bracket cfragment( ops[2] )
+	    )
+	  | ( vec lhs | "1" | old+".lwb" )
+	  )
+	);
+
+	( vec result
+	| use macro
+	  ( "A_VTSCRIPT",
+	    ( "&("+new+".upb)", old+".upb", trims[1], trims[2] )
+	  )
+	| ( vec lhs
+	  | use macro
+	    ( "A_VRTSCRIPT",
+	      ( "&("+new+")", old+".upb", trims[1], trims[2], trims[3] )
+	    )
+	  | use macro
+	    ( "A_RTSCRIPT",
+	      ( "&("+new+")", "&("+old+")", trims[1], trims[2], trims[3] )
+	    )
+	  )
+	)
+END;
+
+
+PROC	trim index op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{	
+    	Return a macro that computes the base address for the new trim; 
+	the lwb, upb and stride have been initialised by trim (above).
+}
+BEGIN       
+	REF VALUE left	    := root OPERAND 1; evaluate( left );
+	CFRAGMENT src = bracket
+			( ( is flex array( mode OF left )
+			  | "*" + bracket cfragment( YIELD left )
+			  | GETCFRAGMENT ( qtrimindex YIELD left )
+			  )
+			),
+	  temp	     = name OF new (mode OF root, qtrimindex);
+        
+	INT number of subscripts = PARAMOF rator;
+	VECTOR [number of subscripts +2] UVALUE subscripts;
+	BITS is fx warning := 2r0; { flag any fxwarn attributes }
+	subscripts [1] := temp;
+	subscripts [2] := src;
+	INT new dim := 0;
+	FOR loop TO number of subscripts
+	DO
+		REF VALUE trimmer = root OPERAND loop+1;
+		TREEOPER oper;
+    	  	IF 	( extra OF trimmer
+			| (TREEOPER t): (oper := t; TRUE)
+			| FALSE
+			)
+		ANDTH	fn OF oper = trim fn		  	 { its a trim }
+		THEN
+			{ Note that trim(vec)->row ONLY IF an @ part is present
+			  This is the reason for checking on vector below
+			}
+			subscripts [loop+2] := 
+			  trim(	oper,
+				( is vector (mode OF left)		 { old }
+				| src
+				| src  +".dim["+whole( loop-1, 0 )+"]"
+				),
+			 	( is vector (mode OF root)		 { new }
+ 				| temp
+				| temp +".dim["+whole( new dim, 0 )+"]"
+				),
+				is vector( mode OF left ), 	  { lhs is vec }
+				is vector( mode OF root ),     { result is vec }
+				is fx warning
+			      );
+		    	new dim +:= 1
+		ELIF	ISINT (mode OF trimmer)			  { its an int }
+		THEN
+			evaluate (trimmer);
+			is fx warning ORAB ( info OF trimmer AND fxwarn );
+			subscripts [loop+2] := bracket cfragment( trimmer )
+		ELSE
+			qtrimindex +":rhs is not a trim or int" ASSERT FALSE;
+			SKIP
+		FI
+	OD;
+
+	IF	(is fx warning AND fxwarn) = fxwarn
+	THEN	pportability warning( 264, src )
+	FI;
+        
+	CFRAGMENT macro name 	 =
+		( is vector (mode OF left)
+		| "A_VTRIM"
+		| "A_R"+whole( number of subscripts, 0 )+"TRIM"
+		);
+
+	( mode OF root,
+	  is fx warning OR atomic,
+	  use macro( macro name, subscripts )
+	)
+END;
+                                                                   
+
+PROC	boundpack =
+( REF VALUE root,
+  INT no of bounds,
+  REF VALUELIST bound set,	{ this contains set of bounds }
+  CFRAGMENT temp		{ this temporary is to have its bounds set }
+) VOID:
+{
+	Sets the upper and lower bounds of rows and vectors.
+       	Macros used are: A_<n>INITSTRIDES(t) where 1<=n<=3
+}                   
+BEGIN   
+	REF VALUELIST ops := bound set;
+	{ emit the upper and lower bounds }
+	FOR this bound FROM no of bounds-1 BY -1 TO 0
+	DO
+		REF VALUE bound := value OF ops;
+		evaluate( bound );
+		ops := rest OF ops;
+		CFRAGMENT select =
+			( no of bounds = 1		{ ie is a vector }
+			| temp +".upb"		  	{ temp.upb }
+			| temp +".dim["+ whole( this bound OVER 2, 0 ) +"]"+
+			  ( ODD this bound | ".upb" | ".lwb" )
+			);
+ 		emit line(( select, " = ", bound, " ;" ))
+	OD;
+	
+	( no of bounds > 1 { ie a row not a vector } 
+	| { Initialise the strides of rows }
+	  emit line(( use macro( "A_"+whole( no of bounds OVER 2, 0 )+"INITSTRIDES",temp), " ;" ))
+	)                                  
+END;
+               
+
+PROC	dynamic generator	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Two operands boundpack and bool.
+	Supports multidimensional array bounds.
+}
+BEGIN                        
+	REF VALUE left, right;  TREEOPER oper;
+	right := root OPERAND 2; evaluate( right );
+	left  := root OPERAND 1;
+	qdynamic generator+": rhs is not a boundpack"
+	ASSERT
+	( ( extra OF left
+	  |( TREEOPER t): (oper := t; TRUE)
+	  | FALSE
+	  )
+	  ANDTH fn OF oper = boundpack fn
+	);
+	TEMPORARY temp = new( mode OF root, qdynamic generator );
+	INT	no of bounds = PARAMOF oper;
+	INT	rows   = no of bounds OVER 2;
+	       { zero for vectors for the convenience of the garbage collector }
+	boundpack( left, no of bounds, operands OF oper, name OF temp );
+	CFRAGMENT allocator = 
+	( rows = 0
+	| "V"
+	| "R"+whole( rows, 0 )
+	);
+	CFRAGMENT parameters =
+		comma list(( c type( element mode( mode OF root ) ), temp ));
+	emit line
+	(( "( ", right,
+	   "? A_", allocator, "LOC",  parameters,
+	   ": A_", allocator, "HEAP", parameters,
+	   " );"
+	));
+	( mode OF root, atomic, temp )
+END;  
+
+
+PROC	straight index op	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{  #define A_STRINDEX(s,i,t) (t=(s), (t.index)(i, t.composite))
+   #define A_STRINDEX_RTN(s,i,t, u) (t=(s), (t.index)(i, t.composite, &u), u)
+}
+BEGIN
+	REF VALUE left, right;  eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+          IF no struct result option
+          THEN  { Take account of "no struct return option".  DCT  18:03:94
+                  result of index is always a struct (ALGOL UNION) }
+                use macro( "A_STRINDEX_RTN",
+                           ( left, right,
+                             new( mode OF left, "OPERATORS - straight index" ),
+                             new( mode OF root,
+                                  "OPERATORS - straight index result" )
+                           )
+                         )
+          ELSE  use macro( "A_STRINDEX",
+                           ( left, right,
+                             new( mode OF left, "OPERATORS - straight index" )
+                           )
+                         )
+          FI
+	)
+END;
+
+PROC	straighten		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+The prestraight operator is a null op. It is dealt with in here.
+
+If the lhs is a constant or ref[]x then:
+	temp is of mode ref +lhs mode (on heap)
+	temp = heap object;		[1]
+	*temp = lhs;
+	OPSTRAIGHT(temp,...)
+If the lhs has refs then:
+	temp = lhs;			[2]
+	OPSTRAIGHT(temp,...)
+
+NOTE[1] This heaping is not necessary in other RS implementations because a
+        dynamic stack frame is used (stack frame is not collapsed & therefore
+        the temp would still be in scope; whereas here the temp does get out of
+        scope.) There is no way of telling when we can free the temp since it
+        may be passed as a result by the calling proc (ie it's a dynamic stack
+        frame too) etc... 
+
+NOTE[2] It is not always necessary to use a temp here, but in cases when the
+        upb is computed and we could get side effects we do need it. It is
+        easier to always declare the temp than to have a number of different
+        cases to deal with. 
+
+#define	A_OPSTRAIGHT(c,i,u,str)\
+	((str).composite = (char *) (c),\
+	 (str).index = (i).fn, (str).upb.fn_global = (u), (str))
+}
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+
+	INT lmode	 = mode OF left;
+	INT root mode    = mode OF root;
+	BOOL prestraight = lmode < ref mark OREL
+			   (is firm array (lmode) ANDTH HASONEREF lmode);
+                                                        
+	{ We need a real C "*" so need 2 refs for []'s }
+    	INT tmp mode	 = lmode + 
+			   ( prestraight
+			   | ref mark +
+				( is firm array (lmode) ANDTH lmode < ref mark
+				| ref mark
+				| 0
+				)
+			   | 0
+	  		   );
+	
+	CFRAGMENT temp	   = name OF new( tmp mode, module name +"prestraight");
+	CFRAGMENT straight = name OF new( root mode, module name +"straighten");
+
+	IF	prestraight
+	THEN	{ Heap the value to be straightened -- See note [1] above }
+		emit line(( temp," = ",use macro("A_HEAP",ctype(lmode)), " ;" ));
+		emit line(( "* ",temp ," = ",GETCFRAGMENT left, " ;" ))
+	ELSE	emit line(( temp, " = ", GETCFRAGMENT left, " ;" ))
+	FI;
+
+	CFRAGMENT c left = bracket("*"+temp);
+	
+	CFRAGMENT upb =
+	(  is vector (lmode)
+	|  c left + ".upb"
+	|: is row (lmode)
+	|  c left +".dim[0].upb -"+ c left + ".dim[0].lwb +1"
+	|: is istruct (lmode)
+	|  whole (istruct length (lmode), 0)
+	   { For large istructs the 2 byte param field is too small }
+	|: is struct (lmode)
+	|  whole (PARAMOF rator,0)
+	|: is union (lmode)
+	|  "1"
+	|  module name +"- straight; illegal OUT part of CASE" ASSERT FALSE;
+	   SKIP            
+	);
+
+	( root mode,
+	  default info,		{needs no brackets}
+	  use macro( "A_OPSTRAIGHT",( temp, right, upb, straight ) )
+	)                
+END;                      
+
+
+PROC	assign op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	If lhs is not simple then generate a temporary. If the value yielded
+        by the operator is immediately dereferenced then the generation of the
+        address-of operator is unecessary. The attribute of root will be set
+        to voided if the reference is not required. 
+}
+BEGIN                                            
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+	REF VALUE lhs = YIELD left; { ensure lhs is c identifier }
+	info OF lhs ORAB lvalue;
+	CFRAGMENT body =                      
+	CASE	PARAMOF rator  IN
+	{ simple assignment }
+		join uvalue(( lhs, " = ", right )),
+	{ copy elements }
+		use macro                              
+		( ( is flex array( mode OF left ) 
+		  | ( is vector (mode OF left) 
+		    | "A_VCOPY" 
+		    | "A_R" + whole (dimensions (mode OF left), 0) + "COPY"
+		    )
+		  | ( is vector (mode OF left) 
+		    | "A_VASSIGN2" 
+		    | "A_R" + whole (dimensions (mode OF left), 0) + "ASSIGN2" )
+		  ),
+		  ( qassign op YIELD right,
+		    lhs, c type(element mode(mode OF lhs))
+		  )
+		)
+	OUT   	qassign op+":invalid param field" ASSERT FALSE; ""
+	ESAC;
+	IF	has attribute( root, voided ) { voided or derefed assign }
+	THEN	( mode OF root,
+		  ((info OF left OR info OF right) AND (fxwarn OR nonloc))
+		  OR effects,
+		  body
+		)
+	ELSE	{ output the assignment immediately: return an id or temporary }
+		emit line(( body, " ;" ));
+		( mode OF root,
+		  ((info OF left OR info OF right) AND (fxwarn OR nonloc))
+		  OR atomic,
+		  extra OF lhs
+		)
+	FI                
+END; 
+
+
+PROC	deref op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	If the operand is an identifier the mode field will be altered to the
+	required mode.  The extra of value will have the appropriate number of
+	refs or derefs added when GETCFRAGMENT is called.
+}
+BEGIN                                
+	REF VALUE op := root OPERAND 1;
+	PROC	is ab operator = ( INT param )BOOL:
+	{	This determines whether the oper is an 'and becomes' oper }
+	BEGIN
+		INT i = param OVER op number divisor;
+		i >= ab operators start ANDTH i <= ab operators end
+	END;
+	{ If the subtree is an assignment then use the 'voided' attribute
+	  to indicate that a REF result is not required
+	}
+	BOOL	assignment =                   
+	CASE	REF VALUE subtree = value OF operands OF rator;
+		extra OF subtree  IN
+	( TREEOPER tree ):
+	BEGIN	IF	INT fn = fn OF tree;  fn = assign fn
+		OREL	fn = dyop fn
+		ANDTH	is ab operator( PARAMOF tree )
+		THEN	info OF op ORAB voided; TRUE
+		ELSE	FALSE
+		FI
+	END
+	OUT	FALSE    
+	ESAC;
+	evaluate( op );
+	{ Identifiers and temporaries will have the correct ref level when
+	  passed to GETCFRAGMENT at a higher level.  Assignments will not
+	  yield a REF mode in this context.
+	}
+	( assignment OREL ISANAME op
+	  OREL ( HASONEREF mode OF op ANDTH is firm array( mode OF op ) )
+	| ( mode OF root, info OF op, extra OF op )
+	| ( mode OF root,
+	    info OF op AND fxwarn OR atomic,
+	    bracket("*"+bracket cfragment(op))
+	  )
+	)
+END;                  
+                                     
+
+PROC call op = ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+  Processes global and non-global procedure calls. Non-global procedures
+  are accessed through the '.fn' field of the procedure value, and are also
+  passed an extra parameter '.nonlocals' representing the environment
+  (collected non-locals). If the 'value' called is not a routineinfo, it
+  may be an identifier, temp, or already evaluated CFRAGMENT (eg call to
+  another proc); in any of these cases the 'value' will be represented as a
+  procedure value and is therefore called in the same way as a non-global
+  proc (even though it may have global scope...) 
+}
+BEGIN
+  INT no params := 0, no warnings := 0;
+
+  PROC  parameter list = ( REF VALUELIST list ) CFRAGMENT:
+  {
+    This constructs the string which forms the parameter list.
+    It also checks the fxwarn flags to give the required warnings.
+    It uses the non-locals declared above.
+  }
+  IF list IS nil value list
+  THEN ""  { special case : there are no parameters }
+  ELSE
+    no params +:= 1 { count the number of parameters in the list };
+    evaluate( value OF list );
+    ( has attribute( value OF list, fxwarn )| no warnings +:= 1 );
+    ( rest OF list ISNT nil value list | parameter list( rest OF list ) + ", " | "" ) +
+      GETCFRAGMENT value OF list                   
+  FI;
+
+  { Evaluate the procedure name and point at the
+    list of actual parameters
+  }
+  REF VALUELIST actuals := operands OF rator;
+  REF VALUE    procname := value OF actuals;
+  actuals := rest OF actuals;
+  evaluate( procname );        
+
+  BOOL global := FALSE;
+  {
+    Turn the procedure value into a C string
+  }
+  CFRAGMENT name = 
+    CASE  extra OF procname  IN
+    ( ROUTINEINFO r ): { global or non-global routine }
+      IF
+        REF RDINFO rdinfo = rds[rdenno OF r];
+        global := flags OF rdinfo >= rd global flag;
+        NOT global ANDTH has attribute( procname, nonloc )
+      THEN    nl macro( id full name( rdenno OF r ))
+      ELSE    id full name( rdenno OF r )
+      FI,
+
+    ( CFRAGMENT cf ): { assume for now it has side effects }
+      name OF yield temporary( "CALL", mode OF procname, procname ),
+
+    ( IDENTIFIER id ):
+      IF
+        REF IDINFO idinfo = get_idinfo( idno OF id );
+        global := flags OF idinfo >= id gproc flag
+      THEN  id full name( idno OF id )
+      ELSE  GETCFRAGMENT procname { may have "**"s }
+      FI,
+
+    ( TEMPORARY t ):
+      GETCFRAGMENT procname  { may have "**"s }
+
+    OUT     "OPERATORS: call op: invalid object of call"
+      ASSERT FALSE; ""
+    ESAC;
+        
+  BOOL params = actuals ISNT nil value list;
+  CFRAGMENT actual parameter list = parameter list( actuals );
+  IF  no warnings >= 2
+  THEN  pportability warning( 263,( name[8:], whole( no params,0), whole( no warnings,0 ) ) )
+  FI;
+
+  IF no struct result option ANDTH is c struct(mode OF root)
+  THEN
+    TEMPORARY t = new(mode OF root,"avoid structure result");
+    IF global
+    THEN
+      emit line(( name, "( ", actual parameter list, ( params | ", &" | " &" ), name OF t, " );" ))
+    ELSE
+      emit line (( "A_CALLPROC(", name, ",(", actual parameter list, ( params | ", &" | " &" ), name OF t, "),(",
+        actual parameter list, ( params | ", &" | " &" ), name OF t,  ",(" + name + ").nonlocals));"
+      ))
+    FI;
+    ( mode OF root, atomic, t)
+  ELSE
+     VALUE res :=
+       ( mode OF root,
+         atomic OR effects OR fxwarn,
+         IF global
+         THEN
+           name + "(" + actual parameter list + ")"
+         ELSE
+           "A_CALLPROC(" + name + ",(" + actual parameter list + "),(" +
+           actual parameter list + (params | ",(" | "(" ) + name + ").nonlocals))"
+         FI
+       );
+  
+    { If the object yielded is not simple then emit a temporary }
+    IF NOT   has refs( mode OF root )
+       ANDTH  (  is struct( mode OF root ) OREL  is array( mode OF root ) OREL  is union( mode OF root ) )
+    THEN
+      info OF res := atomic;
+      "Function returning struct/union/array" YIELD res
+    ELSE
+      res
+    FI                           
+  FI
+END;
+
+
+PROC	void op			= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Generates no C code.  The code to change the mode field of an
+	assignment immediately below the void on the value stack effects
+	an optimisation in the assignment oper.  This mechanism can be
+	used more generally if found to be useful.
+
+	There is a complex decision tree which determine whether the value
+	being voided should generate a warning or not.
+}
+BEGIN   
+	BOOL	can give bool warning:= FALSE;
+	REF VALUE rand = value OF operands OF rator;
+	INT	rand mode = mode OF rand;
+
+	BOOL	give warning =
+	(	{ if result is from proc call then allow voiding silently }
+		IF	rand mode = skip mode
+		THEN	FALSE
+		ELSE  	CASE	extra OF rand  IN
+			( TREEOPER oper ):
+				IF	fn OF oper = dyop fn
+				OREL	fn OF oper = assign fn
+				THEN  	can give bool warning := TRUE;
+					NOT has refs( rand mode )
+				ELIF	fn OF oper = call fn
+				THEN	( PARAMOF oper = 4 {user proc}
+					| can give bool warning := TRUE;
+					  NOT has refs( rand mode )
+					| FALSE
+					)
+				ELSE	TRUE
+				FI
+			OUT	TRUE
+			ESAC
+		FI                                                     
+	);
+     	REF VALUE op;
+	op := root OPERAND 1;
+	info OF op ORAB voided;
+	evaluate( op );
+	IF	give warning
+	THEN	warning
+		(	IF	rand mode = bool mode AND can give bool warning
+			THEN	308	{ bool voided ":=" possible mistyped }
+			ELIF	mode type( rand mode ) = procp
+			THEN	309	{ proc with parameters voided }
+			ELSE	310	{ result voided }
+			FI
+		)
+	FI;
+	( void mode,
+	  default info,   { assume nothing occurs above this oper in the tree }
+	  GETCFRAGMENT op
+	)
+END;                                 
+                          
+
+PROC	make vacuum = ( INT mode, CFRAGMENT comment ) CFRAGMENT:
+{
+	Several of the opertors below require temporary rows and vectors
+	to be generated which have null contents
+}
+BEGIN                                       
+	use macro
+	( (  is vector( mode )
+	  |  "A_VVAC"
+	  |: is row( mode )
+	  |  "A_R"+ whole( dimensions( mode ), 0 ) +"VAC"
+	  |  comment+": mode of isnt [] or VEC[]" ASSERT FALSE; SKIP
+	  ),
+	  new( mode, comment )
+	)
+END;
+
+PROC	nil to mode op		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	If a REF-array mode is required then generate a null descriptor,
+	else generate a cast of A68_NIL
+}
+BEGIN                                                 
+	REF VALUE op; eval1( root, op );
+	INT root mode = mode OF root;
+	BOOL is vacuum = is firm array( root mode ) ANDTH HASONEREF root mode;
+	( root mode,
+	  ( is vacuum
+	  | is nil
+	  | is nil OR constant { used to optimise identities }
+	  ),
+	  ( is vacuum
+	  | make vacuum( root mode, qnil to mode )
+	  | bracket( ctype(mode OF root) ) + bracket cfragment( op )
+	  )
+	) 
+END;                                    
+
+
+PROC	goto to proc		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Procedured GOTOs are no implemented
+}
+BEGIN
+	error( 900 ); { goto to proc not implemented }
+	REF VALUE op;  eval1( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn,
+	  "/* goto to proc:" + GETCFRAGMENT op + "*/" 
+	)
+END;
+
+PROC	goto to mode		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	If the mode of the goto is not void then emit a goto directly and
+	insert a SKIP in the expression.  This produces an irritating warning
+	about unreachable code in the C compilation.
+}
+BEGIN
+	REF VALUE op;  eval1( root, op );
+	INT	l =     { label number of the operand }
+		CASE	extra OF op IN
+		(LABNO lab): labno OF lab
+		OUT	"OPERATORS - gotom: op isnt labno" ASSERT FALSE; SKIP
+		ESAC;
+
+	{ Check for local or non-local type of jump }
+	CFRAGMENT c jump =
+		IF	current level = level OF label environ( l )
+		THEN	"goto " + GETCFRAGMENT op
+		ELSE	"siglongjmp" + bracket( GETCFRAGMENT op+".label,1" )
+		FI;	
+	INT	root mode = mode OF root;
+	IF	root mode = void mode
+	THEN	( root mode, info OF root, c jump )
+	ELSE	emit line(( c jump, " ;" ));
+		( root mode,
+		  info OF root,
+		  bracket("*"+bracket( ctype(root mode)+"*" )+"A68_NIL")
+		) { an elaborate nihil }
+	FI                                        
+END;
+
+
+PROC	int to real		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	Generates a C cast to do the coercion
+}
+BEGIN
+	REF VALUE op;  eval1( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn,
+	  cast( mode OF root ) + bracket cfragment( op )
+	)
+END;
+
+
+PROC  real to complex = (REF VALUE  root,  TREEOPER  rator) VALUE:
+   {  #define A_COMPL_RC(t,r)  (t.re = (r), t.im = 0.0, t) }
+BEGIN
+   REF VALUE  op;  eval1(root, op);
+   TEMPORARY  temp = new(mode OF root, "REAL to COMPLEX");
+   ( mode OF root,
+     info OF op AND fxwarn,
+     use macro("A_COMPL_RC", (temp, op))
+   )
+END;
+
+
+PROC	rows to row rows	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	This generates either a vacuum if the coercend is NIL or invokes
+	macros to set up the dimensions of a temporary
+}
+BEGIN                   
+	REF VALUE op; eval1( root, op );
+ 	CFRAGMENT cfragment =
+	IF	has attribute(op, is nil)
+	THEN    { We have to change row(a nil mode) into a vacuum }
+		make vacuum( mode OF root, qrows to row rows )
+	ELSE    use macro
+		( ( dimensions( mode OF op )
+		  | "A_ARR12","A_ARR23"
+		  | module name+"Only 3 dimensions supported" ASSERT FALSE; SKIP
+		  ),
+		  ( qrows to row rows YIELD op, new( mode OF root, qrows to row rows ) )
+		)
+	FI;
+	( mode OF root,
+	  ( info OF op AND (fxwarn OR is nil)),
+	  cfragment
+	)
+END;
+
+PROC	vector to row		= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	This invokes a macro the perform the coercion
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+ 	( mode OF root, 
+	  info OF op AND fxwarn OR atomic,
+	  use macro
+	  ( "A_VECARR",
+	    ( YIELD op, new(mode OF root, qvector to row) )
+	  ) 
+	)
+END;
+                
+PROC	mode to struct 1 mode	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	This invokes a macro to perform the coercion
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+ 	  use macro( "A_IS", ( new( mode OF root, qmode to struct1 ), op ) )
+	)
+END;
+
+PROC	unite simple	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	The operand is the paramth mode of 'mode OF root'
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+	IF	mode OF op = void mode { just a tree integrity check }
+	THEN	( extra OF op
+	      	| ( TREENSE nihil ):
+			qunite simple+": operand isnt nse(EMPTY)"
+			ASSERT	nse OF nihil = 1 {EMPTY}
+		| { if its not EMPTY then its a PROC VOID }
+		  emit line(( op, " ;" ))
+		)
+	FI;
+	CFRAGMENT m = whole( PARAMOF rator, 0 );
+	TEMPORARY t = new( mode OF root, qunite simple );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( mode OF op /= void mode
+	  | use macro( "A_UNITE", ( t, "mode"+m, m, YIELD op ) )
+	  | use macro( "A_EMPTY", ( t, m ) )
+	  ) 
+	)
+END;
+
+
+PROC	unite union	= ( REF VALUE root, TREEOPER rator ) VALUE:
+BEGIN
+	REF VALUE op; eval1( root, op );
+	INT mode index =
+		find ints
+		  ( constituents( mode OF op ), constituents( mode OF root )
+	      	  );
+
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( mode index > 0
+	  | use macro
+	    ( "A_UUNITE",
+	      ( new( mode OF root, qunite union ), whole(mode index - 1,0), YIELD op)
+	    )
+	  | { run-time table required }
+	    VECTOR [] CHAR table = 
+	      replace control chars
+	      ( union to union table
+		  ( constituents( mode OF op ), constituents( mode OF root )
+		  )
+	      );
+	    use macro
+	    ( "A_UTABUNITE",
+	      ( new(mode OF root, qunite union), """\000"+table+"""", YIELD op )
+	    )
+	  )
+	)
+END;
+
+
+PROC	istruct to vector	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	If the operand has no REFs and is not a constant istruct
+	then heap the data.      
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+	BOOL	ref result = has refs( mode OF op );
+	CFRAGMENT body =
+	( has attribute( op, constant )    { currently only mode 26 VEC[]CHAR }
+	| { if is struct is a global static then construct a descriptor of it }
+	  CFRAGMENT temp = new unique name;
+	  write c stream
+	  (( use macro
+	     ( "A_GISVEC",
+	       ( ctype( mode OF root), temp, op,
+		 whole( istruct length( mode OF op ),0 ) )
+	     ), cnewline
+	   ),NONLOCDECSTREAM 0
+	  );
+	  temp
+	| use macro	{ heap the data }
+	  ( ( ref result | "A_ISVEC" | "A_HISVEC" ),
+	    ( new( mode OF root, qistruct to vec ),
+      	      qistruct to vec YIELD op,
+	      whole( istruct length( mode OF op ),0 ),
+	      ctype( element mode( mode OF op ) )
+	    )
+	  )
+	);
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  body
+	)
+END;
+
+PROC	istruct to row	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	'Param' is the number of i-structs before the 'mode OF rator'
+}
+BEGIN
+	REF VALUE op; eval1( root, op );
+	{ Create a list of the bounds of the constituent istructs }
+	INT	dims = dimensions( mode OF root );
+	INT	elem mode := mode OF op;
+	FLEX VECTOR[0]CHAR bounds;
+	FOR	i
+	WHILE	bounds +:= whole( istruct length(elem mode),0 );
+		i < dims
+	DO     	bounds +:= ", ";
+		elem mode := element mode( elem mode )
+	OD;
+	BOOL ref result = has refs( mode OF root );
+	CFRAGMENT body =
+	( has attribute( op, constant )   { currently only mode 27 []CHAR }
+	| { if istruct is global static then construct a descriptor of it }
+	  CFRAGMENT temp = new unique name;
+	  write c stream
+	  (( use macro
+	     ( "A_GISARR", ( ctype(mode OF root), temp, op, bounds )), cnewline
+	   ),NONLOCDECSTREAM 0
+	  );
+	  temp
+	| use macro
+	  ( "A_"+( ref result |""|"H")+"IS"+whole(dims,0)+"ARR",
+	    ( new( mode OF root, qistruct to row ),
+      	      qistruct to row YIELD op,
+	      ctype( element mode( mode OF op ) ),
+	      bounds
+	    )
+	  )
+	);
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  body
+	)
+END;
+                  
+
+PROC	scalar to row or vector	= ( REF VALUE root, TREEOPER rator ) VALUE:
+BEGIN
+  	REF VALUE op; eval1( root, op );
+	INT	root mode = mode OF root, op mode = mode OF op;
+
+	IF	has attribute (op, is nil)
+	THEN    { Change row(nil) to vacuum }
+		( root mode,
+		  default info,
+		  make vacuum( root mode, qscalars to array )
+		)
+	ELSE    CFRAGMENT macro = "A_"+
+			( has refs( root mode ) | "" | "H" )+
+			( is vector( root mode ) |"VEC"|"ARR");
+		( root mode,
+		  info OF op AND fxwarn OR atomic,
+		  use macro
+		  ( macro,
+		    ( new(root mode, qscalars to array), op, ctype(mode OF op) )
+		  )
+		)
+	FI
+END;
+
+PROC( REF VALUE, TREEOPER )VALUE scalar to row	= scalar to row or vector;
+
+PROC( REF VALUE, TREEOPER )VALUE scalar to vector = scalar to row or vector;
+
+
+PROC	skip to mode	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{                       
+	Generate a temporary of the required mode.
+	Return the uninitialised value.
+}
+BEGIN                                                      
+	REF VALUE op; eval1( root, op );
+	{ NB The result of evaluating (SKIP,,skip) is a comment }
+	( mode OF root, default info, new( mode OF root, qskip to mode ) )
+END;
+
+PROC	deunite			= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	This occurs in compiler generated routine to assign unions.
+	An assumption is made that find deflex mode cannot return 0,
+	this will have already been trapped in module modes.
+}
+BEGIN
+	REF VALUE op;  eval1( root, op );
+	INT	required mode = mode OF root;
+	( required mode,
+	  default info,
+	  "&"+bracket
+	  ( GETCFRAGMENT op + "-> data.mode" +
+	    whole
+	    ( find mode
+	      ( find deflex mode(deref mode(required mode)), mode OF op
+	      ), 0
+	    )
+	  )
+	)
+END;
+
+
+PROC	bits to row bool	= ( REF VALUE root, TREEOPER rator ) VALUE:
+BEGIN
+	REF VALUE op; eval1( root, op );
+	CFRAGMENT macro name = 
+		CASE (mode OF op) - short bits mode + 1 IN
+			( longlongoption | "A_WSBVB" | "A_WLBVB" ),
+			"A_WBVB",
+			( longlongoption | "A_WLBVB" | "A_WSBVB" ),
+			( longlongoption | "A_WLLBVB" | "A_WSSBVB" )
+		OUT     qbits to row bool+" :invalid operand for BITS"
+			ASSERT FALSE; SKIP
+		ESAC;
+
+	( mode OF root,
+	  atomic,
+	  use macro( macro name,( new(mode OF root,qbits to row bool), op ))
+	)
+END;
+
+PROC	vacuum			= ( REF VALUE root, TREEOPER rator ) VALUE:
+BEGIN                                
+	REF VALUE op; eval1( root, op );
+	qvacuum+": operand isnt nse(EMPTY)"
+	ASSERT
+	( extra OF op
+	| ( TREENSE nihil ):  nse OF nihil = 1 {EMPTY}
+	| FALSE
+	);
+	( mode OF root,
+	  atomic,
+	  make vacuum( mode OF root, qvacuum )
+	)
+END;
+
+PROC ytypetom = ( REF VALUE root, TREEOPER rator ) VALUE:
+( "EVALUATE ytypetom not implemented" ASSERT FALSE; skipvalue);
+
+PROC mtoxtype = ( REF VALUE root, TREEOPER rator ) VALUE:
+( "EVALUATE mtoxtype not implemented" ASSERT FALSE; skipvalue);
+
+PROC	static generator	= ( REF VALUE root, TREEOPER rator ) VALUE:
+{
+	No operands.  Param field of rator is (TRUE/FALSE) for (local/heap)
+	space generation.  The required mode of result is a REF to the mode
+	of the space to be allocated.
+}
+BEGIN
+	BOOL loc = ( PARAMOF rator = ABS TRUE );
+	extra OF root := allocate space( loc, deref mode(mode OF root) );
+	root
+END;
+
+SKIP
+
+KEEP    simple index op,   	trim index op,
+	straight index op,	straighten,
+	assign op,		deref op,		call op,
+	void op,		nil to mode op,
+	rows to row rows,	vector to row,		scalar to vector,
+	mode to struct 1 mode,	unite simple,		unite union,
+	istruct to row,		istruct to vector,	skip to mode,
+	scalar to row,		vacuum,			static generator,
+	staticpart generator,	select op,		copy to flex,
+	dynamic generator,	goto to proc,		goto to mode,
+	int to real,		real to complex,	deunite,
+	bits to row bool,	ytypetom,		mtoxtype
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

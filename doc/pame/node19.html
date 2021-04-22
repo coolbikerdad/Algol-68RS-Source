@@ -1,0 +1,214 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Division</title>
+<meta name="description" content="division">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node20.html">
+<link rel="previous" href="node18.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node20.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html947"
+  href="node20.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html941"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html935"
+  href="node18.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html943"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html945"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html948"
+  href="node20.html">Exponentiation</a>
+<b> Up:</b> <a name="tex2html942"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html936"
+  href="node18.html">Multiplication</a>
+ &nbsp; <b>  <a name="tex2html944"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html946"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html949"
+  href="node19.html#section00441000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00440000000000000000"></a><a name="form-div"></a>
+<br>
+Division
+</h1>
+
+<p>In the preceding sections, all the operators mentioned yield results
+which have the same mode as the operand or operands. In this and
+following sections, we shall see that this is not always the case.</p>
+
+<p> Division poses a problem because division by integers can have two
+different meanings.  For example, <span class="math">3 &#247; 2</span>
+can be taken to mean <code>1</code> or <code>1.5</code>.  In this
+case, we use two different operator symbols.</p>
+
+<p>Integer division<a name="858"></a> is represented by the symbol
+<code>%</code>.  It takes operands of mode <code>INT</code> and yields
+a value of mode <code>INT</code>.  It has the alternative
+representation<a name="859"></a> <tt>OVER</tt><a name="1065"></a>.
+The formula <tt>7 % 3</tt> yields the value <code>2</code>, and the
+formula <tt>-7 % 3</tt> yields the value <code>-2</code>.  The
+priority<a name="864"></a> of <code>%</code> is&nbsp;7, the same as
+multiplication.  Here are some identity declarations using the
+operator:</p>
+
+<pre>
+   INT r = 23 OVER 4, s = -33 % 3;
+   INT q = r * s % 2
+</pre>
+
+<p>Using the given values of <code>r</code> and <code>s</code>, the value of
+<code>q</code> is <code>-27</code>. When a formula containing
+consecutive<a name="867"></a> dyadic operators of the
+same priority is elaborated, elaboration is always left-to-right, so
+in this case the multiplication is elaborated first, followed by the
+integer division.  Of course, <code>%</code> can be combined with
+subtraction as well as all the other operators already discussed.</p>
+
+<p>The modulo operator<a name="868"></a>
+<tt>MOD</tt><a name="1066"></a> gives the remainder<a name="871"></a>
+after integer division. It requires two operands of mode
+<code>INT</code> and yields a value also of mode <code>INT</code>.
+Thus <code>5 MOD 3</code> yields <code>2</code>, and <code>12 MOD
+3</code> yields <code>0</code>.  It does work with negative integers,
+but the results are unexpected.  You can explore <code>MOD</code> with
+negative integers in an exercise.  <code>MOD</code> can also be
+written as <code>%*</code>. The priority of <code>MOD</code>
+is&nbsp;7.</p>
+
+<p> Division of real<a name="872"></a> numbers is performed by the
+operator <tt>/</tt><a name="1067"></a>. It takes two operands of mode
+<code>REAL</code> and yields a <code>REAL</code> result.  Thus the
+formula <code>3.0/2.0</code> yields <code>1.5</code>.  Again,
+<code>/</code> can be combined with <code>*</code> and the other
+operators already discussed.  It has a priority of&nbsp;7. The
+operator is also defined for integer operands.  Thus <code>3/2</code>
+yields the value <code>1.5</code>.  No widening<a name="875"></a>
+takes place here since the operator is defined to yield a value of
+mode <code>REAL</code> when its operands have mode
+<code>INT</code>.</p>
+
+<p>Here are some identity declarations using the operators described
+so far:</p>
+
+<pre>
+   REAL pi by 2 = pi / 2,
+        pm3 = pi - 3.0 * -4.1;
+   INT c = 22 % 3 - 22 MOD 3;
+   INT d = c MOD 6 + SIGN -36
+</pre>
+
+<hr>
+<h2><a name="section00441000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.5<a name="ex-ii-v"></a>
+<dd>What is the value yielded by each of the following formul&#230;, and
+what is its mode? Ans<a href="node136.html#ans-ii-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>5 * 4</code>  
+<p>
+<dt>(b)
+<dd><code>5 % 4</code>  
+<p>
+<dt>(c)
+<dd><code>5 / 4</code>  
+<p>
+<dt>(d)
+<dd><code>5 MOD 4</code>  
+<p>
+<dt>(e)
+<dd><code>5.0 * 3.5 - 2.0 / 4.0</code>  
+<p>
+</dd>
+</dl>
+<dt>2.6<a name="ex-ii-vi"></a>
+<dd>Write a short program to print the results of using <code>MOD</code> with
+negative integer operands. Try either operand negative, then both
+operands negative.  Ans<a href="node136.html#ans-ii-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>2.7<a name="ex-ii-vii"></a>
+<dd>Give an identity declaration for the identifier
+<code>two pi</code>.  Ans<a href="node136.html#ans-ii-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html947"
+  href="node20.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html941"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html935"
+  href="node18.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html943"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html945"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html948"
+  href="node20.html">Exponentiation</a>
+<b> Up:</b> <a name="tex2html942"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html936"
+  href="node18.html">Multiplication</a>
+ &nbsp; <b>  <a name="tex2html944"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html946"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

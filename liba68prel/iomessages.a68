@@ -1,0 +1,101 @@
+DECS  iomessages  CONTEXT VOID  USE  messageproc:
+
+{ " Id: iomessages.sta,v 1.1 91/10/14 14:27:09 edcad Exp $" }
+configinfo A68CONFIG "$Id: iomessages.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+22:03:91  Modify for more general form of MSGNO, see messageproc. DJS
+27:06:91  R6B50 Initialise vector of messages in io_facility to put NIL
+             into the references.  DJS
+05:08:93  COM MOC now used instead of # in output file header.  DCT
+05:10:93  header OF iostate replaced by "facility".  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT max_io_messages = 35;
+
+FACILITY io_facility = ( "ioprocs", LOC VECTOR [max_io_messages] MESSAGE,
+                         LOC BOOL:= FALSE,
+                         (  { Vector of messages }
+(  1, user_class,   "* Error writing to log file - closing file ""*"""),
+(  2, user_class,   "* Error writing to output file - closing file ""*"""),
+(  3, log_class,    "Input file ""*"" closed "),
+(  4, user_class,   "Line of text read from file ""*"" is too long"),
+(  5, fatal_class,  "Too many END-OF-FILEs encountered on input line"),
+(  6, user_class,   "END-OF-FILE found on input line"),
+(  7, user_class,   "Input line too long"),
+(  8, log_class,    "From *"),
+(  9, fatal_class,  "Input error in non-interactive working"),
+( 10, user_class,   "No input files open"),
+
+( 11, log_class,    "Reading from ""*"""),
+( 12, user_class,   "No input files open"),
+( 13, log_class,    "*" { time_str }),
+( 14, log_class,    "*" { message }),
+( 15, diag1_class,  "*" { comment }),
+( 16, user_class,   "No input file to resume"),
+( 17, user_class,   "Input file not suspended"),
+( 18, user_class,   "This command may only be given from an input file"),
+( 19, log_class,    "Input file suspended due to ONLINE command"),
+( 20, user_class,   "You are already using a log file, use ""dontlog"" first"),
+
+( 21, log_class,    "* log file  ""*""  started on  *"),
+( 22, log_class,    "Log file  ""*""  closed"),
+( 23, user_class,   "Not using a log file"),
+( 24, user_class,   "You are already writing a file, use ""dontoutput"" first"),
+( 25, log_class,    "COM  * output file  ""*""  started on  *  MOC"),
+( 26, log_class,    "Output file  ""*""  closed"),
+( 27, user_class,   "Not using an output file"),
+( 28, user_class,   "Screen page length too short"),
+( 29, log_class,    "Screen page length is * lines"),
+( 30, user_class,   "Output width too narrow"),
+
+( 31, user_class,   "Output  width too wide"),
+( 32, log_class,    "Output  width is now * characters"),
+( 33, user_class,   "$$$Output file width too narrow"),
+( 34, user_class,   "$$$Output file width too wide"),
+( 35, log_class,    "$$$Output file width is now * characters")
+                         ) );
+
+PROC  io_msg = (INT number) MSGNO:  make_msgno(number, io_facility);
+
+PROC  is_io_msg = (MSGNO msgno) BOOL: is_facility_msg(msgno, io_facility);
+
+FORALL message IN messages OF io_facility
+DO  message:= ( ( 0, NIL, 2r0 ), NIL )  OD
+
+KEEP  io_msg, is_io_msg
+FINISH

@@ -1,0 +1,332 @@
+DECS  osshell  CONTEXT VOID USE  cif,  oserrors,  messageproc,  usefulops,
+      osfiles,  oscommon:
+
+{  Id: osshell.a68,v 1.3 1993/11/05 12:05:59 aap Exp $ }
+
+configinfo A68CONFIG "$Id: osshell.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+10:08:93  Wrong use of generic_msg - use msg parameter.  DCT
+12:08:93  Changes to prompt_args + check in get_args for prelude call.  DCT
+09:09:93  Procedures common with VAX / VMS moved to oscommon.  DCT
+22:09:93  Must disallow "no match" in prompt_args.  DCT
+01:10:93  "Match found" does not mean file found - logic found in parse.  DCT
+26:11:93  New way of interfacing A_prelude from AAP - added <unistd.h>.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ Shell-dependent services:
+
+  Filename expansion and parsing.
+  Command argument processing.
+}
+
+{
+  ALIEN declarations
+}
+
+PROC (VECTOR [] CHAR, REF CSTRING) INT  cexpand =
+  ALIEN "EXPAND"
+        "#include <sys/types.h>"
+        "#include <sys/stat.h>"
+        "#include <sys/wait.h>"
+        "#include <signal.h>"
+        "#include <unistd.h>"
+        "#include <stdio.h>"
+        "       /* default if environ variable SHELL not set */"
+        "#define SHELL           ""/bin/sh"""
+        "       /* limit on filename size (input and output) */"
+        "#define EXPAND_BUFSIZ   5000"
+        "#define NOSTR           NULL"
+
+        "   /* Are any of the characters in the two strings the same? */"
+        "int anyof(char *s1, char *s2)"
+        "{"
+        "        int c;"
+
+        "        while (c = *s1++)"
+        "                if (strchr(s2, c))"
+        "                        return(1);"
+        "        return(0);"
+        "}"
+
+        "/*"
+        "        Takes a file name, possibly with shell meta characters"
+        "        in it and expands it by using ""sh -c echo filename"","
+        "        a pointer to the result is written into 'newname'."
+        "        Returns status as follows:"
+        "        0 = success"
+        "        1 = not expanded"
+        "        2 = no match"
+        "        3 = Ambiguous (more than one match)"
+        "        4 = Expand buffer too small"
+        "        5 = 'pipe' failed"
+        "        6 = 'fork' failed"
+        "        7 = 'read' failed"
+        "        8 = 'echo' failed"
+        "*/"
+
+        "int expand(char *name, char **newname)"
+        "{"
+        "        static char xname[EXPAND_BUFSIZ];"
+        "        char *xlast = xname + EXPAND_BUFSIZ;"
+        "        char *xp = xname;"
+        "        char cmdbuf[EXPAND_BUFSIZ];"
+        "        register int pid, l;"
+        "        register char *cp, *Shell;"
+        "        int s, pivec[2];"
+        "        struct stat sbuf;"
+
+        "        if (!anyof(name, ""~{[*?$`'\""\\"")) {"
+        "                *newname = name;"
+        "                return(1);"
+        "        }"
+        "        if (pipe(pivec) < 0) {"
+        "                return(5);      /* pipe(2) failed */"
+        "        }"
+        "        sprintf(cmdbuf, ""echo %s"", name);"
+        "        if ((pid = fork()) == 0) {"
+        "                Shell = getenv(""SHELL"");"
+        "                if (Shell == NOSTR || *Shell=='\0')"
+        "                        Shell = SHELL;"
+        "                close(pivec[0]);"
+        "                close(1);"
+        "                dup(pivec[1]);"
+        "                close(pivec[1]);"
+        "                close(2);"
+        "                execlp(Shell, Shell, ""-c"", cmdbuf, 0);"
+        "                _exit(1);"
+        "        }"
+        "        if (pid == -1) {"
+        "                close(pivec[0]);"
+        "                close(pivec[1]);"
+        "                return(6);      /* fork(2) failed */"
+        "        }"
+        "        close(pivec[1]);"
+        "        do {"
+        "          l = read(pivec[0], xp, xlast-xp);"
+        "          if (l < 0) {"
+        "                return(7);      /* read(2) failed */"
+        "          }"
+        "          xp += l;"
+        "        } while(l>0);"
+        "        close(pivec[0]);"
+        "        while (wait(&s) != pid);"
+        "                ;"
+        "        s &= 0377;"
+        "        if (s != 0 && s != SIGPIPE) {"
+        "                return(8);      /* echo failed */"
+        "        }"
+        "        if (xp == xname) {"
+        "                return(2);      /* no match */"
+        "        }"
+        "        if (xp == xlast) {"
+        "                return(4);      /* expand buffer overflow */"
+        "        }"
+        "        *xp = 0;"
+        "        for (cp = xp-1; *cp == '\n' && cp > xname; cp--)"
+        "                ;"
+        "        *++cp = '\0';"
+        "        *newname = xname;"
+        "        if (strchr(xname, ' ') != NOSTR && stat(xname, &sbuf) < 0) {"
+        "                return(3);      /* ambiguous filename */"
+        "        }"
+        "        return(0);"
+        "}"
+        "#define EXPAND(name,newname) \"
+        "             A_int_INT(expand(A_VC_charptr(name),((void *)newname)))";
+
+
+PROC  expand = (STR  str,  REF RVC  ans,  MESSAGEPROC  msg) INT:
+BEGIN
+   { 0 = OK, 1 = not expanded, 2 = no match, 3 = ambiguous, >= 4 = error }
+   CSTRING  xname:= NIL;
+   INT status = cexpand(str + REPR 0, xname);
+   CASE status IN
+      SKIP, { Not expanded - no recognisable shell meta characters }
+      msg(user, concat(("shell expand - no match for string """, str, """"))),
+      SKIP, { Multiple matches }
+      msg(user, "shell expand buffer too small"),
+      msg(user, "shell expand call of 'pipe' failed"),
+      msg(user, "shell expand call of 'fork' failed"),
+      msg(user, "shell expand call of 'read' failed"),
+      msg(user, "shell expand call of 'echo' failed")
+   OUT  { status = 0 = OK - a single match - fail otherwise }
+        IF status /= 0 THEN  msg(system, "shell expand unexpected return")  FI
+   ESAC;
+   ans:= CSTRINGTORVC xname;
+   status
+END;
+
+{
+  FILENAME EXPANSION AND PARSING
+  ==============================
+}
+
+PROC  parse_filename = (STR  name, default, MESSAGEPROC  msg) FILENAME:
+BEGIN
+   { Parses "expanded" name against default }
+
+   PROC  call_expand = (STR  name,  BOOL  first_try) FILENAME:
+   BEGIN
+      { expand any shell metacharacters }
+      RVC  expanded:= HEAP VECTOR [0] CHAR;
+
+      INT status = expand(name, expanded, msg);
+      CASE  status + 1  IN
+       { status = 0 => expand sucessful - not necessarily found file - parse }
+         parse_default(MAKERVC expanded, MAKERVC default),
+       { status = 1 => not expanded }
+         parse_default(MAKERVC name, MAKERVC default),
+       { status = 2 => no match - parse against default and try again }
+         IF first_try
+         THEN  FILENAME  parsed = parse_default(MAKERVC name, MAKERVC default);
+               call_expand(filename OF parsed, FALSE)
+         ELSE  msg( user,
+                    concat(("No match to file name """, name, """ found")) );
+               nullfilename
+         FI,
+       { status = 3 => multiple matches }
+         ( msg(user, concat(( "Multiple matches to file name """,
+                              name, """ found" )));
+           nullfilename
+         )
+      ESAC
+   END;
+
+   FILENAME  ans = call_expand(name, TRUE {     first try });
+
+   IF UPB name OF ans = 0
+   THEN   { "Null filename ""*""" }
+         msg(user, concat(("Null file name """, filename OF ans, """")))
+   FI;
+
+   ans
+END;
+
+
+
+{
+  COMMAND ARGUMENT PROCESSING
+}
+
+{ prelude must be kept }
+INT prelude =
+  ALIEN "A_prelude"
+        "extern int A_argc;"
+        "extern char **A_argv;"
+	"extern char **A_envp;"
+        "#define A_prelude(argc,argv,envp) A_argc = argc; A_argv = argv; A_envp = envp";
+
+{ but don't keep this ... }
+INT define_argc_argv =
+  ALIEN "dummy"
+        "int A_argc = 0;"
+        "char **A_argv = NULL;"
+	"char **A_envp = NULL;";
+
+BOOL args_initialised := FALSE;
+REF VECTOR [] RVC  arguments:= LOC VECTOR [1] RVC:= LOC STRUCT 4 CHAR:= "Anon";
+
+PROC  get_args = VECSTR:
+{
+  returns "argv" in a convenient form
+}
+BEGIN
+  IF NOT args_initialised
+  THEN
+    INT  upb = INT CODE "RESULT=A_argc;";
+
+    IF upb = 0
+    THEN  global_msg( error, "get_args:  'argc' not initialised - has the "
+              "correct prelude module been included in the main PROGRAM ?" )
+    ELSE  arguments := HEAP VECTOR [upb] RVC;
+
+          CCHARPTRPTR myargv = CCHARPTRPTR CODE "RESULT = (void *)A_argv;";
+
+          FORALL arg IN arguments,  new IN myargv[: upb]
+          DO  arg:= MAKERVC CSTRINGTORVC new  OD
+    FI;
+    args_initialised := TRUE
+  FI;
+
+  VRVCTOVSTR arguments
+END;
+
+PROC  read_prompt = (STR  prompt) RVC:  { copied from osinterface  DCT }
+BEGIN
+   PROC  read = RVC:
+   BEGIN
+      HEAP VECTOR [512] CHAR  ans;
+      INT  l:= 0;
+      IF read_line(stdin, ans, l, global_msg) = io_no_newline
+      THEN  concat((ans[: l], read))
+      ELSE  ans[: l]
+      FI
+   END;
+   write_buffer(stdout, prompt, global_msg);
+   read
+END;
+
+
+PROC prompt_args = (STR  prompt,  MESSAGEPROC  msg) VECSTR:
+{
+  Ask user for a line of interactive input (using 'prompt').
+  Input line is parsed as extra command arguments (including shell
+    meta-character expansion), and "appended" to the first element of argv.
+    (It is assumed that the first argument would have been supplied by the
+    shell giving the string that was used to invoke the program).
+  Subsequent calls of 'get_args' return the extended set of arguments.
+  Subsequent calls of 'prompt_args' re-prompt the user for input.
+}
+BEGIN
+   IF NOT args_initialised THEN  get_args  FI;
+   RVC  buffer = read_prompt(prompt);
+   RVC  expanded:= NIL;
+   expand(buffer, expanded, msg);
+   arguments:= parse_prompt(arguments[1], expanded);
+   VRVCTOVSTR arguments
+END
+
+
+KEEP  FILENAME,   parse_filename,  prelude,  get_args,  prompt_args
+FINISH
+
+{
+Local Variables:
+eval:(auto-fill-mode 0)
+End:
+}

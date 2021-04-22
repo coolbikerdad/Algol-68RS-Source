@@ -1,0 +1,259 @@
+.TH A68TOC 1
+.SH NAME
+a68toc \- Algol 68 to C translator
+.SH SYNOPSIS
+.B a68toc 
+[
+.I options
+]
+.I sourcefile
+.SH DESCRIPTION
+
+.SH OPTIONS
+.LP
+.TP 20
+.BR \-verbose " (" \-v )
+Causes some potentially helpful C comments to be generated.
+.TP
+.BR \-line " (" \-n )
+Causes the generation of C pre-processor \fC#line\fR directives.
+In its absence the option
+.BR \-verbose ,
+causes comments containing Algol 68 line number and source file to be generated.
+.TP
+.BR \-long " (" \-l )
+Causes the translator to accept
+.B "long long"
+modes.
+This is the default.
+.TP
+.BR \-short " (" \-s )
+Causes the translator to accept
+.B "short short"
+modes.
+.TP
+.BR \-return_structs " (" \-r )
+Prevents generated C functions from returning structure results directly,
+it uses an extra pointer parameter instead.
+.TP
+.BR \-mark_closures " (" \-c )
+Causes closures to be marked with a special value for debugging purposes.
+.TP
+.BR \-stack_closures " (" \-C )
+Causes closures to be (unsafely) stacked rather than heaped.
+.TP
+.BR \-filename_truncate " (" \-f ) " integer"
+Truncates module names to integer characters long when searching for USE and
+library modules. eg. -f 8 for DOS FAT files.
+.TP
+.BI -staredit " starflags"
+Sets the required staredit characters to \fIstarflags\fR.  The characters specified
+in the
+.SB A68_STAREDIT
+environment variable are overriden unless \fIstarflags\fR starts with
+"\fC+\fR" or "\fC-\fR" in which cases the \fIstarflags\fR are added to, or
+removed from, those specifed in
+.SB A68_STAREDIT .
+.TP
+.BI -dir " directory"
+Add 
+.I directory
+to the front of the list of directories, specified in the 
+.SB A68_DIR
+environment variable, in which the translator searches for module information
+(\fB.m\fR) files.
+.TP
+.BI -cdir " directory"
+Add 
+.I directory
+to the front of the list of directories, specified in the 
+.SB A68_CDIR
+environment variable, in which the translator searches for previously generated
+(\fB.c\fR) files when the
+.B "-uname cfile"
+option is specified.
+.TP
+.BI -lib " directory"
+.I Directory
+contains the modinfo (\fB.m\fR) files corresponding to library modules.
+This overrides any value set in the
+.SB A68_LIB
+environment variable.
+.TP
+.B -nolib
+Turns off the library lookup mechanism.
+.TP
+.B -stream
+Causes RS stream language to be printed on standard output.
+.TP
+.B -dot
+Use dot stropping.  (Note 2)
+.TP
+.B -quote
+Use quote stropping. (Note 2)
+.TP
+.B -skip
+Suppresses run-time error when missing non-\fBvoid\fR \fBout\fR part selected.
+.TP
+.B -tilde
+Allows tilde as valid character in identifiers.  (Note 2)
+.TP
+.B -optbool
+Uses the optimised versions of \fBand(bool,bool)\fR and \fBor(bool,bool)\fR.
+.TP
+.B -keeplist
+Allows extension of a keeplist to maintain compatibility.  (Note 2)
+.TP
+.BR \-trace " (" \-t ) " \fIlevel\fR"
+Controls level of expression tree diagnostics.
+.TP
+.BR \-debug_level " (" \-d ) " \fIlevel\fR"
+Controls level of general diagnostics.
+.TP
+.BR \-debug_module " (" \-m ) " \fImodule\fR"
+Turns on general diagnostics in \fImodule\fR.
+.TP
+.BR -cstream " [" " file " | " memory " ]
+Controls how the translator's C streams are implemented.
+.RS
+.TP 10
+.B file
+Each C stream is a file.
+.TP
+.B memory
+Each C stream is an area of memory.  This is the default.
+.RE
+.TP
+.BI -uname uname-option
+Controls how the translator's unique name generator is seeded.
+If any error is detected, a warning is issued, and the translator proceeds as
+if \fC-uname AAAAAAA\fP had been specified.
+The possible values of \fIuname-option\fP are
+.RS
+.TP 10
+.B seedfile
+Read the seed from the file
+.SB $A68_NAMESEED .
+This is the default.
+The specified file is updated after translation.
+.TP
+.B cfile
+The seed is read from the configuration information contained in the C file
+produced by a previous translation of the current module.
+The C file is found by searching the directories specified using the
+.B -cdir
+option or
+.SB $A68_CDIR
+environment variable.
+.TP
+.I uname
+The specified unique name is used as the seed.  The unique name should consist
+of seven uppercase letters.  It is an error if the specified unique name
+contains invalid characters.  If more than seven characters are specified, the
+extra ones are silently ignored.  If fewer than seven characters are
+specified, the unique name is padded on the right with 'A's.
+.RE
+.TP
+.B -tmp
+The generated C file, and C stream files (if 
+.BR "-cstream file"
+has been specified), are placed in \fC/tmp\fR rather than
+the current directory.
+This may improve performance on systems where \fC/tmp\fR is mapped into
+virtual memory.
+Beware of concurrent builds using this option.
+.TP
+.B -check
+Check ALGOL 68 syntax.
+No C file is generated, but module information is generated normally.
+.TP
+.B -V
+Outputs the current version of Ctrans to standard output.
+.TP
+.B "-version -Version"
+Outputs detailed configuration information to standard output.
+.TP
+.B -oldalien
+Allow obsolete \fBalien\fR declaration semantics, i.e. right-hand side of
+\fC#define\fR follows first space.  If right-hand side is empty, an
+\fCextern\fR declaration is automatically generated.
+.SH FILES
+.PD 0
+.TP 20
+.IB name .c
+The C file generated from \fIname\fR.a68.  The \fBa68\fR suffix is \fInot\fR
+mandatory.
+.TP
+.IB name .m
+Module information generated for \fBdecs\fR module \fIname\fR.
+.TP
+.B $A68_NAMESEED
+The file containing the unique name seed.
+.SH ENVIRONMENT
+.TP 20
+.B A68_NAMESEED
+The name of the file containing the unique name seed.  The environment
+variable
+.SB CTRANS_NAMESEED
+may also be used for backwards compatibility.
+.TP
+.B A68_STAREDIT
+The set of required staredit characters.  This may be over-riden or modified
+by the
+.B -staredit
+option.
+.TP
+.B A68_DIR
+A colon-separated list of directories in which the translator will look for
+module information (\fB.m\fR) files.  This may be modified by the 
+.B -dir
+option.
+.TP
+.B A68_CDIR
+A colon-separated list of directories in which the translator will look for
+previously generated (\fB.c\fR) files when the
+.B "-uname cfile"
+option has been specified.  This may be modified by the 
+.B -cdir
+option.
+.TP
+.B A68_LIB
+The name of directory in which the translator will look for
+module information (\fB.m\fR) files corresponding to library modules.
+This may be overridden by the 
+.BR -lib " or " -nolib
+options.
+.TP
+.B A68_GC_DEBUG
+Controls the amount of debugging information produced by the heap management
+functions of the Algol 68 run-time library.
+.TP
+.B A68_GC_POLICY
+Controls behaviour when a memory allocation cannot be satisfied.  The
+specified behaviour may be overriden by the Algol68 program. Possible
+values are as follows
+.RS
+.TP 5
+.B 0
+The garbage collector is called if the heap usage is above a certain
+threshold.
+This is the default.
+.TP
+.B 1
+The garbage collector is never called (i.e. the heap is grown).
+.TP
+.B 2
+The garbage collector is always called.  The heap is grown only if absolutely necessary.
+.RE
+.SH NOTES
+.TP 5
+.B 1
+Not yet implemented.
+.TP
+.B 2
+This option is a relic of the Multics compiler; it has not been tested and
+maybe should be removed.
+
+.\"Local Variables:
+.\"compile-command: "ditroff -man a68toc.1 | xtroff "
+.\"End:

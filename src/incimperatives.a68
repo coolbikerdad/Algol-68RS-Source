@@ -1,0 +1,207 @@
+DECS  incimperatives  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incimperatives.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+	Stream imperative modes, functions, and properties.
+}
+MODE
+	RVC	= REF VECTOR []CHAR,
+	FORMATX		= STRUCT
+			  ( STRUCT( INT nochars, nocases, w ) info,
+			    RVC text
+			  ),
+	CHARDENOTATION	= STRUCT( RVC representation ),
+	STRINGDENOTATION	= STRUCT( INT mode, RVC denotation),
+	NUMERICDENOTATION	= STRUCT( INT mode, LONG BITS denotation ),
+	NUMBER		= STRUCT( INT mode, RVC nu ),
+	ALIENX		= STRUCT( INT mode, RVC string ),
+	CODEX		= STRUCT( INT mode, number, RVC insert ),
+
+	LOAD		= UNION
+			  ( STRUCT( INT nse ), INT, BOOL, CHARDENOTATION,
+			    STRUCT( INT labno ), NUMBER, ALIENX,
+			    NUMERICDENOTATION, STRINGDENOTATION
+			  ),
+	OPER		= STRUCT( INT fn, mode, param ),
+	TRANSIDDEC	= STRUCT( INT type, RVC name, INT mode, decno ),
+	ROUTINE		= STRUCT
+			  ( RVC name,
+			    BITS props,
+			    INT mode, rdenno, maxname
+			  ),
+	WARN		= STRUCT( INT w ),
+	LABDEC		= STRUCT
+			  ( RVC name, INT labno, status,
+			    BOOL not setting
+			  ),
+	UCHOICE		= STRUCT( INT mode, BITS props, INT param ),
+	CALLMODULE	= STRUCT( INT i ),
+	KEEPS		= STRUCT( BOOL start ),
+
+	PRIMARY		= UNION
+			  ( LOAD, OPER, TRANSIDDEC, ROUTINE, WARN, LABDEC,
+			    UCHOICE, CALLMODULE, KEEPS, FORMATX, CODEX
+			  ),
+	SEPARATOR 	= STRUCT( INT fn, mode, BITS props, INT param ),
+	STARTER		= STRUCT( INT fn, mode, BITS props, INT result mode ),
+	TERMINATOR	= STRUCT( INT fn, BITS props ),
+
+	CLOSURE		= STRUCT( INT body, moduleno, REF []INT actuals ),
+	SYNTHETICMODULE	= STRUCT( INT moduleno, INT i, j),
+	EXTERNALMODULE	= STRUCT
+			  ( INT moduleno,
+			    RVC name, uname, lname, gname,
+			    REF [] RVC ysnames
+			  ),
+	COMPOSER 	= UNION( CLOSURE, SYNTHETICMODULE, EXTERNALMODULE ),
+
+	IMPERATIVE	= UNION( PRIMARY, SEPARATOR, STARTER, TERMINATOR, COMPOSER, VOID);
+
+{------------------------------------------------------------------------------}
+
+INT	empty fn = 1,
+	skip fn  = 2,
+	nil fn   = 3;
+
+{starter fns:}
+
+INT	routine fn	= -1,
+	decs fn		= 0,
+	if fn		= 1,
+	case fn		= 2,
+	caseu fn	= 3,
+	begin fn	= 4,
+	coll begin fn	= 5,
+	for fn		= 6,
+	forall fn	= 7;
+
+INT	separator offset = 7;
+	{ makes separator fns + separator offset contiguous with starter fns }
+
+{separator fns:}
+
+INT	then fn		= 1,
+	in fn		= 2,
+	inu fn		= 3,
+	comma fn	= 4,
+	commau fn	= 5,
+	exit fn		= 6,
+	out fn		= 7,
+	outu fn		= 8,
+	else fn		= 9,
+	coll comma fn	= 10,
+	semi fn		= 11,
+	do fn		= 12,
+	while fn	= 13;
+
+INT	terminator offset = separator offset + 13;
+	{ makes terminator fns + terminator offset contiguous with separator fns }
+
+{terminator fns:}
+
+INT	fi fn		= 1,
+	esac fn		= 2,
+	esacu fn	= 3,
+	end fn		= 4,
+	end coll fn	= 5,
+	od fn		= 6,
+	routinend fn	= 7,
+	finish fn	= 8,
+	optbool fn	= 9;
+
+{warnings:}
+
+INT	andth warn = 2, orel warn = 3;
+
+INT	announcing = 0, aliasing = 2;  {LABDEC 'status'}
+
+{------------------------------------------------------------------------------}
+
+BITS ccbit		= 8r02,		{ for xroutine }
+     operatorbit	= 8r04,
+     valbit		= 8r10,
+     holebit            = 8r20,
+     globscopebit       = 8r40,
+
+     priobit            = 8r000040,	{ for xcontrol }
+     exitbit		= 8r000010,
+     semibit		= 8r000020,
+     heapbit		= 8r000040,
+     decbit		= 8r000100,
+     vardecbit		= 8r000200,
+     compgenbit         = 8r000400,
+     elifousebit	= 8r001000,
+     labbit		= 8r002000,
+     dontpullbit	= 8r004000,
+     dyprocbit		= 8r010000,
+     dyvardecbit	= 8r020000,
+     dydecbit		= 8r040000,
+     genprocbit         = 8r100000,	{ 32768 }
+     locgenbit          = 8r200000,     { 65536 }
+     locdydecbit        = 8r400000,     { 131072 }
+
+     for part bit	= 8r01,
+     from part bit	= 8r02,
+     by part bit	= 8r04,
+     to part bit	= 8r10;
+
+BITS	dybits = dyprocbit OR dyvardecbit OR dydecbit;
+{------------------------------------------------------------------------------}
+
+INT	dummy dec = 8
+
+KEEP
+    ALIENX, CALLMODULE, CLOSURE, CODEX, COMPOSER, EXTERNALMODULE, FORMATX,
+    TRANSIDDEC, CHARDENOTATION,
+    IMPERATIVE, KEEPS, LABDEC, LOAD, NUMBER, NUMERICDENOTATION, OPER, PRIMARY, 
+    ROUTINE, SEPARATOR, STARTER, STRINGDENOTATION, SYNTHETICMODULE, TERMINATOR,
+    UCHOICE, WARN, aliasing, andth warn, announcing, begin fn, by part bit,
+    case fn, caseu fn, ccbit, coll begin fn, coll comma fn, comma fn,
+    commau fn, compgenbit, decbit, decs fn, do fn, dontpullbit, dummy dec,
+    dybits, dydecbit, dyprocbit, dyvardecbit, elifousebit, else fn, empty fn,
+    end coll fn, end fn, esac fn, esacu fn, exit fn, exitbit, fi fn,
+    finish fn, for fn, for part bit, forall fn, from part bit, genprocbit,
+    globscopebit, heapbit, holebit, if fn, in fn, inu fn, labbit, locgenbit,
+    locdydecbit, nil fn, od fn, operatorbit, optbool fn, orel warn, out fn,
+    outu fn, priobit, routine fn, routinend fn, semi fn, semibit, 
+    separator offset, skip fn, terminator offset, then fn, to part bit, 
+    valbit, vardecbit, while fn
+FINISH

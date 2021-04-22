@@ -1,0 +1,228 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Real numbers</title>
+<meta name="description" content="real numbers">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node11.html">
+<link rel="previous" href="node9.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node11.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html799"
+  href="node11.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html793"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html787"
+  href="node9.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html795"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html797"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html800"
+  href="node11.html">Program structure</a>
+<b> Up:</b> <a name="tex2html794"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html788"
+  href="node9.html">Characters</a>
+ &nbsp; <b>  <a name="tex2html796"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html798"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html801"
+  href="node10.html#section00371000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00370000000000000000"></a><a name="intro-reals"></a>
+<br>
+Real numbers</h1>
+
+<p>Numbers which contain fractional parts, such as 3.5 or
+0.0005623956, or numbers expressed in scientific notation, such as
+1.95<sup>34</sup> are values of mode <tt>REAL</tt><a name="446"></a>.
+Reals are denoted by digits and one at least of the decimal point
+(which is denoted by a full stop), or the letter <code>e</code>.  The
+<code>e</code> means &times;10<sup>some&nbsp;power</sup>.  Just as with
+integers, there are no denotations for negative reals.  When the
+exponent is preceded by a minus sign, this does not mean that the
+number is negative, but that the decimal point should be shifted
+leftwards.  For example, in the following <code>REAL</code>
+denotations<a name="277"></a>, the third denotation has the same value
+as the fourth (again, the denotations are separated by commas, but the
+commas are not part of the denotations):</p>
+
+<pre>
+   4.5,  .9,  0.000 000 003 4,  3.4e-9,  1e6
+</pre>
+
+<p>Although the second denotation is valid, it is advisable in such a
+case to precede the decimal point with a zero: <code>0.9</code>.  This is
+better because a decimal point not preceded by an integer can be
+missed easily.  Here are some identity declarations for values of
+mode <code>REAL</code>:</p>
+
+<pre>
+   REAL e = 2.718 281 828,
+        electron charge = 1.602 10 e-19,
+        monthly salary = 2574.43
+</pre>
+
+<p>The largest <code>REAL</code> which the compiler can handle is
+declared in the standard prelude<a name="282"></a> as <tt>max
+real</tt><a name="448"></a>. Its value is</p>
+
+<pre>
+1.79769313486231571<i>e</i>308
+</pre>
+
+<p>The value of &pi; is declared in the standard prelude with the
+identifier <tt>pi</tt><a name="449"></a> and a value of</p>
+
+<pre>
+   REAL pi = 3.141592653589793238462643
+</pre>
+
+<p> It was mentioned above that in an identity
+declaration<a name="289"></a>, any piece of program yielding a value
+of the required mode can be used as the value. Here, for example, is
+an identity declaration where the value has mode <code>INT</code>:</p>
+
+<pre>
+   REAL a = 3
+</pre>
+
+<p>However, the mode required is <code>REAL</code>. In certain
+circumstances, a value of one mode can be coerced into a value of
+another mode. These circumstances are known as <b>contexts</b>.
+There are five contexts defined in the
+language.  Each context<a name="293"></a> will be mentioned as it
+occurs.  The right-hand side of an identity declaration has a
+<b>strong</b> context.  In a strong context<a name="295"></a>, a value
+and its mode can be changed according to six rules, known as
+<b>coercions</b>, defined in the language.  Again, each coercion<a
+name="297"></a> will be explained as it occurs.  The coercion which
+replaces a value of mode <code>INT</code> with a value of mode
+<code>REAL</code> is known as <b>widening</b><a name="299"></a>.  You will
+meet a different kind of widening in
+section&nbsp;<a href="node69.html#struc-compl">7.4</a>.</p>
+
+<p> You can even supply an identifier yielding the required mode on
+the right-hand side. Here are two identity declarations:</p>
+
+<pre>
+   REAL one = 1.0;
+   REAL one again = one
+</pre>
+
+<p>You cannot combine these two declarations into one with a
+comma<a name="303"></a> as in</p>
+
+<pre>
+   REAL one = 1.0, one again = one
+</pre>
+
+<p>because you cannot guarantee that the identity declaration for
+<code>one</code> will be elaborated before the declaration for
+<code>one again</code> (because the comma is not a <b>go-on</b>
+symbol).<a name="tex2html2"
+href="footnode.html#foot450"><sup><span
+class="arabic">2</span>.<span class="arabic">2</span></sup></a></p>
+
+<p> Values of modes <code>INT</code>, <code>REAL</code> and
+<code>CHAR</code> are known as plain values. We shall be meeting
+another mode having plain values in chapter&nbsp;4, and modes in
+chapter&nbsp;3 which are not plain.  Complex numbers are dealt with in
+chapter&nbsp;7.</p>
+
+<hr>
+<h2><a name="section00371000000000000000">Exercises</a></h2>
+
+<dl compact>
+<dt>1.10<a name="ex-i-x"></a>
+<dd>Is there anything wrong with the following identity
+declarations?
+<pre>
+   REAL x = 5.,
+        y = .5;
+        z = 100
+</pre>
+Ans<a href="node135.html#ans-i-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>1.11<a name="ex-i-xi"></a>
+<dd>Given that light travels
+<span class="math">2.997&nbsp;925&times;10<sup>8</sup></span> metres per
+second in a vacuum, write an identity declaration for the identifier
+<code>light year</code> in terms of metres to an accuracy of 5 decimal
+places (use a calculator).
+ Ans<a href="node135.html#ans-i-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<hr>
+<p>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html799"
+  href="node11.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html793"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html787"
+  href="node9.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html795"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html797"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html800"
+  href="node11.html">Program structure</a>
+<b> Up:</b> <a name="tex2html794"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html788"
+  href="node9.html">Characters</a>
+ &nbsp; <b>  <a name="tex2html796"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html798"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

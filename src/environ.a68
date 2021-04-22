@@ -1,0 +1,238 @@
+DECS  environ  CONTEXT VOID  USE  environment, incenviron, idtable, incid:
+
+configinfo A68CONFIG "$Id: environ.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.3 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+	ENVIRONSTACK, FULLENVIRON, ENVIRON etc...
+	Environstack stacks routine environments.  Block levels are
+	not stacked, but merely incremented and decremented within a
+	given routine nesting level.
+}                                     
+MODE	NONLOCLIST = STRUCT( INT decno, REF NONLOCLIST rest ),
+	FULLENVIRON = STRUCT 
+		     	( INT level,		    { routine nesting level }
+			      block, 		    { block nesting }
+			      rdenno,	    	    { rdenno of current routine }
+			  REF NONLOCLIST nonlocals  { list of non-locals used }
+			),                                             
+	ENVIRONSTACK = STRUCT( FULLENVIRON env, REF ENVIRONSTACK rest),
+	ENVIRON = STRUCT( INT level, block );	{ subset of fullenviron for identifier declarations }
+
+REF NONLOCLIST	 empty non loc list  = NIL;
+REF ENVIRONSTACK empty environ stack = NIL;
+ENVIRON		 null environ   = ( 0, 0 );
+FULLENVIRON	 global environ = ( 0, 0, 0, NIL );
+REF ENVIRONSTACK environ stack := HEAP ENVIRONSTACK :=
+		( global environ, empty environ stack);
+
+INT 	highest level := 0; { highest proc nesting level for collating streams }
+                     
+PROC	current environ = ENVIRON:  
+	( level OF env OF environstack, block OF env OF environstack );
+                                      
+PROC	find environ = ( INT level ) REF FULLENVIRON:
+{
+	Finds the environ in environstack pertaining to 'level'.
+}
+BEGIN
+	REF ENVIRONSTACK select environ := environstack; { point to top }
+	WHILE	level OF env OF select environ > level
+	DO	IF	REF ENVIRONSTACK (rest OF select environ) IS empty environ stack
+		THEN	"CENTITIES: find level: incorrect nesting level"
+			ASSERT FALSE
+		ELSE    select environ := rest OF select environ
+		FI
+	OD;
+	env OF select environ
+END;
+
+PROC	current routine = INT: rdenno OF env OF environstack;
+
+PROC	find routine = ( INT level ) INT: rdenno OF find environ( level );
+
+PROC	stack environ = ( FULLENVIRON environ ) VOID:
+{
+	Add a new environ to 'environ stack'.
+}
+BEGIN
+	environ stack := HEAP ENVIRONSTACK := ( environ, environ stack )
+END;
+
+PROC	collapse environ stack = VOID:
+{
+	Revert to previous environ.
+}
+BEGIN
+	environ stack := rest OF environ stack
+END;                                           
+
+PROC	non locals used = BOOL:
+{
+	Have any non local identifiers been used in this routine?
+}
+	nonlocals OF env OF environstack ISNT empty non loc list;
+
+PROC	non local declared = ( INT decno, level ) BOOL:
+{                                       
+	Searches down non locals list of the environ of the specified level
+	for decno.  If it's found this means it has been declared.
+        IF decno is a label, then check for alias as well.        
+}
+BEGIN                            
+	PROC is in list = ( INT decno, REF NONLOCLIST list ) BOOL:
+	BEGIN
+		( list ISNT empty non loc list )
+		ANDTH            
+			( decno = decno OF list
+			OREL
+			is in list( decno, rest OF list ))
+	END;
+
+        REF NONLOCLIST non locals = non locals OF find environ( level );
+
+	is in list( decno, non locals )
+          OREL
+        ( (decno > min lab) ANDTH is in list (alias OF labels[decno-min lab] + min lab, non locals) )
+END;
+                                 
+PROC	add non local = ( INT decno, level ) VOID:
+{
+	Adds the decno for this non local identifier to the non locals list
+	of the environ pertaining to 'level'.
+}
+BEGIN
+  IF
+    decno > min lab
+  THEN
+    INT alias = alias OF labels[decno-min lab];
+    IF alias > 1
+    THEN
+      add non local( alias + min lab, level)
+    FI
+  FI;
+
+  REF FULLENVIRON environ = find environ( level );
+  non locals OF environ := HEAP NONLOCLIST := ( decno, non locals OF environ )
+END;    
+
+OP	ISLOCALLEVEL = ( ENVIRON e1 ) BOOL:
+	( level OF e1 = level OF env OF environstack );
+
+OP	ISGLOBALLEVEL = ( ENVIRON e1 ) BOOL: level OF e1 = 0;
+
+OP	ISNEWERTHAN = ( ENVIRON e1, e2 ) BOOL:
+	( level OF e1 = level OF e2
+	| block OF e1 > block OF e2
+	| level OF e1 > level OF e2
+	);
+                          
+{	The current routine nesting level	}
+PROC	current level = INT: level OF env OF environstack;
+
+PROC	start new level = ( INT rdenno ) VOID:
+{	
+Starts a new routine nesting level.
+}
+BEGIN
+	INT this level = level OF env OF environstack + 1;
+	stack environ(( this level, 0, rdenno, empty non loc list ));
+	IF this level > highest level
+	THEN
+		highest level := this level
+	FI
+END;
+
+PROC	VOID revert to previous level = collapse environ stack;
+
+{ The following operators calculate the stream numbers of the C output 
+  streams for a given routine nesting level.
+  nonlocdecstream contains non-local data declarations and typedefs,
+  codestream contains procedure headers and code statements,
+  locdecstream contains local declarations, including temporary 
+	declarations (for clause results) 
+  labelstream contains setjump declarations.
+}
+INT streams_per_level = 4;
+INT
+  preamble stream = 0,
+  modes stream = 1,
+  imports stream = 2,
+  extern stream = 3,
+  last fixed stream = 3;
+
+OP NONLOCDECSTREAM 	= ( INT level ) INT:
+  (level * streams_per_level) + 1 + last fixed stream;
+OP CODESTREAM 		= ( INT level ) INT:
+  (level * streams_per_level) + 2 + last fixed stream;
+OP LOCDECSTREAM		= ( INT level ) INT:
+  (level * streams_per_level) + 3 + last fixed stream;
+OP LABELSTREAM 		= ( INT level )	INT:
+  (level * streams_per_level) + 4 + last fixed stream;
+
+OP ISNONLOCDECSTREAM = (INT streamno) BOOL:
+  (streamno > last fixed stream) ANDTH ((streamno MOD streams_per_level ) = 3);
+OP ISCODESTREAM      = (INT streamno) BOOL:
+  (streamno > last fixed stream) ANDTH ((streamno MOD streams_per_level ) = 0);
+OP ISLOCDECSTREAM    = (INT streamno) BOOL:
+  (streamno > last fixed stream) ANDTH ((streamno MOD streams_per_level ) = 1);
+OP ISLABELSTREAM     = (INT streamno) BOOL:
+  (streamno > last fixed stream) ANDTH ((streamno MOD streams_per_level ) = 2);
+
+SKIP
+
+KEEP
+        streams_per_level,
+	preamble stream, imports stream, modes stream, extern stream,
+	NONLOCDECSTREAM ( INT ), CODESTREAM ( INT ), 
+	LOCDECSTREAM ( INT ), LABELSTREAM ( INT ),
+	ISNONLOCDECSTREAM ( INT ), ISCODESTREAM ( INT ), 
+	ISLOCDECSTREAM ( INT ), ISLABELSTREAM ( INT ),
+	ENVIRON, null environ, current environ, current level, current routine,
+	find routine, highest level, start new level, revert to previous level, 
+	non locals used, non local declared, add non local,
+	ISNEWERTHAN( ENVIRON, ENVIRON ),  ISLOCALLEVEL( ENVIRON ),
+	ISGLOBALLEVEL( ENVIRON )
+FINISH
+
+{
+Local Variables:
+auto-fill-hook:nil
+End:
+}

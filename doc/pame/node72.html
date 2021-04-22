@@ -1,0 +1,101 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Transput of structures</title>
+<meta name="description" content="transput of structures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node73.html">
+<link rel="previous" href="node71.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node73.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1853"
+  href="node73.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1847"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1841"
+  href="node71.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1849"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1851"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1854"
+  href="node73.html">Summary</a>
+<b> Up:</b> <a name="tex2html1848"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1842"
+  href="node71.html">Rows of structures</a>
+ &nbsp; <b>  <a name="tex2html1850"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1852"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00970000000000000000"></a><a name="struc-trans"></a>
+Transput of structures</h1>
+
+<p>The following program fragment will print the details of the name
+<code>emp</code> declared in section
+<a href="node70.html#struc-mult">7.5</a>:</p>
+
+<pre>
+   print((emp,newline))
+</pre>
+
+<p>For details of how this works, see the remarks on
+&ldquo;straightening<a name="4944"></a>&rdquo; in section <a href="node81.html#trans-straight">9.2</a>. However,
+the individual strings would be printed together and so, in this
+case, it would be better to write the following:</p>
+
+<pre>
+   print((name OF emp,newline));
+   FOR i TO UPB address OF emp
+   DO
+      print((address OF emp)[i],newline))
+   OD;
+   print((dept OF emp,newline,
+          ni code OF emp,newline,
+          tax code OF emp,
+          basic OF emp,
+          overtime OF emp,
+          net pay OF emp,
+          tax OF emp,newline))
+</pre>
+
+<p>In practice, it would be sensible to declare a procedure or an
+operator which would print the structure and then call it as
+required.</p>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

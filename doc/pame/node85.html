@@ -1,0 +1,205 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The command line</title>
+<meta name="description" content="the command line">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node86.html">
+<link rel="previous" href="node84.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node86.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2078"
+  href="node86.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2072"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2066"
+  href="node84.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2074"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2076"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2079"
+  href="node86.html">Environment strings</a>
+<b> Up:</b> <a name="tex2html2073"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2067"
+  href="node84.html">Events</a>
+ &nbsp; <b>  <a name="tex2html2075"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2077"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2080"
+  href="node85.html#section001161000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001160000000000000000"></a><a name="trans-cmd"></a>
+The command line</h1>
+
+<p>When you execute a program at the command
+prompt<a name="5725"></a>, you type the identification of the program
+and then press return.  You can specify parameters (sometimes called
+<b>arguments</b><a name="5727"></a>) for the program after the program
+identification.  These can then be accessed by the program to modify
+its activities.</p>
+
+<p>Hitherto, the identifications of books have always been written
+into the actual code. In the last exercise, the input book was called
+<code>inbook</code> and the output book <code>outbook</code>. If your
+program could be given the identifications of the books whenever you
+executed the program, then it could have a much wider
+applicability.</p>
+
+<p>The command line is available to the program via the channel
+<tt>arg channel</tt><a name="6005"></a>. Here is a small program which
+reads its first argument and prints it on the screen:</p>
+
+<pre>
+   PROGRAM arg1 CONTEXT VOID
+   USE standard
+   IF FILE args;  open(args,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the command line",
+           newline));
+      stop
+   ELSE
+     on logical file end(arg,
+        (REF FILE f)BOOL:
+           (put(stand error,
+                ("No parameters",newline));
+            FALSE));
+     STRING id;
+     get(arg,id);  write((id,newline))
+   FI
+   FINISH
+</pre>
+
+<p>Some points to note:</p>
+
+<ol>
+<li><code>stand error</code> is an output <code>FILE</code> which is usually used
+for error messages.
+</li>
+<li>The identification field in the call to <code>open</code> is ignored
+by <tt>arg channel</tt><a name="6006"></a>. In the example, it is written as
+the empty string.
+</li>
+<li><tt>stop</tt><a name="6007"></a> is equivalent to <code>exit(0)</code>.
+</li>
+<li>In Linux, the first parameter is always the full path of the
+identification of the program.
+</li>
+</ol>
+
+<p>You can only read via the <tt>arg channel</tt><a name="6008"></a>
+(using <tt>get</tt><a name="6009"></a>). <tt>make
+term</tt><a name="6010"></a> has already been set to make the string
+terminator <tt>blank</tt><a name="6011"></a> (the last argument is
+always followed by a space) so you can read the individual parameters
+from the command line by reading strings.  However, you should note
+that when you have read a string, the next character will be the
+terminator of the string. So when you have read a string, you will
+need to skip all characters which could possibly terminate the reading
+of a string (known as terminators<a name="5746"></a>) otherwise the
+next read of a string will yield the null string<a name="5747"></a>
+(denoted by <code>""</code>).  The procedure <tt>skip
+terminators</tt><a name="6012"></a> with header</p>
+
+<pre>
+   PROC skip terminators=(REF FILE f)VOID:
+</pre>
+
+<p>is used for this purpose.</p>
+
+<hr>
+<h2><a name="section001161000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.8<a name="ex-ix-viii"></a>
+<dd>Modify exercise <code>ex9.5</code> (see <a href="node83.html#trans-term-a">9.4</a>) to
+get the identifiers of its input and output books from the command
+line (remember that the first argument is always the program id, so
+use a <code>LOC STRING</code> for it).  Remember to cater for the end of
+the input file.  Ans<a href="node143.html#ans-ix-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.9<a name="ex-ix-ix"></a>
+<dd>Write a program to replace all the spaces in its input book
+with the asterisk and write out the resulting lines to its output
+book, the book identifiers being given on the command line.
+ Ans<a href="node143.html#ans-ix-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2078"
+  href="node86.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2072"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2066"
+  href="node84.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2074"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2076"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2079"
+  href="node86.html">Environment strings</a>
+<b> Up:</b> <a name="tex2html2073"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2067"
+  href="node84.html">Events</a>
+ &nbsp; <b>  <a name="tex2html2075"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2077"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

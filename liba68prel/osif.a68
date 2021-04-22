@@ -1,0 +1,184 @@
+DECS  osif  CONTEXT VOID  USE  cif,  messageproc,  osfiles,  oserrors,
+      ossignals,  osmisc,  osshell,  osgc:
+
+{  Id: osif.a68,v 2.13 1993/07/16 10:23:22 aap Exp $ }
+
+configinfo A68CONFIG "$Id: osif.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+
+10:09:93  A68INIT.  Fault in generic_msg - need to check for newline.  DCT
+28:10:93  error_msg not good enough check in default_msg.  DCT
+26:11:93  New grabage collector interface.  AAP
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.003 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ Low level operating system interface.
+
+  Low level routines for accessing OS facilities, defined with POSIX.1 in mind.
+  Staredits for deviations from POSIX are:
+    to be supplied.
+  Note:  by convention *4 => VAX/VMS with the native mode compiler.  Therefore
+         %4 => Ctrans.  *5 = UNIX, *D = DOS.
+         *0 is always a comment.
+         ELLA stars:  6 = VAX, R = SPARC, 9/P = diagnostic, 8/X = security
+         ? = 680x0, T = ?.
+}
+
+
+PROC  generic_msg = (MSGNO msgno, VECSTR params) VOID:
+BEGIN
+   MESSAGE  message = translate_msg(msgno,params);
+
+   IF error_msg(message)
+   THEN  write_buffer(stderr, text OF message, ignore_msg);
+         IF newline_msg(message)
+         THEN  write_buffer(stderr, newline_char, ignore_msg)
+         FI;
+         { error_msg includes "report error and continue" - therefore check }
+         IF cli_msg(message)  OREL  abort_msg(message)
+         THEN  exit(-2)
+         ELIF  sysfault_msg(message)
+         THEN  exit(-1)
+         FI
+   ELIF out_msg(message)  OREL  log_msg(message)
+   THEN  write_buffer(stdout, text OF message, ignore_msg);
+         IF newline_msg(message)
+         THEN  write_buffer(stdout, newline_char, ignore_msg)
+         FI
+   FI
+END;
+
+
+
+PROC init_osif = VOID:
+BEGIN
+  { "init_oserrors" -- here to avoid circular dependency }
+  global_msg:= generic_msg;
+  { init_ossignals must be called after the assignment as it dereferences it }
+  init_ossignals
+END;
+
+A68INIT init_osif
+
+KEEP
+
+  { --- from oserrors --- }
+  errno,
+  MESSAGEPROC,
+  ignore_msg, generic_msg, global_msg,
+
+  { --- from osfiles --- }
+  stdin, stdout, stderr,
+  nil_file, null_cfileptr, newline_char, null_char,
+
+  IOSTATUS, =(IOSTATUS,IOSTATUS), /=(IOSTATUS,IOSTATUS),
+  io_ok, io_eof, io_error, io_no_newline,
+  FILE, FILEACCESS, file_name, open_file, close_file, read_buffer, read_line,
+  write_buffer, read_access, write_access, append_access, update_access,
+  update_truncate_access, update_append_access,
+
+  set_file_position, get_file_position, update_disk,
+  delete_file, rename_file, 
+
+  FILEDETAILS, nil_file_details, get_file_details, is_terminal,
+
+  DIRPTR, null_dirptr, open_directory, close_directory, get_next_dir_entry,
+
+  { --- from osmisc --- }
+  get_working_directory,
+  get_env_var, get_time, local_time_str,
+  exit, execute_os_command, get_cpu_time, get_login_name,
+
+  { --- from osshell --- }
+  FILENAME,  parse_filename,
+
+  prelude, get_args, prompt_args,
+
+  { --- from ossignals --- }
+
+  sighup,
+  sigint,
+  sigquit,
+  sigill,
+  sigtrap,
+  sigabrt,
+#  sigemt, SunOs only #
+  sigbus,
+  sigfpe,
+  sigkill,
+  sigusr1,
+  sigsegv,
+  sigusr2,
+  sigpipe,
+  sigalrm,
+  sigterm,
+  sigstkflt,
+  sigchld,
+  sigcont,
+  sigstop,
+  sigtstp,
+  sigttin,
+  sigttou,
+  sigurg,
+  sigxcpu,
+  sigxfsz,
+  sigvtalrm,
+  sigprof,
+  sigwinch,
+  sigio,
+  sigpwr,
+
+  set_sigmsgproc, set_sigignore, set_sigdefault, get_sigmsgproc,
+
+  { --- from osgc --- }
+
+  garbage_collect,
+  always collect, always grow heap, default policy,
+  gc_diag_options, set_gc_diagnostics,
+  gc_statistics,
+  GCPARAM, set_gc_params
+
+
+
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

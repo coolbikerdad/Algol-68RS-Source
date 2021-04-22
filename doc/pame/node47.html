@@ -1,0 +1,176 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node46.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node48.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1388"
+  href="node48.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1382"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1378"
+  href="node46.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1384"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1386"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1389"
+  href="node48.html">Names</a>
+<b> Up:</b> <a name="tex2html1383"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1379"
+  href="node46.html">Multiple choice</a>
+ &nbsp; <b>  <a name="tex2html1385"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1387"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1390"
+  href="node47.html#section00671000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00670000000000000000"></a><a name="choice-summ"></a>
+Summary</h1>
+
+<p>There are two values having mode <code>BOOL</code>. Operators with
+operands of mode <code>BOOL</code> are predeclared in the standard
+prelude.  A conditional clause uses an enquiry clause yielding a value
+of mode <code>BOOL</code>.  A case clause uses an enquiry clause
+yielding a value of mode <code>INT</code>.  Both conditional and case
+clauses can be abbreviated.  Extended conditional and case clauses can
+be written using <code>ELIF</code> and <code>OUSE</code> respectively.
+Conditional clauses and case clauses are sometimes grouped together
+and termed choice clauses. Choice clauses are examples of enclosed
+clauses, and are units.</p>
+
+<p>Here are some exercises which test you on the material covered in
+this chapter.</p>
+
+<hr>
+<h2><a name="section00671000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>4.10<a name="ex-iv-x"></a>
+<dd>Which values have the mode <code>BOOL</code>?  Ans<a href="node138.html#ans-iv-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.11<a name="ex-iv-xi"></a>
+<dd>What is the value of each of the following formul&#230;? Ans<a href="node138.html#ans-iv-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>3 &lt; 4</code>  
+<p>
+<dt>(b)
+<dd><code>4.0 &gt;= 0.4e1</code>  
+<p>
+<dt>(c)
+<dd><code>2 &lt; 3 &amp; 3 &gt; 2</code>  
+<p>
+<dt>(d)
+<dd><code>11 &lt; 2 OR 10 &lt; ABS TRUE</code>  
+<p>
+<dt>(e)
+<dd><code>NOT TRUE &amp; ABS "A" &lt; ABS "D"</code>  
+<p>
+<dt>(f)
+<dd><code>NOT(3 &gt; 2 &amp; 3 &gt; 1 OR 10 &lt; 6)</code>  
+<p>
+</dd>
+</dl>
+<dt>4.12<a name="ex-iv-xii"></a>
+<dd>What is wrong with the following (<code>m</code> is predeclared):
+<pre>
+   IF m&gt;4|print("ok")ELSE print(".")ESAC
+</pre>
+Ans<a href="node138.html#ans-iv-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.13<a name="ex-iv-xiii"></a>
+<dd>What would be displayed on your screen by the following:
+<pre>
+   FOR i TO 10 DO print(ODD i) OD
+</pre>
+Ans<a href="node138.html#ans-iv-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.14<a name="ex-iv-xiv"></a>
+<dd>Use a conditional clause to print <code>"Units"</code> if <code>m</code>
+(which has mode <code>INT</code>) is less than <code>10</code>, <code>"Tens"</code> if
+it is less than <code>100</code>, <code>"Hundreds"</code> if it is less
+than&nbsp;<code>1000</code> and <code>"Too big"</code> otherwise.  Ans<a href="node138.html#ans-iv-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.15<a name="ex-iv-xv"></a>
+<dd>Use a case clause to print the value of a card in words. For
+example, if it is a queen, print <code>"Queen"</code>.
+ Ans<a href="node138.html#ans-iv-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1388"
+  href="node48.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1382"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1378"
+  href="node46.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1384"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1386"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1389"
+  href="node48.html">Names</a>
+<b> Up:</b> <a name="tex2html1383"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1379"
+  href="node46.html">Multiple choice</a>
+ &nbsp; <b>  <a name="tex2html1385"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1387"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

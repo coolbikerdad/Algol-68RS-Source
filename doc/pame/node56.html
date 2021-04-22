@@ -1,0 +1,159 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Dynamic names</title>
+<meta name="description" content="dynamic names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node57.html">
+<link rel="previous" href="node55.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node57.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1550"
+  href="node57.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1544"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1538"
+  href="node55.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1546"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1548"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1551"
+  href="node57.html">Loops revisited</a>
+<b> Up:</b> <a name="tex2html1545"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1539"
+  href="node55.html">Reference modes in transput</a>
+ &nbsp; <b>  <a name="tex2html1547"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1549"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1552"
+  href="node56.html#section00781000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00780000000000000000"></a><a name="name-dyn"></a>
+Dynamic names</h1>
+
+<p>Hitherto, all the names which can refer to rows were declared with
+bounds whose values were given by integer denotations.  In fact, the
+bounds given on the right-hand side of the identity declaration can be
+any unit which yields an integer in a <b>meek</b>
+context<a name="3097"></a>.  So it is quite reasonable to write</p>
+
+<pre>
+   REF INT size = LOC INT;  read(size);
+   REF[]INT a = LOC[1:size]INT
+</pre>
+
+<p>or even</p>
+
+<pre>
+   REF[]INT r=
+      LOC[1:(REF INT i=LOC INT;
+             read(i);
+             i)]INT
+</pre>
+
+<p>since an enclosed serial clause has the value of its last unit.
+The value of the clause in the parentheses is a name of mode <code>REF
+INT</code> and since the context of the clause is meek,
+dereferencing<a name="3102"></a> is allowed. The context is passed on
+to the last unit in the clause.  Thus the integer read by
+<code>read</code> will be passed to the generator.</p>
+
+<p>A <b>dynamic</b><a name="3104"></a> name is one which can refer to
+a multiple whose bounds are determined at the time the program is
+elaborated. It means that you can declare names referring to multiples
+of the size you actually require, rather than the maximum size that
+you might ever need.</p>
+
+<hr>
+<h2><a name="section00781000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.15<a name="ex-v-xv"></a>
+<dd>Declare a name which can refer to a multiple of reals whose
+upper bound is determined by reading an integer from the keyoard.
+ Ans<a href="node139.html#ans-v-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.16<a name="ex-v-xvi"></a>
+<dd>Write a program which will read an integer which says how many
+integers follow it. Compute the sum of all the integers and print it.
+ Ans<a href="node139.html#ans-v-xvi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1550"
+  href="node57.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1544"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1538"
+  href="node55.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1546"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1548"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1551"
+  href="node57.html">Loops revisited</a>
+<b> Up:</b> <a name="tex2html1545"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1539"
+  href="node55.html">Reference modes in transput</a>
+ &nbsp; <b>  <a name="tex2html1547"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1549"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

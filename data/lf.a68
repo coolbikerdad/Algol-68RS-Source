@@ -1,0 +1,526 @@
+PROGRAM lf CONTEXT VOID
+USE standard
+BEGIN
+   COMMENT
+      Prints an ASCII file.
+      $Log: lf.a68,v $
+      Revision 1.1.1.1  2001-05-07 10:16:10  sian
+      Import of Ctrans v1.0.4
+
+      Revision 1.1  2000/08/23 16:33:32  sian
+      Ready for Debianising
+
+      Revision 1.2  2000/01/28 10:36:48  sian
+      Rearrangement of the code: global names before PROCs.
+      Minor improvements.
+
+      Revision 1.1.1.1  2000/01/26 14:34:42  sian
+      New version for Ctrans
+
+      Revision 1.0  1998/03/26 17:29:02  sian
+      Adapted to the LaserJet 6L
+   COMMENT
+
+[]CHAR version = "$Id: lf.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+MODE
+   PRINTER=STRUCT(INT max line length,max lines per page,
+                  STRING init string,quality,begin hdr,end hdr),
+   SEC    =STRUCT(INT beg,end),
+   STAT = STRUCT(LONG INT st dev, #device#
+                 SHORT BITS pad1,
+                 INT  st ino,     #inode#
+                 BITS st mode,    #protection#
+                 INT  st nlink,   #no. of hard links#
+                      st uid,     #user ID of owner#
+                      st gid,     #group ID of owner#
+                 LONG INT st rdev,#device type (if inode device)#
+                 SHORT BITS pad2,
+                 INT  st size,    #total size, in bytes#
+                      st blksize, #blocksize for filesystem transput#
+                      st blocks,  #no. of blocks allocated#
+                 INT  st atime,   #time of last access (kernel uses 64-bits)#
+                      unused1,
+                      st mtime,   #time of last modification (kernel uses 64-bits)#
+                      unused2,
+                      st ctime,   #time of last change (kernel uses 64-bits)#
+                      unused3, unused4, unused5);
+
+INT
+   max input line length = 1000,
+   default tab size      = 3,
+	err eacces            = 13;
+
+PRINTER lj6l   = (115,85,
+                  esc+"E"+esc+"(1oU"+esc+"(s0p16.67h8.5v0s0b0T"+esc+"&l0o8D"+esc+"&a6L",
+                  "","",""),
+   #reset,PC-8,fixed,cpi,height,upright,medium,line printer,portrait,lpi,left margin=6 cols#
+       generic = (80,66,"","","","");
+
+FILE
+   inf,              # File to be printed #
+   comm line;        # Command line arguments #
+
+STRING
+   date last written,# Of an input file #
+   home,             # Home directory #
+   infn;             # Input file identification #
+
+CHAR ch;             # General-purpose use #
+
+PRINTER cur pr:=lj6l;
+
+BOOL
+   line numbers   := FALSE,
+   letter quality := FALSE,
+   ordered        := TRUE,  #TRUE when section nos are in order#
+   page throw     := FALSE; #TRUE when a ^L has been read#
+
+INT lines,           # The current line number on the page #
+    page num := 0,   # The current page number #
+    tabs     := default tab size,   # No. of spaces for a tab character #
+    even     := 0;   # 0 = o/p all pages, 1 = o/p odd pages, 2 = o/p even pages #
+
+FLEX[1:0]SEC sections:=SEC(1,max int); #Default section to print#
+
+PROC(REF INT)CSTR linux ctime
+   = ALIEN "CTIME"
+   "#include <time.h>"
+   "#define CTIME(time) (void *)ctime((time_t *)time)";
+
+PROC(INT,REF STAT)INT linux fstat
+   = ALIEN "FSTAT"
+   "#include <sys/stat.h>"
+   "#include <unistd.h>"
+   "#define FSTAT(fd,buff) A_int_INT(fstat(fd,(struct stat *)buff))";
+
+PROC(VECTOR[]CHAR)CPTR linux getcwd
+	= ALIEN "GETCWD"
+	"#define GETCWD(buf) (void *)getcwd(A_VC_charptr(buf),A_INT_int(buf.upb))";
+
+OP (CPTR)CSTR CPTRTOCSTR = BIOP 99;
+
+PROC get cwd = STRING:
+	CSTRTORVC CPTRTOCSTR linux getcwd(LOC VECTOR[1024]CHAR);
+
+PROC fstat = (FILE f)REF STAT:
+IF HEAP STAT st;
+   linux fstat(sys file OF f,st) /= 0
+THEN NIL
+ELSE st
+FI; # fstat #
+
+PRIO AFTER = 5, UPTO = 5;
+
+OP AFTER = ([]CHAR s,CHAR ch)[]CHAR:
+IF INT pos;  char in string(ch,pos,s)
+THEN s[pos+1:@pos+1]
+ELSE s
+FI; #AFTER#
+
+OP UPTO = ([]CHAR s,CHAR ch)[]CHAR:
+IF INT pos;  char in string(ch,pos,s)
+THEN s[:pos-1@LWB s]
+ELSE s
+FI; #UPTO#
+
+OP REVERSE = ([]CHAR s)[]CHAR:
+(
+   [LWB s:UPB s]CHAR ss;
+   FOR i FROM UPB s TO LWB s
+   DO
+      ss[UPB ss-i+1]:=s[i]
+   OD;
+   ss
+); #REVERSE#
+
+OP UC = (CHAR c)CHAR: (c>="a" & c<="z"|REPR(ABS c-ABS"a"+ABS"A")|c);
+
+OP +:= = (REF FLEX[]SEC fxs, SEC sec)REF FLEX[]SEC:
+BEGIN
+   HEAP[LWB fxs:UPB fxs+1]SEC fl;
+   fl[:UPB fxs@LWB fxs]:=fxs;
+   fl[UPB fl]:=sec;
+   fxs:=fl
+END; #+:=#
+
+PROC help=VOID:
+BEGIN
+   put(stand err,("Version ",version[15:] UPTO blank,newline,newline,
+            "Usage:  lf [-h] [-n] [-fp] [-q] [-ssec,sec...] [-tn] FILE ...",newline,
+            "   -f:  output even or odd pages",newline,
+            "           e - output even pages only",newline,
+            "           o - output odd pages only",newline,
+            "   -h:  this message",newline,
+            "   -n:  print line numbers",newline,
+            "   -p:  select printer",newline,
+            "           g - generic",newline,
+            "           l - LaserJet 6l (default)",newline,
+            "   -q:  print with letter quality",newline,
+            "   -ssec[,sec] print sections",newline,
+            "     sec=secbegin:secend",newline,
+            "     10     line 10 only",newline,
+            "     10:    line 10ff",newline,
+            "     :10    upto line 10",newline,
+            "     10:20  lines 10 to 20",newline,
+            "   -t:  expand tabs to n spaces (default=",
+            whole(default tab size,0),")",newline,newline,
+            "After each file, the page number is reset to 1",newline,
+            "but not the sections. Use -s to reset the sections",newline,
+            "to the default 1:maxint.",newline,newline,
+            "eg)  lf -n -s:200,400: lf.a68",newline,
+            "print lines 1-200 inc, and 400ff",newline,newline,
+            "maximum input line length ="+whole(max input line length,0),
+            newline));
+   exit(1)
+END;
+
+PROC disp error = ([]STRING s)VOID:
+(
+   FOR i FROM LWB s TO UPB s
+   DO
+      put(stand err,s[i])
+   OD;
+   newline(stand err)
+);
+
+PROC reset parameters = VOID: page num:=0;
+
+PROC lf print = (INT ev,pn,[]UNION(SIMPLOUT,PROC(REF FILE)VOID) r)VOID:
+IF ev = 0 THEN print(r)
+ELSE
+   CASE ev IN
+      IF ODD pn THEN print(r) FI
+      ,
+      IF NOT ODD pn THEN print(r) FI
+   ESAC
+FI; # lf print #
+
+PROC get mtime = (REF FILE f)[]CHAR:
+IF REF STAT st = fstat(f);  st ISNT NIL
+THEN
+   CSTR cstr = linux ctime(st mtime OF st);
+   INT lf pos;
+   FOR i TO 128 WHILE cstr[i]/=lf DO lf pos:=i OD;
+   cstr[:lf pos]
+ELSE ""
+FI; #get mtime#
+
+PROC heading = (STRING fn, REF INT pn, ln)VOID:
+IF   ln >= max lines per page OF cur pr
+THEN
+   pn+:=1;
+   lf print(even,page num,(begin hdr OF cur pr,"File ", fn,
+                           " last written to on "));
+   lf print(even,page num,date last written);
+   lf print(even,page num,(" Page ",whole(pn,-3),end hdr OF cur pr,
+                           cr,newline,newline,newline));
+   ln:=3
+FI;
+
+# Tab routines #
+
+[max input line length]BOOL tab stops;
+[max input line length]CHAR line;      INT line upb; # Set in get line #
+
+PROC set tabs = (REF[]BOOL tab stops, INT tabs)VOID:
+FOR i FROM LWB tab stops TO UPB tab stops
+DO
+   tab stops[i]:=(i MOD tabs = 0)
+OD;
+
+PROC tab pos = (INT col,REF[]BOOL tab stops)BOOL:
+IF col > UPB tab stops THEN TRUE ELSE tab stops[col] FI;
+
+
+# Input a line, and expand any tab characters #
+
+PROC get line = (REF FILE f)VOID: # Line will be in "line" #
+BEGIN
+   STRING in line;     get(f,(in line,newline));
+   line upb:=LWB line-1;
+
+   FOR i FROM LWB in line TO UPB in line
+   DO
+      IF CHAR c = in line[i];  c = tabch
+      THEN
+         WHILE
+            line[line upb+:=1]:=blank;
+            NOT tabpos(line upb,tab stops)
+         DO SKIP OD
+      ELIF c = ff
+      THEN page throw:=TRUE
+      ELSE line[line upb+:=1]:=c
+      FI
+   OD
+END; #get line#
+
+PROC prefix = (BOOL line numbers,INT lnum)VOID:
+IF   line numbers
+THEN lf print(even,page num,(whole(lnum,-6),": "))
+ELSE lf print(even,page num,"        ")
+FI; #prefix#
+
+PROC print file = (REF FILE f)VOID:
+BEGIN
+   PROC do line = (INT lnum)VOID:
+   BEGIN
+      get line(f);
+
+      IF page throw
+      THEN
+         lf print(even,page num,ff);  page throw:=FALSE;
+         heading(infn,page num,lines:=max lines per page OF cur pr)
+      FI;
+
+      INT leng := line upb;
+
+      IF leng = 0
+      THEN
+         heading(infn, page num, lines);
+         prefix(line numbers,lnum);
+         lf print(even,page num,(cr,newline));
+         lines+:=1
+      ELSE
+         INT start:=LWB line;  BOOL ln:=line numbers;
+         INT mll = max line length OF cur pr;
+
+         IF   leng > mll
+         THEN
+            FOR i TO leng % mll
+            DO
+               heading(infn, page num, lines);
+               prefix(ln,lnum);
+               IF ln THEN ln:=NOT ln FI;
+               lf print(even,page num,(line[start:start+mll-1],cr,newline));
+               lines+:=1;
+               start+:=mll;  leng-:=mll
+            OD
+         FI;
+
+         heading(infn, page num, lines);
+         prefix(ln,lnum);
+         lf print(even,page num,(line[start:start+leng-1],cr,newline));
+         lines+:=1
+      FI
+   END; #do line#
+
+   set tabs(tab stops,tabs);
+   lines:=max lines per page OF cur pr;
+   print(init string OF cur pr);  # Initialise the printer #
+
+   IF letter quality THEN print(quality OF cur pr) FI;
+
+   on logical file end(f,(REF FILE f)BOOL: (GOTO eof; TRUE));
+
+   FOR s FROM LWB sections TO UPB sections
+   DO
+      SEC ss=sections[s];
+      FOR lnum
+      FROM (s=LWB sections|1|:ordered|end OF sections[s-1]+1|reset(f); 1)
+      TO beg OF ss-1
+      DO get line(f)   OD; #ignore#
+      heading(infn,page num,lines:=max lines per page OF cur pr);
+      FOR lnum FROM beg OF ss TO end OF ss DO do line(lnum) OD
+   OD;
+eof:
+   SKIP
+END #print file#;
+
+PROC process file name = ([]CHAR cwd, arg)[]CHAR:
+BEGIN
+   CO Rules for file names.
+      A file name can start with:
+          ~   meaning home directory
+          /   meaning an absolute path
+          .   meaning a relative path
+          id  meaning a relative path
+          ..  meaning a relative path
+      In addition, a path starting with ~ might have one or more '../'
+      embedded in the string.
+   CO
+   
+   CHAR stroke="/", dot=".";
+   STRING fn:=
+      IF arg[LWB arg]="~"
+      THEN home+arg[1+LWB arg:]
+       ELIF (UPB arg>LWB arg|arg[LWB arg:LWB arg+1]="./"|FALSE)
+       THEN cwd+arg[LWB arg+1:]
+       ELIF arg[LWB arg]/=stroke
+       THEN cwd+stroke+arg
+       ELSE arg
+       FI;
+   CO Example:  ~/../../usr/X11R6/lib/X11/pixmaps/xterm.xpm
+      converted to
+            /home/sian/../../usr/X11R6/lib/X11/pixmaps/xterm.xpm CO
+
+     WHILE
+      INT dot pos:=LWB fn-1;
+       char in string(dot,dot pos,fn);
+      (UPB fn>=dot pos+3|fn[dot pos+1]=dot|FALSE)
+                        &
+                   dot pos-2>=LWB fn
+     DO # Remove .. and directory "above" it #
+       fn:=REVERSE(stroke+REVERSE fn[:dot pos-2] AFTER stroke)
+            + fn[dot pos+3:]
+   OD;
+
+   CO Final name:
+           /usr/X11R6/lib/X11/pixmaps/xterm.xpm CO
+  fn
+END; #process file name#
+
+PROC get numeric arg = ([]CHAR arg,INT default)INT:
+IF FILE mf; INT number;
+   open(mf,arg+blank,mem channel)/=0
+THEN default
+ELSE
+   on logical file end(mf,(REF FILE f)BOOL: (close(mf); GOTO eof; TRUE));
+   on value error(mf,(REF FILE f)BOOL: (close (mf); GOTO eof; TRUE));
+   get(mf,number);
+   close(mf);
+   number EXIT
+eof:
+   default
+FI; #get numeric arg#
+
+PROC get sections = ([]CHAR arg)VOID: #starts with -s#
+IF UPB arg = 2
+THEN ordered:=TRUE;  sections:=SEC(1,max int) #-s -- reset to one section#
+ELSE
+   PROC add section = ([]CHAR arg)SEC:
+   IF INT colon:=LWB arg-1;
+      char in string(":",colon,arg)
+   THEN (get numeric arg(arg[:colon-1],1),get numeric arg(arg[colon+1:],max int))
+   ELSE INT n=get numeric arg(arg,1);  (n,n)
+   FI; #add section#
+
+   sections:=LOC[0]SEC;
+
+   INT pos lwb:=3, pos comma;
+   IF char in string(",",pos comma,arg[pos lwb:@pos lwb])
+   THEN #>1 sec#
+      WHILE
+         IF UPB sections=0
+         THEN sections:=add section(arg[pos lwb:pos comma-1])
+         ELSE sections+:=add section(arg[pos lwb:pos comma-1])
+         FI;
+			(pos lwb:=pos comma+1) <= UPB arg
+      DO
+         IF NOT char in string(",",pos comma,arg[pos lwb:@pos lwb])
+			THEN pos comma:=UPB arg+1
+			FI
+		OD
+   ELSE sections:=add section(arg[pos lwb:])
+   FI;
+
+   #Now check whether the sections are ordered.
+    ie, whether
+      beg OF sec-i <= end OF sec-i
+                   &
+      end OF sec-i <  beg OF sec-i+1
+   #
+   FOR i FROM LWB sections TO UPB sections WHILE ordered
+   DO
+      SEC si=sections[i];
+      ordered:=beg OF si <= end OF si;
+      IF ordered & i < UPB sections
+      THEN ordered:=end OF si < beg OF sections[i+1]
+      FI
+   OD
+FI; #get sections#
+
+CO ********** Main Logic ************
+   Get the command line parameters and file names, printing
+   each file with the current values of the arguments.
+CO
+
+IF FILE h;  open(h,"HOME",env channel)/=0
+THEN
+   put(stand err,("Cannot access environment string HOME",newline));
+   exit(2)
+ELSE
+   on logical file end(h,(REF FILE f)BOOL: (close(f); GOTO eofh; TRUE));
+   get(h,home);  close(h);
+eofh:
+   SKIP
+FI;
+
+[]CHAR cwd = get cwd;
+
+IF open(comm line,"",arg channel)/=0
+THEN help
+ELSE
+   on logical file end(comm line,(REF FILE f)BOOL: (stop; SKIP));
+	get(comm line,(LOC STRING)) #program id#
+FI;
+
+DO #******** Principal processing loop **********#
+   CO If an argument is a parameter, execute it, otherwise, list the file
+      according to the current values of the parameters
+   CO
+   STRING arg;  get(comm line,(skip terminators,arg));
+
+   IF arg[1] = "-"
+   THEN
+      IF UPB arg  > 1
+      THEN
+         ch:=arg[2];
+         IF INT n; NOT char in string(UC ch,n,"FHNPQST?")
+         THEN (disp error(("lf error: unknown argument -",ch));  help)
+         ELSE
+            CASE n
+            IN
+           #F# IF UPB arg >= 3
+               THEN
+                 ch:=UC arg[3];
+                 IF   ch = "O"     THEN even:=1
+                 ELIF ch = "E"     THEN even:=2
+                 ELSE disp error(("lf error: invalid page specifier ",arg));  help
+                 FI
+               ELSE disp error("lf error: -f option needs a page specifier");  help
+               FI
+               ,
+           #H# help
+               ,
+           #N# line numbers:=NOT line numbers
+               ,
+           #P# IF UPB arg=3
+               THEN
+                 ch:=UC arg[3];
+                 IF   ch = "G" THEN cur pr:=generic
+                 ELIF ch = "L" THEN cur pr:=lj6l
+                 ELSE disp error(("lf error: invalid printer ",arg[3])); help
+                 FI
+               FI
+               ,
+           #Q# letter quality:= TRUE
+               ,
+           #S# get sections(arg)
+               ,
+           #T# tabs:=get numeric arg(arg[3:],default tab size)
+               ,
+           #?# help
+            ESAC
+         FI
+      ELSE #sole -, so print stand in#
+         infn:="stand in";
+         date last written:="today"+19*blank;
+         print file(stand in);
+         print(newpage);
+         reset parameters
+      FI
+	ELIF
+      infn:=process file name(cwd,arg);
+      open(inf,infn,stand in channel)/=0
+   THEN disp error(("lf error: cannot access file ",infn))
+   ELSE
+      date last written:=get mtime(inf);
+      print file(inf);  close(inf);
+      print(newpage);
+      reset parameters
+   FI
+OD
+
+END
+FINISH

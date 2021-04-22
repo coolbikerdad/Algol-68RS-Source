@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=a68toc
+TryExec=a68toc
+Exec=a68toc
+GenericName=Compiler
+GenericName[eo]=Kompililo
+NoDisplay=true
+Comment=Algol 68 compiler
+Comment[eo]=Kompililo por Algol 68
+Terminal=true
+Categories=Utility;System;

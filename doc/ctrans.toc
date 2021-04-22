@@ -1,0 +1,51 @@
+@numchapentry{Overview}{1}{Overview}{1}
+@numchapentry{ALGOL 68 language}{2}{Language}{3}
+@numsecentry{Language restrictions}{2.1}{Language restrictions}{3}
+@numsubsecentry{Modules system}{2.1.1}{Modules system restrictions}{3}
+@numsubsecentry{Standard prelude library}{2.1.2}{Standard prelude}{3}
+@numsubsecentry{@code {FORMAT}}{2.1.3}{FORMAT}{3}
+@numsubsecentry{Selection from arrays of structures}{2.1.4}{Arrays in structures}{3}
+@numsubsecentry{@code {XTYPE} and @code {YTYPE}}{2.1.5}{XTYPE and YTYPE}{4}
+@numsubsecentry{@code {CYCLE} operator}{2.1.6}{CYCLE}{4}
+@numsubsecentry{Rowing dynamic procedure results}{2.1.7}{Rowing dynamic results}{4}
+@numsecentry{Language extensions}{2.2}{Language extensions}{4}
+@numsubsecentry{First-class procedures}{2.2.1}{First-class procedures}{4}
+@numsubsecentry{Star-edit preprocessor}{2.2.2}{Star edit}{4}
+@numsecentry{Language differences}{2.3}{Language differences}{5}
+@numsubsecentry{@code {LOC} generators}{2.3.1}{LOC generators}{5}
+@numsubsecentry{C inserts}{2.3.2}{C inserts}{5}
+@numsubsecentry{@code {ALIEN} declarations}{2.3.3}{ALIEN declarations}{5}
+@numsubsubsecentry{Prelude and postlude actions}{2.3.3.1}{Prelude actions}{6}
+@numsecentry{C naming conventions}{2.4}{C naming conventions}{6}
+@numchapentry{Prelude Library}{3}{Prelude Library}{7}
+@numchapentry{Using the translator}{4}{Using the translator}{9}
+@numsecentry{Input and output files}{4.1}{Translator files}{9}
+@numsecentry{Unique names}{4.2}{Unique names}{9}
+@numsecentry{Multiple-module ALGOL 68 programs}{4.3}{Modules system}{9}
+@numchapentry{Building complete ALGOL 68 programs}{5}{Building complete programs}{11}
+@numsecentry{Compiling ALGOL 68 modules}{5.1}{Compiling}{11}
+@numsecentry{Linking ALGOL 68 programs}{5.2}{Linking}{11}
+@numchapentry{Debugging ALGOL 68 programs}{6}{Debugging}{13}
+@numsecentry{Program debugging}{6.1}{Program debugging}{13}
+@numsecentry{Program crashes}{6.2}{Program crashes}{13}
+@appentry{Summary of translator usage}{A}{Translator usage summary}{15}
+@appsecentry{Translator options}{A.1}{Translator options}{15}
+@appsecentry{Environment variables}{A.2}{Environment variables}{17}
+@appentry{Further reading}{B}{Further reading}{19}
+@appentry{Implementation guide}{C}{Implementation}{21}
+@appsecentry{Source directories}{C.1}{Ctrans directories}{21}
+@appsecentry{The translator (@code {ctrans/a68toc})}{C.2}{Translator sources}{21}
+@appsecentry{The ALGOL 68 header files (@code {include/*.h})}{C.3}{Header files}{26}
+@appsecentry{The ALGOL 68 run-time support library (@code {library/liba68.a})}{C.4}{Run-time library}{27}
+@appsecentry{Heap management and garbage collection (@code {library/liba68.a})}{C.5}{Heap management}{28}
+@appsubsecentry{Internal macro interface}{C.5.1}{Internal macros}{28}
+@appsubsecentry{Garbage collector header files}{C.5.2}{Garbage collector headers}{29}
+@appsubsecentry{Garbage collector modules}{C.5.3}{Garbage collector modules}{31}
+@appsubsecentry{Garbage collector parameters}{C.5.4}{Garbage collector parameters}{32}
+@appsubsecentry{Garbage collector statistics}{C.5.5}{Garbage collector statistics}{33}
+@appsubsecentry{Debugging the garbage collector}{C.5.6}{Debugging the garbage collector}{33}
+@appsecentry{The ALGOL 68 prelude library (@code {liba68prel/liba68prel.a})}{C.6}{Prelude library sources}{34}
+@appsecentry{Porting checklist}{C.7}{Porting}{34}
+@unnchapentry{Option index}{10001}{Option index}{35}
+@unnchapentry{Symbol index}{10002}{Symbol index}{37}
+@unnchapentry{Concept index}{10003}{Concept index}{39}

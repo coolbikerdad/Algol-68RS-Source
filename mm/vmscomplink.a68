@@ -1,0 +1,264 @@
+DECS vmscomplink CONTEXT VOID USE putstrings,
+*4                                vmsinterface,
+                                  osinterface, basics, messageproc :
+
+configinfo A68CONFIG "$Id: vmscomplink.a68,v 1.3 2002-06-06 13:55:55 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+31:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 32.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+*5{ VMS version
+BITS ss__normal = ALIEN "SS$_NORMAL",
+     ss__supersede = ALIEN "SS$_SUPERSEDE",
+     ss__nolognam = ALIEN "SS$_NOLOGNAM";
+
+PROC ( STR,          { logical name }
+       STR           { desired contents }
+     ) BITS          { like DCL DEFINE sets a "process logical name" * }
+   lib_set_logical    = ALIEN "LIB$SET_LOGICAL";
+
+PROC ( STR           { logical name }
+     ) BITS          { like DCL DEASSIGN deletes a "process logical name" }
+   lib_delete_logical = ALIEN "LIB$DELETE_LOGICAL";
+
+PROC set_logical = (VECTOR[ ]CHAR name,
+                                  value,
+                    BOOL diagnose )BOOL:
+BEGIN               { new logical name }
+BITS status = lib_set_logical( name, value );
+
+    IF diagnose THEN
+        put( screen, ( "Define logical ", name, " as ", value, newline ))
+    FI;
+    IF status MATCHCOND ss__supersede THEN
+        FALSE
+  ELIF NOT ODD ABS status THEN
+        abort( "set_logical error" );
+        SKIP
+  ELSE
+        TRUE
+    FI
+END;
+
+PROC delete_logical = (VECTOR[ ]CHAR name,
+                       BOOL diagnose )BOOL:
+BEGIN                  { delete logical name }
+BITS status = lib_delete_logical( name );
+
+    IF diagnose THEN
+        put( screen, ( "Delete logical ", name, newline ))
+    FI;
+    IF status MATCHCOND ss__nolognam THEN
+        FALSE
+  ELIF NOT ODD ABS status THEN
+        abort( "delete_logical error" );
+        SKIP
+  ELSE
+        TRUE
+    FI
+END;
+
+PROC obey_osaction = (REF VECTOR[ ]CHAR command,
+                      MESSAGEPROC msg )BOOL:
+BEGIN
+INT status = ABS spawn( command, msg ); { execute_os_command( command, msg );
+                                          call spawn directly since
+                                          execute_os_command inserts newlines }
+
+    ( BIN status AND 2r1 ) = 2r1
+END;
+*5 }
+*4 { UNIX version
+PROC set_logical = (VECTOR[ ]CHAR name,
+                                  value,
+                    BOOL diagnose )BOOL:
+BEGIN               { new logical name }
+    put( screen, ( "Define logical ", name, " as ", value, newline ));
+    TRUE
+END;
+
+PROC delete_logical = (VECTOR[ ]CHAR name,
+                       BOOL diagnose )BOOL:
+BEGIN                  { delete logical name }
+    put( screen, ( "Delete logical ", name, newline ));
+    TRUE
+END;
+
+PROC obey_osaction = (REF VECTOR[ ]CHAR command,
+                      MESSAGEPROC msg )BOOL:
+BEGIN
+    put( screen, ( "Obey UNIX command :- ", command, newline ));
+    TRUE
+END;
+*4 }
+
+PROC (VECTOR[ ]CHAR )VOID insert_oscommand_item;
+PROC (MESSAGEPROC )BOOL obey_oscommand;
+VECTOR[ 3 ]CHAR vms := "VMS";
+VECTOR[ 5 ]CHAR std_star_chars := "24689";
+VECTOR[ 4 ]CHAR std_edit_command := "EDIT";
+VECTOR[ 12 ]CHAR std_exe_dir := "usr$scratch:";
+VECTOR[ 7 ]CHAR std_heap_size := "2000000";
+PROC initialise_complink =
+                  (PROC (VECTOR[ ]CHAR )VOID insert_oscommand_item_proc,
+                   PROC (MESSAGEPROC )BOOL obey_oscommand_proc,
+                   MESSAGEPROC msg )STRUCT( REF VECTOR[ ]CHAR operating_system,
+                                                              star_chars,
+                                                              edit_command,
+                                                              exe_dir,
+                                                              heap_size,
+                                            BOOL case_sensitive ):
+BEGIN
+    insert_oscommand_item := insert_oscommand_item_proc;
+    obey_oscommand := obey_oscommand_proc;
+    ( vms, std_star_chars, std_edit_command, std_exe_dir, std_heap_size, FALSE )
+END;
+
+MODE LOGICAL = STRUCT( REF VECTOR[ ]CHAR name,
+                       BOOL used,
+                       REF LOGICAL rest );
+
+REF LOGICAL nillogical = NIL;
+REF LOGICAL mm_logicals := nillogical,
+            free_logicals := nillogical;
+
+INT max_log_count := -1;
+
+PROC translate_filename = (VECTOR[ ]CHAR name,
+                           REF INT reset_logicals,
+                           BOOL diagnose,
+                           MESSAGEPROC msg )REF VECTOR[ ]CHAR:
+BEGIN
+REF REF LOGICAL mm_log_tail := mm_logicals;
+REF LOGICAL rest, tmp;
+INT cnt := 0;
+
+    IF reset_logicals <= 0 THEN
+
+        IF reset_logicals < 0 THEN
+            WHILE max_log_count >= 0
+            DO
+                delete_logical( oneline(( "MM_LN", max_log_count )), diagnose );
+                max_log_count MINUSAB 1
+            OD
+        FI;
+
+        WHILE mm_log_tail ISNT nillogical
+        DO
+            IF used OF mm_log_tail OREL name = name OF mm_log_tail THEN
+                used OF mm_log_tail := FALSE;
+                mm_log_tail := rest OF mm_log_tail
+          ELSE
+                tmp := mm_log_tail;
+                rest := rest OF mm_log_tail;
+                REF REF LOGICAL( mm_log_tail ) := rest;
+                rest OF tmp := free_logicals;
+                free_logicals := tmp
+            FI
+        OD;
+
+        reset_logicals := 1
+    FI;
+
+    mm_log_tail := mm_logicals;
+    WHILE ( mm_log_tail ISNT nillogical ) ANDTH
+          name /= name OF mm_log_tail
+    DO
+        cnt PLUSAB 1;
+        mm_log_tail := rest OF mm_log_tail
+    OD;
+
+REF VECTOR[ ]CHAR mm_ln = oneline(( "MM_LN", cnt, ":" ));
+
+    IF UPB name > 0 THEN
+        IF mm_log_tail IS nillogical THEN
+            max_log_count := max_log_count MAX cnt;
+            set_logical( mm_ln[ : UPB mm_ln - 1 ], name, diagnose );
+            IF free_logicals IS nillogical THEN
+                REF REF LOGICAL( mm_log_tail ) := HEAP LOGICAL :=
+                                            ( MAKERVC name, TRUE, nillogical )
+          ELSE
+                tmp := free_logicals;
+                free_logicals := rest OF tmp;
+                REF LOGICAL( tmp ) := ( MAKERVC name, TRUE, nillogical );
+                REF REF LOGICAL( mm_log_tail ) := tmp
+            FI
+      ELSE
+            used OF mm_log_tail := TRUE
+        FI
+    FI;
+    mm_ln
+END;
+
+PROC os_submit = (VECTOR[ ]CHAR dbname,
+                                node,
+                  MESSAGEPROC msg )BOOL:
+BEGIN
+FILENAME fn = parse_filename( "mm.log", "", msg );
+
+    insert_oscommand_item( "submit /log=" );
+    insert_oscommand_item( filename OF fn );
+    insert_oscommand_item( " /noprint /notify /queue=SYS$BATCH_" );
+    insert_oscommand_item( node );
+    insert_oscommand_item( " /param=(" );
+    insert_oscommand_item( directory OF fn );
+    insert_oscommand_item( ", *NEW*, """ );
+    insert_oscommand_item( dbname );
+    insert_oscommand_item( " -g"") usr$tools:module_manage.com" );
+    obey_oscommand( msg )
+END;
+
+PROC os_save_file = (REF VECTOR[ ]CHAR name,
+                                       save_name,
+                     MESSAGEPROC msg )VOID:
+BEGIN
+    insert_oscommand_item( "copy /nolog /noconfirm " );
+    insert_oscommand_item( name );
+    insert_oscommand_item( " " );
+    insert_oscommand_item( save_name );
+    obey_oscommand( msg );
+    insert_oscommand_item( "purge /nolog /noconfirm " );
+    insert_oscommand_item( name );
+    insert_oscommand_item( ", " );
+    insert_oscommand_item( save_name );
+    obey_oscommand( msg )
+END;
+
+    SKIP
+KEEP os_submit, os_save_file, translate_filename, obey_osaction,
+     initialise_complink
+FINISH

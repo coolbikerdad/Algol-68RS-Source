@@ -1,0 +1,721 @@
+DECS  osfiles  CONTEXT VOID  USE  cif,  messageproc,  oserrors,  usefulops:
+
+{  Id: osfiles.a68,v 2.10 1993/07/16 10:23:20 aap Exp $ }
+
+configinfo A68CONFIG "$Id: osfiles.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+
+10:09:93  A68INIT used to initialise.  DCT
+23:09:93  nil_file_details added, get_file_details modified.  DCT
+13:10:93  *%T replaced by #ifdef sunosgcc.  DCT
+21:10:93  Can not treat buffer processed by fgets as C string - must look
+            for newline_char.  DCT
+29:10:93  further problem with fgets when <eof> directly follows line.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.009 
+05:12:94  33.002  DJS   CmplxNos   Add comment regarding declarations of
+                                   IOSTATUS`s in other modules. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{  Low level operating system interfaces for file access.
+
+  Low level routines for accessing OS facilities, defined with POSIX.1 in mind.
+  Staredits for deviations from POSIX are:
+    to be supplied.
+}
+{
+  ALIEN declarations
+}
+
+MODE FILEPTR = CPOINTER, DIRPTR = CPOINTER;
+
+FILEPTR null_cfileptr = NIL;
+DIRPTR null_dirptr = NIL;
+CCHARPTR null_ccharptr = NIL;
+
+PROC (VECTOR [] CHAR,VECTOR [] CHAR) FILEPTR fopen =
+  ALIEN "FOPEN"
+        "#include <stdio.h>"
+        "#define FOPEN(filename,mode) A_fileptr_FILEPTR(fopen(A_VC_charptr(filename),A_VC_charptr(mode)))";
+
+PROC (FILEPTR) INT fclose =
+  ALIEN "FCLOSE"
+CO was "extern int fclose(); /* #include <stdio.h> */"
+   For Linux:- CO
+        "#include <stdio.h>"
+        "#define FCLOSE(stream) A_int_INT(fclose(A_FILEPTR_fileptr(stream)))";
+
+PROC (REF VECTOR [] CHAR,INT,INT,FILEPTR) INT fread =
+  ALIEN "FREAD"
+        "#ifdef sunosgcc"
+        "   #include <sys/stdtypes.h>"
+        "#else"
+        "   #include <sys/types.h>"
+        "#endif"
+        "extern size_t fread(); /* #include <stdio.h>*/ "
+        "#define FREAD(ptr,size,nmemb,stream) \"
+        "  A_size_t_INT(fread(A_VC_charptr(ptr),A_INT_size_t(size),A_INT_size_t(nmemb),A_FILEPTR_fileptr(stream)))";
+
+PROC (FILEPTR) INT ferror =
+  ALIEN "FERROR"
+        "#include <stdio.h>"
+        "#define FERROR(stream) A_int_INT(ferror(A_FILEPTR_fileptr(stream)))";
+
+PROC (FILEPTR) INT feof =
+  ALIEN "FEOF"
+        "#include <stdio.h>"
+        "#define FEOF(stream) A_int_INT(feof(A_FILEPTR_fileptr(stream)))";
+
+PROC (VECTOR [] CHAR,INT,FILEPTR) CSTRING fgets =
+  ALIEN "FGETS"
+        "#include <stdio.h>"
+        "#define FGETS(s,n,stream) (void *)(fgets(A_VC_charptr(s),A_INT_int(n),A_FILEPTR_fileptr(stream)))";
+
+PROC (VECTOR [] CHAR,INT,INT,FILEPTR) INT fwrite =
+  ALIEN "FWRITE"
+        "#ifdef sunosgcc"
+        "   #include <sys/stdtypes.h>"
+        "#else"
+        "   #include <sys/types.h>"
+        "#endif"
+        "extern size_t fwrite(); /* #include <stdio.h> */"
+        "#define FWRITE(ptr,size,nmemb,stream) \"
+        "  A_size_t_INT(fwrite(A_VC_charptr(ptr),A_INT_size_t(size),A_INT_size_t(nmemb),A_FILEPTR_fileptr(stream)))";
+
+PROC (FILEPTR,LONG INT,INT) INT fseek =
+  ALIEN "FSEEK"
+        "extern int fseek(); /* #include <stdio.h> */"
+        "#define FSEEK(stream,offset,whence) \"
+CO      "  A_int_INT(fseek(A_FILEPTR_fileptr(stream),A_LINT_long(offset),A_INT_int(whence)))";
+        New definition for Linux (see include/Atypes.h for long long int) CO
+        "  A_int_INT(fseek(A_FILEPTR_fileptr(stream),(long int)offset,A_INT_int(whence)))";
+
+PROC (FILEPTR) LONG INT ftell =
+  ALIEN "FTELL"
+        "#include <stdio.h>"
+        "#define FTELL(stream) A_long_LINT(ftell(A_FILEPTR_fileptr(stream)))";
+
+INT seek_set =
+  ALIEN "A_int_INT(SEEK_SET)"
+        "#include <stdio.h>";
+
+PROC (FILEPTR) INT fflush =
+  ALIEN "FFLUSH"
+        "extern int fflush(); /* #include <stdio.h> */"
+        "#define FFLUSH(stream) A_int_INT(fflush(A_FILEPTR_fileptr(stream)))";
+
+PROC (VECTOR [] CHAR) INT unlink =
+  ALIEN "UNLINK"
+        "#include <unistd.h>"
+        "#define UNLINK(path) A_int_INT(unlink(A_VC_charptr(path)))";
+
+PROC (VECTOR [] CHAR,VECTOR [] CHAR) INT rename =
+  ALIEN "RENAME"
+        "#include <stdio.h>"
+        "#define RENAME(old,new) A_int_INT(rename(A_VC_charptr(old),A_VC_charptr(new)))";
+
+PROC (CSTRING) VOID free =
+  ALIEN "free"
+        "#include <stdlib.h>";
+
+PROC(FILEPTR) INT fileno =
+  ALIEN "FILENO"
+        "#include <stdio.h>"
+        "#define FILENO(stream) A_int_INT(fileno(A_FILEPTR_fileptr(stream)))";
+
+MODE CSTAT = STRUCT (INT stat);
+PROC(INT,REF CSTAT) INT fstat =
+  ALIEN "FSTAT"
+        "#include <sys/stat.h>"
+CO New include for Linux CO
+		  "#include <unistd.h>"
+        "#define FSTAT(fildes,buf) A_int_INT(fstat(A_INT_int(fildes),(buf)))";
+
+PROC(VECTOR [] CHAR, REF CSTAT) INT stat =
+  ALIEN "STAT"
+        "#include <sys/stat.h>"
+        "#define STAT(path,buf) A_int_INT(stat(A_VC_charptr(path),(buf)))";
+
+PROC (VECTOR [] CHAR) DIRPTR opendir = ALIEN
+   "OPENDIR"
+   "#include <sys/types.h>"
+   "#include <dirent.h>"
+   "#define OPENDIR(dirname) A_dirptr_DIRPTR(opendir(A_VC_charptr(dirname)))";
+
+PROC (DIRPTR) INT closedir =
+  ALIEN "CLOSEDIR"
+        "#include <sys/types.h>"
+        "#include <dirent.h>"
+        "#define CLOSEDIR(dirp) A_int_INT(closedir(A_DIRPTR_dirptr(dirp)))";
+
+PROC (DIRPTR) CSTRING readdir =
+  ALIEN "READDIR"
+        "#include <sys/types.h>"
+        "#include <dirent.h>"
+        "A_STATIC char * A_readdir(dir) DIR *dir;"
+        "{ struct dirent *d =  readdir(dir);"
+        "  if( d == (struct dirent *)NULL ) return (char *)NULL;"
+        "  return d->d_name;"
+        "}"
+        "#define READDIR(dirp) (void *)(A_readdir(A_DIRPTR_dirptr(dirp)))";
+
+PROC (INT) CSTRING ttyname =
+  ALIEN "TTYNAME"
+        "#include <unistd.h>"
+        "#define TTYNAME(fildes) ((void *)ttyname(A_INT_int(fildes)))";
+
+INT  eacces  = ALIEN "EACCES"  "#include <errno.h>",
+     enoent  = ALIEN "ENOENT"  "#include <errno.h>",
+     enotdir = ALIEN "ENOTDIR" "#include <errno.h>";
+
+
+{ ----- FILE -----}
+
+MODE
+  FILEINFO = STRUCT (
+    REF VECTOR [] CHAR name,  { as passed to 'open file' i.e. non-canonical }
+    FILEPTR stdio file       { C stdio FILE * }
+  ),
+  FILE = REF FILEINFO;
+
+{
+  Standard files
+}
+
+FILE nil_file = NIL;
+FILE stdin := nil_file, stdout := nil_file, stderr := nil_file;
+
+{
+  Initialise OS interface
+}
+
+{ ----- FILEACCESS ----- }
+
+MODE
+  FILEACCESS = STRUCT (STRUCT 4 CHAR  access);
+
+FILEACCESS  aa;
+FILEACCESS  read_access            = (access OF aa:= "r"16r"0 0 0"; aa),
+            write_access           = (access OF aa:= "w"16r"0 0 0"; aa),
+            append_access          = (access OF aa:= "a"16r"0 0 0"; aa),
+            update_access          = (access OF aa:= "r+"16r"0 0"; aa),
+            update_truncate_access = (access OF aa:= "w+"16r"0 0"; aa),
+            update_append_access   = (access OF aa:= "a+"16r"0 0"; aa);
+
+OP  =  = (FILEACCESS  a, b) BOOL:  access OF a = access OF b;
+OP  /= = (FILEACCESS  a, b) BOOL:  access OF a = access OF b;
+
+{ ----- IOSTATUS ----- }
+
+MODE
+  IOSTATUS   = STRUCT (INT  status);
+
+{{ Other status declarations are in module getstrings.a68 }}
+IOSTATUS  tt;
+IOSTATUS  io_ok         = (status OF tt:= 1; tt),
+          io_eof        = (status OF tt:= 2; tt),
+          io_error      = (status OF tt:= 3; tt),
+          io_no_newline = (status OF tt:= 4; tt);
+
+OP  =  = (IOSTATUS  a, b) BOOL:  status OF a = status OF b;
+OP  /= = (IOSTATUS  a, b) BOOL:  status OF a /= status OF b;
+
+{ USEFUL CONSTANTS }
+
+CHAR newline_char = 16r"0a", null_char = 16r"0";
+
+
+{
+  FILE NAME
+}
+
+PROC file_name = (FILE file) VECTOR [] CHAR:
+  ( file IS nil_file | "" | name OF file );
+
+{
+  OPEN FILE
+}
+
+PROC open_file = (
+  VECTOR [] CHAR name,
+  FILEACCESS access,
+  MESSAGEPROC msg) FILE:
+BEGIN
+  FILEPTR stdio file = (errno := 0; fopen( name + 2r"0", access OF access));
+
+  IF
+    stdio file IS null_cfileptr
+  THEN
+    osif message(2, ( name, errno text), msg);
+    GOTO fault
+  FI;
+
+  HEAP FILEINFO := ( MAKERVC name, stdio file )
+  EXIT
+fault:
+  nil_file
+END;
+
+{
+  CLOSE FILE
+}
+
+PROC close_file = (
+  FILE file,
+  MESSAGEPROC msg
+) VOID:
+IF
+  file IS nil_file
+THEN
+  osif message( 12, (), msg)
+ELIF
+  errno := 0;
+  fclose (stdio file OF file) /= 0
+THEN
+  osif message( 11, (name OF file, errno text), msg)
+FI;
+
+
+{
+  READ INTO BUFFER
+
+  Reads "UPB buffer" bytes from stream 'file' into 'buffer'.
+  If end of file is encountered, 'chars read' will be less than 'UPB buffer'.
+}
+
+PROC read_buffer = (
+  FILE file,
+  REF VECTOR [] CHAR buffer,
+  REF INT chars read,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 22, (), msg);
+  io_error
+ELIF
+  errno := 0;
+  chars read := fread(buffer, 1, UPB buffer, stdio file OF file);
+  chars read = UPB buffer
+THEN
+  io_ok
+ELIF
+  ferror(stdio file OF file) = 0
+THEN
+  io_eof
+ELSE
+  osif message( 21, (name OF file,errno text), msg );
+  io_error
+FI;
+
+{
+  READ LINE
+
+  As 'read buf', except input stops when a newline is read.
+  At most 'UPB buffer-1' characters are read because 'fgets' adds a null
+      character after the last character read.
+  'chars read' does not include the newline or the null character added by
+     'fgets'.
+}
+
+PROC read_line = (
+  FILE file,
+  REF VECTOR [] CHAR buffer,
+  REF INT chars read,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 32, (), msg);
+  io_error
+ELIF
+  errno := 0;
+  CSTRING fgets result = fgets(buffer, UPB buffer, stdio file OF file);
+  ferror(stdio file OF file) /= 0
+THEN
+  osif message( 31, (name OF file, errno text), msg);
+  io_error
+ELIF
+  fgets result IS NIL
+THEN
+  chars read := 0;
+  io_eof
+ELIF
+  feof(stdio file OF file) /= 0
+THEN
+  { Have end of file and have read characters - must look for <null> }
+  INT  ind:= 0;
+  FORALL c IN buffer WHILE c /= null_char DO  ind PLUSAB 1  OD;
+  chars read:= ind;
+  io_ok
+ELSE
+  { No end of file - may have <null> in stream - therefore must look for \n }
+  INT  ind:= 0;
+  FORALL c IN buffer WHILE c /= newline_char DO  ind PLUSAB 1  OD;
+  IF ind = UPB buffer
+  THEN  chars read:= ind - 1;  { buffer[ind] = null_char }
+        io_no_newline
+  ELSE  chars read:= ind;
+        io_ok
+  FI
+FI;
+
+
+{
+  WRITE BUFFER TO FILE
+}
+
+PROC write_buffer = (
+  FILE file,
+  VECTOR [] CHAR buffer,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 42, (), msg);
+  io_error
+ELIF
+  UPB buffer = 0
+THEN
+  io_ok
+ELIF
+  errno := 0;
+  fwrite(buffer, 1, UPB buffer, stdio file OF file) = UPB buffer
+THEN
+  io_ok
+ELSE
+  osif message( 41, (name OF file, errno text), msg);
+  io_error
+FI;
+
+
+{
+  GETTING AND SETTING FILE POSITION
+}
+
+PROC set_file_position = (
+  FILE file,
+  LONG INT byte offset,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 52, (), msg);
+  io_error
+ELIF
+  fseek(stdio file OF file, byte offset, seek_set ) = 0
+THEN
+  io_ok
+ELSE
+  osif message( 51, (name OF file, errno text), msg);
+  io_error
+FI;
+
+PROC get_file_position = (
+  FILE file,
+  REF LONG INT byte offset,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 99, "get_file_position", msg);
+  io_error
+ELIF
+  byte offset := ftell(stdio file OF file);
+  byte offset /= LENG -1
+THEN
+  io_ok
+ELSE
+  osif message( 99, "get_file_position", msg);
+  io_error
+FI;
+
+
+{
+  UPDATE DISK FILE (ie FLUSH I/O BUFFERS)
+}
+
+PROC update_disk = (
+  FILE file,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  file IS nil_file
+THEN
+  osif message( 62, (), msg);
+  io_error
+ELIF
+  fflush(stdio file OF file) = 0
+THEN
+  io_ok
+ELSE
+  osif message( 61, (name OF file, errno text), msg);
+  io_error
+FI;
+
+{
+  DELETE FILE
+}
+
+PROC delete_file = (
+  VECTOR [] CHAR filename,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  unlink(filename + 2r"0") = 0
+THEN
+  io_ok
+ELSE
+  osif message( 71, (filename, errno text), msg);
+  io_error
+FI;
+
+{
+  RENAME FILE
+}
+
+PROC rename_file = (
+  VECTOR [] CHAR oldname,
+  VECTOR [] CHAR newname,
+  MESSAGEPROC msg
+) IOSTATUS:
+IF
+  rename(oldname + 2r"0",newname + 2r"0") = 0
+THEN
+  io_ok
+ELSE
+  osif message( 99, ("rename_file", errno text), msg);
+  io_error
+FI;
+
+{
+  FILE STATUS
+}
+
+{
+  ALGOL 68 version of 'struct stat' in <sys/stat.h>
+  Only the portable parts (according to Lewine's book) are included.
+}
+
+MODE FILEDETAILS = STRUCT (
+  SHORT BITS permissions,
+  LONG BITS inode,
+  SHORT INT device,
+  SHORT INT links,
+  SHORT BITS owning_user,
+  SHORT BITS owning_group,
+  LONG INT size, { in bytes }
+  LONG INT accessed,
+  LONG INT data_modified,
+  LONG INT status_modified
+);
+
+REF FILEDETAILS  nil_file_details = NIL;
+
+REF CSTAT statbuf =
+  ALIEN "statbuffer"
+        "A_STATIC struct stat statbuffer;";
+
+OP <<< = ( REF FILEDETAILS f ) REF FILEDETAILS:
+BEGIN
+  CODE (f,statbuf)
+    "f->Permissions = A_mode_t_SBITS(statbuf.st_mode);"
+    "f->Inode = A_ino_t_LBITS(statbuf.st_ino);"
+    "f->Device = A_dev_t_SINT(statbuf.st_dev);"
+    "f->Links = A_nlink_t_SINT(statbuf.st_nlink);"
+    "f->Owning_user = A_uid_t_SBITS(statbuf.st_uid);"
+    "f->Owning_group = A_gid_t_SBITS(statbuf.st_gid);"
+    "f->Size = A_off_t_LINT(statbuf.st_size);"
+    "f->Accessed = A_time_t_LINT(statbuf.st_atime);"
+    "f->Data_modified = A_time_t_LINT(statbuf.st_mtime);"
+    "f->Status_modified = A_time_t_LINT(statbuf.st_ctime);";
+  f
+END;
+
+PROC get_file_details = ( UNION(FILE,VECTOR [] CHAR) file,
+                          MESSAGEPROC msg ) REF FILEDETAILS:
+CASE file IN
+  (FILE f):  { an open file }
+    IF
+      FILEDETAILS details;
+      fstat(fileno(stdio file OF f),statbuf) /= 0
+    THEN
+      msg(system, "get_file_details:  'fstat' failed on file parameter");
+      nil_file_details
+    ELSE
+      <<< details
+    FI,
+  (VECTOR [] CHAR filename): { an arbitrary file }
+    IF
+      FILEDETAILS details;
+      stat(filename,statbuf) /= 0
+    THEN
+      IF errno = eacces
+      THEN  msg(user, concat(( "get_file_details:  search permission is denied"
+                               " for filename """, filename, """" )))
+      ELIF errno = enoent  OREL  errno = enotdir
+      THEN  SKIP  { Directory path or file does not exists - return NIL }
+      ELSE  msg(system, concat(( "get_file_details:  'stat' failed on """,
+                                 filename, """" )))
+      FI;
+      nil_file_details
+    ELSE
+      <<< details
+    FI
+OUT
+  osif message(0,(),msg);
+  SKIP
+ESAC;
+
+{
+  IS A STREAM CONNECTED TO A TERMINAL?
+
+  ( Used by 'prompt_args' in osshell )
+}
+
+PROC is_terminal = (FILE f) BOOL:
+  ttyname(fileno(stdio file OF f)) ISNT CSTRING (NIL);
+
+
+{
+  DIRECTORY HANDLING
+
+  This maps directly onto the POSIX directory handling facilities.
+  It might be better to package this up differently for ALGOL 68, e.g.
+    PROC get_directory_entries =
+       ( VECTOR [] CHAR name, MESSAGEPROC msg ) REF VECTOR [] RVC:
+}
+
+PROC open_directory = ( VECTOR [] CHAR name, MESSAGEPROC msg ) DIRPTR:
+BEGIN
+  DIRPTR dir = opendir( name + 2r"0" );
+  IF
+    dir IS null_dirptr
+  THEN
+    osif message( 100, ( name, errno text ), msg )
+  FI;
+  dir
+END;
+
+PROC close_directory = ( DIRPTR d, MESSAGEPROC msg ) VOID:
+IF
+  d IS null_dirptr
+THEN
+  osif message( 100, (), msg )
+ELIF
+  closedir(d) /= 0
+THEN
+  osif message( 100, errno text, msg )
+FI;
+
+PROC get_next_dir_entry = ( DIRPTR d, MESSAGEPROC msg ) REF VECTOR [] CHAR:
+  IF d IS null_dirptr
+  THEN
+    osif message( 100, (), msg);
+    NIL
+  ELIF
+    REF VECTOR [] CHAR entry = CSTRINGTORVC readdir(d);
+   (entry IS NIL) OREL (UPB entry = 0)
+  THEN
+    osif message( 100, errno text, msg);
+    NIL
+  ELSE
+    MAKERVC entry
+  FI;
+
+
+PROC init_osfiles = VOID:
+BEGIN
+  {
+    standard i/o file pointers.
+    NB. The dereference in the macro expansion is required because
+    Ctrans assumes that the ALGOL 68 mode has one more REF than the C
+    mode.
+  }
+
+  FILEPTR stdio stdin =
+    ALIEN "STDIN"
+          "#include <stdio.h>"
+          "#define STDIN (*(A_fileptr_FILEPTR(stdin)))";
+
+  FILEPTR stdio stdout =
+    ALIEN "STDOUT"
+          "#include <stdio.h>"
+          "#define STDOUT (*(A_fileptr_FILEPTR(stdout)))";
+
+  FILEPTR stdio stderr =
+    ALIEN "STDERR"
+          "#include <stdio.h>"
+          "#define STDERR (*(A_fileptr_FILEPTR(stderr)))";
+
+  stdin := HEAP FILEINFO := ( MAKERVC "<stdin>", stdio stdin );
+  stdout := HEAP FILEINFO := ( MAKERVC "<stdout>", stdio stdout );
+  stderr := HEAP FILEINFO := ( MAKERVC "<stderr>", stdio stderr )
+END;
+
+A68INIT  init_osfiles
+
+KEEP
+
+  stdin, stdout, stderr,
+  nil_file, null_cfileptr, newline_char, null_char, FILEPTR,
+
+  IOSTATUS, =(IOSTATUS,IOSTATUS), /=(IOSTATUS,IOSTATUS),
+  io_ok, io_eof, io_error, io_no_newline,
+  FILE, FILEINFO, FILEACCESS, file_name, open_file, close_file, read_buffer,
+  read_line, write_buffer, read_access, write_access, append_access,
+  update_access, update_truncate_access, update_append_access,
+
+  set_file_position, get_file_position, update_disk,
+  delete_file, rename_file, 
+
+  FILEDETAILS, nil_file_details, get_file_details, is_terminal,
+
+  DIRPTR, null_dirptr, open_directory, close_directory, get_next_dir_entry
+
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

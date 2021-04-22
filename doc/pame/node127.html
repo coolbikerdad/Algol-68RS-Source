@@ -1,0 +1,460 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Environment enquiries</title>
+<meta name="description" content="environment enquiries">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node128.html">
+<link rel="previous" href="node126.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node128.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2853"
+  href="node128.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2847"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2841"
+  href="node126.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2849"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2851"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2854"
+  href="node128.html">Standard operators</a>
+<b> Up:</b> <a name="tex2html2848"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2842"
+  href="node126.html">Standard modes</a>
+ &nbsp; <b>  <a name="tex2html2850"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2852"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2855"
+  href="node127.html#section001521000000000000000">Arithmetic enquiries</a>
+<ul>
+<li><a name="tex2html2856"
+  href="node127.html#section001521100000000000000">Enquiries about precisions</a>
+<li><a name="tex2html2857"
+  href="node127.html#section001521200000000000000">Enquiries about ranges</a>
+<li><a name="tex2html2858"
+  href="node127.html#section001521300000000000000">Internal sizes of modes</a>
+<li><a name="tex2html2859"
+  href="node127.html#section001521400000000000000">Sizes used in binary transput</a>
+<li><a name="tex2html2860"
+  href="node127.html#section001521500000000000000">Particular arithmetic values</a>
+</ul>
+<br>
+<li><a name="tex2html2861"
+  href="node127.html#section001522000000000000000">Character set enquiries</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001520000000000000000"></a><a name="stan-enq"></a>
+Environment enquiries</h1>
+
+<p>Algol 68 was the first programming language to contain declarations
+which enable a programmer to determine the characteristics of the
+implementation. The enquiries are divided into a number of different
+groups. The actual values of the Linux port of the a68toc compiler
+are placed in square brackets. Those defined in the Revised Report
+are marked with (RR).</p>
+
+<h2><a name="section001521000000000000000"></a><a name="stan-arithenq"></a>
+Arithmetic enquiries</h2>
+
+<p>These enquiries are so numerous that they are further
+subdivided.</p>
+
+<h3><a name="section001521100000000000000"></a><a name="stan-prec"></a>
+Enquiries about precisions</h3>
+
+<p>Any number of <code>LONG</code> or <code>SHORT</code> can be given in the mode
+specification of numbers, but only a few such modes are distinguishable
+in any implementation. The following environment enquiries tell which
+modes are distinguishable. Note particularly that there are more
+distinguishable precisions available for <code>INT</code> and <code>BITS</code>
+than there are for <code>REAL</code> and <code>COMPL</code> in the
+a68toc<a name="8957"></a> implementation.</p>
+
+<dl>
+<dt><tt>INT int lengths</tt><a name="10792"></a> (RR)
+   <span class="math">[2]</span></dt>
+<dd><span class="math">1 +</span> the number of extra lengths of integers.</dd>
+<dt><tt>INT int shorths</tt><a name="10793"></a> (RR)
+   <span class="math">[3]</span></dt>
+<dd><span class="math">1 +</span> the number of short lengths of
+   integers.</dd>
+<dt><tt>INT real lengths</tt><a name="10794"></a> (RR)
+   <span class="math">[1]</span></dt>
+<dd><span class="math">1 +</span> the number of extra lengths of real
+   numbers.</dd>
+<dt><tt>INT real shorths</tt><a name="10795"></a> (RR)
+   <span class="math">[2]</span></dt>
+<dd><span class="math">1 +</span> the number of short lengths of real numbers.</dd>
+<dt><tt>INT bits lengths</tt><a name="10796"></a> (RR)
+   <span class="math">[2]</span></dt>
+<dd><span class="math">1 +</span> the number of extra lengths of <code>BITS</code>.</dd>
+<dt><tt>INT bits shorths</tt><a name="10797"></a> (RR)
+   <span class="math">[3]</span> </dt>
+<dd><span class="math">1 +</span> the number of short lengths of <code>BITS</code>.</dd>
+<dt><tt>INT bytes lengths</tt><a name="10798"></a> (RR)
+   <span class="math">[0]</span></dt>
+<dd>Bytes are not implemented by the a68toc<a name="10799"></a>
+   compiler.</dd>
+<dt><tt>INT bytes shorths</tt><a name="10800"></a> (RR)
+   <span class="math">[0]</span></dt>
+<dd>Bytes are not implemented by the a68toc compiler.</dd>
+</dl>
+
+<h3><a name="section001521200000000000000"></a><a name="stan-range"></a>
+Enquiries about ranges</h3>
+
+<dl>
+
+<dt><code>SHORT SHORT INT</code> <tt>short short max
+int</tt><a name="10801"></a> (RR) <span class="math">[127]</span>
+</dt>
+
+<dd>The maximum value of mode <code>SHORT SHORT INT</code>.</dd>
+
+<dt><tt>SHORT INT short max int</tt><a name="10802"></a>
+(RR) <span class="math">[32&nbsp;767]</span> </dt>
+<dd>The maximum value of mode <code>SHORT INT</code>.</dd>
+
+<dt><tt>INT max int</tt><a name="10803"></a> (RR)
+<span class="math">[2&nbsp;147&nbsp;483&nbsp;647]</span></dt>
+<dd>The maximum value of mode <code>INT</code>.</dd>
+
+<dt><tt>LONG INT long max int</tt><a name="10804"></a> (RR)</dt>
+<dd><span class="math">[9&nbsp;223&nbsp;372&nbsp;036&nbsp;854&nbsp;775&nbsp;807]</span>
+The maximum value of mode <code>LONG INT</code>.</dd>
+
+<dt><tt>SHORT REAL short min real</tt><a name="10805"></a>
+<span class="math">[0.117&nbsp;55e-37]</span></dt>
+<dd>The smallest representable short real. It should not be confused with
+<code>short small real</code>.</dd>
+
+<dt><tt>SHORT REAL short max real</tt><a name="10806"></a> (RR)
+<span class="math">[0.340&nbsp;28e+39]</span></dt>
+<dd>The largest short real value storable.</dd>
+
+<dt><tt>SHORT REAL short small real</tt><a name="10807"></a> (RR)</dt>
+<dd><span class="math">[1.192&nbsp;09e-7]</span>
+The smallest short real which, when added to 1.0 makes a discernible
+difference.</dd>
+
+<dt><tt>REAL min real</tt><a name="10808"></a>
+<span class="math">[0.197&nbsp;626&nbsp;258&nbsp;336&nbsp;50e-322]</span></dt>
+<dd>The smallest representable real. It should not be confused with
+<code>small real</code>.</dd>
+
+<dt><tt>REAL max real</tt><a name="10809"></a> (RR)
+<span class="math">[0.179&nbsp;769&nbsp;313&nbsp;486&nbsp;23e+309]</span></dt>
+<dd>The largest real value storable.</dd>
+
+<dt><tt>REAL small real</tt><a name="10810"></a> (RR)
+<span class="math">[0.222&nbsp;044&nbsp;604&nbsp;925&nbsp;031e-15]</span></dt>
+<dd>The smallest real which, when added to 1.0, makes a discernible
+difference.</dd>
+
+<dt><tt>INT bytes per bits</tt><a name="10811"></a> (RR)
+   [4]</dt><dd>Number of bytes for a machine word.</dd>
+</dl>
+
+<h3><a name="section001521300000000000000"></a><a name="stan-intsz"></a>
+Internal sizes of modes</h3>
+
+<dl>
+<dt><tt>INT short short int width</tt><a name="10812"></a>
+   <span class="math">[3]</span></dt>
+<dd>The maximum number of decimal digits expressible by a value of mode
+<code>SHORT SHORT INT</code>.</dd>
+
+<dt><tt>INT short int width</tt><a name="10813"></a>
+   <span class="math">[5]</span></dt>
+<dd>The maximum number of decimal digits expressible by a value of mode
+<code>SHORT INT</code>.</dd>
+
+<dt><tt>INT int width</tt><a name="10814"></a> <span class="math">[10]</span></dt>
+<dd>The maximum number of decimal digits expressible by a value of mode
+<code>INT</code>.</dd>
+
+<dt><tt>INT long int width</tt><a name="10815"></a>
+   <span class="math">[19]</span></dt>
+<dd>The maximum number of decimal digits expressible by a value of mode
+<code>LONG INT</code>.</dd>
+
+<dt><tt>INT short short bits width</tt><a name="10816"></a>
+(RR) <span class="math">[8]</span></dt>
+<dd>The number of bits required to hold a value of mode
+<code>SHORT SHORT BITS</code>.</dd>
+
+<dt><tt>INT short bits width</tt><a name="10817"></a> (RR)
+   <span class="math">[16]</span></dt>
+<dd>The number of bits required to hold a value of mode <code>SHORT
+   BITS</code>.</dd>
+
+<dt><tt>INT bits width</tt><a name="10818"></a> (RR)
+   <span class="math">[32]</span> </dt>
+<dd>The number of bits required to hold a value of mode
+   <code>BITS</code>.</dd>
+
+<dt><tt>INT long bits width</tt><a name="10819"></a> (RR)
+   <span class="math">[64]</span></dt>
+<dd>The number of bits required to hold a value of mode <code>LONG BITS</code>.</dd>
+
+<dt><tt>INT bytes width</tt><a name="10820"></a>
+(RR) <span class="math">[0]</span> </dt>
+<dd>The mode <code>BYTES</code> is not implemented.</dd>
+
+<dt><tt>INT short real precision</tt><a name="10821"></a>
+   <span class="math">[24]</span></dt>
+<dd>The number of bits used for the mantissa of a short real.</dd>
+
+<dt><tt>INT short real width</tt><a name="10822"></a>
+   <span class="math">[6]</span></dt>
+<dd>The maximum number of significant decimal digits in a small
+   real.</dd>
+
+<dt><tt>INT short min exp</tt><a name="10823"></a>
+   <span class="math">[- 125]</span></dt>
+<dd>The minimum exponent of a short real.</dd>
+
+<dt><tt>INT short max exp</tt><a name="10824"></a> <span class="math">[128]</span></dt>
+<dd>The maximum exponent of a short real.</dd>
+<dt><tt>INT short exp width</tt><a name="10825"></a>
+   <span class="math">[2]</span></dt>
+<dd>The maximum number of decimal digits in the exponent of a short real.
+This can be less than the number of digits occupied by
+<code>short max exp</code> because any decimal digit can be represented. For
+example, 99 but not 999.</dd>
+<dt><tt>INT real precision</tt><a name="10826"></a> <span class="math">[53]</span></dt>
+<dd>The number of bits used for the mantissa of a real.</dd>
+<dt><tt>INT real width</tt><a name="10827"></a>
+<span class="math">[15]</span></dt>
+<dd>The maximum number of significant decimal digits in a real.</dd>
+<dt><tt>INT min exp</tt><a name="10828"></a>
+   <span class="math">[- 1021]</span></dt>
+<dd>The minimum exponent of a real.</dd>
+<dt><tt>INT max exp</tt><a name="10829"></a> <span class="math">[1024]</span>
+</dt>
+<dd>The maximum exponent of a real.</dd>
+<dt><tt>INT exp width</tt><a name="10830"></a>
+   <span class="math">[3]</span></dt>
+<dd>The maximum number of decimal digits in the exponent of a real. See
+also <code>short exp width</code>.</dd>
+</dl>
+
+<h3><a name="section001521400000000000000"></a><a name="stan-binary"></a>
+Sizes used in binary transput</h3>
+
+<p>These values give the sizes of each mode when transput using
+<tt>put bin</tt><a name="10831"></a> or <tt>get
+   bin</tt><a name="10832"></a>.</p>
+
+<ol>
+<li><tt>INT long bits bin bytes</tt><a name="10833"></a> <span class="math">[8]</span>
+</li>
+<li><tt>INT bits bin bytes</tt><a name="10834"></a> <span class="math">[4]</span>
+</li>
+<li><tt>INT short bits bin bytes</tt><a name="10835"></a> <span class="math">[2]</span>
+</li>
+<li><tt>INT short short bits bin bytes</tt><a name="10836"></a> <span class="math">[1]</span>
+</li>
+<li><tt>INT bool bin bytes</tt><a name="10837"></a> <span class="math">[4]</span>
+</li>
+<li><tt>INT long int bin bytes</tt><a name="10838"></a> <span class="math">[8]</span>
+</li>
+<li><tt>INT int bin bytes</tt><a name="10839"></a> <span class="math">[4]</span>
+</li>
+<li><tt>INT short int bin bytes</tt><a name="10840"></a> <span class="math">[2]</span>
+</li>
+<li><tt>INT short short int bin bytes</tt><a name="10841"></a>
+<span class="math">[1]</span>
+</li>
+<li><tt>INT real bin bytes</tt><a name="10842"></a> <span class="math">[8]</span>
+</li>
+<li><tt>INT short real bin bytes</tt><a name="10843"></a> <span class="math">[4]</span>
+</li>
+<li><tt>INT compl bin bytes</tt><a name="10844"></a> <span class="math">[16]</span>
+</li>
+<li><tt>INT short compl bin bytes</tt><a name="10845"></a> <span class="math">[8]</span>
+</li>
+<li><tt>INT char bin bytes</tt><a name="10846"></a> <span class="math">[1]</span>
+</li>
+</ol>
+
+<h3><a name="section001521500000000000000"></a><a name="stan-arithval"></a>
+Particular arithmetic values</h3>
+
+<ol>
+<li><tt>REAL infinity</tt><a name="10847"></a>
+<br/>
+Defined by the C mathematics library as <code>HUGE_VAL</code>.
+</li>
+<li><tt>SHORT REAL short pi</tt><a name="10848"></a> <span class="math">[3.14159]</span>
+</li>
+<li><tt>REAL pi</tt><a name="10849"></a>
+<span class="math">[3.141&nbsp;592&nbsp;653&nbsp;589&nbsp;79]</span>
+</li>
+<li><tt>REAL log2</tt><a name="10850"></a>
+<span class="math">[0.301&nbsp;029&nbsp;995&nbsp;663&nbsp;981]</span>
+</dt>
+This is the value of
+<span class="math">log<sub>10</sub>2</span>.
+</li>
+</ol>
+
+<h2><a name="section001522000000000000000"></a><a name="stan-enqchar"></a>
+Character set enquiries</h2>
+
+<p>The a68toc<a name="9097"></a> implementation of Algol 68 is
+bedevilled by the peculiar limitations of the C&nbsp;programming language
+in which a character is actually an integer and indistinguishable
+from such. Furthermore, a&nbsp;C `character' is a signed integer,
+equivalent to a value of mode <code>SHORT SHORT INT</code>. Thus&nbsp;C
+`characters' range from <span class="math">-128</span> to <span class="math">+127</span>.  Algol&nbsp;68, on the other
+hand, has the mode <code>CHAR</code> which, at a high level, is distinct
+from values of both mode <code>INT</code> and mode <code>SHORT SHORT INT</code>.
+The absolute value of Algol&nbsp;68 characters range from <span class="math">0</span> to the value
+of <code>max abs char</code>. Furthermore, the operator <code>REPR</code> will
+convert any <code>INT</code> upto <code>max abs char</code> to a character. Be
+warned that the&nbsp;C value of <code>REPR 225</code>, for example, is <span class="math">-31</span>!
+What character is represented by <code>REPR 225</code> will depend on the
+character set used by the displaying device. An ISO 8859-1 character
+set, for example, will display `&#225;'. The environment enquiries in
+this section are limited to a range enquiry and the values of
+commonly required characters.</p>
+
+<ol>
+<li><tt>INT max abs char</tt><a name="10851"></a>
+(RR) <span class="math">[255]</span><br/>
+The largest positive integer which can be represented as a character.
+</li>
+<li><tt>CHAR null character</tt><a name="10852"></a>
+(RR)
+<span class="math">[<tt>REPR 0</tt>]</span>
+</li>
+<li><tt>CHAR nul ch</tt><a name="10854"></a>
+<span class="math">[<tt>REPR 0</tt>]</span></dt>
+This is a synonym for <code>null character</code>.
+</li>
+<li><tt>CHAR blank</tt><a name="10856"></a>
+(RR)
+<span class="math">[<tt>REPR 32</tt>]</span></dt>
+This is a space character.
+</li>
+<li><tt>CHAR error char</tt><a name="10858"></a>
+(RR) <span class="math">[ <tt>*</tt> ]</span></dt>
+This character is used by the conversion routines for invalid values.
+</li>
+<li><tt>CHAR flip</tt><a name="10859"></a> (RR)
+<span class="math">[T]</span>
+</dt>
+This character is used to represent <code>TRUE</code> as an external value.
+</li>
+<li><tt>CHAR flop</tt><a name="10860"></a> (RR)
+<span class="math">[F]</span>
+</dt>
+This character is used to represent <code>FALSE</code> as an external value.
+</li>
+<li><tt>CHAR cr</tt><a name="10861"></a>
+<span class="math">[<tt>REPR 13</tt>]</span></dt>
+This character is sometimes used as a line terminator, usually in
+association with <code>lf</code>.
+</li>
+<li><tt>CHAR lf</tt><a name="10863"></a>
+<span class="math">[<tt>REPR 10</tt>]</span></dt>
+This character terminates lines on Linux.
+</li>
+<li><tt>CHAR ff</tt><a name="10865"></a>
+<span class="math">[<tt>REPR 12</tt>]</span></dt>
+This character is the &ldquo;form-feed&rdquo; character often used for
+continuous stationery.
+</li>
+<li><tt>CHAR tab ch</tt><a name="10867"></a>
+<span class="math">[<tt>REPR 9</tt>]</span></dt>
+This character is used to provide crude formatting of text files,
+particularly those which mimic documents produced by typewriters.
+</li>
+<li><tt>CHAR esc</tt><a name="10869"></a>
+<span class="math">[<tt>REPR 27</tt>]</span></dt>
+This character is mainly used to introduce &ldquo;escape sequences&rdquo; which
+control the format and colour of output on Linux virtual terminals
+(VTs) and <i>xterm</i> windows.<a name="tex2html48"
+  href="footnode.html#foot10871"><sup><span class="arabic">14</span>.<span class="arabic">2</span></sup></a>
+</li>
+<li><tt>CHAR eof char</tt><a name="10872"></a>
+<span class="math">[<tt>REPR 26</tt>]</span><br/>
+This character was used to denote the end of a plain text file in the
+MS-DOS operating system.
+</li>
+</ol>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2853"
+  href="node128.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2847"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2841"
+  href="node126.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2849"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2851"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+
+<b> Next:</b> <a name="tex2html2854"
+  href="node128.html">Standard operators</a>
+<b> Up:</b> <a name="tex2html2848"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2842"
+  href="node126.html">Standard modes</a>
+ &nbsp; <b>  <a name="tex2html2850"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2852"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

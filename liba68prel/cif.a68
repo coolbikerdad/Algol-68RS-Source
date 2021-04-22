@@ -1,0 +1,209 @@
+DECS  cif  CONTEXT VOID:
+
+{  Id: cif.a68,v 2.10 1993/08/24 13:35:19 aap Exp $ }
+
+configinfo A68CONFIG "$Id: cif.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+ 1:10:93   VECINTPTR now delivers a REF INT.   DJS
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+
+  Algol68 to/from C data type conversion
+  ======================================
+
+  EVERYTHING IN THIS MODULE IS PLATFORM-DEPENDENT
+  AND SHOULD BE REVIEWED WHEN PORTING TO NEW ARCHITECTURES.
+
+}
+{
+  Convenient pointer modes.
+
+  16000000 is too large for VMS Algol68.
+}
+
+MODE
+   CPOINTER    = REF BITS,                        { generic pointer () * }
+   CCHARPTR    = REF CHAR,                        { A68_CHAR * == char * }
+   CINTPTR     = REF INT,                         { A68_INT * }
+%4 CSTRING     = REF STRUCT 16000000 CHAR,        { char * }
+*4 CSTRING     = REF STRUCT 1600 CHAR,            { char * }
+%4 CCHARPTRPTR = REF STRUCT 16000000 CSTRING;     { char ** }
+*4 CCHARPTRPTR = REF STRUCT 1600 CSTRING;         { char ** }
+
+
+{
+  Algol 68 objects and conversions
+  --------------------------------
+}
+
+MODE CFUNCPTR = CPOINTER;
+OP (INT) CFUNCPTR TOCFUNCPTR = BIOP 99;
+
+CHAR newline_char = 16r"0a", null_char = 16r"0";
+
+%4 CCHARPTR null c charptr = ALIEN "NULL" "#include <stdio.h>";
+*4 CCHARPTR null c charptr = NIL;
+
+CFUNCPTR nilfuncptr  = TOCFUNCPTR -1;
+MODE RVC = REF VECTOR [] CHAR;
+
+%4 { This description should match the one in "a68_types.h" }
+%4 MODE VDESC = STRUCT (CCHARPTR  ptr,  BITS  gcmark,  INT  upb);
+*4 MODE VDESC = STRUCT (INT  upb,  CCHARPTR  ptr);
+%4 MODE VIDESC = STRUCT (CINTPTR  ptr,  BITS  gcmark,  INT  upb);
+*4 MODE VIDESC = STRUCT (INT  upb,  CINTPTR  ptr);
+
+OP ( VECTOR [] CHAR ) VDESC TOVDESC = BIOP 99;
+OP ( VECTOR [] INT  ) VIDESC TOVIDESC = BIOP 99;
+
+%4 MODE PDESC = STRUCT(CFUNCPTR cp, CSTRING env);
+*4 MODE PDESC = CFUNCPTR;
+
+OP (REF PROC VOID) REF PDESC TOREFPDESC = BIOP 99;
+OP (PROC VOID) PDESC TOPDESC = BIOP 99;
+OP (PROC (INT) VOID) PDESC TOPDESC = BIOP 99;
+
+OP  CSTRINGTORVC = ( CSTRING s ) RVC:
+{
+  Converts a C string to an RVC, by using the standard algol
+  compiler REF STRUCT n CHAR to RVC coercion.  Mainly used
+  to access C strings returned from C library routines.
+  The string must be null-terminated.
+}
+BEGIN
+  PROC ( CSTRING ) INT strlen =
+  ALIEN "STRLEN"
+%4  "#include <string.h>"
+%4  "#define STRLEN(s) strlen((char *)s)"
+  ;
+  ( s IS NIL | NIL | s[ : strlen(s) ] )
+END;
+
+OP  VCTOCHARPTR = ( VECTOR [] CHAR buf ) CCHARPTR:
+{
+  Yields the C pointer from a Ctrans descriptor.
+
+  If a C string is expected, a null byte must be appended
+  to the data before this routine is called.  This need not be
+  done with string constants, however, as they will be
+  represented as string literals in C.  This routine may be
+  used to yield a C pointer from an RVC, as the C representation
+  is the same.
+}
+  ptr OF TOVDESC buf;
+
+OP VITOINTPTR = ( VECTOR [] INT buf ) CINTPTR:
+  ptr OF TOVIDESC buf;
+
+OP  ( CSTRING ) CCHARPTR CSTRINGTOCPTR = BIOP 99;
+OP  ( CCHARPTR ) CSTRING CPTRTOCSTRING = BIOP 99;
+
+OP  NULLSTR = (STR  str) STR:
+BEGIN
+   { Yields a null terminated STR from a STR (for use with the C library).
+     First looks to see whether there is a null at UPB + 1 - there will
+     be if STR was a STR literal - there will not be if it was derived
+     from a trim or allocate.  It is possible (?) that a STR allocated from
+     the last part of a segment will cause an access violation in this test -
+     review.  If there is not a null, the string is copied and one is
+     appended.    DCT  09:09:93
+   }
+   CSTRING  ptr = CPTRTOCSTRING VCTOCHARPTR str;
+   IF ptr[UPB str + 1] = null_char
+   THEN  str { alread NULL terminated }
+   ELSE  VECTOR [UPB str + 1] CHAR  ans;
+         ans[: UPB str]:= str;
+         ans[UPB ans]:= null_char;
+         ans
+   FI
+END;
+
+%4 SHORT SHORT INT short short maxint = ALIEN "(A68_SSINT)A68_MAX_SSINT" "/**/";
+*4 SHORT SHORT INT short short maxint = SHORT SHORT 127;
+%4 SHORT INT       short maxint       = ALIEN "(A68_SINT)A68_MAX_SINT" "/**/";
+*4 SHORT INT       short maxint       = SHORT 32767;
+%4 INT             maxint             = ALIEN "(A68_INT)A68_MAX_INT" "/**/";
+*4 INT             maxint             = ABS 16r7fffffff;
+%4 LONG INT        long maxint        = ALIEN "(A68_LINT)A68_MAX_LINT" "/**/";
+*4 LONG INT        long maxint        = LENG maxint;
+
+%4 INT max abs char = ALIEN "(A68_INT)A68_MAX_CHAR" "/**/";
+*4 INT max abs char = 255;
+
+%4 INT bits width = ALIEN "A_SZ_BITS" "/**/";
+*4 INT bits width = 32;
+
+SKIP
+
+KEEP
+  CFUNCPTR,
+
+{ Further modes for convenience }
+  CPOINTER,
+  CCHARPTR,
+  CINTPTR,
+  CSTRING,
+  CCHARPTRPTR,
+
+{ Constants }
+
+newline_char, null_char,
+nilfuncptr, null c charptr,
+
+short short maxint, short maxint, maxint, long maxint, max abs char, bits width,
+
+{ Operators }
+
+CSTRINGTORVC(CSTRING),
+VCTOCHARPTR(VECTOR [] CHAR),
+VITOINTPTR(VECTOR [] INT),
+CSTRINGTOCPTR(CSTRING),
+CPTRTOCSTRING(CCHARPTR),
+TOREFPDESC(REF PROC VOID),
+TOPDESC(PROC VOID),
+TOPDESC(PROC(INT)VOID),
+NULLSTR (VECTOR [] CHAR)
+
+FINISH
+
+{
+Local Variables:
+auto-fill-hook:nil
+End:
+}

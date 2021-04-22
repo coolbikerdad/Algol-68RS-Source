@@ -1,0 +1,91 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Program structure</title>
+<meta name="description" content="program structure">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node38.html">
+<link rel="previous" href="node36.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node38.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1233"
+  href="node38.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1227"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1221"
+  href="node36.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1229"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1231"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1234"
+  href="node38.html">The FORALL loop</a>
+<b> Up:</b> <a name="tex2html1228"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1222"
+  href="node36.html">Nested loops</a>
+ &nbsp; <b>  <a name="tex2html1230"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1232"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00590000000000000000"></a><a name="rep-prog"></a>
+Program structure</h1>
+
+<p>In chapter 1, it was mentioned that the basic structure of an
+Algol&nbsp;68 program consists of</p>
+
+<pre>
+   BEGIN
+      phrases
+   END
+</pre>
+
+<p>This is not strictly true. It is quite possible to write a program
+consisting solely of a <code>DO</code> loop! For example:</p>
+
+<pre>
+   PROGRAM dosum
+   USE standard
+   FOR i TO 5
+   DO
+      print((i**2,newline))
+   OD
+   FINISH
+</pre>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

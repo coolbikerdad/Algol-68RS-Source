@@ -1,0 +1,255 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>References to names</title>
+<meta name="description" content="references to names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node112.html">
+<link rel="previous" href="node110.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node112.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2521"
+  href="node112.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2515"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2509"
+  href="node110.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2517"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2519"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2522"
+  href="node112.html">Identity relations</a>
+<b> Up:</b> <a name="tex2html2516"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2510"
+  href="node110.html">Completers</a>
+ &nbsp; <b>  <a name="tex2html2518"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2520"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2523"
+  href="node111.html#section001351000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001350000000000000000"></a><a name="adv-refref"></a>
+References to names</h1>
+
+<p>The idea that a mode can contain more than one
+<tt>REF</tt><a name="7980"></a>, or that a mode might be
+<code>REF[]REF[]CHAR</code> was broached at the start of
+chapter&nbsp;5 and mentioned in
+section&nbsp;<a href="node95.html#gram-deref">10.3.2</a>. The time has
+now come to address this topic fully.</p>
+
+<p>Any mode which starts with <code>REF</code> is the mode of a
+name<a name="7589"></a>. The value to which a name refers has a mode
+with one <code>REF</code> less.  Since names are values in their own
+right, there is no reason at all why a name should not refer to a
+name.  For example, suppose we declare</p>
+
+<pre>
+   INT x,y
+</pre>
+
+<p>then the mode of both <code>x</code> and <code>y</code> is
+<code>REF INT</code>. We could also declare</p>
+
+<pre>
+   REF INT xx, yy
+</pre>
+
+<p>so that <code>xx</code> and <code>yy</code> both have the mode
+<tt>REF REF INT</tt><a name="7981"></a>.</p>
+
+<p>Now, according to the definition of an assignment<a name="7596"></a>
+(see section&nbsp;<a href="node100.html#gram-quat">10.8</a>), it is
+perfectly legitimate to write</p>
+
+<pre>
+   xx:=x
+</pre>
+
+<p>without any dereferencing because the identifier on the left has
+mode <code>REF REF INT</code> and the identifier on the right has mode
+<code>REF INT</code>.  Leaving aside for the moment of how useful such
+declarations and assignments might be (and they are very useful,
+essential even), let us give our attention to the mechanics. We could
+assign <code>y</code> to <code>xx</code> and a value to <code>y</code>
+with the double assignment</p>
+
+<pre>
+   xx:=y:=3
+</pre>
+
+<p>Again, no dereferencing<a name="7602"></a> is involved.  Now, given
+that <code>xx</code> refers to <code>y</code> which refers to
+<code>3</code>, how could we make <code>y</code> refer to
+<code>4</code>, say? Simple.  Assign <code>4</code> directly to
+<code>y</code>. However, if the assignment to <code>xx</code> was</p>
+
+<pre>
+   xx:=(random&gt;0.8|x|y)
+</pre>
+
+<p>we should not know which name <code>xx</code> referred to. Finding
+out which name <code>xx</code> refers to is the subject of the next
+section.</p>
+
+<p>You may remember that the context of the left-hand side of an
+assignment is soft<a name="7605"></a> so no dereferencing is
+allowed. The way to coerce a name of mode <code>REF REF INT</code> to a
+name of mode <code>REF INT</code> is to use a cast:</p>
+
+<pre>
+   REF INT(xx):=4
+</pre>
+
+<p>Note that the unit</p>
+
+<pre>
+   print(xx)
+</pre>
+
+<p>will yield <code>4</code> with <code>xx</code> being dereferenced
+twice. There is nothing to stop us writing</p>
+
+<pre>
+   REF REF INT xxx:=xx
+</pre>
+
+<p>with assignments like</p>
+
+<pre>
+   REF REF INT(xxx):=x
+   REF INT(xxx):=-2
+</pre>
+
+<p>and we shall see in a later section that names with modes <code>REF
+REF REF some-mode</code> have a use. Although you can use as many
+<code>REF</code>s as you like, there does not seem to be any need for
+more than three.</p>
+
+<p>Now consider the assignments</p>
+
+<pre>
+   xx:=yy:=x:=4
+</pre>
+
+<p>Both <code>xx</code> and <code>yy</code> refer to different
+instances<a name="7616"></a> of the name <code>x</code>, but when
+those instances are dereferenced<a name="7617"></a>, they both yield
+<code>4</code>. This means that if we assign <code>5</code> to
+<code>x</code>, when <code>xx</code> and <code>yy</code> are
+dereferenced twice, they will both yield <code>5</code>. We can
+represent this relationship by the diagram</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-1.png" alt="ch11-1.png">
+</div>
+
+<p>where <code>RRI</code> and <code>RI</code> stand for <code>REF REF
+INT</code> and <code>REF INT</code> respectively. Thus, although
+strictly speaking <code>xx</code> and <code>yy</code> refer to
+different instances of the name identified by <code>x</code>, we shall
+regard them as both referring to <code>x</code>.</p>
+
+<hr>
+<h2><a name="section001351000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.7<a name="ex-xi-vii"></a>
+<dd>Given the declaration
+<pre>
+   REF REAL xx:=LOC REAL
+</pre>
+
+how would you make the anonymous name<a name="7628"></a> refer to
+<code>120.5</code>?  Ans<a href="node145.html#ans-xi-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.8<a name="ex-xi-viii"></a>
+<dd>Write a declaration for <code>rrq</code> which has the mode
+<code>REF</code> <code>REF</code> <code>REF[]CHAR</code> and make it refer to an
+anonymous name which refers to an anonymous name which refers to a
+multiple of 10 characters.  Ans<a href="node145.html#ans-xi-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.9<a name="ex-xi-ix"></a>
+<dd>Write the declaration of a name which can refer to a
+flexible name<a name="7633"></a> which can refer to a row of integers. In a
+separate assignment, assign the row-display <br>
+<code>(3,-2,4)</code> to your name.  Ans<a href="node145.html#ans-xi-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2521"
+  href="node112.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2515"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2509"
+  href="node110.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2517"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2519"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2522"
+  href="node112.html">Identity relations</a>
+<b> Up:</b> <a name="tex2html2516"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2510"
+  href="node110.html">Completers</a>
+ &nbsp; <b>  <a name="tex2html2518"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2520"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

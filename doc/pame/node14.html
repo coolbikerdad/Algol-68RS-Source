@@ -1,0 +1,198 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node13.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node15.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html856"
+  href="node15.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html850"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html846"
+  href="node13.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html852"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html854"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html857"
+  href="node15.html">Formul&#230;</a>
+<b> Up:</b> <a name="tex2html851"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html847"
+  href="node13.html">External values</a>
+ &nbsp; <b>  <a name="tex2html853"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html855"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html858"
+  href="node14.html#section003111000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section003110000000000000000"></a><a name="intro-summ"></a>
+<br>
+Summary
+</h1>
+
+<p>An Algol 68 program manipulates values. A value is characterised by
+its mode. A mode is indicated by a mode indicant. Plain values can be
+denoted. Values occur in contexts, and can sometimes be coerced into
+values of different modes. Identifiers can be linked to values using
+identity declarations.  The values manipulated by a program are
+called internal values.  External values are data used by, or
+produced by, a program. Comments describe a program, but add nothing
+to its elaboration.</p>
+
+<p> Finally, here are some exercises which test you on concepts you
+have met in this chapter.</p>
+
+<hr>
+<h2><a name="section003111000000000000000">
+Exercises</a>
+</h2>
+
+<p><a name="ex-i-xv">1.15</a> Give denotations of the following
+values: <a href="node135.html#ans-i-xv">Ans<img align="bottom"
+border="1" alt="[*]" src="answer.png"></a></p>
+
+<dl compact>
+<dt>(a)</dt>
+<dd>one thousand nine hundred and ninety six.</dd>
+<dt>(b)</dt>
+<dd>The fifth letter of the lower-case Roman alphabet.</dd>
+<dt>(c)</dt>
+<dd>The fraction 1/7 expressed as a decimal fraction to 6
+decimal places.</dd>
+</dl>
+
+<p><a name="ex-i-xvi">1.16</a> Is there anything wrong with the following
+mode indicants?
+ <a href="node135.html#ans-i-xvi">Ans<img align="bottom" border="1"
+alt="[*]" src="answer.png"></a></p>
+
+<dl compact>
+<dt>(a)</dt>
+<dd><code>C H A R</code></dd>
+<dt>(b)</dt>
+<dd><code>INT.CHAR</code></dd>
+<dt>(c)</dt>
+<dd><code>THISISANEXTREMELYLONGMODEINDICANT</code></dd>
+<dt>(d)</dt>
+<dd><code>2CHAR</code></dd>
+</dl>
+
+<p><a name="ex-i-xvii">1.17</a> Write suitable identity declarations for
+the following identifiers:
+ <a href="node135.html#ans-i-xvii">Ans<img align="bottom" border="1"
+alt="[*]" src="answer.png"></a></p>
+
+<dl compact>
+<dt>(a)</dt>
+<dd><code>fifty five</code></dd.
+<dt>(b)</dt>
+<dd><code>three times two point seven</code></dd>
+<dt>(c)</dt>
+<dd><code>colon</code></dd>
+</dl>
+
+<p><a name="ex-i-xviii">1.18</a>
+Is there anything wrong with the following identity declarations?</p>
+
+<pre>
+   REAL x = 1.234,
+        y = x;
+</pre>
+
+<p><a href="node135.html#ans-i-xviii">Ans<img align="bottom"
+border="1" alt="[*]" src="answer.png"></a></p>
+
+<p><a name="ex-i-xix">1.19</a> What is the difference in meaning
+between <code>0</code> and <code>0.0</code>?
+<a href="node135.html#ans-i-xix">Ans<img align="bottom" border="1"
+alt="[*]" src="answer.png"></a></p>
+
+<p><a name="ex-i-xx">1.20</a></p>
+   
+<p>Write a program containing <code>print</code> phrases to print the
+following values on your screen, separated by one space between each
+value:</p>
+
+<pre>
+   0.5 "G" 1 ":" 34000000
+</pre>
+
+<p><a href="node135.html#ans-i-xx">Ans<img  align="bottom" border="1"
+alt="[*]" src="answer.png"></a></p>
+
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html856"
+  href="node15.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html850"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html846"
+  href="node13.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html852"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html854"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html857"
+  href="node15.html">Formul&#230;</a>
+<b> Up:</b> <a name="tex2html851"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html847"
+  href="node13.html">External values</a>
+ &nbsp; <b>  <a name="tex2html853"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html855"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

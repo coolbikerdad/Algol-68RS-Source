@@ -1,0 +1,169 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Advanced constructs</title>
+<meta name="description" content="advanced constructs">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node120.html">
+<link rel="previous" href="node92.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node107.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2419"
+  href="node107.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2413"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2407"
+  href="node105.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2415"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2417"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2420"
+  href="node107.html">Bits, bytes and words</a>
+<b> Up:</b> <a name="tex2html2414"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2408"
+  href="node105.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2416"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2418"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001300000000000000000"></a><a name="chapxi"></a>
+Advanced constructs</h1>
+
+<p>We have now covered most of Algol 68.  All that remains is the
+identity relation, the parallel clause, the mode <code>BITS</code>,
+completers, different precisions of numbers and means of accessing
+operating system facilities. Most of these are deceptively simple.
+The identity relation is used with modes containing multiple
+<code>REF</code>s which take up the greater part of this chapter.  The
+<code>BITS</code> mode and the parallel clause are introduced in later
+sections. Different numerical precisions and access to operating
+system facilities is mainly covered in chapter&nbsp;12. We start with
+access to the machine word.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2421"
+  href="node107.html">Bits, bytes and words</a>
+<ul>
+<li><a name="tex2html2422"
+  href="node107.html#section001311000000000000000">Radix arithmetic</a>
+<li><a name="tex2html2423"
+  href="node107.html#section001312000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2424"
+  href="node108.html">The mode <tt>BITS</tt></a>
+<ul>
+<li><a name="tex2html2425"
+  href="node108.html#section001321000000000000000">Monadic operators for <tt>BITS</tt></a>
+<li><a name="tex2html2426"
+  href="node108.html#section001322000000000000000">Dyadic operators for <tt>BITS</tt></a>
+<li><a name="tex2html2427"
+  href="node108.html#section001323000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2428"
+  href="node109.html">Overlapping slices</a>
+<ul>
+<li><a name="tex2html2429"
+  href="node109.html#section001331000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2430"
+  href="node110.html">Completers</a>
+<li><a name="tex2html2431"
+  href="node111.html">References to names</a>
+<ul>
+<li><a name="tex2html2432"
+  href="node111.html#section001351000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2433"
+  href="node112.html">Identity relations</a>
+<ul>
+<li><a name="tex2html2434"
+  href="node112.html#section001361000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2435"
+  href="node113.html">The value <tt>NIL</tt></a>
+<ul>
+<li><a name="tex2html2436"
+  href="node113.html#section001371000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2437"
+  href="node114.html">Queues</a>
+<ul>
+<li><a name="tex2html2438"
+  href="node114.html#section001381000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2439"
+  href="node115.html">The procedure <tt>add fan</tt></a>
+<ul>
+<li><a name="tex2html2440"
+  href="node115.html#section001391000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2441"
+  href="node116.html">More queue procedures</a>
+<ul>
+<li><a name="tex2html2442"
+  href="node116.html#section0013101000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2443"
+  href="node117.html">Trees</a>
+<ul>
+<li><a name="tex2html2444"
+  href="node117.html#section0013111000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html2445"
+  href="node118.html">Parallel programming</a>
+<li><a name="tex2html2446"
+  href="node119.html">Summary</a>
+</ul>
+<!--end of table of child-links-->
+<br><hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

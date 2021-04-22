@@ -1,0 +1,244 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Trimming</title>
+<meta name="description" content="trimming">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node32.html">
+<link rel="previous" href="node30.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node32.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1144"
+  href="node32.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1138"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1132"
+  href="node30.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1140"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1142"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1145"
+  href="node32.html">Printing multiples</a>
+<b> Up:</b> <a name="tex2html1139"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1133"
+  href="node30.html">Slicing</a>
+ &nbsp; <b>  <a name="tex2html1141"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1143"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1146"
+  href="node31.html#section00531000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00530000000000000000"></a><a name="rep-trim"></a>
+<br>
+Trimming
+</h1>
+
+<p>The bounds of a multiple can be changed using the <code>@</code>
+construction. For example, in the declaration</p>
+
+<pre>
+   []CHAR digits = "0123456789"[@0]
+</pre>
+
+<p>the bounds of <code>digits</code> are <code>[0:9]</code>. Bounds do
+not have to be non-negative.  For example,</p>
+
+<pre>
+   [,]INT ii = ((1,2,3),(4,5,6));
+   [,]INT jj = ii[@-3,@-50]
+</pre>
+
+<p>whence the bounds of <code>jj</code> are
+<code>[-3:-4,-50:-48]</code>.  Notice that you cannot change the
+bounds of a row-display (except by using a <b>cast</b>--see section
+<a href="node97.html#gram-slice">10.5</a>). For now, always declare an
+identifier for the display, and then alter the bounds.  The bounds of
+a slice can be changed:</p>
+
+<pre>
+   [,]INT ij = ((1,3,5),(7,9,11),(13,15,17));
+    []INT ij2 = ij[2,][@0]
+</pre>
+
+<p>The declaration for <code>ij2</code> could also be written</p>
+
+<pre>
+   []INT ij2 = ij[2,@0]
+</pre>
+
+<p><code>@</code> can also be written
+<tt>AT</tt><a name="1779"></a>.</p>
+
+<p>Wherever an integer is required in the above, any unit yielding an
+integer will do. Thus it is quite in order to use the formula</p>
+
+<pre>
+   (a+b) UPB r
+</pre>
+
+<p>where the parentheses are necessary if <code>a+b</code> is expected to
+yield the dimension of <code>r</code> under consideration (because the
+priority<a name="1522"></a> of <code>UPB</code> is greater than the priority
+of <code>+</code>).</p>
+
+<p>A <b>trimmer</b><a name="1524"></a> uses the
+<tt>:</tt><a name="1780"></a> construction.  In the context of the
+declaration of <code>digits</code> above, the phrase
+<code>digits[1:3]</code> yields the value <code>"123"</code> with mode
+<code>[]CHAR</code>.  Again, using the declaration of <code>r</code>
+in the last set of exercises, <code>r[1:2,1]</code> yields
+<code>(1,2)</code>, and <code>r[1:2,1:2]</code> yields
+<code>((1,2),(5,6))</code>.</p>
+
+<p>Trimming is particularly useful with values of mode
+<code>[]CHAR</code>.  Given the declaration</p>
+
+<pre>
+   []CHAR quote = "Habent sua fata libelli"
+</pre>
+
+<p>(the quotation at the start of the acknowledgements in the
+&ldquo;Revised Report&rdquo;),</p>
+
+<pre>
+   quote[:6]
+   quote[8:10]
+   quote[12:15]
+</pre>
+
+<p>yield the first three words. Note that when the first subscript in
+a trimmer is omitted, the lower bound for that dimension is assumed,
+while omission of the second subscript assumes the corresponding upper
+bound. Again, any unit yielding <code>INT</code> may be used for the
+trimmers. The context for a trimmer or a subscript is
+<b>meek</b><a name="1532"></a>.</p>
+
+<p> Omission of both subscripts yields the whole
+slice<a name="1533"></a> with a lower bound of&nbsp;1. So, the upper
+bound of the phrase <code>digits[:]</code> is <code>10</code> which is
+equivalent to <code>digits[@1]</code>.</p>
+
+<p>The lower bound of a <code>trimmer</code> is, by default,
+<code>1</code>, but may be changed by the use of <code>@</code>. For
+example, <code>digits[3:6]</code> has bounds <code>[1:4]</code>, but
+<code>digits[3:6@2]</code> has bounds <code>[2:5]</code>. The bounds
+of <code>quote[17:]</code> mentioned above are <code>[1:7]</code>.</p>
+
+<hr>
+<h2><a name="section00531000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.7<a name="ex-iii-vii"></a>
+<dd>Write an identity declaration for <code>months</code> on the lines of
+the declaration of <code>days</code> in section 3.1.
+ Ans<a href="node137.html#ans-iii-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>3.8<a name="ex-iii-viii"></a>
+<dd>Given the declarations
+<pre>
+   [,]INT i = ((1,-2,3,4),(-5,6,7,8));
+   []REAL r= (1.4,0,-5.4,3.6);
+   []CHAR s= "abcdefghijklmnopqrstuvwxyz"
+                                [@ ABS"a"]
+</pre>
+
+what are the values of the following phrases? Ans<a href="node137.html#ans-iii-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>2 UPB i + UPB s[@1]</code>  
+<p>
+<dt>(b)
+<dd><code>r[2:3]</code>  
+<p>
+<dt>(c)
+<dd><code>i[2,2] - r[3]</code>  
+<p>
+<dt>(d)
+<dd><code>i[2,2:]</code>  
+<p>
+<dt>(e)
+<dd><code>s[ABS"p":ABS"t"]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1144"
+  href="node32.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1138"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1132"
+  href="node30.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1140"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1142"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1145"
+  href="node32.html">Printing multiples</a>
+<b> Up:</b> <a name="tex2html1139"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1133"
+  href="node30.html">Slicing</a>
+ &nbsp; <b>  <a name="tex2html1141"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1143"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

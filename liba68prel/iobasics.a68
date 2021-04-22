@@ -1,0 +1,205 @@
+DECS  iobasics  CONTEXT VOID USE osif :
+
+configinfo A68CONFIG "$Id: iobasics.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+ 
+05:12:94  33.001  ELLA   CmplxNos   Created from putstrings to contain modes
+                                    etc common to putstrings and getstrings. 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE  STR      = VECTOR [0] CHAR,
+      VI       = VECTOR [0] INT,
+      RVC      = REF VECTOR [] CHAR,
+      RVI      = REF VECTOR [] INT;
+
+RVC  nilstr  = NIL,  nullstr  = LOC VECTOR [0] CHAR;
+RVI  nilints = NIL,  nullints = LOC VECTOR [0] INT;
+
+{{{ RCH and put procedures - completely rewritten - 02:02:93  DCT }}}
+
+
+MODE  CHANNEL = STRUCT ( INT  charnumber,  { index of next character }
+                              linenumber,  { current line number }
+                              indent,      { current indentation }
+                              width,       { maximum line width }
+                              sizeincr,    { size if buffer increment in input
+                                             mode }
+                         IOSTATUS status,  { current status of input }
+                         RVC  buffer,      { Must have room for newline_char }
+                         BOOL  buffered,   { Use buffer }
+                               separate,   { Forces one space between INT/BITS }
+                               input,      { TRUE for input else FALSE }
+                         PROC (STR) VOID  putbuffer,
+                         PROC (RVC, REF INT) IOSTATUS getbuffer ),
+      RCH      = REF CHANNEL;
+
+RCH nilchannel = NIL;
+
+CHAR  end_of_file_char = REPR 26,
+      newline_char     = REPR 10,
+      cr_char          = REPR 13,
+      newpage_char     = REPR 12,
+      null_char        = REPR 0;
+STR  space_str = " ",
+     newline_str = newline_char;
+
+PROC  charnumber = (RCH  ch) INT:  charnumber OF ch;
+PROC  linenumber = (RCH  ch) INT:  linenumber OF ch;
+PROC  charsleft  = (RCH  ch) INT:  width OF ch - charnumber OF ch + 1;
+
+PROC  setwidth   = (RCH  ch,  INT  width) INT:  { Change line length }
+   width OF ch:= IF buffered OF ch  ANDTH  width > UPB buffer OF ch - 1
+                 THEN  UPB buffer OF ch - 1
+                 ELIF input OF ch  ANDTH  width > UPB buffer OF ch
+                 THEN  UPB buffer OF ch
+                 ELSE  width
+                 FI;
+
+PROC nullputbuffer = (STR str) VOID: SKIP;
+
+PROC nullgetbuffer = (RVC rvc, REF INT i) IOSTATUS: SKIP;
+
+{{
+   Creating an input or output CHANNEL
+
+   make_channel  takes either a buffer ( REF VECTOR [] CHAR ) or an INT
+                 ( buffer width ) and either a
+                    PROC ( STR ) VOID            { For output }
+                 or
+                    PROC (RVC, REF INT) IOSTATUS { For input }
+                 see PROC 'newline' below.
+                 It returns a REF CHANNEL, whic may be used as a parameter
+                 to the io procedures.
+}}
+
+PROC  make_channel = ( UNION (INT, RVC)  intbuff,  { RVC = buffered }
+                       UNION( PROC (STR) VOID,
+                              PROC (RVC, REF INT) IOSTATUS ) putgetbuffer ) RCH:
+BEGIN
+   RCH  ch = HEAP CHANNEL;
+   CASE putgetbuffer IN
+     (PROC (STR) VOID putbuffer )
+     (  putbuffer OF ch:= putbuffer;
+        getbuffer OF ch:= nullgetbuffer;
+        linenumber OF ch:= 1;
+        input OF ch:= FALSE
+     ),
+     (PROC (RVC, REF INT) IOSTATUS getbuffer )
+     (  putbuffer OF ch:= nullputbuffer;
+        getbuffer OF ch:= getbuffer;
+        linenumber OF ch:= 0;
+        input OF ch:= TRUE
+     )
+   ESAC;
+   CASE intbuff IN
+      (INT  width)
+         ( width OF ch:= width;
+           IF input OF ch
+           THEN  buffer OF ch:= HEAP VECTOR[ width + 1 ]CHAR
+           ELSE  buffer OF ch:= nilstr
+           FI;
+           buffered OF ch:= FALSE
+         ),
+      (RVC  rvc)
+         ( buffer OF ch:= rvc;
+           width OF ch:= UPB rvc - 1; { space for newline_char at end of line }
+           buffered OF ch:= TRUE
+         )
+   ESAC;
+   sizeincr OF ch:= width OF ch;
+   IF input OF ch
+   THEN  charnumber OF ch:= width OF ch + 2  { Make sure a new line is taken
+                                               at the first call of getchar }
+   ELSE  charnumber OF ch:= 1
+   FI;
+   indent OF ch:= 0;
+   status OF ch:= io_ok;
+   separate OF ch:= FALSE;
+   ch
+END;
+
+{{  PROC newline is applied to a CHANNEL and causes the appropriate buffer
+    action to take place. ie. For input the getbuffer procedure is called
+    for output the putbuffer procedure is called.
+}}
+
+PROC  newline = (RCH  ch) VOID:
+   IF input OF ch
+   THEN
+      INT blow := 1, bhigh, len;
+      width OF ch:= 0;
+      charnumber OF ch:= 1;
+      WHILE
+         bhigh := UPB buffer OF ch - 1;
+         status OF ch:= (getbuffer OF ch)((buffer OF ch)[ blow : bhigh], len);
+         width OF ch PLUSAB len;
+         status OF ch = io_no_newline ANDTH buffered OF ch
+      DO RVC old = buffer OF ch;
+         buffer OF ch := HEAP VECTOR[ UPB buffer OF ch + sizeincr OF ch ]CHAR;
+         (buffer OF ch)[ : bhigh ] := old[ : bhigh ];
+         blow := bhigh + 1
+      OD;
+      IF status OF ch /= io_ok
+      THEN  width OF ch:= 0;
+            (buffer OF ch)[ 1 ] := end_of_file_char
+      ELSE CHAR c;
+           WHILE width OF ch > 0 ANDTH
+                 (( c:= (buffer OF ch)[ width OF ch ]) = newline_char OREL
+                    c = cr_char )
+           DO  width OF ch MINUSAB 1 OD;
+           (buffer OF ch)[ width OF ch + 1 ]:= newline_char;
+           linenumber OF ch PLUSAB 1
+      FI
+   ELSE
+   { indentation is delayed until something is wanted on the line }
+      IF buffered OF ch
+      THEN  (buffer OF ch)[charnumber OF ch]:= newline_char;
+            (putbuffer OF ch)((buffer OF ch)[: charnumber OF ch])
+      ELSE  (putbuffer OF ch)(newline_char)
+      FI;
+      charnumber OF ch:= 1;
+      linenumber OF ch PLUSAB 1;
+      separate OF ch:= FALSE
+   FI;
+
+   SKIP
+
+KEEP   STR,  VI,  RVC,  RVI,  nilstr,  nullstr,  nilints,  nullints, nilchannel,
+       CHANNEL,  RCH, end_of_file_char,  newline_char,  null_char, newpage_char,
+       space_str,  newline_str,
+       charnumber,  linenumber,  charsleft,  setwidth,  newline,  make_channel,
+       nullgetbuffer, nullputbuffer
+FINISH

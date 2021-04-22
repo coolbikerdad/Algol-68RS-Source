@@ -1,0 +1,44 @@
+PROGRAM tt1data
+CONTEXT VOID
+USE standard
+BEGIN
+
+COMMENT
+   $Log: tt1data.a68,v $
+   Revision 1.1.1.1  2001-05-07 10:16:10  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.1  2000/01/15 11:11:15  sian
+   Deleted all the .m files and added the example programs to examples directory.
+
+   Revision 1.1  2000/01/10 05:56:28  sian
+   Installing QAD standard prelude
+
+   Provides test data for `tt1'.
+
+   Copyright (c) 1999 Phoenix Engineering
+   GNU GPL Version 2 or any later version applies
+COMMENT
+
+FILE cmd, ouf;
+STRING oufn;
+
+IF INT r=open(cmd,"",arg channel);  r/=0
+THEN put(stand error,("Cannot open the arg channel",newline));  exit(r)
+ELSE
+   on logical file end(cmd,(REF FILE f)BOOL: (GOTO lab1;SKIP));
+	get(cmd,(skip terminators,LOC STRING,skip terminators,oufn))
+   EXIT
+lab1:
+	oufn:="tt1.data" #default file id#
+FI;
+
+[4000] REAL rand;
+FOR i TO UPB rand DO rand[i]:=random OD;
+IF INT r=establish(ouf,oufn,stand back channel,0,0,0);  r/=0
+THEN put(stand error,("Cannot establish ",oufn,newline));  exit(r)
+ELSE put bin(ouf,rand); close(ouf)
+FI
+
+END
+FINISH

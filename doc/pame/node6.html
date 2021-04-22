@@ -1,0 +1,178 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Values and modes</title>
+<meta name="description" content="values and modes">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node7.html">
+<link rel="previous" href="node5.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node7.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html739"
+  href="node7.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html733"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html727"
+  href="node5.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html735"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html737"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html740"
+  href="node7.html">Integers</a>
+<b> Up:</b> <a name="tex2html734"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html728"
+  href="node5.html">Terminology</a>
+ &nbsp; <b>  <a name="tex2html736"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html738"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html741"
+  href="node6.html#section00331000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00330000000000000000"></a><a name="intro-values"></a>
+<br>
+Values and modes
+</h1>
+
+<p>Two of the guiding principles of Algol&nbsp;68 are the concepts of
+<span class="textbf">value</span><a name="108"></a> and
+<span class="textbf">mode</span><a name="110"></a>.  Typically, an
+Algol&nbsp;68 program manipulates values to produce new values, and,
+in the process, does useful work (such as word-processing). Values are
+such entities as numbers and letters, but you will see in later
+chapters that values can be very complicated and, indeed, can be
+things that you would not normally think of as a value.</p>
+
+<p>
+A value is characterised by its mode.  Every value has only one mode,
+and cannot change its mode.  Therefore, if you have a mode change you
+must have a new value as well (but see chapter&nbsp;8).  A mode defines a
+set of values. The number of values in the set depends on the mode
+and there can be from none to potentially infinity.  For example, the
+whole number represented by the digits 37 has mode <tt>INT</tt><a name="437"></a>.  The
+symbol <code>INT</code> is called a <span  class="textbf">mode indicant</span>.  You will be
+meeting many more mode indicants in the course of this book and they
+are all written in capital letters and sometimes with digits.  The
+strict definition of a mode indicant is that it consists of a series
+of one or more characters which starts with a capital letter, and is
+continued by capital letters or digits.  No intervening spaces are
+allowed.  There is no limit to the length of a mode indicant although
+in practice it is rare to find mode indicants longer than 16
+characters.  Here are some more mode indicants which you will meet in
+this and later chapters:<a name="114"></a></p>
+
+<pre style="text-align:center;">
+   BOOL    CHAR    COMPL    FILE    HMEAN
+</pre>
+
+<p>Section&nbsp;<a href="node68.html#struc-mode">7.3</a> explains how
+you can define your own mode indicants. Although you can use any
+sequence of valid characters, meaningful mode indicants can help you
+to understand your programs.</p>
+
+<hr>
+<h2><a name="section00331000000000000000">
+Exercises</a></h2>
+
+<dl compact>
+<dt>1.1<a name="ex-i-i"></a>
+<dd>Is there anything wrong with the following mode indicants?
+Ans<a href="node135.html#ans-i-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>RealNumber</code>  
+<p>
+<dt>(b)
+<dd><code>2NDINT</code>  
+<p>
+<dt>(c)
+<dd><code>COMPL</code>  
+<p>
+<dt>(d)
+<dd><code>UPPER CASE</code>  
+<p>
+<dt>(e)
+<dd><code>ONE.TWO</code>  
+<p>
+</dd>
+</dl>
+<dt>1.2<a name="ex-i-ii"></a>
+<dd>What is the definition of a mode indicant?
+Ans<a href="node135.html#ans-i-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html739"
+  href="node7.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html733"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html727"
+  href="node5.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html735"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html737"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html740"
+  href="node7.html">Integers</a>
+<b> Up:</b> <a name="tex2html734"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html728"
+  href="node5.html">Terminology</a>
+ &nbsp; <b>  <a name="tex2html736"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html738"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

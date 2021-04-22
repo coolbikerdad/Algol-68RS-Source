@@ -1,0 +1,223 @@
+DECS  oscommon  CONTEXT VOID  USE  strops:
+
+{ " Id: " }
+configinfo A68CONFIG "$Id: oscommon.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+09:09:93  Created to hold procedures common to both UNIX and VMS operating
+             system interfaces - parse_prompt based on AAP version.  DCT
+27:09:93  Version stripped off type for VMS / now uses strops.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ File name parsing - operating system dependent but no library procs needed }
+
+
+MODE  STR = VECTOR [0] CHAR,
+      RVC = REF STR,
+      FILENAME = STRUCT ( RVC  filename,     { whole name }
+                               directory,    { directory / any device parts }
+                               name,         { name only (without "type") }
+                               type          { "type" part / any thing after }
+                        ),
+      OSFILENAME = FILENAME;  { To avoid clash with VMS definition }
+
+STR  nullstr;
+FILENAME  nullfilename = (nullstr, nullstr, nullstr, nullstr);
+
+PROC  parse_basic = (RVC  name) FILENAME:
+BEGIN
+   { Operating system dependent }
+   FILENAME  ans:= (name, nullstr, nullstr, nullstr);
+*4 CHAR  typec = ".",  dirc = "]",  devc = ":";          { VMS }
+*5 CHAR  typec = ".",  dirc = "/";                       { UNIX }
+*D CHAR  typec = ".",  dirc = "\",  devc = ":";          { DOS }
+   INT  typepos:= -1,  dirpos:= -1,  typemax:= UPB name;
+   FOR i FROM UPB name BY -1 TO 1 WHILE dirpos < 0
+   DO  CHAR  c = name[i];
+       IF dirpos < 0  ANDTH  c = typec  { accept first occurence after dir }
+       THEN  typepos:= i
+       ELIF c = dirc
+%5                    OREL  c = devc
+       THEN  dirpos:= i
+*4     ELIF c = ";"
+*4     THEN  { Must remove version number from type for VMS }
+*4           typemax:= i - 1
+       FI
+   OD;
+   IF typepos > 0
+   THEN  type OF ans:= name[typepos : typemax ]
+   ELSE  typepos:= UPB name + 1
+   FI;
+   IF dirpos > 0
+   THEN  directory OF ans:= name[: dirpos];
+         name OF ans:= name[dirpos + 1 : typepos - 1]
+   ELSE  name OF ans:= name[: typepos - 1]
+   FI;
+   ans
+END;
+
+
+PROC  parse_default = (RVC  name,  default) FILENAME:
+BEGIN
+   FILENAME  ans:= parse_basic(name);
+   FILENAME  def = parse_basic(default);
+   BOOL  changed:= FALSE;
+   IF UPB directory OF ans = 0  ANDTH  UPB directory OF def > 0
+   THEN  changed:= TRUE;  directory OF ans:= directory OF def
+   FI;
+   IF UPB name OF ans = 0  ANDTH  UPB name OF def > 0
+   THEN  changed:= TRUE;  name OF ans:= name OF def
+   FI;
+   IF UPB type OF ans = 0  ANDTH  UPB type OF def > 0
+   THEN  changed:= TRUE;  type OF ans:= type OF def
+   FI;
+   IF changed
+   THEN  filename OF ans:= concat((directory OF ans, name OF ans, type OF ans))
+   FI;
+   ans
+END;
+
+
+
+{ parse the result of prompting for arguments }
+
+INT  diff = ABS "A" - ABS "a";
+
+PROC  parse_prompt = (RVC  first_arg,  argstring) REF VECTOR [] RVC:
+BEGIN
+   { Split argument string into separate arguments -- takes into account one
+     level of quotes.  It appears that the shell (csh) removes quote
+     characters.  On VMS convert to lower case when not in quotes.
+   }
+
+   { list of arguments }
+   MODE ARG = STRUCT( REF VECTOR [] CHAR arg, REF ARG next);
+   REF ARG arglist;
+   REF REF ARG tail := arglist;
+   INT  no_args := 0;
+
+   { Buffer for extracted arguments }
+   RVC  buffer:= LOC STRUCT 1000 CHAR;
+   INT  windex:= 0;
+
+   PROC  write_char = REF CHAR:
+   BEGIN
+      IF (windex PLUSAB 1) > UPB buffer
+      THEN  HEAP VECTOR [UPB buffer + 1000] CHAR  new;
+            new[: UPB buffer]:= buffer;
+            buffer:= new
+      FI;
+      buffer[windex]
+   END;
+
+   PROC  get_arg = RVC:
+   BEGIN
+      INT  end = windex;
+      windex:= 0;
+      MAKERVC buffer[: end]
+   END;
+
+%4  OP  LOWER = (CHAR  c) CHAR:  c;
+*4  OP  LOWER = (CHAR  c) CHAR:
+*4    { VAX upper cases the command line - lower case to follow convention }
+*4    IF  c >= "A"  ANDTH  c <= "Z"  THEN  REPR (ABS c - diff)  ELSE  c  FI;
+
+   { simple state machine for separating arguments }
+   INT  { possible states }
+        space = 1,        { eating space between args }
+        quoted_arg = 2,   { inside quoted arg,
+                                'quote' contains the quote to match }
+        unquoted_arg = 3; { inside unquoted arg }
+   INT state := space;
+   CHAR quote_to_match;
+   INT startpos;
+   INT i := 0;
+
+   FOR i TO UPB argstring
+   DO  CHAR  c = argstring[i];
+       CASE state IN
+        { space }
+          IF c = "'" OREL c = "`" OREL c = """"
+          THEN  quote_to_match := c;  state := quoted_arg
+          ELIF c /= " "
+          THEN  state := unquoted_arg;  write_char:= LOWER c
+          FI,
+
+        { quoted arg }
+          IF c = quote_to_match
+          THEN  state := unquoted_arg
+          ELSE  write_char:= c
+          FI,
+
+        { unquoted arg }
+          IF c = "'" OREL c = "`" OREL c = """"
+          THEN  state := quoted_arg
+          ELIF c = " "
+          THEN  state := space;
+                no_args +:= 1;
+                REF REF ARG (tail) := HEAP ARG := (get_arg, NIL);
+                REF REF REF ARG (tail) := next OF tail
+          ELSE  write_char:= LOWER c
+          FI
+       ESAC
+   OD;
+
+   { If there's no trailing space, remember to record the last argument -
+     strictly, it is an error if state = quoted_arg at this point, but this
+     should be trapped by 'expand'.
+   }
+
+   IF state /= space
+   THEN  no_args +:= 1;
+         REF REF ARG (tail) := HEAP ARG := (get_arg, NIL)
+   FI;
+
+   HEAP VECTOR [no_args + 1] RVC  new_args;
+   { Copy the first argument - the command name - and then those just parsed }
+   new_args[1]:= first_arg;
+
+   REF ARG this_arg := arglist;
+   FORALL v IN new_args[2:]
+   DO  v := arg OF this_arg;   this_arg := next OF this_arg  OD;
+
+   new_args
+END
+
+
+KEEP  FILENAME,  OSFILENAME,  nullfilename,
+      parse_basic,  parse_default,  parse_prompt
+FINISH

@@ -1,0 +1,136 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Multiple names</title>
+<meta name="description" content="multiple names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node52.html">
+<link rel="previous" href="node50.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node52.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1474"
+  href="node52.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1468"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1462"
+  href="node50.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1470"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1472"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1475"
+  href="node52.html">Assigning to multiple names</a>
+<b> Up:</b> <a name="tex2html1469"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1463"
+  href="node50.html">Assignments in formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html1471"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1473"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00730000000000000000"></a><a name="name-mult"></a>
+Multiple names</h1>
+
+<p>Here is an identity declaration for a name which can refer to a
+multiple<a name="2858"></a>:<a name="3205"></a>:</p>
+
+<pre>
+   REF[]INT i7 = LOC[1:7]INT
+</pre>
+
+<p>There are two things to notice about this declaration.  Firstly,
+the mode on the left-hand side is known as a
+<b>formal-declarer</b><a name="2863"></a>.  It says what the mode of
+the name is, but it says nothing about how many elements there will be
+in any multiple to be assigned, nor what its bounds will be.  All the
+identity declarations for multiples in chapter&nbsp;3 used
+formal-declarers on the left-hand side.  In fact, only
+formal-declarers are used on the left-hand side of <i>any</i> identity
+declaration<a name="2865"></a>.</p>
+
+<p>Secondly, the generator on the right-hand side is an
+<b>actual-declarer</b><a name="2867"></a>. It specifies how many
+elements can be assigned. In fact, the trimmer<a name="2868"></a>
+represents the bounds<a name="2869"></a> of the multiple which can be
+assigned.  If the lower bound is <code>1</code> it may be omitted, so
+the above declaration could well have been written</p>
+
+<pre>
+   REF[]INT i7 = LOC[7]INT
+</pre>
+
+<p>which can be read as &ldquo;ref row of int i7 equals loc row of
+seven int&rdquo;.  The bounds of a multiple do not have to start from
+<code>1</code> as we saw in chapter&nbsp;3. In this identity
+declaration</p>
+
+<pre>
+   REF[]INT i7 at 0 = LOC[0:6]INT
+</pre>
+
+<p>the bounds of the multiple will be <code>[0:6]</code>.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1474"
+  href="node52.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1468"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1462"
+  href="node50.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1470"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1472"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1475"
+  href="node52.html">Assigning to multiple names</a>
+<b> Up:</b> <a name="tex2html1469"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1463"
+  href="node50.html">Assignments in formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html1471"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1473"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

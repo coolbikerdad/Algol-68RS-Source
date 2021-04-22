@@ -1,0 +1,358 @@
+DECS  denotations  CONTEXT VOID  USE
+*L    usefulops, cif,
+      centities, environment:
+
+configinfo A68CONFIG "$Id: denotations.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.4 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+BITS	   all bits		= NOT BIN 0;
+INT	   max int over ten	= ABS all bits OVER 10;
+
+LONG BITS  all long bits	 = NOT BIN LONG 0;
+LONG INT   long max int over ten = ABS all long bits OVER LONG 10;
+
+{ reals not yet supported 
+	LONG REAL  long max real over  ten = long max real / LONG 10;
+	LONG REAL  long min real times ten = long min real * LONG 10;
+}
+
+INT	abs space	= 32,
+	abs 0		= 48,
+	abs a		= 97;
+
+PROC	chars to long bits = ( RVC chars ) LONG BITS:
+{
+        Converts the RS compiler form of a denotation into its binary value.
+}
+BEGIN
+	INT	width = chars[1] CHARINVEC "248g";
+	IF	width <= 0 THEN error(633 { illegal radix }) FI;
+	LONG BITS safe to shift = all long bits SHR width;
+	LONG BITS answer := LONG 2r0;     
+	INT	hexdigit, x;
+	FORALL	char IN chars[ 2: ]
+	WHILE
+	        IF	answer <= safe to shift
+	        THEN	x := ABS char;
+			hexdigit := ( x >= abs a | x-abs a+10 | x-abs 0 );
+			"not a hexdigit" ASSERT hexdigit <= 15;
+			answer := (answer SHL width) OR LENG BIN hexdigit; TRUE
+		ELSE	error(301 { Bits denotation too big });            FALSE
+		FI
+	DO	SKIP
+	OD;
+	answer
+END;
+
+PROC	chars to long int = ( RVC chars ) LONG INT:
+{
+        Converts the RS compiler form of a denotation into its binary value.
+}
+IF	chars[1] = "a"
+THEN    LONG INT answer := LONG 0;
+	INT	digit;
+	FOR i FROM 2 TO UPB chars
+	DO
+	        IF	answer > long max int over ten
+	        THEN	GOTO overflowed
+	        FI;
+	        answer *:= LONG 10;
+	        digit := ABS chars[ i ] - abs 0;
+	        "DENOTATIONS - chars to lint: Not a digit" ASSERT digit <= 9;
+	        IF	answer > long max int - LENG digit
+	        THEN	GOTO overflowed
+	        FI;
+	        answer +:= LENG digit
+	OD;
+	answer
+	EXIT
+overflowed:
+	error( 302 { Int denotation too big } );
+	answer { a large number, so similar errors by other semantics }
+ELSE	{ must be 68R }
+	ABS chars to long bits(chars)
+FI;
+
+COMMENT REAL DENOTATIONS NOT IMPLEMENTED
+
+PROC	chars to long real = ( RVC chars ) LONG BITS:
+{
+        Converts the RS compiler form of a denotation into its binary value.
+}
+BEGIN
+	CHAR	real char		= "r",
+		decimal point char	= "d",
+		positive char		= "p",
+		negative char		= "n";
+
+	"DENOTATIONS - chars to lreal: unexpected real format"
+	ASSERT chars[ 1 ] = real char;
+
+	INT	upb = UPB chars,
+		max good exponent = 999
+		{ beyond this bound to be in error or zero,
+		  given line length limits us to 160 char denotation
+		};
+	INT	exponent := 0, scale := 0, i := 2;
+	CHAR	c;
+	LONG REAL value := LONG 0;
+
+	{ before decimal point }
+
+	WHILE	( c := chars[ i ] ) <= "9"      
+	DO	i +:= 1;
+		IF	value <= long max real over ten
+		THEN	value := value * LONG 10 + LENG (ABS c - abs 0)
+			{ cannot get overflow from digit part,
+			  huge real + 9 = huge real
+			}
+		ELSE	scale +:= 1
+		FI
+	OD;
+
+	{ after decimal point, if it is there }
+
+	IF	c = decimal point char
+	THEN	WHILE	(i +:= 1) <= upb ANDTH (c := chars[ i ]) <= "9"
+		DO
+			IF	value <= long max real over ten
+			THEN	value := value * LONG 10 + LENG (ABS c - abs 0);
+				scale -:= 1
+			FI
+		OD
+	FI;
+
+	{ exponent, if it is there }
+
+	IF	value /= LONG 0
+	THEN	IF	i <= upb { exponent present }
+		THEN	FOR e FROM i + 1 { skip sign } TO upb
+			WHILE	( exponent :=
+					10*exponent +(ABS chars[ e ] -abs 0)
+				) <= max good exponent
+			DO	SKIP
+			OD;
+			scale +:= ( c = positive char | exponent | -exponent )
+		FI;
+
+		{ scale value }
+
+		IF	scale >= 0
+		THEN	{ This may seem slow, but normally worst case is 38,
+			  1e38.  Silly like 0.0...1e99999 take longer analysing
+			  characters than here
+			}
+			WHILE	scale > 0
+			DO	IF	value > long max real over ten
+				THEN	error( 303 { Real denotation to big } );
+					GOTO exit
+					{ leaving value as a large number
+					  for furter errors from semantics
+					}
+				FI;
+				value *:= LONG 10;  scale -:= 1
+			OD
+		ELSE
+			TO	-scale
+			DO	IF	value < long min real times ten
+				THEN	{ Real denotation too close to zero, zero used }
+					comment( 304 );
+					value := LONG 0;
+					GOTO exit
+				FI;
+				value /:= LONG 10
+			OD
+		FI
+
+	{ ELSE ignore any scaling, bound to be zero,
+	  especially careful to avoid scaling 0e999999999999...
+	}
+	FI;
+
+	OP (LONG REAL ) LONG BITS  AS  = BIOP 100;
+exit:	AS value
+
+END;
+
+COMMENT
+
+PROC	convert radix string =
+( REF VECTOR [] CHAR radix string,
+  INT radix
+) VECTOR [] CHAR { converted }:
+{
+        Assumes radix string has one space between each radix number,
+	and no leading or trailing spaces, as produced by RS compiler.
+}
+IF	UPB radix string = 0
+THEN    ""
+ELIF	radix = 0
+THEN	radix string
+ELSE	VECTOR [ UPB radix string {this is big enough}] CHAR converted;
+	INT	converted position := 0, sum := 0, base := radix;
+	INT	hexdigit, x;
+
+	FORALL	c IN radix string
+	DO	x := ABS c;
+		IF	x <= abs space
+			{ allow all the charcters the compiler accepts as spaces, tabs etc. }
+		THEN	converted[ converted position +:= 1 ] := REPR sum;
+			sum := 0;	base := radix
+			{ reset after possible error in previous element,
+			  so more elements can be errored
+			}
+		ELSE	hexdigit := ( x >= abs a | x - abs a + 10 | x - abs 0 );
+			"DENOTATIONS - not a hexdigit"
+			ASSERT hexdigit <= 15 AND hexdigit >= 0;
+			sum := sum * base + hexdigit;
+			IF	sum > max abs char
+			THEN	{ Radix string element too big }
+				error( 305 );
+				sum := base := 0 { so no more errors from this element }
+			FI
+		FI
+	OD;
+	converted[ converted position +:= 1 ] := REPR sum;
+	{ no space at end of radix string, so set last one here }
+	converted[ :converted position ]
+FI;
+
+PROC	translate denotation = ( RVC chars ) CFRAGMENT:
+BEGIN
+	PROC	long bits to hex = ( LONG BITS b ) CFRAGMENT:
+	BEGIN
+		VECTOR [16] CHAR  c;
+		LONG BITS i := b;
+		INT	next := UPB c;
+		WHILE	INT digit = ABS SHORTEN( i AND LONG 16rf);
+			c[next] := REPR( digit+( digit>9 | abs a-10 | abs 0 ));
+			i := i SHR 4;
+			ABS i /= LONG 0 AND next > 1
+		DO
+			next -:= 1
+		OD;
+		c[ next: ]
+	END;
+	PROC	change = ( CFRAGMENT c, CHAR from, CFRAGMENT to ) CFRAGMENT:
+	BEGIN	INT	i;
+		( char in string( from, i, c )
+		| c[ :i-1] + to + c[ i+1: ]
+		| c
+		)
+	END;
+	PROC 	suppress = ( CFRAGMENT c, BOOL real ) CFRAGMENT:
+	{ 	Remove leading zeros from c.
+		If c is a real number then at least one zero must be left
+		in front of the decimal point or exponent.
+		assumptions: if c is an INT, UPB c contains a digit;
+	}
+	BEGIN
+		INT	i := LWB c;
+		WHILE	i < UPB c
+	     	ANDTH	c[i] = "0"
+	     	ANDTH	( real | c[i+1] = "0" | TRUE )
+		DO	i +:= 1
+		OD;
+		c[i:]
+	END;
+	CHAR	base symbol = chars[1];
+	IF	base symbol = "a"		{ base is decimal-integer  }
+	THEN	suppress( chars[2:], FALSE )	{ must not start with zero }
+	ELIF	base symbol = "r"		{ base is decimal-real     }
+	THEN	change
+		( change
+		  ( change( suppress( chars[2:], TRUE ), "d", "." ), "p", "e"
+		  ), "n", "e-"
+		)
+	ELIF	base symbol = "8"		{ base is octal }
+	THEN	{ Octal numbers are distinguished by a leading zero in C }
+		concat(( "0", chars[ 2: ], "U" ))
+	ELIF	base symbol = "g"		{ base is hexadecimal }
+	THEN	concat(("0X", chars[ 2: ], "U" ))
+	ELSE	{ base is binary or quaternary }
+		concat(("0X", long bits to hex( chars to long bits( chars ) ), "U"))
+	FI
+END;
+
+PROC	replace control chars = ( RVC string ) RVC:
+BEGIN
+	INT	esc size = 3;	{ length of an 'escaped' character }
+    	PROC	octal byte = ( INT i )VECTOR[]CHAR:
+	BEGIN	VECTOR [esc size]CHAR octal;
+		FOR	j TO esc size
+		DO	octal[esc size-j+1] :=
+				REPR( ABS(BIN(i OVER(8^(j-1))) AND 8r7)+abs 0 )
+		OD;
+		octal
+	END;
+	INT	pos := 1;		{ position in the output string    }
+	HEAP VECTOR [ (esc size+1) * UPB string ]CHAR escape seq;
+	FOR i TO UPB string
+	DO
+	  	CHAR c = string[i];
+		IF	ABS c = 0 ANDTH UPB string > i ANDTH
+			( ABS string[i+1] < ABS "0"
+			  OREL ABS string[i+1] > ABS "9" )
+		THEN
+			escape seq[pos:][:2] := "\0";
+			pos +:= 2
+		ELIF	(ABS c < 32) OREL (ABS c > 126)  { non-printable ASCII }
+		THEN	escape seq[pos:pos+esc size] :=("\"+octal byte(ABS c));
+			pos +:= 4
+		ELIF	c = "\"
+		THEN	escape seq[ pos:pos+1 ] := "\\";
+			pos +:= 2
+		ELIF	c = """"
+		THEN	escape seq[ pos:pos+1 ] := "\""";
+			pos +:= 2
+		ELIF	UPB string = 1 AND c = "'"
+		THEN	escape seq[ pos:pos+1 ] := "\'";
+			pos +:= 2
+		ELSE	escape seq[ pos ] := c;
+			pos +:= 1
+		FI
+	OD;
+	escape seq [:pos-1]
+END;
+
+SKIP
+
+KEEP	convert radix string, translate denotation, replace control chars
+             
+FINISH

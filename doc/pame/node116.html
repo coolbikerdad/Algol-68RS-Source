@@ -1,0 +1,240 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>More queue procedures</title>
+<meta name="description" content="more queue procedures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node117.html">
+<link rel="previous" href="node115.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node117.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2596"
+  href="node117.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2590"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2584"
+  href="node115.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2592"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2594"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2597"
+  href="node117.html">Trees</a>
+<b> Up:</b> <a name="tex2html2591"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2585"
+  href="node115.html">The procedure add fan</a>
+ &nbsp; <b>  <a name="tex2html2593"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2595"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2598"
+  href="node116.html#section0013101000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section0013100000000000000000"></a><a name="adv-mqproc"></a>
+More queue procedures</h1>
+
+<p>We<a name="7879"></a> can now address three more procedures: how to
+insert a fan into a queue, how to remove a fan from the queue, and how
+to print the queue. Let us take the printing procedure first. Here it
+is:</p>
+
+<pre>
+   PROC print queue = (REF REF QUEUE head)VOID:
+   IF head IS nilq
+   THEN print(("NIL",newline))
+   ELSE print((newline,
+               "(",name OF fan OF head,",",
+               whole(ticket OF fan OF head,0),
+               ")=&gt;"));
+        print queue(next OF head)
+   FI
+</pre>
+
+<p>By not using the triple <code>REF</code> name for the head of the
+queue, we can use recursion<a name="7882"></a> to simplify the
+procedure. Recursion is common in procedures for
+linked-lists<a name="7883"></a>.</p>
+
+<p>Inserting a fan is a little more difficult. There are several
+possibilities: the queue can be empty or non-empty. If it is
+non-empty, the fan can be inserted at the head of the queue, or if
+there are at least two fans in the queue, the fan could be inserted
+somewhere between the head and the tail. The question is, how many
+parameters are required for the procedure? Clearly, we need
+<code>head</code> to determine whether the queue is empty,
+<code>tail</code> to be updated in case it is or if the fan is to be
+added to the end of the queue. Here is a possible header:</p>
+
+<pre>
+   PROC insert fan=(REF REF REF QUEUE head,tail,
+                    REF FAN fan)VOID:
+</pre>
+
+<p>We need a criterion for determining where in the queue a fan should
+be inserted. Here is one: the fans should be inserted in the order of
+ticket number (using a queue is not an efficient way of doing this,
+but this criterion will do for our purposes). Here is <code>insert
+fan</code> with a diagram to help you understand it:</p>
+
+<pre>
+   PROC insert fan=(REF REF REF QUEUE head,tail,
+                    REF FAN fan)VOID:
+   IF   head IS nilq
+   THEN #the queue is empty#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF head
+   ELIF ticket OF fan &lt; ticket OF fan OF head
+   THEN
+      #insert the fan at the head of the queue#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,head)
+   ELIF next OF head IS nilq
+   THEN #add the fan after the head#
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   ELIF REF QUEUE marker:=head;
+      WHILE
+         IF (next OF marker ISNT nilq)
+         THEN
+            ticket OF fan
+                  &gt;
+            ticket OF fan OF next OF marker
+         ELSE FALSE
+         FI
+      DO marker:=next OF marker OD;
+      next OF marker IS nilq
+   THEN
+   #add the fan to the end of the queue#
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   ELSE
+   CO insert the fan between `marker'
+      and `next of marker' CO
+      next OF marker:=
+            HEAP QUEUE:=(fan,next OF marker)
+   FI
+</pre>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-8.png" alt="ch11-8.png">
+</div>
+
+<p>There are three lines where you need to look carefully at the modes
+and values involved:</p>
+
+<ul>
+<li>the line which ends in <code>(fan,head)</code>,
+</li>
+<li>the line which ends in <code>(fan,next OF marker)</code>,
+</li>
+<li>the line containing the <code>&gt;</code> operator.
+</li>
+</ul>
+
+<p>Discussion of this procedure completes our examination
+of<a name="7893"></a> queues<a name="7894"></a>.</p>
+
+<hr>
+<h2><a name="section0013101000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.21<a name="ex-xi-xxi"></a>
+<dd>In the procedure <code>insert fan</code>, explain the circumstances
+in which the loop will terminate.  Ans<a href="node145.html#ans-xi-xxi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.22<a name="ex-xi-xxii"></a>
+<dd>Using the procedure <code>print queue</code>, confirm that the
+procedure <code>insert fan</code> works.  Ans<a href="node145.html#ans-xi-xxii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.23<a name="ex-xi-xxiii"></a>
+<dd>Write the procedure <code>delete fan</code> which will delete a fan
+with a given ticket number from the queue. It should yield the fan if
+it has been deleted and <code>FALSE</code> if it cannot be found. This
+diagram should help you:
+<div align="center">
+<img align="bottom" border="0"
+ src="ch11-9.png"
+ alt="ch11-9.png">
+
+</div>
+Include the procedure in a program and test it.  Ans<a href="node145.html#ans-xi-xxiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2596"
+  href="node117.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2590"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2584"
+  href="node115.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2592"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2594"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2597"
+  href="node117.html">Trees</a>
+<b> Up:</b> <a name="tex2html2591"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2585"
+  href="node115.html">The procedure add fan</a>
+ &nbsp; <b>  <a name="tex2html2593"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2595"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

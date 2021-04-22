@@ -1,0 +1,227 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The mode STRING</title>
+<meta name="description" content="the mode string">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node55.html">
+<link rel="previous" href="node53.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node55.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1520"
+  href="node55.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1514"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1508"
+  href="node53.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1516"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1518"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1521"
+  href="node55.html">Reference modes in transput</a>
+<b> Up:</b> <a name="tex2html1515"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1509"
+  href="node53.html">Flexible names</a>
+ &nbsp; <b>  <a name="tex2html1517"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1519"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1522"
+  href="node54.html#section00761000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00760000000000000000"></a><a name="name-string"></a>
+The mode <tt>STRING</tt></h1>
+
+<p>The mode <tt>STRING</tt><a name="3217"></a> is defined in the
+standard prelude<a name="3016"></a> as having the same mode as the
+expression <tt>FLEX[1:0]CHAR</tt><a name="3218"></a>. That is, the
+identity declaration<a name="3219"></a></p>
+
+<pre>
+   REF STRING s = LOC STRING
+</pre>
+
+<p>has exactly the same effect as the declaration</p>
+
+<pre>
+   REF FLEX[]CHAR s = LOC FLEX[1:0]CHAR
+</pre>
+
+<p>You will notice that although the mode indicant<a name="3024"></a>
+<code>STRING</code> appears on both sides of the identity declaration
+for <code>s</code>, in the second declaration the bounds are omitted
+on the left-hand side (the mode is a
+formal-declarer<a name="3025"></a>) and kept on the right-hand side
+(the actual-declarer<a name="3026"></a>).  Without getting into
+abstruse grammatical explanations, just accept that if you define a
+mode like <code>STRING</code>, whenever it is used on the left-hand
+side of an identity declaration the compiler will ignore the bounds
+inherent in its definition.</p>
+
+<p>We can now write</p>
+
+<pre>
+   s:="String"
+</pre>
+
+<p>which gives bounds of <code>[1:6]</code> to <code>s</code>.  We can
+slice<a name="3029"></a> that row to get a value with mode <code>REF CHAR</code>
+which can be used in a formula. If we want to change the bounds of
+<code>s</code>, we must assign a value which yields a value of mode
+<code>[]CHAR</code> to the whole of <code>s</code> as in</p>
+
+<pre>
+    s:="Another string"
+</pre>
+
+<p>or</p>
+
+<pre>
+    s:=s[2:4]
+</pre>
+
+<p>Wherever <code>[]CHAR</code> appears in chapter 3, it may be safely
+replaced by <code>STRING</code>. This is because it is only
+names<a name="3033"></a> which are flexible so the flexibility of
+<code>STRING</code> is only available in <code>REF STRING</code>
+declarations.</p>
+
+<p>There are two operators defined in the standard
+prelude<a name="3034"></a> which use an operand of mode <code>REF
+STRING</code>: <tt>PLUSAB</tt><a name="3221"></a>, whose left operand
+has mode <code>REF STRING</code> and whose right operand has mode
+<code>STRING</code> or <code>CHAR</code>, and
+<tt>PLUSTO</tt><a name="3222"></a>, whose left operand has mode
+<code>STRING</code> or <code>CHAR</code> and whose right operand has
+mode <code>REF STRING</code>.  Using the
+concatenation<a name="3039"></a> operator
+<tt>+</tt><a name="3223"></a>, their actions can be summarised as
+follows:</p>
+
+<div align="center" class="mathdisplay">
+<table border="0">
+<tr>
+  <td><tt>a PLUSAB b</tt></td>
+  <td>&equiv; a:=a+b</td>
+</tr>
+<tr>
+  <td><tt>a PLUSTO b</tt></td>
+  <td>&equiv; b:=a+b</td>
+</tr>
+</table>
+</div>
+
+<p>Thus <code>PLUSAB</code> concatenates <code>b</code> onto the end
+of <code>a</code>, and <code>PLUSTO</code> concatenates <code>a</code>
+to the beginning of <code>b</code>.  Their alternative representations
+are <code>+:=</code> and <code>+=:</code> respectively. For example,
+if <code>a</code> refers to <code>"abc"</code> and <code>b</code>
+refers to <code>"def"</code>, after <code>a PLUSAB b</code>,
+<code>a</code> refers to <code>"abcdef"</code>, and after <code>a
+PLUSTO b</code>, <code>b</code> refers to <code>"abcdefdef"</code>
+(assuming the <code>PLUSAB</code> was elaborated first).</p>
+
+<hr>
+<h2><a name="section00761000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.11<a name="ex-v-xi"></a></dt>
+<dd>Write a program which declares a name with mode <code>REF</code>
+<code>STRING</code> and then consecutively assigns the rows of
+characters <code>"ab"</code>, <code>"abc"</code>, upto the whole
+alphabet and prints each row on a separate line. Use a
+<code>FOR</code> loop clause.
+Ans<a href="node139.html#ans-v-xi"><img align="bottom" border="1"
+alt="[*]" src="answer.png"></a></dd>
+<dt>5.12<a name="ex-v-xii"></a></dt>
+<dd>Declare a flexible name which can refer to a 2-dimensional row
+whose elements have mode <code>REAL</code>.  Assign a one-dimensional row
+whose elements are
+
+<pre>
+   5.0 10.0 15.0 20.0
+</pre>
+
+Write the <code>print</code> phrase which will display each bound on the screen
+followed by a space, all on one line.
+Ans<a href="node139.html#ans-v-xii"><img
+align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1520"
+  href="node55.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1514"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1508"
+  href="node53.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1516"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1518"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1521"
+  href="node55.html">Reference modes in transput</a>
+<b> Up:</b> <a name="tex2html1515"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1509"
+  href="node53.html">Flexible names</a>
+ &nbsp; <b>  <a name="tex2html1517"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1519"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

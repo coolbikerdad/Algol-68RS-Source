@@ -1,0 +1,347 @@
+DECS mm_oscommands CONTEXT VOID USE putstrings, osinterface, messageproc,
+*V                                  vmscomplink,
+*U                                  unixcomplink,
+                                    mm_basics :
+
+configinfo A68CONFIG "$Id: mm_oscommands.a68,v 1.3 2002-06-06 13:55:55 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+31:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 32.1 
+02:09:94  33.001  DJS    
+08:09:94  33.002  DJS   MMCR001   
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT com_buf_step = 512;
+REF VECTOR[ ]CHAR command_buffer := LOC VECTOR[ 0 ]CHAR;
+INT com_buf_top := 0, com_pos := 0;
+REF SYMBOL exists_symbol := NIL,
+           param_symbol := NIL,
+           filename_symbol := NIL,
+           fdirectory_symbol := NIL,
+           fname_symbol := NIL,
+           ftype_symbol := NIL;
+
+PROC insert_oscommand_item = (VECTOR[ ]CHAR item )VOID:
+BEGIN
+INT top = UPB item;
+
+    IF top + com_pos > com_buf_top THEN
+    REF VECTOR[ ]CHAR old = command_buffer;
+
+        command_buffer := HEAP VECTOR[ com_buf_top + com_buf_step ]CHAR;
+        command_buffer[ : com_buf_top ] := old;
+        com_buf_top := UPB command_buffer
+    FI;
+    command_buffer[ com_pos + 1 : com_pos + top ] := item;
+    com_pos PLUSAB top
+END;
+
+PROC obey_oscommand = (MESSAGEPROC msg )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR command = command_buffer[ : com_pos ];
+
+    IF com_pos = 0 THEN
+        TRUE
+  ELIF diagnose THEN
+        com_pos := 0;
+        put( screen, ( "Obey:- ", command, newline ));
+        TRUE
+  ELSE
+        com_pos := 0;
+        obey_osaction( command, msg )
+    FI
+END;
+
+PROC translate_oscommands = (VECTOR[ ]CHAR class,
+                             MESSAGEPROC msg )BOOL:
+BEGIN
+INT ind := 0;
+REF SYMBOL rev_symbols := nilsymbol,
+           fwd_symbols := nilsymbol,
+            sym_search := nilsymbol;
+REF VECTOR[ ]CHAR searchname := blankname;
+
+    PROC get_symbol = (REF VECTOR[ ]CHAR name )REF SYMBOL:
+    BEGIN
+    INT ntop := UPB name;
+    CHAR lc = name[ ntop ];
+    REF SYMBOL sym := nilsymbol;
+    BOOL step_up   = ( lc = ">" ),
+         step_down = ( lc = "<" );
+
+        IF step_up OREL step_down THEN
+        REF VECTOR[ ]CHAR sn = name[ : ntop MINUSAB 1 ];
+
+            sym_search := IF sn = searchname THEN
+                              IF step_up THEN rest OF sym_search
+                                         ELSE last OF sym_search
+                              FI
+                        ELIF step_up THEN
+                              fwd_symbols
+                        ELSE
+                              rev_symbols
+                          FI;
+            WHILE ( sym_search ISNT nilsymbol ) ANDTH
+                  ( ntop > UPB name OF sym_search OREL
+                    ( name OF sym_search )[ : ntop ] /= sn )
+            DO
+                sym_search := IF step_up THEN rest OF sym_search
+                                         ELSE last OF sym_search
+                              FI
+            OD;
+            searchname := IF sym_search IS nilsymbol THEN blankname ELSE sn FI;
+            sym := sym_search
+      ELIF name = searchname THEN
+            sym := sym_search
+      ELSE
+            sym := fwd_symbols;
+            WHILE ( sym ISNT nilsymbol ) ANDTH name OF sym /= name
+            DO
+                sym := rest OF sym
+            OD
+        FI;
+        sym
+    END;
+
+    PROC set_param = (VECTOR[ ]CHAR param_str )VOID:
+    BEGIN
+    FILENAME fn = parse_filename( param_str, "", msg );
+
+        IF file_exists( filename OF fn, msg ) THEN
+            text OF exists_symbol := true_string
+      ELSE
+            text OF exists_symbol := false_string
+        FI;
+        text OF filename_symbol :=
+                       translate_filename( filename OF fn, ind, diagnose, msg );
+        text OF fdirectory_symbol := directory OF fn;
+        text OF fname_symbol := name OF fn;
+        text OF ftype_symbol := type OF fn;
+        text OF param_symbol := MAKERVC param_str
+    END;
+
+    PROC parse_oscommand = (REF VECTOR[ ]CHAR comtext )VOID:
+    BEGIN
+    INT  ign_cnt := 0, pstart := 0;
+    BOOL query := FALSE, sense := FALSE, condition := FALSE, inparam := FALSE;
+
+        PROC state = BOOL:
+        BEGIN
+            IF condition THEN
+                com_pos := pstart - 1;
+                TRUE
+          ELIF com_pos < pstart THEN
+                NOT sense  { Equivalent to FALSE }
+          ELSE
+            REF VECTOR[ ]CHAR str = command_buffer[ pstart : com_pos ];
+
+                com_pos := pstart - 1;
+                IF str = "off" OREL str = "false" THEN
+                    NOT sense
+              ELSE
+                    sense
+                FI
+            FI
+        END;
+
+        PROC analyse_text = (REF VECTOR[ ]CHAR text )VOID:
+        BEGIN
+        INT top = UPB text;
+        INT pos := 0, start := 1, mark := top;
+        BOOL subs := FALSE, escape := FALSE;
+        CHAR c;
+
+            PROC insert = (BOOL substitute )VOID:
+            BEGIN
+                IF start < pos THEN
+                    IF substitute THEN
+                    REF SYMBOL s = get_symbol( text[ start : pos - 1 ] );
+
+                        IF s ISNT nilsymbol THEN analyse_text( text OF s ) FI
+                  ELSE
+                        insert_oscommand_item( text[ start : pos - 1 ] )
+                    FI
+                FI;
+                start := pos + 1
+            END;
+
+            WHILE ( pos PLUSAB 1 ) <= top
+            DO
+                c := text[ pos ];
+                IF escape THEN
+                    escape := FALSE
+              ELIF c = "{" THEN
+                    IF query THEN
+                        query := FALSE;
+                        IF NOT state THEN ign_cnt := 1 FI
+                  ELIF ign_cnt > 0 THEN
+                        ign_cnt PLUSAB 1
+                    FI;
+                    start := pos + 1
+              ELIF c = "|" THEN
+                    IF ign_cnt = 1 THEN
+                        ign_cnt MINUSAB 1;
+                        start := pos + 1
+                  ELIF ign_cnt <= 0 THEN
+                        insert( FALSE );
+                        ign_cnt := 1
+                    FI
+              ELIF c = "}" THEN
+                    IF ign_cnt > 0 THEN
+                        ign_cnt MINUSAB 1;
+                        start := pos + 1
+                  ELSE
+                        insert( FALSE )
+                    FI
+              ELIF ign_cnt > 0 THEN
+                    SKIP
+              ELIF c = "?" OREL c = "#" THEN
+                    IF query THEN
+                        condition := state
+                  ELSE
+                        insert( FALSE );
+                        condition := FALSE;
+                        query := TRUE
+                    FI;
+                    pstart := com_pos + 1;
+                    sense := ( c = "?" )
+              ELIF c = "'" THEN
+                    insert( subs );
+                    subs := NOT subs
+              ELIF c = "(" THEN
+                    IF inparam THEN
+                        msg( fatal, "oscommand parameters cannot be nested." )
+                  ELSE
+                        insert( FALSE );
+                        pstart := com_pos + 1;
+                        inparam := TRUE
+                    FI
+              ELIF c = ")" THEN
+                    IF NOT inparam THEN
+                        msg( fatal, "oscommand parameters bracket missmatch." )
+                  ELSE
+                        insert( FALSE );
+                        IF com_pos >= pstart THEN
+                            set_param( command_buffer[ pstart : com_pos ] )
+                        FI;
+                        com_pos := pstart - 1;
+                        inparam := FALSE
+                    FI
+              ELIF c = "^" THEN
+                    insert( FALSE );
+                    pos := mark
+              ELIF c = "@" THEN
+                    insert( FALSE );
+                    mark := pos
+              ELIF c = "\" THEN
+                    insert( FALSE );
+                    escape := TRUE
+                FI
+            OD;
+            insert( FALSE )
+        END;
+
+        analyse_text( comtext )
+    END;
+
+BOOL continue := TRUE;
+
+    PROC rev_action = (REF SYMBOL s )BOOL:
+    BEGIN
+        last OF s := rev_symbols;
+        rev_symbols := s;
+        IF fwd_symbols IS nilsymbol THEN fwd_symbols := s FI;
+        TRUE
+    END;
+
+    scansymbols( "", rev_action );
+
+    PROC com_action = (REF SYMBOL s )BOOL:
+    BEGIN
+        parse_oscommand( text OF s );
+        continue := obey_oscommand( msg );
+        flt_if_interrupted( msg );
+        continue
+    END;
+
+    scansymbols( class, com_action );
+    continue
+END;
+
+PROC submit = (VECTOR[ ]CHAR dbname, node, MESSAGEPROC msg )BOOL:
+        os_submit( dbname, node, msg );
+
+PROC save_file = (REF VECTOR[ ]CHAR name, MESSAGEPROC msg )REF VECTOR[ ]CHAR:
+BEGIN
+BOOL have_file = file_exists( name, msg );
+
+    IF have_file THEN
+    REF VECTOR[ ]CHAR save_name = oneline(( name, "_old" ));
+
+        os_save_file( name, save_name, msg );
+        save_name
+  ELSE
+        put( screen, ( "File ", name,
+                       " not found at save_file.  No action taken.", newline ));
+        blankname
+    FI
+END;
+
+PROC initialise_mm_oscommands = (MESSAGEPROC msg )REF VECTOR[ ]CHAR:
+BEGIN
+    exists_symbol := define_symbol( "exists", blankname, local_tag );
+    param_symbol := define_symbol( "param", blankname, local_tag );
+    filename_symbol := define_symbol( "filename", blankname, local_tag );
+    fdirectory_symbol := define_symbol( "fdirectory", blankname, local_tag );
+    fname_symbol := define_symbol( "fname", blankname, local_tag );
+    ftype_symbol := define_symbol( "ftype", blankname, local_tag );
+    initialise_mm_basics(
+              initialise_complink( insert_oscommand_item, obey_oscommand, msg ))
+END;
+
+PROC close_oscommands = (MESSAGEPROC msg )VOID:
+BEGIN
+INT filename_ind := -1; { Indicates the end of the run }
+
+    translate_filename( blankname, filename_ind, diagnose, global_msg );
+                { Un-define any filename aliases that have been created }
+    SKIP
+END;
+
+    SKIP
+KEEP insert_oscommand_item, obey_oscommand, translate_oscommands,
+     initialise_mm_oscommands, close_oscommands, submit, save_file
+FINISH

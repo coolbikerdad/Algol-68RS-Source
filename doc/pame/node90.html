@@ -1,0 +1,151 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Other transput procedures</title>
+<meta name="description" content="other transput procedures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node91.html">
+<link rel="previous" href="node89.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node91.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2152"
+  href="node91.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2146"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2140"
+  href="node89.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2148"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2150"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2153"
+  href="node91.html">Summary</a>
+<b> Up:</b> <a name="tex2html2147"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2141"
+  href="node89.html">Internal books</a>
+ &nbsp; <b>  <a name="tex2html2149"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2151"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2154"
+  href="node90.html#section0011111000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section0011110000000000000000"></a><a name="trans-other"></a>
+Other transput procedures</h1>
+
+<p>The procedure <tt>idf</tt><a name="6048"></a> has the header</p>
+
+<pre>
+   PROC idf=(REF FILE f)[]CHAR:
+</pre>
+
+<p>and yields the identification of the book handled by the file
+<code>f</code>.</p>
+
+<p>There are two other ways of closing a file. One is
+<tt>scratch</tt><a name="6049"></a> and the other is
+<tt>lock</tt><a name="6050"></a>. Here are their headers:-</p>
+
+<pre>
+   PROC scratch=(REF FILE f)VOID:
+   PROC lock=(REF FILE f)VOID:
+</pre>
+
+<p>The procedure <tt>scratch</tt> deletes the file once it is closed. It
+is often used with work files. The procedure <tt>lock</tt> closes its
+file and then locks it so that it cannot be opened without some
+system action. In the QAD transput supplied with the
+a68toc<a name="6051"></a>
+compiler, <tt>lock</tt> removes all permissions from the file so
+that it cannot be accessed without first using the program
+<tt>chmod</tt>.</p>
+
+<hr>
+<h2><a name="section0011111000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.18<a name="ex-ix-xviii"></a>
+<dd>Write a program to print the rainfall figures given in an
+earlier exercise. Start your report with a suitable heading.  Ans<a href="node143.html#ans-ix-xviii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.19<a name="ex-ix-xix"></a>
+<dd>Write a program which will read a text file and print each line
+preceded by a line number.  Ans<a href="node143.html#ans-ix-xix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2152"
+  href="node91.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2146"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2140"
+  href="node89.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2148"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2150"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2153"
+  href="node91.html">Summary</a>
+<b> Up:</b> <a name="tex2html2147"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2141"
+  href="node89.html">Internal books</a>
+ &nbsp; <b>  <a name="tex2html2149"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2151"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

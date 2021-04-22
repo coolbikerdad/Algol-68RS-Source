@@ -1,0 +1,326 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 2</title>
+<meta name="description" content="chapter 2">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node137.html">
+<link rel="previous" href="node135.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node137.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3049"
+  href="node137.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3043"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3037"
+  href="node135.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3045"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3047"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3050"
+  href="node137.html">Chapter 3</a>
+<b> Up:</b> <a name="tex2html3044"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3038"
+  href="node135.html">Chapter 1</a>
+ &nbsp; <b>  <a name="tex2html3046"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3048"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001620000000000000000"></a><a name="app-ii"></a>
+<br>
+Chapter 2
+</h1><dl>
+<dt><strong><a href="node17.html#ex-ii-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-i"></a>2.1</strong></dt>
+<dd><code>INT minus thirty five = -35</code>
+</dd>
+<dt><strong><a href="node17.html#ex-ii-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-ii"></a>2.2</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>1</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>1.0</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>5.0</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>0</code>
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd><code>5</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node17.html#ex-ii-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-iii"></a>2.3</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>6</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>-6</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>13.5</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>4.5</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node18.html#ex-ii-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-iv"></a>2.4</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>5</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>-45.0</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>-61</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node19.html#ex-ii-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-v"></a>2.5</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>20</code> <code>INT</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>1</code> <code>INT</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>1.25</code> <code>REAL</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>1</code> <code>INT</code>
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd><code>17.0</code> <code>REAL</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node19.html#ex-ii-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-vi"></a>2.6</strong></dt>
+<dd>Your answer should be something like this:-
+<pre>
+   PROGRAM ex2 6 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(-7 MOD 3);
+      print( 7 MOD -3);
+      print(-7 MOD -3)
+   END
+   FINISH
+</pre>
+
+This will display
+<pre>
+         +2          +1          +2
+</pre>
+on your screen.
+</dd>
+<dt><strong><a href="node19.html#ex-ii-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-vii"></a>2.7</strong></dt>
+<dd><code>REAL two pi = 2 * pi</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node20.html#ex-ii-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-viii"></a>2.8</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>4</code> <code>INT</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>3.25</code> <code>REAL</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>12</code> <code>INT</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node23.html#ex-ii-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-ix"></a>2.9</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>-3</code> <code>INT</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>-9</code> <code>REAL</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>2.0</code>
+<code>REAL</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node23.html#ex-ii-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-x"></a>2.10</strong></dt>
+<dd><code>1.5</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node27.html#ex-ii-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-xi"></a>2.11</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>5</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>2</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>345</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>32</code>
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd><code>"1"</code>
+</dd>
+<dt><strong>(f)</strong></dt>
+<dd><code>8</code>
+</dd>
+<dt><strong>(g)</strong></dt>
+<dd><code>0.0</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node27.html#ex-ii-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-xii"></a>2.12</strong></dt>
+<dd>The first <code>print</code> phrase
+displays
+<pre>
+   $0.0000000000000000$
+</pre>
+
+(16 zeros) and the second displays <code>+infinity</code>.
+</dd>
+<dt><strong><a href="node27.html#ex-ii-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-xiii"></a>2.13</strong></dt>
+<dd>The compiler detects
+the error and rejects it.
+</dd>
+<dt><strong><a href="node27.html#ex-ii-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ii-xiv"></a>2.14</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>The brackets should be replaced with
+parentheses.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>There are more opening than
+closing parentheses. The first opening parenthesis should be deleted.
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>The operator <code>ROUND</code> has not been
+declared to use an operand with mode <code>CHAR</code>.
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd>The operator <code>ENTIER</code> has
+not been declared for use with an operand with mode <code>INT</code>.
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3049"
+  href="node137.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3043"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3037"
+  href="node135.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3045"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3047"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3050"
+  href="node137.html">Chapter 3</a>
+<b> Up:</b> <a name="tex2html3044"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3038"
+  href="node135.html">Chapter 1</a>
+ &nbsp; <b>  <a name="tex2html3046"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3048"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

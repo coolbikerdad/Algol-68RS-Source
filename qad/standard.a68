@@ -1,0 +1,239 @@
+DECS standard CONTEXT VOID
+USE
+   transput, spconvert, spplain, spops, spaliens, spmodes:
+
+COMMENT
+   $Log: standard.a68,v $
+   Revision 1.7  2004-11-07 16:48:42  sian
+   Removed PLUS, MINUS, TIMES
+
+   Revision 1.6  2003/06/10 14:32:26  sian
+   Added envp to the KEEP list in transput and standard
+
+   Revision 1.5  2003/04/23 08:57:34  sian
+   Debian release 1.5
+
+   Revision 1.4  2002/06/06 12:45:16  sian
+   Reset of nameseed. argc and argv now available after open(...arg channel)
+
+   Revision 1.3  2001/09/27 13:06:05  sian
+   Partial conversion to new package
+
+   Revision 1.2  2001/06/18 11:04:27  sian
+   1. Replaced non-standard hexadecimal string denotations with REPR n.
+   2. Added code to resolve symbolic Internet addresses.
+   3. Replaced the temporary file generation in create.
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.2  2000/07/05 14:56:00  sian
+   Ready for release 0.1.0
+
+   Revision 1.1  2000/01/10 05:56:26  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   This module draws together all the declarations in the QAD
+   standard prelude. It does not contain any code.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+SKIP
+KEEP
+#spmodes#
+STRING, STR, RVC,
+CSTR, CPTR, CCHARPTR, CINTPTR, CCHARPTRPTR, GCPARAM,
+PDESC, VDESC,
+BUFFER,
+CHANNEL, FILE,
+SIMPLIN, SIMPLOUT,
+
+#spaliens#
+null c charptr, max abs char, 
+max int, short max int, short short max int,
+infinity, pi,
+
+short real precision, short real width, short small real,
+short min exp, short max exp,
+real precision, real width, small real, min exp, max exp,
+
+erange err,
+sqrt, exp, ln, log, cos, sin, tan, arccos, arcsin, arctan,
+
+sighup,sigint,sigquit,sigill,sigtrap,sigabrt,sigbus,
+sigfpe,sigkill,sigusr1,sigsegv,sigusr2,sigpipe,
+sigalrm,sigterm,sigstkflt,sigchld,sigcont,sigstop,
+sigtstp,sigttin,sigttou,sigurg,sigxcpu,sigxfsz,
+sigvtalrm,sigprof,sigwinch,sigio,sigpwr,
+
+gc_param, garbage_collect,
+always collect, always grow heap, default policy,
+
+bytes per bits, errno,
+af unix, af inet,
+
+ansi raise,     ansi signal,      ansi strtod,
+
+bsd accept,     bsd bind,         bsd chmod,
+bsd connect,    bsd fchmod,       bsd inet aton,
+bsd is a tty,   bsd listen,       bsd shutdown,
+bsd socket,     bsd mkstemp,      bsd real snprintf,
+
+iso at exit,
+
+linux on exit,
+linux tc get attr,                linux tc set attr,
+
+posix seek cur,   posix seek end, posix seek set,
+posix strerror,
+
+posix close,    posix creat,      posix exit,
+posix getenv,   posix getpid,     posix lseek,
+posix open,     posix read,       posix rename,
+posix strlen,   posix time,       posix unlink,
+posix write,
+
+fe to nearest, fe downward,
+fe set round, fe get round, lrint,
+
+#spops#
+TOCPTR(INT), TOCSTR(CPTR),
+nil func ptr,
+TOVDESC(STR), TOVBDESC(VECTOR[]BITS), TOVIDESC(VECTOR[]INT),
+TORPDESC(REF PROC VOID), TOPDESC(PROC VOID), TOPDESC(PROC(INT)VOID),
+TOPDESC(PROC(INT,CPTR)VOID), TOPDESC(PROC(INT,RVC)VOID),
+
+VALID(REAL), **(COMPL,INT), &*(REAL,INT),
+MAKERVC(CHAR),          MAKERVC(STR), MAKERVC([]CHAR),
+CSTRTORVC(CSTR),        VCTOCHARPTR(STR),
+VBTOCPTR(VECTOR[]BITS), VITOINTPTR(VECTOR[]INT),
+CSTRTOCCHARPTR(CSTR),   CCHARPTRTOCSTR(CCHARPTR),
+STRTOCSTR(STR),
+
+FLAT(REAL), FLAT(SHORT REAL), FLAT (STRUCT 8 CHAR), FLAT(STRUCT 4 CHAR),
+
+FLATB(LONG BITS), FLATB(BITS), FLATB(SHORT BITS), FLATB(SHORT SHORT BITS),
+FLATB(STRUCT 8 CHAR), FLATB(STRUCT 4 CHAR),
+FLATB(STRUCT 2 CHAR), FLATB(STRUCT 1 CHAR),
+
+FLATR(REAL),          FLATR(STRUCT 2 BITS),
+FLATT(LONG BITS),     FLATT(STRUCT 2 BITS),
+
+FLATRVR(RVC),           FLATRVSR(RVC),
+FLATRVLB(RVC),          FLATRVB(RVC), FLATRVSB(RVC), FLATRVSSB(RVC),
+Z(STR),                 CPTRTORVC(CPTR),
+
+ROUND(REAL), ENTIER(REAL),
+
+MIN(SHORT SHORT INT,SHORT SHORT INT),
+MIN(SHORT INT,SHORT INT), MIN(INT,INT), MIN(LONG INT,LONG INT),
+MIN(REAL,INT), MIN(INT,REAL), MIN(REAL,REAL), MIN(SHORT REAL,SHORT REAL),
+
+MAX(SHORT SHORT INT,SHORT SHORT INT),
+MAX(SHORT INT,SHORT INT), MAX(INT,INT), MAX(LONG INT,LONG INT),
+MAX(REAL,INT), MAX(INT,REAL), MAX(REAL,REAL), MAX(SHORT REAL,SHORT REAL),
+
+ELEM(INT), ELEM(INT,LONG BITS),
+ELEM(INT,SHORT BITS), ELEM(INT,SHORT SHORT BITS),
+HEX(LONG BITS), HEX(BITS), HEX(SHORT BITS), HEX(SHORT SHORT BITS),
+
+#spplain#
+#Decs#
+int lengths,                 int shorths,
+real lengths,                real shorths,
+bits lengths,                bits shorths,
+bytes lengths,               bytes shorths,
+
+long max int,
+
+long int width,  int width,  short int width,  short short int width,
+long bits width, bits width, short bits width, short short bits width,
+bytes width,
+
+char bin bytes,             bool bin bytes,
+short short int bin bytes,  short int bin bytes,
+int bin bytes,              long int bin bytes,
+short short bits bin bytes, short bits bin bytes,
+bits bin bytes,             long bits bin bytes,
+real bin bytes,             short real bin bytes,
+compl bin bytes,            short compl bin bytes,
+
+blank, error char,          null character,  nul ch,
+flip, flop,
+cr, lf, ff, tab ch, esc, eof char,
+
+min real,                   short min real,
+max real,                   short max real,
+exp width,                  short exp width,
+
+short pi, log2,
+
+#PROCs#
+short sin,
+short cos,
+short tan,
+short arcsin,
+short arccos,
+short arctan,
+short sqrt,
+short ln,
+short log,
+short exp,
+
+last random,                long last random,
+next random,                random,             short random,
+long random int,            random int,
+short random int,           short short random int,
+
+#spconvert#
+char in string, whole, fixed, float,
+
+#transput#
+prelude, argc, argv, envp,
+
+set_gc_params,             get_gc_param,
+disable_garbage_collector, enable_garbage_collector,
+exit,  at exit,  on exit,  stop,
+on signal,
+
+long bits pack, bits pack, short bits pack, short short bits pack,
+error text,
+physical file end not mended,
+logical file end not mended,
+stand in redirected,
+environment string unset,
+environment string estab err,
+estab invalid parameters,
+open invalid parameters,
+no program args,
+value error not mended,
+
+set possible, get possible, put possible, bin possible, reidf possible,
+idf, reidf, current pos, logical end, set flush after put,
+
+on logical file end, on physical file end,
+on value error, on char error,
+make term,
+
+establish, open, create, close, scratch, lock,
+reset, set,
+no file end, ignore value error, ignore char error,
+
+stand in, stand out, stand error, stand back,
+kbd channel, arg channel, env channel, mem channel,
+accept, client socket channel, server socket channel,
+stand in channel, stand out channel, stand back channel,
+
+file buffer, flush buffer,
+
+space, backspace, skip terminators, newline, newpage,
+get, put, read, print, write,
+get bin, put bin, read bin, write bin,
+
+stand in book, stand out book, stand back book
+
+FINISH

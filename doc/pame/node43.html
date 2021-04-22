@@ -1,0 +1,295 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Relational operators</title>
+<meta name="description" content="relational operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node44.html">
+<link rel="previous" href="node42.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node44.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1329"
+  href="node44.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1323"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1317"
+  href="node42.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1325"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1327"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1330"
+  href="node44.html">Compound Boolean formul&#230;</a>
+<b> Up:</b> <a name="tex2html1324"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1318"
+  href="node42.html">Boolean operators</a>
+ &nbsp; <b>  <a name="tex2html1326"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1328"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1331"
+  href="node43.html#section00631000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00630000000000000000"></a><a name="choice-relops"></a>
+Relational operators</h1>
+
+<p>Values of modes <code>INT</code>, <code>REAL</code>,
+<code>CHAR</code> and <code>[]CHAR</code> can be compared with each
+other.  The expression</p>
+
+<pre>
+   3 = 1+2
+</pre>
+
+<p>yields <code>TRUE</code>.  Similarly,</p>
+
+<pre>
+   1+1=1
+</pre>
+
+<p>yields <code>FALSE</code>.  The equals symbol <tt>=</tt><a name="2451"></a> can also be written
+<code>EQ</code>. Likewise, the formula</p>
+
+<pre>
+   35.0 EQ 3.5e1
+</pre>
+
+<p>should also yield <code>TRUE</code>, but you should be chary of
+comparing two <code>REAL</code>s for equality or inequality because
+the means of transforming the denotations into binary values may yield
+values which differ slightly.  The operator is also defined for both
+operands being <code>CHAR</code> or <code>[]CHAR</code>.  In the
+latter case, the two multiples must have the same number of elements,
+and corresponding elements must be equal if the operator is to yield
+<code>TRUE</code>.  Thus</p>
+
+<pre>
+   "a" = "abc"
+</pre>
+
+<p>yields <code>FALSE</code>. Notice that the bounds do not have to be
+the same.  So <code>a</code> and <code>b</code> declared as</p>
+
+<pre>
+   []CHAR a = "Dodo" [@0],
+          b = "Dodo"
+</pre>
+
+<p>yield <code>TRUE</code> when compared with the equals operator.
+Because the rowing coercion<a name="2132"></a> is not allowed in
+formul&#230;, the operator is declared in the standard
+prelude<a name="2134"></a> for mixed modes (such as <code>REAL</code>
+and <code>INT</code>).</p>
+
+<p>The converse of <code>=</code> is <tt>/=</tt><a name="2452"></a>
+(not equal). So the formula</p>
+
+<pre>
+   3 /= 2
+</pre>
+
+<p>yields <code>TRUE</code>, and</p>
+
+<pre>
+   "r" /= "r"
+</pre>
+
+<p>yields <code>FALSE</code>.  An alternative representation of
+<code>/=</code> is <tt>NE</tt><a name="2453"></a>.  The
+priority<a name="2143"></a> of both <code>=</code> and <code>/=</code>
+is&nbsp;4.  The operands of <code>=</code> and <code>/=</code> can be
+any combination of values of mode <code>INT</code> and
+<code>REAL</code>.  No widening<a name="2144"></a> takes place, the
+operators being declared for the mixed modes<a name="2145"></a>.</p>
+
+<p>The ordering operators <tt>&lt;</tt><a name="2454"></a>,
+<tt>&gt;</tt><a name="2455"></a>, <tt>&lt;=</tt><a name="2456"></a>
+and <tt>&gt;=</tt><a name="2457"></a> can be used to compare values of
+modes <code>INT</code>, <code>REAL</code>, <code>CHAR</code> and
+<code>[]CHAR</code> in the same way as <code>=</code> and
+<code>/=</code>.  They are read &ldquo;less than&rdquo;,
+&ldquo;greater than&rdquo;, &ldquo;less than or equal to&rdquo; and
+&ldquo;greater than or equal to&rdquo; respectively. The formula</p>
+
+<pre>
+   3 &lt; 3.1
+</pre>
+
+<p>yields <code>TRUE</code>.</p>
+
+<p>If the identifiers <code>b</code> and <code>c</code> are declared
+as having mode <code>CHAR</code>, then the formula</p>
+
+<pre>
+   c &lt; b
+</pre>
+
+<p>will yield the same value as</p>
+
+<pre>
+   ABS c &lt; ABS b
+</pre>
+
+<p>and similarly for the operator <code>&gt;</code>. The operators <code>&lt;=</code> and
+<code>&gt;=</code> can both be used with equal values.  For
+example,</p>
+
+<pre>
+   24 &lt;= 24.0
+</pre>
+
+<p>yields <code>TRUE</code>.</p>
+
+<p>For values of mode <code>[]CHAR</code>, the formula</p>
+
+<pre>
+   "abcd" &gt; "abcc"
+</pre>
+
+<p>yields <code>TRUE</code>. Two values of mode <code>[]CHAR</code> of
+different length can be compared. For example, both</p>
+
+<pre>
+   "aaa" &lt;= "aaab"
+</pre>
+
+and
+<pre>
+   "aaa" &lt;= "aaaa"
+</pre>
+
+<p>yield <code>TRUE</code>. Alternative representations for these
+operators are <code>LT</code> and <code>GT</code> for
+<code>&lt;</code> and <code>&gt;</code> and <code>LE</code> and
+<code>GE</code> for <code>&lt;=</code> and <code>&gt;=</code>
+respectively. The priority of all four ordering
+operators<a name="2168"></a> is&nbsp;5.</p>
+
+<p>Note that apart from values of mode <code>[]CHAR</code>, no
+operators are defined in the standard prelude for multiples.</p>
+
+<hr>
+<h2><a name="section00631000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>4.1<a name="ex-iv-i"></a>
+<dd>What is the value of each of the following formul&#230;? Ans<a href="node138.html#ans-iv-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>ABS NOT TRUE</code>  
+<p>
+<dt>(b)
+<dd><code>3.4 + ABS TRUE</code>  
+<p>
+<dt>(c)
+<dd><code>-3.5 &lt;= -13.4</code>  
+<p>
+<dt>(d)
+<dd><code>2e10 &gt;= 3e9</code>  
+<p>
+<dt>(e)
+<dd><code>"abcd" &gt; "abc"</code>  
+<p>
+</dd>
+</dl>
+<dt>4.2<a name="ex-iv-ii"></a>
+<dd>In the context of these declarations
+<pre>
+   []INT i1 = (2,3,5,7);
+   []CHAR t = "uvwxyz"
+</pre>
+
+what is the value of each of the following? Ans<a href="node138.html#ans-iv-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>UPB i1 &lt; UPB t</code>  
+<p>
+<dt>(b)
+<dd><code>t[2:4] &gt;= t[2:3]</code>  
+<p>
+<dt>(c)
+<dd><code>i1[3] &lt; UPB t[2:]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1329"
+  href="node44.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1323"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1317"
+  href="node42.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1325"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1327"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1330"
+  href="node44.html">Compound Boolean formul&#230;</a>
+<b> Up:</b> <a name="tex2html1324"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1318"
+  href="node42.html">Boolean operators</a>
+ &nbsp; <b>  <a name="tex2html1326"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1328"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Routines</title>
+<meta name="description" content="routines">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node62.html">
+<link rel="previous" href="node60.html">
+<link rel="up" href="node60.html">
+<link rel="next" href="node62.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1653"
+  href="node62.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1647"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1641"
+  href="node60.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1649"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1651"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1654"
+  href="node62.html">Operators</a>
+<b> Up:</b> <a name="tex2html1648"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1642"
+  href="node60.html">Routines</a>
+ &nbsp; <b>  <a name="tex2html1650"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1652"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1655"
+  href="node61.html#section00811000000000000000">Exercises</a>
+<li><a name="tex2html1656"
+  href="node61.html#section00812000000000000000">Routine modes</a>
+<li><a name="tex2html1657"
+  href="node61.html#section00813000000000000000">Multiples as parameters</a>
+<li><a name="tex2html1658"
+  href="node61.html#section00814000000000000000">Names as parameters</a>
+<li><a name="tex2html1659"
+  href="node61.html#section00815000000000000000">The mode <tt>VOID</tt></a>
+<li><a name="tex2html1660"
+  href="node61.html#section00816000000000000000">Routines yielding names</a>
+<li><a name="tex2html1661"
+  href="node61.html#section00817000000000000000">Exercises</a>
+<li><a name="tex2html1662"
+  href="node61.html#section00818000000000000000">Parameterless routines</a>
+<li><a name="tex2html1663"
+  href="node61.html#section00819000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00810000000000000000"></a><a name="rout-rout"></a>
+Routines</h1>
+
+<p>A <b>routine</b><a name="3561"></a> is a number of encapsulated
+actions which can be elaborated in their entirety in other parts of
+the program. A routine has a well-defined mode. The value of a routine
+is expressed as a <b>routine denotation</b><a name="3563"></a>.  Here
+is an example:</p>
+
+<pre>
+   ([]INT a)INT:
+   (
+      INT sum:=0;
+   
+      FOR i FROM LWB a TO UPB a DO sum+:=i OD;
+      sum
+   )
+</pre>
+
+<p>In this example, the <b>header</b><a name="3567"></a>
+<a name="3568"></a>of the routine is given by</p>
+
+<pre>
+   ([]INT a)INT:
+</pre>
+
+<p>which could be read as &ldquo;with (parameter) row of
+<code>INT</code> <code>a</code> yielding <code>INT</code>&rdquo;.  The
+mode<a name="3571"></a> of the routine is given by the header, less
+the colon and any identifiers. So the mode of the above routine is</p>
+
+<pre>
+   ([]INT)INT
+</pre>
+
+<p>We say that the routine takes one <b>parameter</b> of mode
+<code>[]INT</code> and yields<a name="3575"></a> a value of mode
+<code>INT</code>.</p>
+
+<p>As you can see from the <b>body</b><a name="3577"></a> of the
+routine (everything except the header), the routine yields the sum of
+the individual elements of the parameter<a name="3578"></a>.  The body of a routine
+is a unit<a name="3579"></a>. In this case, it is an enclosed
+clause<a name="3580"></a>.</p>
+
+<p>We have met parameters before in a different guise. The formal
+definition of an identity declaration<a name="3581"></a> is</p>
+
+<div align="center" class="mathdisplay">
+&lt;<tt>formal-mode-param</tt> &gt; = &lt; <tt>actual-mode-param</tt> &gt;
+</div>
+
+<p>The formal-mode-param<a name="3583"></a> consists of an
+identifier preceded by a formal-mode-declarer<a name="3584"></a> (referred to in
+the last chapter as a formal-declarer<a name="3585"></a>). An
+actual-mode-param<a name="3586"></a> is a piece of program which
+yields an internal object which henceforth is identified by the
+identifier<a name="3587"></a>. For example, in the identity
+declaration</p>
+
+<pre>
+   []INT a = (2,3,5,7,11)
+</pre>
+
+<p><code>[]INT a</code> is the formal (mode) parameter,
+<code>[]INT</code> is the formal (mode) declarer, the identifier is
+<code>a</code>, and the actual (mode) parameter is the
+row-display<a name="3590"></a> <code>(2,3,5,7,11)</code>.  The word
+&ldquo;mode&rdquo; was placed in parentheses because it is common
+usage to omit it.  Henceforth, we shall talk about formal parameters
+and actual parameters.</p>
+
+<p>In the header of the above routine, <code>a</code> is declared as
+a formal parameter.  The mode of <code>a</code> is <code>[]INT</code>.
+At the time the routine is declared, <code>a</code> does not identify
+a value.  That is why it is called a &ldquo;formal&rdquo; parameter.
+It is only when the routine is used that <code>a</code> will identify
+a value.  We'll come to that later.  Any identifier may be used for
+the formal parameter of a routine.</p>
+
+<p>In the body of the routine, <code>a</code> is treated as though it
+has a value. Since its mode is <code>[]INT</code>, it is a multiple
+and so it can be sliced to access its individual elements.</p>
+
+<p>The body of the routine written above consists of an enclosed
+clause<a name="3591"></a>. In this case, the enclosure consists of the
+parentheses <code>(</code> and <code>)</code>, but it might well have
+been written using <tt>BEGIN</tt><a name="4188"></a> and
+<tt>END</tt><a name="4189"></a>. Inside the enclosure is a serial
+clause<a name="3596"></a> consisting of three phrases. The first is a
+declaration with an initial assignment<a name="3597"></a>.  Although
+an assignment yields a name, an identity declaration with an initial
+assignment, even an abbreviated one, does not.  This is the only
+exception.</p>
+
+<p>The second phrase is a <code>FOR</code> loop
+clause<a name="3598"></a> which yields <code>VOID</code> (see
+section&nbsp;<a href="#rout-void">6.1.4</a>).  The third phrase
+consists of the identifier <code>sum</code> which yields its name of
+mode <code>REF INT</code>.</p>
+
+<p>Now, according to the header of the routine, the routine must
+yield a value of mode <code>INT</code>.  The
+context<a name="3600"></a> of the body of a routine is strong.
+<a name="rout-cont"></a>Although a serial clause cannot be coerced,
+the context of the serial clause is passed to the last phrase of that
+clause.  In this case, we have a value of mode <code>REF INT</code>
+which, in a strong context<a name="3602"></a>, can be coerced to a
+value of mode <code>INT</code> by
+dereferencing<a name="3603"></a>.</p>
+
+<hr>
+<h2><a name="section00811000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.1<a name="ex-vi-i"></a>
+<dd>What is the formal definition of an identity declaration?
+ Ans<a href="node140.html#ans-vi-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.2<a name="ex-vi-ii"></a>
+<dd>Why is the parameter of a routine denotation called a formal
+parameter?  Ans<a href="node140.html#ans-vi-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.3<a name="ex-vi-iii"></a>
+<dd>In the routine denotation
+<pre>
+   (REAL r)INT: ENTIER r;
+</pre> Ans<a href="node140.html#ans-vi-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>What is the mode of the formal parameter?  
+<p>
+<dt>(b)
+<dd>What is the mode of the value yielded?  
+<p>
+<dt>(c)
+<dd>What is the context of the body of the routine?  
+<p>
+<dt>(d)
+<dd>If the value of <code>r</code> were <code>-4.6</code>, what value
+would the routine yield?  
+<p>
+</dd>
+</dl>
+<dt>6.4<a name="ex-vi-iv"></a>
+<dd>Write a routine which takes a parameter of mode <code>[]INT</code> and
+yields a value of mode <code>[]CHAR</code>, where each element of the result
+yields the character equivalent of the corresponding element in the
+parameter (use <code>FOR</code> and <code>REPR</code>).  Ans<a href="node140.html#ans-vi-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00812000000000000000"></a><a name="rout-modes"></a>
+Routine modes</h2>
+
+<p>In general, a routine may have any number of parameters, including
+none, as we shall see. The mode of the parameters may be any mode, and
+the value yielded may be any mode. The modes written for the
+parameters and the yield are always formal declarers, so no bounds are
+used if the modes of the parameters or yield involve multiples.</p>
+
+<p>Here is a possible header of a more complicated
+routine<a name="3626"></a>:</p>
+
+<pre>
+   (INT i,REF[,]CHAR c,REAL a,REAL b)BOOL:
+</pre>
+
+<p>A minor abbreviation would be possible in this case. The</p>
+
+<pre>
+   REAL a,REAL b
+</pre>
+
+<p>could be written <code>REAL a,b</code> giving</p>
+
+<pre>
+   (INT i,REF[,]CHAR c,REAL a,b)BOOL:
+</pre>
+
+<p>Notice that the parameters are separated by commas.  This means
+that when the routine is used, the actual parameters are evaluated
+collaterally<a name="3633"></a>.  We shall see later that this is
+important when we consider <b>side-effects</b><a name="3635"></a>.</p>
+
+<p>The order in which parameters are written in the header is of no
+particular significance.</p>
+
+<p>The mode of the routine whose header is given above is</p>
+
+<pre>
+   (INT,REF[,]CHAR,REAL,REAL)BOOL
+</pre>
+
+<p>(&ldquo;with int ref row row of car real real yielding
+bool&rdquo;).</p>
+
+<h2><a name="section00813000000000000000"></a><a name="rout-multpar"></a>
+Multiples as parameters</h2>
+
+<p>Since a formal parameter<a name="3641"></a> which is a multiple
+has no bounds written in it, any multiple having that mode could be
+used as the actual parameter<a name="3642"></a>. This means that
+if you need to know the bounds of the actual multiple, you will need to
+use the bounds interrogation<a name="3643"></a> operators. For
+example, here is a routine denotation<a name="3644"></a> which
+finds the smallest element in its multiple parameter:</p>
+
+<pre>
+([]INT a)INT:
+(
+   INT min:=a[LWB a];
+
+   FOR i FROM LWB a TO UPB a
+   DO
+       min:=min MIN a[i]
+   OD;
+   min
+)
+</pre>
+
+<h2><a name="section00814000000000000000"></a><a name="rout-namepar"></a>
+Names as parameters</h2>
+
+<p>The second parameter in the more complicated routine header given
+in section <a href="#rout-modes">6.1.1</a> had the mode
+<code>REF[,]CHAR</code>. When a parameter is a name, the body of the
+routine can have an assignment which makes the name refer to a new
+value. For example, here is a routine denotation which assigns a value
+to its parameter:</p>
+
+<pre>
+   (REF INT a)INT:  a:=2
+</pre>
+
+<p>Notice that the unit<a name="3653"></a> in this case is a single
+phrase<a name="3654"></a> and so does not need to be enclosed. Here is
+a routine denotation which has two parameters and which yields a value
+of mode <code>BOOL</code>:</p>
+
+<pre>
+   (REF[]CHAR rc,[]CHAR c)BOOL:
+   IF UPB rc - LWB rc /= UPB c - LWB c
+   THEN FALSE
+   ELSE rc[:]:=c[:];  TRUE
+   FI
+</pre>
+
+<p>Here, the body is a conditional clause<a name="3657"></a> which is
+another kind of enclosed clause<a name="3658"></a>. Note the use of
+trimmers to ensure that the bounds<a name="3659"></a> of the multiples
+on each side of the assignment match.</p>
+
+<p>If a flexible name could be used as an actual parameter, then the
+mode of the formal parameter must include the mode constructor
+<tt>FLEX</tt><a name="4190"></a>. For example,</p>
+
+<pre>
+   (REF FLEX[]CHAR s)INT:
+   (CO Code to compute the number of words CO)
+</pre>
+
+<p>Of course, in this example, the mode of <code>s</code> could have been
+given as <code>REF STRING</code>.</p>
+
+<h2><a name="section00815000000000000000"></a><a name="rout-void"></a>
+The mode <tt>VOID</tt></h2>
+
+<p>A routine must yield a value of some mode, but it is possible to
+throw away that value using the voiding<a name="3668"></a> coercion.
+The mode <tt>VOID</tt><a name="4192"></a> has a single value whose
+denotation is <tt>EMPTY</tt><a name="4193"></a>. In practice, because
+the context of the yield of a routine is strong, use of
+<code>EMPTY</code> is usually unnecessary (but see section
+<a href="node76.html#union-proc">8.2</a>). Here is another way of
+writing the last routine in the previous
+section<a name="4194"></a>:</p>
+
+<pre>
+   (REF[]CHAR rc,[]CHAR c)VOID:
+   IF UPB rc - LWB rc /= UPB c - LWB c
+   THEN
+      print(("Bounds mismatch",newline));
+      stop
+   ELSE rc[:]:=c[:]
+   FI
+</pre>
+
+<p>This version produces an emergency error message and terminates the
+program prematurely (see section <a href="node131.html#stan-stop">4</a> for details of
+<code>stop</code>).  Since the yield is <code>VOID</code>, any value the
+conditional clause might yield will be thrown away. A <code>FOR</code> loop
+yields <code>EMPTY</code> and a semicolon voids the previous unit.
+Declarations yield no value, not even <code>EMPTY</code>.</p>
+
+<h2><a name="section00816000000000000000"></a><a name="rout-yname"></a>
+Routines yielding names</h2>
+
+<p>Since the yield<a name="3681"></a> of a routine can be a value of
+any mode, a routine can yield a name<a name="3682"></a>, but there is
+a restriction: the name yielded must have a scope larger than the body
+of the routine.  This means that any names declared to be
+<span class="textit">local</span>, cannot be passed from the routine.
+Names which exist outwith the scope of the routine can be passed via a
+parameter and yielded by the routine. For example, here is a routine
+denotation which yields the name passed by such a parameter:</p>
+
+<pre>
+   (REF INT a)REF INT:  a:=2
+</pre>
+
+<p>Compare this routine with the first routine denotation in
+section&nbsp;<a href="#rout-namepar">6.1.3</a>.</p>
+
+<p>In chapter 5, we said that a new name can be declared using the
+generator <code>LOC</code>. For example, here is an identity
+declaration for a name:</p>
+
+<pre>
+   REF INT x = LOC INT
+</pre>
+
+<p>The range<a name="3689"></a> of the identifier <code>x</code> is
+the smallest enclosed clause in which it has been declared.  The
+scope<a name="3690"></a> of the value it identifies is limited to that
+smallest enclosed clause because the generator used is the <b>local
+generator</b><a name="3692"></a> <tt>LOC</tt><a name="4195"></a>. Here
+is a routine which tries to yield a name declared within its body:</p>
+
+<pre>
+   (INT a)REF INT:
+     (REF INT x = LOC INT:=a;  x) #wrong!#
+</pre>
+
+<p>This routine is wrong because the scope of the name identified by
+<code>x</code> is limited to the body of the routine. Note, however, the
+a68toc<a name="3697"></a> Algol&nbsp;68 compiler provides neither
+compile-time nor run-time scope checking<a name="3698"></a> so that it is possible
+to yield a locally declared name. However, the rest of the program
+would be undefined--you might or might not get meaningful things
+happening.  When scopes are checked, this sort of error cannot
+occur.</p>
+
+<p>However, there is a way of yielding a name declared in a routine.
+This is achieved using a global generator<a name="3699"></a>. If
+<code>x</code> above were declared as<a name="4196"></a></p>
+
+<pre>
+   REF INT x = HEAP INT
+</pre>
+
+<p>or, in abbreviated form, <code>HEAP INT x</code>, then the scope of
+the name identified by <code>x</code> would be from its declaration to
+the end of the program even though the range of the <i>identifier</i>
+<code>x</code> is limited to the body of the routine:</p>
+
+<pre>
+   (INT a)REF INT:  (HEAP INT x:=a;  x)
+</pre>
+
+<p>Notice that the mode of the yield is still <code>REF INT</code>.
+All that has changed is the scope of the value yielded. Of course, you
+would not be able to identify the yielded name using <code>x</code>,
+but we'll come to that problem when we deal with how routines are
+used. Notice that the global generator is written <code>HEAP</code>
+instead of <code>GLOB</code> as you might expect. This is because
+global generators use a different method of allocating storage for
+names with global scope and, historically, this different method is
+recorded in the mode constructor.</p>
+
+<p>The difference between range and scope is that identifiers have
+range, but values have scope. Furthermore,
+denotations<a name="3706"></a> have global scope.</p>
+
+<hr>
+<h2><a name="section00817000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.5<a name="ex-vi-v"></a>
+<dd>Write the header of a routine with a parameter of mode
+<code>REF REAL</code> and which yields a value of mode <code>REAL</code>.
+ Ans<a href="node140.html#ans-vi-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.6<a name="ex-vi-vi"></a>
+<dd>Write the header of a routine which takes two parameters each of
+which is a name of mode <code>REF CHAR</code>, and yields a name of mode
+<code>REF CHAR</code>.  Ans<a href="node140.html#ans-vi-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.7<a name="ex-vi-vii"></a>
+<dd>Write a routine which takes a parameter of mode <code>STRING</code> and
+yields a value of mode <code>[]STRING</code> consisting of the words of the
+parameter (use your answer to exercise <a href="node139.html#name-ex5-12-3">A</a>).
+ Ans<a href="node140.html#ans-vi-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<hr>
+
+<h2><a name="section00818000000000000000"></a><a name="rout-nopar"></a>
+Parameterless routines</h2>
+
+<p>A routine can have no parameters. In the header, the parentheses
+normally enclosing the formal parameter<a name="3722"></a> <b>list</b>
+(either one parameter, or more than one separated by commas) are also
+omitted.  Here is a routine with no parameters and which yields a
+value of mode <code>INT</code>:</p>
+
+<pre>
+   INT: 2*3**4 - ENTIER 36.5
+</pre>
+
+<p>It would be more usual to use identifiers which had been declared in
+some enclosing range. For example,</p>
+
+<pre>
+   INT: 2*a**4 - ENTIER b
+</pre>
+
+<p>Routines which have no parameters and yield no value are fairly
+common.  For example,</p>
+
+<pre>
+   VOID:  print(2)
+</pre>
+
+<p>Strictly speaking, there is one value having the mode
+<tt>VOID</tt><a name="4197"></a>, but there's not a lot you can do
+with it. In practice, <code>VOID</code> routines usually use
+identifiers declared in an enclosing range (they are called
+identifiers global to the routine). For
+example<a name="3732"></a>:</p>
+
+<pre>
+   VOID: (x:=a;  x&lt;=2|print(x)|print("Over 2"))
+</pre>
+
+<p>where the body is an abbreviated conditional clause, and
+<code>x</code> and <code>a</code> have been declared globally with
+appropriate modes.</p>
+
+<p>Assignment of values to names declared
+globally<a name="tex2html20"
+href="footnode.html#foot4198"><sup><span
+class="arabic">7</span>.<span class="arabic">1</span></sup></a> to the
+routine is known as a <b>side-effect</b><a name="3737"></a>. We shall
+deal with side-effects when we describe how routines are used, and we
+shall show why side-effects are undesirable.  If you write
+parameterless routines, it is preferable not to put any assignments to
+globally-declared names in them. In fact, it would be safer to say:
+&ldquo;In a routine, don't assign to names not declared in the routine
+or not provided as parameters&rdquo;.  Side-effects are messy and are
+usually a sign of badly designed programs.  It is better to use a
+parameter (or an extra parameter) using a name, and then assign to
+that name.  This ensures that values can only get into or out of your
+routines via the header, and results in a much cleaner design.
+Cleanly designed programs are easier to write and easier to
+maintain.</p>
+
+<hr>
+<h2><a name="section00819000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.8<a name="ex-vi-viii"></a>
+<dd>Write the header of a routine which yields a value of mode
+<code>REAL</code>, but takes no parameters.  Ans<a href="node140.html#ans-vi-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.9<a name="ex-vi-ix"></a>
+<dd>Write a routine of mode <code>VOID</code> which prints
+<pre>
+   Hi, there
+</pre>
+
+on your screen.  Ans<a href="node140.html#ans-vi-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1653"
+  href="node62.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1647"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1641"
+  href="node60.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1649"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1651"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1654"
+  href="node62.html">Operators</a>
+<b> Up:</b> <a name="tex2html1648"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1642"
+  href="node60.html">Routines</a>
+ &nbsp; <b>  <a name="tex2html1650"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1652"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

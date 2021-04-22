@@ -1,0 +1,182 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node72.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node74.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1865"
+  href="node74.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1859"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1855"
+  href="node72.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1861"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1863"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1866"
+  href="node74.html">Unions</a>
+<b> Up:</b> <a name="tex2html1860"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1856"
+  href="node72.html">Transput of structures</a>
+ &nbsp; <b>  <a name="tex2html1862"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1864"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1867"
+  href="node73.html#section00981000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00980000000000000000"></a><a name="struc-summ"></a>
+Summary</h1>
+
+<p>This chapter has significantly increased the number of different
+modes we can construct.  Structures are constructed using the mode
+constructor <code>STRUCT</code>.  Complicated structures are best
+declared using the mode declaration (using <code>MODE</code>).
+Structures can have any number of fields from one up, and the fields
+can have any mode, including the same modes.  The mode
+<code>COMPL</code> has been declared in the standard prelude together
+with the necessary operators to manipulate complex numbers.</p>
+
+<p>Structures can contain procedures and multiples and multiples of
+structures can be declared. Although structures containing reference
+modes can be declared, they are covered in chapter 11. Operators
+and procedures which have structure parameters or yield can be
+declared.</p>
+
+<p>Here are some exercises to check what you have learned.</p>
+
+<hr>
+<h2><a name="section00981000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.14<a name="ex-vii-xiv"></a>
+<dd>Write a suitable mode for a football team which contains the
+names of its 11 members, the name of the team (ordinary name, not the
+Algol&nbsp;68 meaning), the number of games played, won and drawn, and the
+number of goals scored for and against.
+ Ans<a href="node141.html#ans-vii-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.15<a name="ex-vii-xv"></a>
+<dd>Given the declaration
+<pre>
+   STRUCT(INT i,[3]REAL r)s
+</pre>
+
+explain why parentheses are needed in the phrase
+<pre>
+   (r OF s)[2]
+</pre>
+Ans<a href="node141.html#ans-vii-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.16<a name="ex-vii-xvi"></a>
+<dd>Given the declaration
+<pre>
+   [3]STRUCT(INT i,REAL r)s
+</pre>
+
+explain why parentheses are not needed in the phrase
+<code>r OF s[2]</code>.   Ans<a href="node141.html#ans-vii-xvi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.17<a name="ex-vii-xvii"></a>
+<dd>Given the declarations
+<pre>
+   MODE S2,
+        S1 = STRUCT([3]CHAR n,
+                    PROC S2 p),
+        S2 = STRUCT([3]CHAR m,
+                    PROC(S1)S2 p);
+   S1 s1;  S2 s2;
+</pre>
+
+what are the modes of each of the following: Ans<a href="node141.html#ans-vii-xvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>p OF s1</code>  
+<p>
+<dt>(b)
+<dd><code>p OF s2</code>  
+<p>
+<dt>(c)
+<dd><code>(n OF s1)[2:]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1865"
+  href="node74.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1859"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1855"
+  href="node72.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1861"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1863"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1866"
+  href="node74.html">Unions</a>
+<b> Up:</b> <a name="tex2html1860"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1856"
+  href="node72.html">Transput of structures</a>
+ &nbsp; <b>  <a name="tex2html1862"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1864"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

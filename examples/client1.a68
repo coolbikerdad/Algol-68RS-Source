@@ -1,0 +1,18 @@
+PROGRAM client1 CONTEXT VOID
+USE standard
+BEGIN
+
+FILE f;
+
+IF INT r=establish(f,"server_socket",client socket channel,af unix,0,1024);
+   r/=0
+THEN put(stand error,("client1: ",error text(r),newline));  exit(r)
+FI;
+
+INT ch:=100;  print(("client putting ",ch,newline)); put bin(f,ch);  print(("client getting",newline)); get bin(f,ch);
+
+print(("from server = ",ch,newline));
+close(f)
+
+END
+FINISH

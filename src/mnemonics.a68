@@ -1,0 +1,609 @@
+DECS  mnemonics  CONTEXT VOID  USE
+*L    usefulops,
+      incimperatives, identifiers:
+
+configinfo A68CONFIG "$Id: mnemonics.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.4 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{--------------------------------------------------------------------------
+
+  DECS     mnemonics
+  KEEPS    imperative mnemonic
+  USE      incimperatives, identifiers
+  used by: shell
+
+  By: Kees Goossens
+  Date: 21/10/86
+
+  Changes from last version:
+
+- proc mode mnemonic has been deleted, mode name (of decs modes) is now
+  called. 
+- when the imperative is oper then param and mode and printed out according
+  to the type of oper.
+- the keep list of this module doesn't contain mode mnemonics anymore.
+
+--------------------------------------------------------------------------}
+
+MODE XBIT = STRUCT( VECTOR [0] CHAR name, BITS value);
+
+[]XBIT control bits =
+(
+    ( "prio",        priobit),
+    ( "exit",        exitbit),
+    ( "semi",        semibit),
+    ( "heap",        heapbit),
+    ( "dec",         decbit),
+    ( "vardec",      vardecbit),
+    ( "compgen",     compgenbit),
+    ( "elifouse",    elifousebit),
+    ( "lab",         labbit),
+    ( "dontpull",    dontpullbit),
+    ( "dyproc",      dyprocbit),
+    ( "dyvardec",    dyvardecbit),
+    ( "dydec",       dydecbit),
+    ( "genproc",     genprocbit),
+    ( "locgen",      locgenbit),
+    ( "locdydec",    locdydecbit)
+);
+
+[]XBIT routine bits =
+(
+    ( "cc",          ccbit),
+    ( "operator",    operatorbit),
+    ( "val",         valbit),
+    ( "hole",        holebit),
+    ( "genproc",     genprocbit),
+    ( "globscope",   globscopebit)
+);
+
+{--------------------------------------------------------------------------
+
+  The  BITS values below are used to filter out bits relevant to the 
+particular context (see 'The RS compiler' B3.7 for example) 
+  Because some bits used by the xroutine and xcontrol (for example) are the
+same this means that the procedure bit mnemonic has to know on which impera-
+tive it is working and therefore a bool indicating which []XBIT is passed to 
+it as well as the BITS value to be 'translated'
+  The values below are all extracted from: The RS compiler B3
+
+--------------------------------------------------------------------------}
+
+BITS mask general   = priobit      OR semibit     OR
+                      decbit       OR vardecbit   OR
+                      labbit       OR exitbit     OR
+                      locgenbit    OR locdydecbit,
+     mask dynamic a = dyprocbit    OR dyvardecbit OR 
+                      dydecbit,
+     mask dynamic b = dontpullbit,
+     mask dynamic c = dontpullbit  OR dyprocbit    OR 
+                      dyvardecbit  OR dydecbit,
+     mask routine   = genprocbit   OR globscopebit OR
+                      valbit,
+     mask special   = elifousebit,
+     mask xroutine  = ccbit        OR operatorbit  OR
+                      valbit       OR holebit      OR
+                      globscopebit OR genprocbit;
+ 
+INT field length = 0 ;  { print in smallest space possible }
+
+{-------------------------------------------------------------------------
+
+  proc:    bit mnemonic
+  by:      Kees Goossens 10/10/86
+
+  purpose: return a VEC[]CHAR containing the mnemonic values of the bits that
+           are set (TRUE) in props. the mnemonic values are taken from 
+           []XBIT (see above). because a bit can have a different mnemonic
+           value depending on which []XBIT is choosen, a bool indicating 
+           which []XBIT to use has to passed to the proc as well.
+  input:   the BITS value to be decoded and a bool indicating which  []XBIT
+           to use: TRUE --> control bits,
+                   FALSE -> routine bits
+  output:  the VEC [] CHAR containing the mnemonic values.
+  calls:   ---
+
+--------------------------------------------------------------------------}
+
+
+PROC	bit mnemonic = (BITS props, BOOL which xbit) VECTOR [] CHAR :
+BEGIN
+	FLEX VECTOR [0] CHAR output := "" ;
+	[]XBIT which imperative = ( which xbit | control bits | routine bits );
+    
+	FORALL b IN which imperative
+	DO
+	        IF	( value OF b AND props) /= BIN 0
+	        THEN	output +:= name OF b + ","
+	        FI
+	OD ;
+	IF	output = "" 
+	THEN 	"" 
+	ELSE	{ do not print the trailing semicolon after bits... }
+	        " | bits (" + output [:UPB output -1] + ")"
+	FI
+END ;
+
+PROC	imperative mnemonic = (IMPERATIVE imperative) VECTOR [] CHAR :
+{
+	Delivers a string containing a mnemonic for the imperative
+}
+CASE	imperative  IN
+(PRIMARY p):
+	CASE	p  IN
+	(LOAD l):
+		CASE	l  IN
+		{(GEN g):   }      { for future use of these imperatives }
+		{(CODE c):  }
+		{(FORMAT f):}
+
+		(STRUCT(INT nse) si):
+			"load:nse                  (" +
+			( nse OF si
+			|	"EMPTY fn", "SKIP fn", "NIL fn"
+			|	"ERROR: nse=" +	whole (nse OF si, field length)
+			),
+
+		(INT i):
+			"load:int                  (" +
+			whole (i,field length) + "=""" +
+			id full name (i) + """",
+
+		(BOOL b):
+			"load:bool                 (" + 
+			(b | "TRUE" | "FALSE" ),
+
+		(CHARDENOTATION c):
+			"load:char                 (" + representation OF c,
+
+		(STRUCT(INT labno) sl):
+			"load:labno                (" +
+			whole (labno OF sl, field length) ,
+
+		(NUMBER n):
+			"load:number               (mode" +
+			( mode OF n < 0 
+			| " (of surrounding clause too)="
+			| "="
+			) +
+			whole (ABS mode OF n, field length) + "=" +
+			mode name (ABS mode OF n) + 
+			" | number=" + nu OF n ,
+
+		(ALIENX a):
+			"load:alienx               (mode" + 
+			( mode OF a < 0 
+			| " (of surrounding clause too)="
+			| "="
+			) +
+			whole (ABS mode OF a, field length) + "=" +
+			mode name (ABS mode OF a) + " | string =""" + string OF a + """",
+
+		(NUMERICDENOTATION o):
+			"load:numeric denotation   (mode" +
+			( mode OF o < 0 
+			| " (of surrounding clause too)="
+			| "="
+			) +
+			whole (ABS mode OF o, field length) + "=" +
+			mode name (ABS mode OF o) + " | denotation=" + 
+			lwhole (ABS denotation OF o, field length),
+			{ ABS denotation -> LONG INT is valid for whole}
+
+		(STRINGDENOTATION st): 
+			"load:string denotation    (mode" +
+			( mode OF st < 0 
+			| " (of surrounding clause too)="
+			| "="
+			) +
+			whole (ABS mode OF st, field length) + "=" +
+			mode name (ABS mode OF st) + 
+			" | denotation=""" + denotation OF st + """"
+	OUT	"ERROR: unknown LOAD imperative"
+	ESAC,
+
+	(OPER o):
+	BEGIN
+		PROC standard prelude ops = ( INT op number )VECTOR[]CHAR:
+		CASE	op number  IN
+			"+",     "-",      "UPB",    "LWB",      "ANDTH",
+			"OREL",  "<",      ">",       "<=",      ">=",
+			"=",     "/=",     "*",       "/",       "OVER",
+			"MOD",   "**",     "I",       "SHL",     "SHR",
+			"ELEM",  "PLUSAB", "MINUSAB", "TIMESAB", "OVERAB",
+			"MODAB", "DIVAB",  "IS",      "ISNT",    "AND",
+			"OR",    "PLUSTO", "CYCLE"
+		OUT	"not in standard prelude"
+		ESAC;
+		VECTOR [] CHAR p = whole (param OF o, field length) ;
+		VECTOR [] CHAR m =
+			( mode OF o < 0 
+			| " (of surrounding clause too)=" 
+			| "="
+			) + 
+			whole (ABS mode OF o, field length)
+			+ "=" + mode name (ABS mode OF o) ;
+
+		"oper                      (fn=" +
+		CASE	fn OF o  IN {see OPER.A68}
+		{1}	"statgrab | 1 operand | " +
+			( param OF o = ABS TRUE
+                        | "local generation"
+			| "heap generation"
+			) + m, 
+
+		{2}	"parampack | "+p+" operands | mode of proc"+m,
+
+		{3}	"select | 1 operand | " + p + 
+			"th field | result mode" + m,
+
+		{4}	"copy | 1 operand | result mode" + m,
+
+		{5}	"trim | " + p + " operands | " + 
+                        CASE mode OF o MOD 8 IN
+                            "a:",            ":b",            "a:b", 
+                            "@c",            "a:@c",          ":b@c",
+                            "a:b@c"
+                        OUT "" {8}
+			ESAC +
+			( mode OF o > 7 | " (set LWB)" | "" ),
+
+		{6}	"simple index | " + whole (1 + param OF o,0) +  
+			" operands | " + p + " subscripts | result mode" + m,
+
+		{7}	"trim index | " + whole (1 + param OF o,0) + 
+			" operands | result mode" + m,
+
+		{8}	"dyngrab | 2 operands | result mode" + m,
+
+		{9}	"bound pack | " + p + " operands | result mode" + m,
+
+		{10}	"dyadic op | opnumber=" +
+			whole (param OF o OVER 16, field length) + "=""" +
+			standard prelude ops( param OF o OVER 16 + 1 )
+			+ """ | version=" + 
+			whole (param OF o MOD 16, field length) +
+			" | result mode" + m,
+
+		{11}	"monadic op | opnumber=" +
+			whole (param OF o OVER 16, field length) + "=""" +
+			CASE	param OF o OVER 16 +1  IN
+				"+",   "-",    "UPB",   "LWB",    "NOT",
+				"ABS", "BIN",  "REPR",  "LENG",   "SHORTEN",
+				"ODD", "SIGN", "ROUND", "ENTIER", "RE",
+				"IM",  "ARG",  "CONJ"
+			OUT	"not in standard prelude"
+			ESAC +
+			""" | version=" + 
+			whole (param OF o MOD 16, field length) +
+			" | result mode" + m,
+
+		{12}	"straight | 2 operands" + m + " | mode of original="
+			+ (  param OF o = 1  | "UNION"
+			  |: param OF o = -1 | "VECTOR" 
+			  |: param OF o > 1  | "STRUCT or I-STRUCT"
+			  |  "ARRY of " + whole (-1 -param OF o, field length)
+			     + " dimensions"
+			  ),
+
+		{13}	"prestraight | 1 operand | result mode" + m,
+   
+		{14}	"strindex | 2 operands | result mode" + m,
+
+		{15}	"assign | 2 operands | param="+ p +" | result mode"+ m,
+
+		{16}	"default bound | no operands | result mode"+ m,
+
+		{17}	"deref | result mode"+ m,
+
+		{18}	"call | result mode"+ m +
+			CASE	param OF o +1 IN
+				" | not operator or generator routine",
+				" | invented local space generator", 
+				" | invented heap space generator",
+				" | invented space generator within one",
+				" | user defined or library routine"
+			OUT	"ERROR: unknown PARAM field" + p
+			ESAC,
+
+		{19}	"VOID",
+
+		{20}	"NIL to " + m,
+
+		{21}	"GOTO | procedure to mode" + m, 
+  
+		{22}	"GOTO | coerce to mode" + m,
+
+		{23}	"REAL to COMPL | result mode" + m,
+
+		{24}	"INT to REAL | result mode" + m,
+
+		{25}	"xxib | result mode" + m,
+
+		{26}	"ARRAY to ARRAY | result mode" + m,
+
+		{27}	"VECTOR to ARRAY | result mode" + m, 
+
+		{28}	"I-STRUCT to VECTOR | result mode" + m, 
+
+		{29}	"1 STRUCT | result mode" + m,
+
+		{30}	"unite | non UNION operand to "+ p +"th mode of " + m, 
+
+		{31}	"uniteu | UNION operand to mode" + m,
+
+		{32}	"isarr | coerce to "+ p +" dimensional array"
+			" | result mode" + m,
+
+		{33}	"SKIP to " + m,
+
+		{34}	"to VEC | result mode" + m,
+
+		{35}	"to ARRAY | result mode" + m,
+
+		{36}	"deunite to " + m,
+
+		{37}	"BITS to VEC BOOL | result mode" + m,
+
+		{38}	"vacuum | coerce EMPTY to " + m,
+
+		{39}	"Y TYPE to " + m, 
+
+		{40}	m + "to X TYPE"
+
+		OUT
+			IF	fn OF o = 50
+			THEN	"static generator"
+			ELIF	fn OF o = 51
+			THEN	"format"
+			ELSE	"SPARE"
+			FI
+		ESAC 
+	END,
+
+	(TRANSIDDEC t):
+		"transiddec                (" + 
+		CASE	type OF t IN
+		{1}      "identity declaration",
+		{2}      "variable declaration",
+		{3}      "formal parameter",
+		{4}      "FOR control",
+		{5}      "initialised variable",
+		{6}      "formal conformity identifier",
+		{7}      "FORALL control",
+		{8}      "dummy declaration"
+		OUT	"ERROR: unknown TRANSIDDEC type=" +
+			whole (type OF t, field length) 
+		ESAC +
+		" | name=""" + 
+		name OF t + """ | mode" + 
+		( mode OF t < 0 | " (of surrounding clause too)=" | "=") +
+		whole (ABS mode OF t, field length) + "=" +
+		mode name (ABS mode OF t) + 
+		" | decno=" + whole (decno OF t,field length),
+
+    (ROUTINE r):
+		"routine                   (name=""" + name OF r + 
+		"""" + bit mnemonic (props OF r AND mask xroutine,
+		FALSE {->routine bits}) + " | mode" + 
+		( mode OF r < 0 | " (of surrounding clause too)=" | "=" ) +
+		whole (ABS mode OF r, field length) + "=" +
+		mode name (ABS mode OF r) + 
+
+		{ see B3.3 of 'The RS compiler for ALGOL68' }
+		IF	maxname OF r < 3 
+		THEN	" | proc of unlimited lifetime"
+		ELIF	maxname OF r = 3 
+		THEN 	" | only external id is declared in CONTEXT VOID module"
+		ELSE	" | decno of external id with smallest lifetime=" +
+                        whole (maxname OF r, field length) + "=""" +  
+                        id full name (maxname OF r) + """"
+		FI + " | rdenno=" + 
+		whole (rdenno OF r, field length),
+
+	(WARN w):
+		"warn                      (" +
+		CASE	w OF w  IN
+			"assign",     "ANDTH",  "OREL", "index",
+			"PLUSAB etc", "FORALL", "loop"
+		OUT 	"ERROR: unknown WARN field"
+		ESAC,
+
+	(LABDEC l):
+		"labdec                    (name=""" + 
+		( name OF l IS REF VECTOR [] CHAR (NIL) | "" | name OF l)
+		+ """" +
+		IF	not setting OF l 
+		THEN	CASE	status OF l + 1  IN
+				" | at start serial clause; labno=" 
+				+ whole (labno OF l, field length),
+				"at start user written routine; GOTO external"
+				" label | labno=" +
+				whole (labno OF l, field length)
+			OUT 	{ aliasing }
+				" | labno " + whole (status OF l,field length) + 
+				" is redefined as " +
+				whole (labno OF l,field length)
+			ESAC
+		ELSE	" | actual label setting of labno=" +
+			whole (labno OF l,field length)
+		FI,
+
+	(UCHOICE u):
+		"uchoice                   (mode" + 
+		( mode OF u < 0 | " (of surrounding clause too)=" | "=") +
+		whole (ABS mode OF u, field length) + "=" +
+		mode name (ABS mode OF u) + bit mnemonic 
+		( props OF u AND decbit, TRUE {->control}) + 
+		" | param=" + whole (param OF u,field length),
+
+	(CALLMODULE c):
+		"callmodule                (" +
+		whole (i OF c,field length),
+
+	(KEEPS k):
+		"keeps                     (start=" + 
+		(start OF k | "TRUE" | "FALSE"),
+
+	(CODEX c):
+		"load:code                 "+
+		"( mode="       + whole(mode   OF c,0) +
+		" | parameters="+ whole(number OF c,0) +
+		" )",
+
+	(FORMATX f):
+		"formatx                   (info=(nochars=" + 
+		whole (nochars OF info OF f,field length) +
+		" | nocases=" + 
+		whole (nocases OF info OF f,field length) +
+		" | max nesting=" + 
+		whole (w OF info OF f,field length) + 
+		") | text=" + text OF f
+	OUT	"ERROR: unknown PRIMARY imperative"
+	ESAC,
+
+{--------------------------------------------------------------------------}
+(SEPARATOR s):  "separator                 (" +
+                CASE fn OF s IN 
+                    "THEN",       "IN",       "INu",    
+                    "ic comma",   "cc comma", "EXIT",
+                    "OUT",        "OUTu",     "ELSE",
+                    "coll comma", "semi",   "DO",
+                    "WHILE" 
+                OUT
+                    "ERROR: unknown SEPARATOR fn=" +
+                    whole (fn OF s,field length)
+                ESAC 
+                + bit mnemonic (props OF s AND (mask general OR
+                mask dynamic a OR mask special), TRUE {->control bits}) +
+		IF fn OF s = 11 {semi}
+		THEN
+			" | mode & param are undefined"
+		ELSE
+			" | mode" + 
+			(mode OF s < 0 | " (of surrounding clause too)=" | "=") +
+                	whole (ABS mode OF s, field length) + "=" +
+                	mode name (ABS mode OF s) +
+			" | param=" + whole (param OF s,field length)
+		FI,
+                
+
+{--------------------------------------------------------------------------}
+(STARTER s):    "starter                   (" +
+                CASE fn OF s +2 IN
+                    "routine",  "decs",               { -1, 0 respectively }
+                    "IF/WHILE",
+                    "CASE",
+                    "CASEu",
+                    "BEGIN",
+                    "coll BEGIN",
+                    "FOR",
+                    "FORALL"
+                OUT
+                    "ERROR: unknown STARTER fn=" + 
+                    whole (fn OF s,field length) 
+                ESAC 
+                + bit mnemonic (props OF s, TRUE {->control bits}) +
+                " | mode" + 
+                (mode OF s < 0 | " (of surrounding clause too)=" | "=") +
+                whole (ABS mode OF s, field length) + "=" +
+                mode name (ABS mode OF s) + " | result mode"+ 
+                (result mode OF s < 0 | " (of surrounding clause too)=" | "=") +
+		( fn OF s = 6 OR fn OF s = 7 {for/forall}
+		| "undefined"
+                | whole (ABS result mode OF s, field length) + "=" +
+                  mode name (ABS result mode OF s)
+		),
+
+{--------------------------------------------------------------------------}
+(TERMINATOR t): "terminator                (" +
+                CASE fn OF t IN
+                    "FI",          "ESAC",     "ESACu",
+                    "END",         "coll END", "OD",
+                    "routine end", "FINISH",   "opt bool"
+                OUT
+                    "ERROR: unknown TERMINATOR fn=" +
+                    whole (fn OF t,field length)
+                ESAC 
+                + bit mnemonic (props OF t, TRUE {->control bits}),
+
+
+{--------------------------------------------------------------------------}
+(COMPOSER c):   CASE c IN
+                (CLOSURE c):         "composer:closure          (body=" +
+                                     whole (body OF c,field length) + 
+                                     " | moduleno=" + 
+                                     whole (moduleno OF c,field length),
+                                     { later also print out the actuals }
+                (SYNTHETICMODULE s): "composer:synthetic module (moduleno=" +
+                                     whole (moduleno OF s,field length) +
+                                     " | i=" + whole (i OF s,field length) +
+                                     " | j=" + whole (j OF s,field length),
+                (EXTERNALMODULE e):  "composer:extern module    (moduleno=" + 
+                                     whole (module no OF e,field length) +
+                                     " | name="""    +  name OF e + 
+                                     """ | uname=""" + uname OF e +
+                                     """ | lname=""" + lname OF e + 
+                                     """ | gname=""" + gname OF e + """"
+                                     { later also print the ysnames }
+                OUT
+                    "ERROR: unknown COMPOSER imperative"
+                ESAC,
+
+
+{--------------------------------------------------------------------------}
+(VOID):         "VOID"
+OUT "ERROR: unknown imperative"
+ESAC + ")"
+
+CO ************************************************************************
+CO
+
+KEEP imperative mnemonic
+
+CO ************************************************************************
+CO
+FINISH
+
+{
+Local Variables:
+mode:text
+eval:(auto-fill-mode 0)
+End:
+}

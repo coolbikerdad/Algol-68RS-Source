@@ -1,0 +1,186 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Standard modes</title>
+<meta name="description" content="standard modes">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node127.html">
+<link rel="previous" href="node125.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node127.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2839"
+  href="node127.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2833"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2827"
+  href="node125.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2835"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2837"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2840"
+  href="node127.html">Environment enquiries</a>
+<b> Up:</b> <a name="tex2html2834"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2828"
+  href="node125.html">Standard Prelude</a>
+ &nbsp; <b>  <a name="tex2html2836"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2838"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001510000000000000000"></a><a name="stan-modes"></a>
+Standard modes</h1>
+
+<p>Many of the modes available in the standard prelude are built from the
+standard modes of the language which are all defined in the Revised
+Report.</p>
+
+<dl>
+<dt><tt>VOID</tt><a name="10773"></a></dt>
+<dd>This mode has one value: <code>EMPTY</code>. It is mainly used as the yield
+of routines and in unions.</dd>
+<dt><tt>BOOL</tt><a name="10774"></a></dt>
+<dd>This mode has two values, namely <tt>TRUE</tt><a name="10775"></a> and
+<tt>FALSE</tt><a name="10776"></a>.</dd>
+<dt><code>INT</code></dt>
+<dd>This is the basic arithmetic mode. Various precisions are available:-
+
+<ol>
+<li><tt>LONG INT</tt><a name="10777"></a> 64-bit integer
+</li>
+<li><tt>INT</tt><a name="10778"></a> 32-bit integer
+</li>
+<li><tt>SHORT INT</tt><a name="10779"></a> 16-bit
+integer
+</li>
+<li><tt>SHORT SHORT INT</tt><a name="10780"></a> 8-bit integer
+</li>
+</ol>
+</dd>
+
+<dt><code>REAL</code></dt>
+<dd>This mode is used mainly for approximate calculations although
+exact values can be manipulated provided that the number of
+significant digits does not exceed the precision of the mantissa (see
+section <a href="node127.html#stan-arithenq">13.2.1</a>). The
+following precisions are available:-
+
+<ol>
+<li><tt>REAL</tt><a name="10781"></a> 64-bit real
+</li>
+<li><tt>SHORT REAL</tt><a name="10782"></a> 32-bit real
+</li>
+</ol></dd>
+
+<dt><code>COMPL</code></dt>
+<dd>Strictly speaking, this is not a fundamental mode because it is
+regarded as a structure with two fields:-
+
+<pre>
+   MODE COMPL = STRUCT(REAL re,im)
+</pre>
+
+However, the widening coercion will convert a <code>REAL</code> value into a
+<code>COMPL</code> value and <code>COMPL</code> values are not straightened (see
+section&nbsp;<a href="node132.html#stan-straight">13.7.6</a>). Like
+<code>REAL</code>s, the following precisions are available:-
+
+<ol>
+<li><tt>COMPL</tt><a name="10783"></a> 128-bit</li>
+<li><tt>SHORT COMPL</tt><a name="10784"></a> 64-bit</li>
+</ol>
+</dd>
+<dt><tt>CHAR</tt><a name="10785"></a></dt>
+<dd>This mode is used for most character operations. See section
+<a href="node127.html#stan-enqchar">13.2.2</a> for further details.</dd>
+<dt><code>BITS</code></dt>
+<dd>This mode is equivalent to a computer word regarded as a group of
+bits (binary digits) numbered 1 to <code>bits width</code> (see
+section <a href="node127.html#stan-intsz">13.2.1</a>). Various
+precisions are available:-
+
+<ol>
+<li><tt>LONG BITS</tt><a name="10786"></a> 64-bit</li>
+<li><tt>BITS</tt><a name="10787"></a> 32-bit</li>
+<li><tt>SHORT BITS</tt><a name="10788"></a> 16-bit</li>
+<li><tt>SHORT SHORT BITS</tt><a name="10789"></a> 8-bit</li>
+</ol>
+</dd>
+<dt><tt>BYTES</tt><a name="10790"></a></dt>
+<dd>The Revised Report describes the mode, but the a68toc compiler does not
+implement it.</dd>
+<dt><tt>STRING</tt><a name="10791"></a></dt>
+<dd>This mode is defined as
+
+<pre>
+   MODE STRING = FLEX[1:0]CHAR
+</pre>
+
+and is provided with a shorthand construct for denotations of such
+values (see section&nbsp;<a href="node29.html#rep-mult">3.1</a>).</dd>
+</dl>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2839"
+  href="node127.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2833"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2827"
+  href="node125.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2835"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2837"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2840"
+  href="node127.html">Environment enquiries</a>
+<b> Up:</b> <a name="tex2html2834"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2828"
+  href="node125.html">Standard Prelude</a>
+ &nbsp; <b>  <a name="tex2html2836"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2838"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

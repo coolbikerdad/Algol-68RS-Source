@@ -1,0 +1,570 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>A simple utility</title>
+<meta name="description" content="a simple utility">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node124.html">
+<link rel="previous" href="node122.html">
+<link rel="up" href="node120.html">
+<link rel="next" href="node124.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2724"
+  href="node124.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2718"
+  href="node120.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2712"
+  href="node122.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2720"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2722"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2725"
+  href="node124.html">Summary</a>
+<b> Up:</b> <a name="tex2html2719"
+  href="node120.html">Program development</a>
+<b> Previous:</b> <a name="tex2html2713"
+  href="node122.html">Non-canonical input</a>
+ &nbsp; <b>  <a name="tex2html2721"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2723"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2726"
+  href="node123.html#section001431000000000000000">The source code</a>
+<li><a name="tex2html2727"
+  href="node123.html#section001432000000000000000">Routines</a>
+<li><a name="tex2html2728"
+  href="node123.html#section001433000000000000000">Dry-running example</a>
+<li><a name="tex2html2729"
+  href="node123.html#section001434000000000000000"><tt>ALIEN</tt> procedures</a>
+<ul>
+<li><a name="tex2html2730"
+  href="node123.html#section001434100000000000000">The procedure <tt>fstat</tt></a>
+<li><a name="tex2html2731"
+  href="node123.html#section001434200000000000000">The procedure <tt>get cwd</tt></a>
+</ul></ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001430000000000000000"></a><a name="dev-lf"></a>
+A simple utility</h1>
+
+<p>When you are writing computer programs, it is very useful to be
+able to copy your Algol&nbsp;68 source programs to a printer with line
+numbers.  Many editors, including <code>vim</code>, <code>Emacs</code>
+and <code>FTE</code>, use line numbers. When the Algol&nbsp;68
+compiler finds an error in your program, it displays the offending
+line together with its number and a descriptive message on the screen
+and the number of the character in the line where the error occurred.
+However, it is insufficient to merely copy the contents of a file to
+the printer (unless you are using the spooling facility of a header
+file) because the output will not contain any identifying
+information.</p>
+
+<p>What is required is a small program which will optionally write
+line numbers and which will write the name of the file being printed
+together with the date and time at which the file was last modified.
+A page number is another useful item as it prevents pages being lost
+when the listing is made on separate sheets of paper. It would also be
+very useful to be able to specify where in a file a listing should
+start and where it should finish. Such a program is called a
+<b>utility</b><a name="8580"></a>. Notice that the program must be
+able to handle zero-length lines as well as lines which are too long
+to be printed on one line alone. Lastly, some editors allow you to
+insert tab characters into your document, so the utility must be able
+to print the file with the correct indentation.</p>
+
+<p>The preceding problem analysis shows that we could write such a
+program if we knew how to obtain the date and time of last
+modification of a file from the operating system. In the directory
+<code>/usr/share/doc/algol68toc/</code>, you will find the source of
+the program <code>lf</code> which solves the problem described above
+for the Linux operating system. The source of <code>lf</code> is 526
+lines long.  Compile it and run it with the
+argument<a name="8581"></a> <code>-h</code>. The help information
+displayed by a program should be displayed by every program you write
+which is used at the command line: it prevents accidental use from
+causing damage to your operating system files or directories.</p>
+
+<h2><a name="section001431000000000000000"></a><a name="dev-code"></a>
+The source code</h2>
+
+<p>There are many ways of tackling the understanding of a program, but
+here is a method which does help with Algol 68 programs. In
+summary,</p>
+
+<ol>
+<li>See what the program does.
+</li>
+<li>Look at the principal processing.
+</li>
+<li>Examine the mode declarations.
+</li>
+<li>Examine the routines.
+</li>
+<li>Repeat steps 2-4 for each routine.
+</li>
+</ol>
+
+<p>Stage one of examining a program is to see what it does. Examples
+of its output, and possibly its input, help you to identify the
+actions of various parts of the program. Documentation of the input
+and output would suffice, but neither exists in this case because the
+input is a plain text file and the output is better seen than
+described. Compile the Algol 68 example program <code>lf</code> in</p>
+
+<pre>
+   /usr/share/doc/a68toc/examples
+</pre>
+
+<p>and use it to list the file <code>test.lf</code> (in the same
+directory) with line numbers on your printer using the command</p>
+
+<pre>
+   lf -pg -n test.lf | lpr
+</pre>
+
+<p>to pipe the output to the printer unless you have a LaserJet 4 or
+6L when you can omit the <code>-pg</code> argument.  Notice that the
+time and date the file was last modified appears at the top of each
+page, together with the identifier of the file and the page number. If
+you used the <code>-n</code> parameter to print the test file, each
+line will be preceded by a line number and a colon.  If you did not
+list the file with line numbers, do so now because the line numbers
+will highlight another feature of the program. The first line in
+<code>test.lf</code> is too long to be printed on one line, so the
+program breaks it into two parts.  The second part does not have a
+line number since it is part of the same line in the input.</p>
+
+<p>The second stage in understanding a program is to look at the
+principal processing. Since procedures and other values must be
+declared before use in the a68toc<a name="8591"></a> compiler, the
+last part of the program contains the main processing
+logic<a name="8592"></a>.  Now print (or display) the source of
+<code>lf.a68</code> using the command</p>
+
+<pre>
+   lf -n /usr/share/doc/a68toc/pame/lf.a68
+</pre>
+
+<p>In the source, the main processing logic is on lines 427-517.
+Examine those lines now.</p>
+
+<p>Before processing any command line arguments, the program defines
+the actions to take when the last argument has been read. In other
+words, what should be done when the logical end of file has been
+reached for <code>comm line</code>. The default action is to terminate
+the program immediately with a suitable error message. In
+<code>lf</code>, no identification is given for <code>comm line</code>
+in the <code>open</code> procedure, because it isn't relevant, but if
+you insert such an identification, for example, <code>command line
+file</code>, then any error message issued by the transput system will
+include it. Notice that although the anonymous procedure used as the
+second parameter for <code>on logical file end</code> on line 448
+occurs within the <code>IF ... FI</code> clause, because it is a
+denotation (a procedure denotation) it has global scope. That is one
+of the reasons why anonymous procedures are so useful. Also note the
+use of <tt>SKIP</tt><a name="8677"></a> to yield a value of mode
+<code>BOOL</code>: in fact, it will never be used because
+<tt>stop</tt><a name="8678"></a> is a synonym for <code>GOTO end of
+program</code>.</p>
+
+<p>In lines 442-517, the program processes the command line argument
+by argument. If an argument starts with &ldquo;-&rdquo; it is assumed
+to be an option otherwise it is assumed to be a filename. Note the use
+of <code>skip terminators</code> to skip spaces in the command line.
+Options that require a number (<code>-s</code> and <code>-t</code>)
+expect it to follow the option directly (see lines 493 and 495). Lines
+500-506 process a solitary <code>-</code> to mean &ldquo;list the
+standard input&rdquo;. Lines 507-516 process a named file. As you
+examine the code, underline the identifiers of all procedure
+calls.</p>
+
+<p>The next stage in understanding a program is to look at all the
+mode declarations<a name="8599"></a>.  There are three in this
+program: <code>PRINTER</code>, <code>SEC</code> and <code>STAT</code>.
+You should scan the program to see what identifiers have that or a
+related mode and where they are used.</p>
+
+<h2><a name="section001432000000000000000"></a><a name="dev-rout"></a>
+Routines</h2>
+
+<p>Finally, you need to examine the routines declared. It is a good
+idea, especially in a more complicated program, to list the
+identifiers of all procedures with nested declarations of procedures
+indented under their parent procedure identifiers. This helps to fix
+the structure of the program in your mind. Then you should examine the
+procedures used in the main processing loop.  In <code>lf</code>, they
+are:</p>
+
+<div align="center">
+<table border="0">
+   <tr>
+      <td>char in string</td><td>help</td>
+   </tr>
+   <tr>
+      <td>close</td><td>open</td>
+   </tr>
+   <tr>
+      <td>disp error</td><td>print</td>
+   <tr>
+      <td>get</td><td>print file</td>
+   </tr>
+   <tr>
+      <td>get mtime</td><td>process file name</td>
+   </tr>
+   <tr>
+      <td>get numeric arg</td><td>reset parameters</td>
+   </tr>
+   <tr>
+      <td>get sections</td><td>skip terminators</td>
+   </tr>
+</table>
+</div>
+
+<p>When you examine each procedure, do the same as you did for the
+whole program: first the main logic, then the modes, then the
+procedures and operators. You will need to backtrack several times in
+a large program. If a lot of names are declared, prepare a list
+together with a description of what each name is used for, where it is
+declared and the places where it is used. A cross-reference program
+would be really useful, but it is not a simple program to write for
+Algol&nbsp;68.</p>
+
+<p>The principle processing is performed by the procedure
+<code>print</code> <code>file</code> on lines 258-322. Firstly, tab
+stops are set according to the current value of <code>tabs</code>,
+then <code>lines</code> is initialised and an initialisation string
+output to the printer. If letter quality has been chosen (option
+<code>-q</code>), a special string is sent to the printer accordingly.
+Then the <code>logical</code> <code>file</code> <code>end</code> event
+procedure is set. Each section specified on the command line (or the
+default section if no sections were specified) is then printed using
+the procedure <code>do line</code>. Each line is input using <code>get
+line</code> whose principal function is to expand tab characters to
+the required number of spaces (3 unless set by the <code>-t</code>
+option). Lines are not output until the <code>beg OF ss</code> line is
+reached (1 unless set by the <code>-s</code> option). Notice the code
+following <code>FROM</code> in the preamble to the inner <code>DO ...
+OD</code> loop (on lines 313-316) which ensures that the file is reset
+if the sections to be printed are not ordered (the definition of
+ordered is in the procedure <code>get sections</code> (lines
+381-425).</p>
+
+<p>Similar to your list of nested procedures, prepare a list of
+procedures where indented procedures identify procedures called by
+the parent procedure. Here is part of the list for
+<code>lf</code>:</p>
+
+<pre>
+   fstat
+      linux fstat
+   help
+      exit, newline, put
+   reset parameters
+   lf print
+      ODD, print
+   get mtime
+      fstat, linux ctime
+   get sections
+      +:=
+      add section
+         char in string
+         get numeric arg
+      char in string
+</pre>
+
+<h2><a name="section001433000000000000000"></a><a name="dev-dry"></a>
+Dry-running example</h2>
+
+<p>The procedure <code>get line</code> (lines 232-250) and its
+associated procedures <code>set tabs</code> (lines 220-224) and
+<code>tab pos</code> (lines 226-227) are worth examining in detail.
+The best way to see how they work is to dry-run them.  Take a blank
+sheet of paper and make a vertical list of all the names, both local
+and global, used<a name="8610"></a> by the procedures. Opposite
+<code>in line</code>, write a piece of text containing tab characters
+(a piece of indented program, for example).  Then work your way
+through the procedure, marking the value referenced by each name as
+you complete each step.  You should also note the value of each
+non-name; for example, the loop identifier <code>i</code>.  Here is
+what your list could look like after going 3 times round the outer
+loop (the inner loop is on lines 241-244):</p>
+
+<table cellpadding=3 border="0">
+<tr><td></td>
+<td align="left">tabstops</td>
+<td align="left">FFTFFTFFTFFTFFTFFTFFTFFT<span class="math">...</span></td>
+</tr>
+<tr><td align="left"></td>
+<td align="left">line(ln)</td>
+<td align="left"><code>    </code>T</td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left">in line</td>
+<td align="left">=>
+<code>THEN ch:="A"</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left">op</td>
+<td align="left">
+<del>1</del>&nbsp;<del>2</del>&nbsp;<del>3</del>&nbsp;<del>4</del>&nbsp;<del>5</del>&nbsp;6</td></tr>
+<tr><td align="left"> 
+</td>
+<td align="left">i</td>
+<td align="left"><del>1</del>&nbsp;<del>2</del>&nbsp;3</td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left">c</td>
+<td align="left"><del>&rarr;</del>&nbsp;<del>&upsilon;</del>&nbsp;T
+</td>
+</tr>
+</table>
+
+<p>Struck-out values have been superceded and &upsilon; denotes a
+space. Dry-running is a very useful method, if laborious and
+time-consuming, of finding bugs. <tt>tab ch</tt> <a name="8679"></a>
+is declared in the standard prelude.</p>
+
+<p>This utility program (<code>lf</code>) is quite short, but we have
+analysed its working in detail so that you can see how it is done.</p>
+
+<h2><a name="section001434000000000000000"></a><a name="dev-alien"></a>
+<tt>ALIEN</tt> procedures</h2>
+
+<p>The utility <code>lf</code> uses some of the extensions provided by
+the a68toc<a name="8681"></a> compiler, in particular, the
+<code>ALIEN</code> construct which provides access to procedures
+compiled by other compilers. In this section we shall look at the
+<code>get cwd</code> and the <code>fstat</code> procedures.</p>
+
+<h3><a name="section001434100000000000000"></a><a name="dev-fstat"></a>
+The procedure <tt>fstat</tt></h3>
+
+<p>The procedure <code>fstat</code> is on lines 100-105. It depends on
+a call of the <code>linux fstat</code> procedure whose second
+parameter is a name referring to a value of mode <code>STAT</code>.
+The declaration of <code>STAT</code> is on lines 24-41.</p>
+
+<p>If you investigate the file <code>/usr/include/statbuf.h</code>,
+you will find the C&nbsp;definition of the <code>stat</code> structure
+therein. The <code>STAT</code> mode accurately reflects this structure
+using <code>LONG</code> or <code>SHORT</code> as appropriate. Briefly,
+a C&nbsp;<code>unsigned int</code> is equivalent to an Algol 68
+<code>BITS</code>. For historical reasons, the&nbsp;C <code>unsigned
+long int</code> has the same meaning as an <code>unsigned int</code>
+so <code>BITS</code> could have been used for those fields as well.
+However, because the value is required as an integer (and is stored as
+a positive integer), it is possible to regard them as having mode
+<code>INT</code>. Some of the C&nbsp;modes<a name="tex2html43"
+href="footnode.html#foot8683"><sup><span
+class="arabic">13</span>.<span class="arabic">3</span></sup></a> are
+hidden by further mode declarations<a name="tex2html44"
+href="footnode.html#foot8684"><sup><span
+class="arabic">13</span>.<span class="arabic">4</span></sup></a>, but
+if you hunt for <code>__dev_t</code> you will find it is an
+<code>unsigned long long int</code> which is equivalent to the Algol
+68 <code>LONG BITS</code> or, as is used in <code>STAT</code>,
+<code>LONG INT</code>.</p>
+
+<p>Now look at the declaration of <code>linux fstat</code> on lines
+85-89.  Most of this construction is C&nbsp;source code. The
+<code>ALIEN</code> construct may be written as</p>
+
+<pre>
+   &lt;mode&gt; &lt;identifier&gt; = ALIEN "&lt;symbol&gt;"
+      "&lt;C source code&gt;";
+</pre>
+
+<p>where the angle brackets denote items to be replaced. In the
+declaration for <code>linux fstat</code> we have</p>
+
+<ul>
+<li><code>&lt;mode&gt; = PROC(INT,REF STAT)INT</code>
+</li>
+<li><code>&lt;identifier&gt; = linux fstat</code>
+</li>
+<li><code>&lt;symbol&gt; = FSTAT</code>
+</li>
+</ul>
+
+<p>followed by three lines of C&nbsp;source code. It is not my
+intention to delve into the mysteries of C. If you don't understand
+that language, consult someone who does. However, the point of the
+declaration is to map the Algol 68 modes onto the C&nbsp;equivalents.
+The C&nbsp;procedure <code>fstat</code> takes two parameters: the
+first has mode <code>int</code> (equivalent to <code>INT</code>) and
+the second of mode <code>struct stat*</code> which is equivalent to
+<code>REF STAT</code>. The cast in C&nbsp;consists of a mode in
+parentheses (compare with the Algol 68 cast in
+section&nbsp;<a href="node97.html#gram-prim">10.5</a>) so the third
+line of C&nbsp;code ensures that the second parameter of the Algol 68
+procedure <code>linux fstat</code> has the right mode. The
+<code>A_int_INT(...)</code> construct is a C&nbsp;language
+macro<a name="tex2html45"
+href="footnode.html#foot8631"><sup><span
+class="arabic">13</span>.<span class="arabic">5</span></sup></a> for a
+cast which ensures that the yielded C&nbsp;integer is equivalent to
+the Algol 68 <code>INT</code>.  If you want to see what the
+a68toc<a name="8685"></a> compiler generates, look for
+<code>FSTAT</code> in the file <code>lf.c</code>.</p>
+
+<p>Reverting to line 102, the field <code>sys file OF f</code> has the correct
+mode for use as the &ldquo;file descriptor&rdquo; for <code>fstat</code>. You should
+check the manual page of <code>fstat</code> (in section 2 of the Linux
+Programming Manual) for details of its functioning and yield.</p>
+
+<h3><a name="section001434200000000000000"></a><a name="dev-getcwd"></a>
+The procedure <tt>get cwd</tt></h3>
+
+<p>The procedure <code>get cwd</code> is more complicated because it
+uses several facilities provided by the standard prelude as well as
+another extension provided by the a68toc<a name="8687"></a> compiler.
+Firstly, look at the <code>ALIEN</code> declaration of <code>linux
+getcwd</code> on lines 91-93.  The mode <code>VECTOR[]CHAR</code> is
+similar to the mode <code>[]CHAR</code>, but the lower bound is always
+1 and is omitted from the generated construct. In fact, a68toc
+translates this mode into the C&nbsp;equivalent of</p>
+
+<pre>
+   STRUCT(REF CHAR data, INT gc, upb)
+</pre>
+
+<p>The <code>gc</code> field is an integer provided for the
+garbage-collector (the run-time memory management system which looks
+after the heap).  The <code>data</code> field is a reference to the
+actual data (in fact it is a memory address)<a name="tex2html46"
+href="footnode.html#foot8688"><sup><span
+class="arabic">13</span>.<span class="arabic">6</span></sup></a>.</p>
+
+<p>The C&nbsp;procedure <code>getcwd</code> requires two parameters: a
+reference to an area which it can use to return the full path of the
+current working directory and an integer which states how big that
+area is. The C&nbsp;source code in the declaration for <code>linux
+getcwd</code> contains the C macro<a name="8641"></a></p>
+
+<pre>
+   A_VC_charptr(buf)
+</pre>
+
+<p>which expands into <code>buf.data</code> (equivalent to the
+Algol&nbsp;68 expression <code>data OF buf</code>) and the
+C&nbsp;macro <code>A_INT_int</code> which converts an Algol&nbsp;68
+<code>INT</code> into a C&nbsp;<code>int</code> (directly equivalent
+on Linux).</p>
+
+<p>The yield of <code>linux getcwd</code> is a reference to the area
+in which the current working directory path has been put. Strictly
+speaking, this is identical to the first parameter of the
+C&nbsp;procedure <code>getcwd</code>, but the GNU C&nbsp;compiler
+complains if it is used as such. To get around this, the author used
+the cast <code>(void *)</code> which effectively causes the reference
+to be a reference to an anonymous piece of memory. The Algol&nbsp;68
+equivalent is <code>CPTR</code> which is defined in the standard
+prelude as <code>REF BITS</code>.</p>
+
+<p>Now comes the clever bit. Look at line 98. The value of mode
+<code>CPTR</code> (<code>REF BITS</code>) is converted by the operator
+<code>CPTRTOCSTR</code> into a value of mode <code>CSTR</code>
+(declared in the standard prelude as <code>REF STRUCT 16000000
+CHAR</code>). Now look at the definition of that operator (on line
+95)! <code>BIOP</code> stands for &ldquo;built-in operator&rdquo; and
+<code>BIOP 99</code> is the only built-in operator implemented by the
+a68toc translator. <code>BIOP 99</code> maps its parameter (of one
+mode) onto its yield (of another mode). It effectively acts as a cast
+(in this case) from one <code>REF</code> mode to another
+<code>REF</code> mode. Have a look at the C&nbsp;source code in
+<code>lf.c</code> if you are interested in the details. Then the value
+of mode <code>CSTR</code> is converted using the operator
+<code>CSTRTORVC</code> to a value of mode <code>REF
+VECTOR[]CHAR</code> which is dereferenced and then coerced to a value
+of mode <code>STRING</code>. In fact, the a68toc compiler will
+silently coerce values of mode <code>REF STRUCT i MODE</code> to mode
+<code>REF VECTOR[]MODE</code> and thence to <code>REF[]MODE</code>.
+Notice that you cannot coerce a value of mode <code>REF
+VECTOR[]MODE</code> to <code>REF FLEX[]MODE</code>. The mode
+<code>STRING</code> has no flexibility (it is equivalent to
+<code>[]CHAR</code>).</p>
+
+<p>Lastly, note that the parameter of <code>linux getcwd</code> is an
+anonymous<a name="8644"></a> <code>VECTOR[]CHAR</code> whose scope
+is limited to the scope of <code>get cwd</code> (the Algol&nbsp;68
+procedure).</p>
+
+<p>If you want to examine the other macros used for the translated
+C&nbsp;source, have a look at the files in the directories</p>
+
+<pre>
+   /usr/share/a68toc/Linux
+   /usr/share/a68toc/include
+</pre>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2724"
+  href="node124.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2718"
+  href="node120.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2712"
+  href="node122.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2720"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2722"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2725"
+  href="node124.html">Summary</a>
+<b> Up:</b> <a name="tex2html2719"
+  href="node120.html">Program development</a>
+<b> Previous:</b> <a name="tex2html2713"
+  href="node122.html">Non-canonical input</a>
+ &nbsp; <b>  <a name="tex2html2721"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2723"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

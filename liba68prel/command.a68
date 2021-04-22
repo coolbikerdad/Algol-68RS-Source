@@ -1,0 +1,1042 @@
+DECS  command  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface,
+      basics,  commandsyntax,  commandreader:
+
+{ " Id: command.sta,v 1.1 91/10/14 14:26:10 edcad Exp $" }
+configinfo A68CONFIG "$Id: command.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1985
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+22:05:85  segment to define an interface between different parts of ELLA
+27:06:85  readprocs incorporated
+25:09:85  GROUP help did not give full name of command - only what the
+             user typed in
+22:11:85  1906 removed
+26:11:85  SKIP parameter in if rd text in fault objected to by FLEX
+26:11:85  Exception catching - allowing break-in - added for FLEX
+12:12:85  Re-written for "Release 2".  "help" simplified.  Lower case used
+             for help output.  Spaces removed as option for GROUP.  An extra
+             level of VECTOR introduced for commands OF .. to allow further
+             grouping (into local and general commands) in help.
+17:12:85  Global variable "current compound" kept for help.  Extra REF
+             to help parameter in consequence.
+26:02:86  Prelude of compound had no call of "check no params"
+26:02:86  A line containing a fault bu ending with .. not handled correctly
+20:03:86  Amended for release 2 help messages
+22:05:86  secret private access corrected (Bug 087)
+09:09:86  secret private access made switchable
+21:10:86  Updated for new os interface.  RVCPROC, COMMANDPROC added  DCT.
+31:10:86  <CTRL / C> interrupt added  DCT.
+16:09:87  Call to Key Checker added as part of the security enhancemments
+             (note: uses *X).
+25:09:87  help now finds all possible matches of its parameter  CR433  DCT.
+16:01:89  Kernel Interface work:
+                Revert to Update 17 (pre EPI)
+                COMPOUND command stack added for EPI, EXIT simplified
+                A command syntax introduced, reader and call mechanism detached
+23:08:89  COMMANDENV changed so that IO/OS messages may be "translate"d. DCT
+25:06:90  syntax_help rewritten.  DCT
+31:01:91  basics added for OP MAX (not defined for UNIX).  DCT
+24:10:91  R6B86:  <CTRL / C> Reinstated.  DCT
+21:11:91  R6B89:  (abort OF env) called inconsistently.  DCT
+26:03:92  Help changed:  now RVC or PROC instead of RVC or RVRVC.  DCT
+26:02:93  Had to added REF VECTOR [] RVC back into help for asscommands. DCT
+27:09:93  Module commandproc removed - merged in.  DCT
+27:10:93  newline removed from simple help. Ordering problem in help.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.027 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+MODE  CONTINUATION = STRUCT (INT  c),
+      ACCESS       = STRUCT (BITS  a),
+
+      RVRVC        = REF VECTOR [] RVC,
+      RVCPROC      = STRUCT ( RVC  parameter,
+                              PROC (RVC, COMMANDPARAM, MESSAGEPROC) VOID  proc
+                            ),
+      COMMANDPROC  = UNION ( { Used for withdrawn commands }
+                             RVCPROC,
+                             { Standard interface }
+                             PROC (COMMANDPARAM, MESSAGEPROC) VOID,
+                             { Simplified interface }
+                             PROC (VALUES, MESSAGEPROC) VOID
+                           ),
+
+      COMMAND,
+      COMMANDVEC   = REF VECTOR [] COMMAND,
+
+      SIMPLE,
+      HELPPROC     = PROC ( REF SIMPLE,           { The command being called }
+                            RCH                   { The output channel }
+                          ) VOID,
+
+      SIMPLE       = STRUCT ( RVC  name,  abreviation,
+                              COMMANDSYNTAX  parameter,
+                              ACCESS  access,
+                              CONTINUATION  continuation,
+                              UNION (RVC, REF VECTOR [] RVC, HELPPROC)  help,
+                              COMMANDPROC  command   { Defined in command_proc }
+                            ),
+
+      GROUP        = STRUCT ( REF SIMPLE  group,
+                                          { Command OF group is not called }
+                              COMMANDVEC  commands
+                            ),
+
+      COMPOUND     = STRUCT ( REF SIMPLE  prelude,
+                              RVC  context,
+                              REF RVC  prompt,        { May change dynamically }
+                              COMMANDVEC  locals,  globals,
+                              REF SIMPLE  postlude    { Only use command OF }
+                            ),
+
+      COMMAND      = UNION (REF SIMPLE, REF GROUP, REF COMPOUND),
+
+      COMMANDSTACK = STRUCT ( REF COMPOUND  current_context,  INT  depth,
+                              RVRVC  input_lines,  REF COMMANDSTACK  caller
+                            ),
+
+      CENV,
+      COMMANDENV = REF CENV,
+      CENV = STRUCT
+         ( { Related to commands }
+
+           REF COMMANDSTACK  stack,
+           REF VECTOR [] ANALYSER  analysers,
+           BOOL  hidden,  private,  secret,  { Flags controlling access }
+           PROC ( COMMANDENV, REF SIMPLE, COMMANDPARAM, MESSAGEPROC
+                ) CONTINUATION  caller,          { Calls command OF simple }
+
+           { Related to output }
+
+           PROC (RVRVC) VOID  report_error,
+              { Report error to user (should call skip_command) }
+           PROC (UNION (MESSAGEPROC, VOID)) VOID  set_default_msg,
+              { Used to (re)set any global MESSAGEPROCs to current local one }
+           MESSAGEPROC  abort
+              { Outer level failure proc }
+         );
+
+{ The following procedures are defined in the commandreader Module.  They are
+  designed to process individual parameters (objects separated by characters
+  defined by PROC separator).
+
+  PROC RVC
+     get_input_lines      Called before an error or at a change of command
+                          context to record input from the start of the command
+                          to the current reading point to pass to report_error.
+  PROC (MESSAGEPROC) BOOL
+     check_for_more       Are there any extra parameters ?
+
+  PROC (MESSAGEPROC) VOID
+     skip_parameter       Called after last choice in an alternative has
+                          failed to match to get read position after the
+                          offending object prior to faulting.
+  PROC VOID
+     skip_command         Called after an error to reset the read position (to
+                          the end of the line) ready for the next command.
+
+  PROC (ERRORPOC) RVC
+     read_command         Read the next command.
+}
+
+
+
+PROC  nullcommand = (COMMANDPARAM  param,  MESSAGEPROC  msg) VOID:  SKIP;
+VECTOR [0] COMMAND  nullcommands;
+REF SIMPLE  nilsimple = NIL;
+
+
+{ Constants used in MODE SIMPLE }
+
+ACCESS  normal access         =  ( ACCESS  a;  a OF a:= 16rf;  a ),
+        hidden access         =  ( ACCESS  a;  a OF a:= 16rb;  a ),
+        secret access         =  ( ACCESS  a;  a OF a:= 16r7;  a ),
+        private access        =  ( ACCESS  a;  a OF a:= 16rd;  a ),
+        hidden private access =  ( ACCESS  a;  a OF a:= 16r9;  a ),
+        secret private access =  ( ACCESS  a;  a OF a:= 16r5;  a ),
+        no access             =  ( ACCESS  a;  a OF a:= 16r0;  a );
+
+CONTINUATION  continue  = ( CONTINUATION  c;  c OF c:= 1;  c ),
+              return    = ( CONTINUATION  c;  c OF c:= 2;  c ),
+              finish    = ( CONTINUATION  c;  c OF c:= 3;  c ),
+              quit      = ( CONTINUATION  c;  c OF c:= 4;  c ),
+              not_found = ( CONTINUATION  c;  c OF c:= 0;  c );  { private }
+
+OP  = = (CONTINUATION  a, b) BOOL:  c OF a = c OF b;
+
+
+
+
+{ Operators and procedures on COMMAND and COMMANDVEC }
+
+PROC  add = (VECTOR [] COMMAND  a, b) COMMANDVEC:
+BEGIN
+   { Checks for similar GROUP commands and combines them, otherwise, concats }
+   INT  l = UPB a;
+   REF VECTOR [] COMMAND  new = HEAP VECTOR [l + UPB b] COMMAND;
+   new[: l]:= a;
+   INT  index:= UPB a;
+   FORALL cb IN b
+   DO  CASE cb IN
+          (REF GROUP  gb)
+             ( BOOL  not_found:= TRUE;
+               FORALL ca IN new[:l] WHILE not_found
+               DO  CASE ca IN
+                      (REF GROUP  ga)
+                         IF name OF group OF ga = name OF group OF gb  ANDTH
+                            abreviation OF group OF ga =
+                               abreviation OF group OF gb  ANDTH
+                            a OF access OF group OF ga =
+                               a OF access OF group OF gb
+                         THEN  not_found:= FALSE;
+                               ca:= HEAP GROUP:=
+                                  ( group OF ga,
+                                    add(commands OF ga, commands OF gb) )
+                         FI
+                   OUT  SKIP
+                   ESAC
+               OD;
+               IF not_found THEN  new[index PLUSAB 1]:= cb  FI
+             )
+       OUT  new[index PLUSAB 1]:= cb
+       ESAC
+   OD;
+   new[: index]
+END;
+
+
+PRIO  ADD = 6;
+
+OP (VECTOR [] COMMAND, VECTOR [] COMMAND) COMMANDVEC  ADD = add;
+
+OP  ADD = (VECTOR [] COMMAND  a,  COMMAND  b) COMMANDVEC:  add(a, b);
+
+OP  ADDAB = (REF COMMANDVEC  a,  VECTOR [] COMMAND  b) COMMANDVEC:
+    a:= add(a, b);
+
+OP  ADDAB = (REF COMMANDVEC  a,  COMMAND  b) COMMANDVEC:  a:= add(a, b);
+
+OP  MAKECOMMANDS = (VECTOR [] COMMAND  commands) COMMANDVEC:
+    HEAP VECTOR [UPB commands] COMMAND:= commands;
+
+OP  MAKECOMMANDS = (COMMAND  command) COMMANDVEC:
+    HEAP VECTOR [1] COMMAND:= command;
+
+
+OP  LC = (STR  str) RVC:    { Command names are now displayed in lower case }
+BEGIN
+   HEAP VECTOR [UPB str] CHAR  ans:= str;
+   FORALL  s IN ans
+   DO  IF s >= "A"  ANDTH s <= "Z" THEN  s:= REPR (ABS s + 32)  FI  OD;
+   ans
+END;
+
+
+
+PROC  make_group = ( STR  name,  abreviation,  ACCESS  access,
+                     VECTOR [] COMMAND  locals ) REF GROUP:
+   HEAP GROUP:= ( HEAP SIMPLE:= ( MAKERVC name, MAKERVC abreviation,
+                                  no parameters, access, continue,
+                                  nullstr,  nullcommand ),
+                  MAKECOMMANDS locals
+                );
+
+
+
+PROC  make_compound = ( REF SIMPLE  prelude,  STR  context_name,
+                        REF RVC  prompt,  COMMANDVEC  locals,  globals,
+                        COMMANDPROC  postlude
+                      ) REF COMPOUND:
+   HEAP COMPOUND:= ( prelude, MAKERVC context_name, prompt,
+                     MAKECOMMANDS locals, MAKECOMMANDS globals,
+                     HEAP SIMPLE:= ( MAKERVC "POSTLUDE", nilstr, no parameters,
+                                     normal access, return, nullstr, postlude )
+                   );
+
+
+{ Procedures determining access }
+
+PROC  can access = (COMMANDENV  env,  REF SIMPLE  command) BOOL:
+      (a OF access OF command AND 16r1) = 16r1  ANDTH
+      ( private OF env  OREL  (a OF access OF command AND 16r2) = 16r2 );
+
+PROC  can help = (COMMANDENV  env,  REF SIMPLE  command) BOOL:
+      { help given only when command is explicitly named }
+      can access(env, command)  ANDTH
+      ( secret OF env  OREL  (a OF access OF command AND 16r8) = 16r8 );
+
+PROC  can see = (COMMANDENV  env,  REF SIMPLE  command) BOOL:
+      { general help permitted }
+      can help(env, command)  ANDTH
+      ( hidden OF env  OREL  (a OF access OF command AND 16r4) = 16r4 );
+
+
+
+
+{ Procedures for checking and processing command names }
+
+PROC  has abreviation = (REF SIMPLE  command) BOOL:
+   ( abreviation OF command ISNT nilstr )  ANDTH
+   UPB abreviation OF command > 0;
+
+
+PROC  check name = ( COMMANDENV  env, BOOL  help, STR  test,
+                     REF SIMPLE  command ) BOOL:
+   ( can help(env, command)  OREL  NOT help  ANDTH  can access(env, command) )
+   ANDTH  ( test = name OF command  OREL
+            (abreviation OF command ISNT nilstr)  ANDTH
+            UPB abreviation OF command > 0  ANDTH
+            test = abreviation OF command
+          );
+
+
+PROC  check starts with = ( COMMANDENV  env, BOOL  help,  RVC  test,
+                            REF RVC  remainder, REF SIMPLE  command ) BOOL:
+   ( can help(env, command)  OREL  NOT help  ANDTH  can access(env, command) )
+   ANDTH  ( IF UPB test > UPB name OF command  ANDTH
+               test[ : UPB name OF command] = name OF command
+            THEN  remainder:= test[UPB name OF command + 1 : ];
+                  TRUE
+            ELIF has abreviation(command)  ANDTH
+                    UPB test > UPB abreviation OF command  ANDTH
+                    test[ : UPB abreviation OF command] = abreviation OF command
+            THEN  remainder:= test[UPB abreviation OF command + 1 : ];
+                  TRUE
+            ELSE  FALSE
+            FI
+          );
+
+
+PROC  search group = ( COMMANDENV  env, BOOL  help, RVC  name,
+                       REF RVC  rem, REF GROUP  group ) BOOL:
+   {  Added to search right through a group command for a match to the
+      remainder of a string before accepting the group so that the same
+      abreviation may be used for more than one group command.  If the
+      string is not matched anywhere a fault will occur at the end of
+      a complete search of the whole command list rather than from within
+      a group command.  }
+
+   IF check starts with(env, help, name, rem, group OF group)
+   THEN  BOOL  found:= FALSE;
+         FORALL  command IN commands OF group WHILE NOT found
+         DO  CASE command IN
+                (REF SIMPLE  s)
+                   found:= check name(env, help, rem, s) ,
+                (REF GROUP  g)
+                   ( RVC  rem2:= nullstr;
+                     found:= search group(env, help, rem, rem2, g)
+                   ) ,
+                (REF COMPOUND  c)
+                   found:= check name(env, help, rem, prelude OF c)
+             ESAC
+         OD;
+         found
+   ELSE  FALSE
+   FI;
+
+
+PROC  show name = (REF SIMPLE  command,  BOOL  group) RVC:
+BEGIN
+   RVC  name = LC name OF command,
+        base = IF group THEN  oneline((name, "..."))  ELSE  name  FI;
+   IF has abreviation(command)
+   THEN  concat(( base, " (", LC abreviation OF command,
+                  IF group THEN  "..."  ELSE  ""  FI, ")"))
+   ELSE  base
+   FI
+END;
+
+
+PROC  group simple = (REF SIMPLE  group, simple) REF SIMPLE:
+BEGIN
+   HEAP SIMPLE  combined:= simple;
+   name OF combined:= concat((name OF group, name OF simple));
+   IF has abreviation(simple)
+   THEN  abreviation OF combined:=
+         IF has abreviation(group)
+         THEN  concat((abreviation OF group, abreviation OF simple))
+         ELSE  concat((name OF group,        abreviation OF simple))
+         FI
+   FI;
+   combined
+END;
+
+
+
+
+{ Help procedures }
+
+PROC  commandvec help = ( COMMANDENV  env,  RCH  channel,  REF SIMPLE  root,
+                          COMMANDVEC  commands,  BOOL  two_columns ) VOID:
+BEGIN
+   FORALL sub command IN commands
+   DO  BOOL  group:= FALSE;
+       REF SIMPLE  simple = CASE sub command IN
+                               (REF SIMPLE  s)   s ,
+                               (REF GROUP  g)    ( group:= TRUE;  group OF g ) ,
+                               (REF COMPOUND  c) prelude OF c
+                            ESAC ,
+
+                   command = IF root IS nilsimple
+                             THEN  simple
+                             ELSE  group simple(root, simple)
+                             FI;
+
+       IF can see(env, command)
+       THEN  RVC  name = show name(command, group),
+                  description =
+                     IF CASE parameter OF command IN
+                           (REF INT  symbol)  symbol = 0  OUT  FALSE
+                        ESAC
+                     THEN  name
+                     ELSE  oneline(( name, after( IF two_columns
+                                                  THEN  IF UPB name > 28
+                                                        THEN  36
+                                                        ELIF UPB name > 22
+                                                        THEN  30
+                                                        ELIF UPB name > 16
+                                                        THEN  24
+                                                        ELSE  18
+                                                        FI
+                                                  ELSE  40
+                                                  FI ),
+                                     show_syntax( parameter OF command,
+                                                  analysers OF env ) ))
+                     FI;
+             IF two_columns  ANDTH  charnumber(channel) > 1  ANDTH
+                charnumber(channel) < 39  ANDTH  UPB description <= 40
+             THEN  put(channel, (tab(40), description))
+             ELSE  put(channel, (newline, description))
+             FI
+       FI
+   OD;
+   IF UPB commands > 0 THEN  newline(channel)  FI
+END;
+
+
+PROC  simple help basic  = ( COMMANDENV  env,  RCH  channel,
+                             REF SIMPLE  simple, BOOL  group) VOID:
+BEGIN
+   IF NOT group
+   THEN  put(channel, ( "   ",
+                        IF CASE parameter OF simple IN
+                              (REF INT  symbol)  symbol = 0  OUT  FALSE
+                           ESAC
+                        THEN  "- has no arguments"
+                        ELSE  show_syntax( parameter OF simple,
+                                           analysers OF env )
+                        FI ))
+   FI;
+   CASE help OF simple IN
+      (RVC     id)
+         IF (id ISNT nilstr)  ANDTH  UPB id > 0
+         THEN  put(channel, lines(2));
+               put(channel, (id, newline))
+         ELSE  newline(channel)
+         FI ,
+      (HELPPROC  p)
+         ( newline(channel);
+           p(simple, channel);
+           newline(channel)
+         ) ,
+      (REF VECTOR [] RVC  help_lines)
+         ( put(channel, lines(2));
+           FORALL l IN help_lines DO  put(channel, (l, newline))  OD
+         )
+   ESAC
+END;
+
+
+PROC  simple help = ( COMMANDENV  env,  RCH  channel,
+                      REF SIMPLE  simple,  BOOL  group ) VOID:
+BEGIN
+   put(channel, (newline, show name(simple, group)));
+   simple help basic(env, channel, simple, group)
+END;
+
+
+
+PROC  group help = ( COMMANDENV  env,  RCH  channel,
+                     RVC  id,  REF SIMPLE  root,
+                     COMMANDVEC  commands,
+                     BOOL  compound details,  local section,
+                     PROC (COMMANDENV, RCH, REF SIMPLE, BOOL) VOID  simple help
+                   ) BOOL:
+BEGIN
+   BOOL  found:= FALSE;
+
+   PROC  full = (REF SIMPLE  s) REF SIMPLE:
+      IF root IS nilsimple THEN  s  ELSE  group simple(root, s)  FI;
+
+   FORALL command IN commands
+   DO  CASE command IN
+         (REF SIMPLE  simple)
+            ( IF check name(env, TRUE, id, simple)
+              THEN  found:= TRUE;
+                    simple help(env, channel, full(simple), FALSE)
+              FI
+            ) ,
+
+         (REF COMPOUND  compound)
+            ( REF SIMPLE  simple = prelude OF compound;
+              IF check name(env, TRUE, id, simple)
+              THEN  found:= TRUE;
+                    simple help(env, channel, full(simple), FALSE);
+                    IF compound details
+                    THEN  put(channel, ( "The following commands are "
+                                              "available in ",
+                                         context OF compound, ":", newline ));
+                          commandvec help( env, channel, nilsimple,
+                                           locals OF compound, TRUE );
+                          commandvec help( env, channel, nilsimple,
+                                           globals OF compound, TRUE )
+                    FI
+              FI
+            ) ,
+
+         (REF GROUP  group)
+            ( REF SIMPLE  simple = group OF group;
+              RVC  remainder:= nullstr;
+              REF SIMPLE  s = full(simple);
+              IF check name(env, TRUE, id, simple)
+              THEN  found:= TRUE;
+                    simple help(env, channel, s, TRUE);
+                    STR  sort =
+                            IF local section THEN  "local"  ELSE  "global"  FI;
+                    put(channel, ( "The ", sort, " commands available starting "
+                                   """", LC name OF s, """ are:", newline ));
+                    commandvec help( env, channel, s, commands OF group, FALSE )
+              ELIF check starts with(env, TRUE, id, remainder, simple)
+              THEN  IF group help( env, channel, remainder, s,
+                                   commands OF group, compound details,
+                                   local section, simple help )
+                    THEN found:= TRUE
+                    FI
+              FI
+            )
+       ESAC
+   OD;
+   found
+END;
+
+
+
+
+
+PROC  help = ( COMMANDENV  env,  RCH  channel,  RVC  id,
+               BOOL  compound details,  MESSAGEPROC  msg ) VOID:
+BEGIN
+   REF COMPOUND  compound = current_context OF stack OF env;
+   IF ( id IS nilstr )  OREL  UPB id = 0
+   THEN  put(channel, ( newline, "The commands available in ",
+                        context OF compound, " are:", newline ));
+         commandvec help(env, channel, nilsimple, locals OF compound, TRUE);
+         commandvec help(env, channel, nilsimple, globals OF compound, TRUE)
+   ELIF BOOL  l = group help( env, channel, id, nilsimple, locals OF compound,
+                              compound details, TRUE, simple help ),
+              g = group help( env, channel, id, nilsimple, globals OF compound,
+                              compound details, FALSE, simple help );
+        NOT (l OREL g)
+   THEN  msg(user, oneline(( """", LC id, """ is not known in ",
+                             context OF compound )) )
+   FI
+END;
+
+
+
+
+{ Diagnostic help procedure }
+
+
+PROC  full_help = ( COMMANDENV  env,  RCH  channel,  BOOL  low,  high,
+                    MESSAGEPROC  msg ) VOID:
+BEGIN
+
+   MODE  LIST = STRUCT (REF SIMPLE  s,  REF LIST  next);
+   REF LIST  end = NIL;
+   REF LIST  list:= end;
+
+   PROC  already encountered = (REF SIMPLE  s) BOOL:
+   BEGIN
+      BOOL  found:= FALSE;
+      REF LIST  ptr:= list;
+      WHILE NOT found  ANDTH  (ptr ISNT end)
+      DO  found:= command OF s OF ptr IS command OF s;
+          ptr:= next OF ptr
+      OD;
+      IF NOT found THEN  list:= HEAP LIST:= (s, list)  FI;
+      found
+   END;
+
+
+   PROC  full = (REF SIMPLE  r, s) REF SIMPLE:
+      IF r IS nilsimple
+      THEN  s
+      ELSE  HEAP SIMPLE  c:= s;
+            name OF c:= oneline((name OF r, name OF s));
+            IF has abreviation(r)  ANDTH  has abreviation(s)
+            THEN  abreviation OF c:=
+                       oneline((abreviation OF r, abreviation OF s))
+            FI;
+            c
+      FI;
+
+
+   PROC  basic help = (REF SIMPLE  r,  simple, RVC  type,  BOOL  g) VOID:
+   BEGIN
+      flt_if_interrupted(msg);
+      REF SIMPLE  s = full(r, simple);
+      BOOL  found = already encountered(simple);
+      IF NOT found  OREL  NOT low
+      THEN  put(channel, (type, show name(s, g)));
+            put(channel, ( IF a OF access OF s   = a OF private access
+                           THEN  "  PRIVATE"
+                           ELIF a OF access OF s = a OF hidden access
+                           THEN  "  HIDDEN"
+                           ELIF a OF access OF s = a OF secret access
+                           THEN  "  SECRET"
+                           ELIF a OF access OF s = a OF hidden private access
+                           THEN  "  HIDDEN + PRIVATE"
+                           ELIF a OF access OF s = a OF secret private access
+                           THEN  "  SECRET + PRIVATE"
+                           ELIF a OF access OF s = a OF no access
+                           THEN  "  NO access"
+                           ELSE  ""
+                           FI ));
+            IF found
+            THEN  put(channel, ("  ***", newline))
+            ELSE  newline(channel);
+                  IF high THEN  simple help(env, channel, s, g)  FI
+            FI
+      FI
+   END;
+
+   PROC  full shell = (INT  m, REF COMPOUND  compound,  REF SIMPLE  root) VOID:
+   BEGIN
+
+      PROC  sub full help = ( INT  m, REF SIMPLE  root,
+                              COMMANDVEC  commands ) VOID:
+         FOR i TO UPB commands
+         DO  CASE  commands[i] IN
+               (REF SIMPLE  s)
+                  basic help(root, s, oneline(("-" * m, "SIMPLE   ")), FALSE) ,
+
+               (REF GROUP  g)
+                  ( REF SIMPLE  s = full(root, group OF g);
+                    basic help( root, group OF g,
+                                oneline(("-" * m, "GROUP    ")), TRUE );
+                    IF high
+                    THEN  commandvec help(env, channel, s, commands OF g, FALSE)
+                    FI;
+                    sub full help(m + 2, s, commands OF g)
+                  ) ,
+
+               (REF COMPOUND  c)
+                  full shell(m + 2, c, root)
+            ESAC
+         OD;
+
+      basic help( root, prelude OF compound,
+                  oneline(("-" * m, "COMPOUND   ")), FALSE );
+      IF high
+      THEN  commandvec help(env, channel, nilsimple, locals OF compound, TRUE);
+            commandvec help(env, channel, nilsimple, globals OF compound, TRUE)
+      FI;
+      put(channel, ( newline, "-" * m, "SUB-COMMANDS  in ",
+                     context OF compound, lines(2)));
+      sub full help(m + 2, nilsimple, locals OF compound);
+      sub full help(m + 2, nilsimple, globals OF compound);
+      newline(channel)
+
+   END;
+
+   full shell(0, current_context OF stack OF env, nilsimple)
+END;
+
+
+
+PROC  syntax_help = ( COMMANDENV  env,  RCH  channel,  RVC  description,
+                      BOOL  give_details,  MESSAGEPROC  msg ) VOID:
+BEGIN
+   PROC  show = (ANALYSER  analyser) VOID:
+   BEGIN
+      flt_if_interrupted(msg);
+      put(channel, ( justify(intchars(sort OF analyser), 4),
+                     "   ",  description OF analyser ));
+      CASE reader OF analyser IN
+         (COMMANDSYNTAX  cs)
+             put(channel, ( tab(6), " ::= ", show_syntax(cs, analysers OF env),
+                            newline))
+      OUT  newline(channel)
+      ESAC;
+      IF give_details
+      THEN  IF (help OF analyser ISNT nilstr)  ANDTH (UPB help OF analyser > 0)
+            THEN  put(channel, (newline, help OF analyser, lines(2)))
+            ELSE  newline(channel)
+            FI
+      FI
+   END;
+
+   IF UPB description = 0
+   THEN  put(channel, ("Readers avaliable:", lines(2)));
+         FORALL  analyser IN analysers OF env
+         DO  IF sort OF analyser /= -1 THEN  show(analyser)  FI  OD;
+         newline(channel)
+   ELSE  BOOL  found:= FALSE;
+         FORALL  analyser IN analysers OF env WHILE NOT found
+         DO  IF sort OF analyser /= -1  ANDTH
+                description OF analyser = description
+             THEN  show(analyser);  found:= TRUE
+             FI
+         OD;
+         IF NOT found
+         THEN  put(channel, ("""", description, """ is not known", newline))
+         FI
+   FI
+END;
+
+
+
+
+
+{ Initialise COMMANDENV data structure for command interpreter }
+
+
+PROC  initialise_commands = ( PROC (RVRVC) VOID  report_error,
+                              PROC (UNION (MESSAGEPROC, VOID))
+                                 VOID  set_default_msg,
+                              MESSAGEPROC  abort,
+                              PROC ( COMMANDENV, REF SIMPLE, COMMANDPARAM,
+                                     MESSAGEPROC ) CONTINUATION  caller,
+                              REF READERS  readers,
+                              REF COMPOUND  outer_command,
+                              COMMANDPARAM  outer_parameter
+                            ) COMMANDENV:
+BEGIN
+   { This procedure sets up the COMMANDENV and initialises the outer command
+     context by calling prelude OF outer_command with outer_parameter.  It
+     orders the commands alphabetically (by modification) and sets up a list
+     of lexical analysers for the command parameters. }
+
+   MODE  DONE = STRUCT (REF COMMANDVEC  vec,  REF DONE  rest);
+   REF DONE  list:= REF DONE (NIL);
+
+   PROC  new = (REF COMMANDVEC  vec) BOOL:
+   BEGIN
+      BOOL  not_found:= TRUE;
+      REF DONE  ptr:= list;
+      WHILE (ptr ISNT REF DONE (NIL))  ANDTH  not_found
+      DO  not_found:= vec ISNT  vec OF ptr;
+          ptr:= rest OF ptr
+      OD;
+      IF not_found THEN  list:= HEAP DONE:= (vec, list)  FI;
+      not_found
+   END;
+
+   PROC  swop = (REF COMMAND  a, b) BOOL:
+   BEGIN
+      PROC  get_name = (COMMAND  c) RVC:
+         CASE c IN
+            (REF SIMPLE  s)       name OF s,
+            (REF GROUP  g)        name OF group OF g,
+            (REF COMPOUND  c)     name OF prelude OF c
+         ESAC;
+      RVC  name1 = get_name(a),  name2 = get_name(b);
+      COMMAND  c;
+      IF name2 < name1
+      THEN  c:= a;  a:= b;  b:= c;   TRUE
+      ELSE  FALSE
+      FI
+   END;
+
+   PROC  sort_commands = (REF COMMANDVEC  commands) VOID:
+      IF new(commands)
+      THEN
+         BOOL  end;
+         WHILE
+            end:= TRUE;
+            FOR i TO UPB commands - 1
+            DO  IF swop(commands[i], commands[i+1]) THEN  end:= FALSE  FI  OD;
+            NOT end
+         DO  SKIP  OD;
+
+         FOR i TO UPB commands
+         DO  CASE  commands[i] IN
+                (REF GROUP  g)     sort_commands(commands OF g) ,
+                (REF COMPOUND  c)  ( sort_commands(locals OF c);
+                                     sort_commands(globals OF c) )
+             OUT  SKIP
+             ESAC
+         OD
+   FI;
+
+   sort_commands(locals OF outer_command);
+   sort_commands(globals OF outer_command);
+
+   INT  n_readers:= 0;
+   REF READERS  rptr:= readers;
+   WHILE rptr ISNT REF READERS (NIL)
+   DO  n_readers:= sort OF rule OF rptr MAX n_readers;
+       rptr:= rest OF rptr
+   OD;
+
+   HEAP VECTOR [n_readers] ANALYSER  analysers;
+   FORALL a IN analysers DO  sort OF a:= HEAP INT:= -1  OD;
+
+   rptr:= readers;
+   WHILE rptr ISNT REF READERS (NIL)
+   DO  INT  index = sort OF rule OF rptr;
+       IF sort OF analysers[index] /= -1
+       THEN  abort(system, "initialise_commands:  duplicate reader")
+       ELSE  analysers[index]:= rule OF rptr
+       FI;
+       rptr:= rest OF rptr
+   OD;
+
+   HEAP COMMANDSTACK  stack:= ( outer_command, 1, HEAP VECTOR [0] RVC,
+                                HEAP COMMANDSTACK:= (NIL, 0, NIL, NIL) );
+
+   HEAP CENV  env:= ( stack, analysers, FALSE, FALSE, FALSE, caller,
+                      report_error, set_default_msg, abort );
+
+   caller(env, prelude OF current_context OF stack, outer_parameter, abort);
+
+   env
+END;
+
+
+
+
+{ Command interpreter - modified to cope with EPI }
+
+
+PROC  interpret_commands = (COMMANDENV  env) CONTINUATION:
+BEGIN
+   { This procedure will accept a COMMANDENV for any depth of command context,
+     modifying the stack field as it moves between different levels. It assumes
+     that the prelude command of the current context (defined by current_context
+     OF stack) has already been called. This procedure uses "read_command" to
+     obtain the next command name. It searches for that command in commands OF
+     current_context and uses its "parameter" field to read its parameters.
+     Procedure "caller" is used to obey the command which may request that
+     execution either: "continue"s with the next command, "return"s to the
+     previous command context, "finish"es by leaving at level one, or "quit"s,
+     terminating execution immediately. }
+
+
+   MESSAGEPROC  msg:= SKIP;
+
+
+   PROC  input_lines = RVRVC:
+   BEGIN
+       { This procedure is called by msg to report an error. It regenerates
+         input given by the user from the line containing the current command
+         name up to the point read. The error messages is tacked on to the end
+         of the last line (by msg) and the prompt string is prefixed to each
+         line. }
+       RVRVC  l = IF UPB input_lines OF stack OF env = 0
+                  THEN  get_input_lines   { get lines remembered by reader }
+                  ELSE  input_lines OF stack OF env
+                  FI,
+              lines = IF UPB l <= 0  { Might not have been read conventionally }
+                      THEN  HEAP VECTOR [1] RVC:= nullstr
+                      ELSE  l
+                      FI;
+       input_lines OF stack OF env:= HEAP VECTOR [0] RVC;
+    {  HEAP VECTOR [UPB lines] RVC  ans;
+       FORALL a IN ans, l IN lines
+       DO  a:= oneline(( prompt OF current_context OF stack OF env,
+                         arrow_str, l ))
+       OD;
+       ans
+    }  lines
+   END;
+
+
+   PROC  obey = (RVC  name,  COMMANDVEC  commands) CONTINUATION:
+   BEGIN
+      CONTINUATION  continuation:= not_found;
+
+      FORALL com IN commands WHILE c OF continuation = c OF not_found
+      DO  CASE com IN
+            (REF SIMPLE  simple)
+               IF check name(env, FALSE, name, simple)
+               THEN  COMMANDPARAM  param =
+                        read_parameters( analysers OF env,
+                                         parameter OF simple, msg );
+                     continuation:= (caller OF env)(env, simple, param, msg)
+               FI ,
+
+            (REF GROUP  group)
+               ( RVC  subname:= nullstr;
+                 IF search group(env, FALSE, name, subname, group)
+                 THEN  continuation:= obey(subname, commands OF group)
+                 FI
+               ) ,
+
+           (REF COMPOUND  compound)
+               IF check name(env, FALSE, name, prelude OF compound)
+               THEN  COMMANDPARAM  param =
+                        read_parameters( analysers OF env,
+                                         parameter OF prelude OF compound,
+                                         msg );
+                     continuation:=
+                        (caller OF env)(env, prelude OF compound, param, msg);
+                     IF c OF continuation = c OF continue
+                     THEN  input_lines OF stack OF env:= input_lines;
+                           REF REF COMMANDSTACK (stack OF env):=
+                              HEAP COMMANDSTACK:=
+                                 ( compound,  depth OF stack OF env + 1,
+                                   HEAP VECTOR [0] RVC, stack OF env )
+                     FI
+               FI
+          ESAC
+      OD;
+
+      continuation
+   END;
+
+
+   PROC  shell = CONTINUATION:
+   BEGIN
+      PROC  return_to_caller = CONTINUATION:
+      BEGIN
+         REF SIMPLE  postlude = postlude OF current_context OF stack OF env;
+         IF depth OF stack OF env = 1
+         THEN  (caller OF env)(env, postlude, no_parameters, abort OF env);
+               quit
+         ELSE  REF REF COMMANDSTACK (stack OF env):= caller OF stack OF env;
+               { msg will return the user to the calling environment }
+               (caller OF env)(env, postlude, no_parameters, msg);
+               input_lines OF stack OF env:= HEAP VECTOR [0] RVC;
+               continue
+         FI
+      END;
+
+      RVC  name = read_command(msg);
+      clear_interrupt;
+      CONTINUATION  c1 = obey(name, locals OF current_context OF stack OF env),
+                    c = IF c OF c1 = c OF not_found
+                        THEN  obey( name,
+                                    globals OF current_context OF stack OF env)
+                        ELSE  c1
+                        FI;
+      IF c OF c = c OF not_found
+      THEN  msg(user, "Command not recognised");
+            continue
+      ELIF c OF c = c OF finish
+      THEN  WHILE  c OF return_to_caller = c OF continue DO  SKIP  OD;
+            finish
+      ELIF c OF c = c OF return   { Return at the outer level => quit }
+      THEN  return_to_caller
+      ELSE  c
+      FI
+   END;
+
+
+   msg:= (MSGNO  msgno,  VECSTR  params) VOID:
+   BEGIN
+      MESSAGE message = translate_msg(msgno, params);
+      IF cli_msg(msgno)  OREL  abort_msg(msgno)
+      THEN  RVRVC  input = input_lines;
+            input[UPB input]:=
+                concat((input[UPB input], " ? - ", text OF message));
+            (report_error OF env)(input);
+            skip_command;
+            IF class OF msgno OF message = class OF fatal
+            THEN  (set_default_msg OF env)(EMPTY);      { ----||---- }
+                  { global_msg calls translate_msg if the parameters to
+                    (abort OF env) are msgno and params - this would override
+                    the security trap in Module messageproc - therefore call
+                    with the translated message.  DCT  21:11:91 }
+                  (abort OF env)(fatal, text OF message)
+            ELIF class OF msgno OF message = class OF system
+            THEN  (set_default_msg OF env)(EMPTY);      { ----||---- }
+                  (abort OF env)(system, text OF message)
+            ELSE  GOTO restart                          { ++++||++++ }
+            FI
+      ELIF log_msg(message)
+      THEN  IF error_msg(message)
+            THEN  putstr(err, text OF message);
+                  IF newline_msg(message) THEN  newline(err)  FI
+            ELSE  putstr(screen, text OF message);
+                  IF newline_msg(message) THEN  newline(screen)  FI
+            FI
+      ELIF out_msg(message)
+      THEN  putstr(out, text OF message);
+            IF newline_msg(message) THEN  newline(out)  FI
+      FI
+   END;
+
+   CONTINUATION  continuation;
+
+restart:                                                { ++++||++++ }
+
+   WHILE
+      { This procedure call will assign the local procedure "msg" to any global
+        msg procedure required by the IO system to catch certain failures.
+        IT MUST NOT BE ALLOWED TO GO OUT OF SCOPE.  The EMPTY parameter will
+        cause the global msg proc to be re-assigned to a (global) default. }
+      (set_default_msg OF env)(msg);                    { ----||---- }
+
+*3    c OF (continuation:= apply(shell, msg)) = c OF continue
+%3    c OF (continuation:= shell) = c OF continue
+   DO  SKIP  OD;
+
+   (set_default_msg OF env)(EMPTY);                     { ----||---- }
+
+   continuation
+END
+
+
+
+
+
+KEEP  CONTINUATION,  ACCESS,  RVRVC,  RVCPROC,  COMMANDPROC,  COMMAND,
+      COMMANDVEC,  SIMPLE,  GROUP,  COMPOUND,  COMMANDSTACK,  COMMANDENV,
+      nullcommand,  nullcommands,
+      normal access,  hidden access,  secret access,  private access,
+      hidden private access,  secret private access,  no access,
+      continue,  return,  finish,  quit,  = (CONTINUATION, CONTINUATION),
+      ADD (VECTOR [] COMMAND, VECTOR [] COMMAND),
+      ADD (VECTOR [] COMMAND, COMMAND),
+      ADDAB (REF COMMANDVEC, VECTOR [] COMMAND),
+      ADDAB (REF COMMANDVEC, COMMAND),
+      MAKECOMMANDS (VECTOR [] COMMAND),       MAKECOMMANDS (COMMAND),
+      make_group,  make_compound,
+      help,   full_help,   syntax_help,
+      initialise_commands,
+      interpret_commands
+FINISH

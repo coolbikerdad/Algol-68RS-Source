@@ -1,0 +1,2485 @@
+\input texinfo @c -*-texinfo-*-
+@c $Id: ctrans.texi,v 1.2 2002-06-06 12:46:19 sian Exp $
+@c %**start of header
+@setfilename ctrans.info
+@settitle Ctrans Portable ALGOL 68
+@setchapternewpage odd
+
+@ifinfo
+@format
+@dircategory Development
+@direntry
+* Ctrans: (ctrans).        Portable Algol 68 compiler.
+@end direntry
+@end format
+@end ifinfo
+
+@finalout
+
+@iftex
+@afourpaper
+@end iftex
+@c %**end of header
+
+@ifinfo
+@node    Top, Overview, (dir), (dir)
+@comment node-name, next,     previous, up
+@top Ctrans
+
+This file documents Ctrans, a portable ALGOL 68 compilation system
+enabling ALGOL 68 programs to be compiled and run on most systems for
+which a C compiler is available.
+
+Copyright (C) 1993 Defence Research Agency.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+The manual has been modified to reflect the modified Ctrans system as
+distributed for the Linux operating system.
+
+Copyright (C) 2000 Sian Leitch
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+@end ifinfo
+
+@setchapternewpage odd
+@titlepage
+@title Ctrans: portable ALGOL 68 compiler
+@subtitle Algol 68 to C translator and run-time system
+@subtitle $Id: ctrans.texi,v 1.2 2002-06-06 12:46:19 sian Exp $
+@author Praxis Systems plc, Bath, UK
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993 Defence Research Agency.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+@end titlepage
+
+@c *** structure of document ***
+
+@c ----------------------------------------------------------------------------
+@menu
+* Overview::                    
+* Language::                    
+* Prelude Library::             
+* Using the translator::        
+* Building complete programs::  
+* Debugging::                   
+* Translator usage summary::    
+* Further reading::             
+* Implementation::              
+* Option index::                
+* Symbol index::                
+* Concept index::               
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+ALGOL 68 language
+
+* Language restrictions::       
+* Language extensions::         
+* Language differences::        
+* C naming conventions::        
+
+Language restrictions
+
+* Modules system restrictions::  
+* Standard prelude::            
+* FORMAT::                      
+* Arrays in structures::        
+* XTYPE and YTYPE::             
+* CYCLE::                       
+* Rowing dynamic results::      
+
+Language extensions
+
+* First-class procedures::      
+* Star edit::                   
+
+Language differences
+
+* LOC generators::              
+* C inserts::                   
+* ALIEN declarations::          
+
+@code{ALIEN} declarations
+
+* Prelude actions::             
+
+Using the translator
+
+* Translator files::            
+* Unique names::                
+* Modules system::              
+
+Building complete ALGOL 68 programs
+
+* Compiling::                   
+* Linking::                     
+
+Debugging ALGOL 68 programs
+
+* Program debugging::           
+* Program crashes::             
+
+Summary of translator usage
+
+* Translator options::          
+* Environment variables::       
+
+Implementation guide
+
+* Ctrans directories::          
+* Translator sources::          
+* Header files::                
+* Run-time library::            
+* Heap management::             
+* Prelude library sources::     
+* Porting::                     
+
+Heap management and garbage collection (@code{library/liba68.a})
+
+* Internal macros::             
+* Garbage collector headers::   
+* Garbage collector modules::   
+* Garbage collector parameters::  
+* Garbage collector statistics::  
+* Debugging the garbage collector::  
+
+@end detailmenu
+@end menu
+
+@node Overview, Language, Top, Top
+@comment node-name, next, previous, up
+@chapter Overview
+@cindex Overview
+
+Ctrans is a portable ALGOL 68 compilation system that allows Algol 68
+programs to be compiled and run on most systems for which an ANSI C compiler is
+available.
+
+The system consists of these components
+@itemize @bullet
+@item
+Algol 68 to C translator (@code{a68toc})
+@item
+C header files providing type definitions and support macros required by
+the generated C code
+@item
+run-time support library including garbage-collected heap allocator
+@item
+an ALGOL 68 prelude library that provides interfaces to XPG3-compatible
+operating system facilities (note that these interfaces are not the same
+as the ALGOL 68 standard prelude defined in the Revised Report).
+@item
+a standard prelude library that provides facilities very similar, but
+not completely compatible, with the standard prelude described in the
+Revised Report.
+@end itemize
+
+Ctrans can be easily ported to most systems that possess an ANSI C
+compiler (e.g. @code{gcc}), and an XPG3 standard C library.
+
+The heap management system works best on virtual memory systems, but can
+be made to work in other environments.
+
+The reader needs to be familiar with ALGOL 68 RS (@pxref{Further
+reading}) to fully understand this documentation.
+
+@c ----------------------------------------------------------------------------
+@node Language, Prelude Library, Overview, Top
+@comment node-name, next, previous, up
+@chapter ALGOL 68 language
+@cindex ALGOL 68 language
+The translator is based on the portable ALGOL 68 RS front-end
+implemented by RSRE (now DRA) and therefore accepts all standard RS extensions to the
+language (except where indicated in this section) such as @code{FORALL}.
+These are not discussed further here.
+
+This chapter describes how the language accepted by Ctrans differs from
+standard ALGOL 68 RS in terms of restrictions, extensions and
+differences.
+
+@menu
+* Language restrictions::       
+* Language extensions::         
+* Language differences::        
+* C naming conventions::        
+@end menu
+
+@node Language restrictions, Language extensions, Language, Language
+@comment node-name, next, previous, up
+@section Language restrictions
+@cindex Language restrictions
+
+@menu
+* Modules system restrictions::  
+* Standard prelude::            
+* FORMAT::                      
+* Arrays in structures::        
+* XTYPE and YTYPE::             
+* CYCLE::                       
+* Rowing dynamic results::      
+@end menu
+
+@node Modules system restrictions, Standard prelude, Language restrictions, Language restrictions
+@comment node-name, next, previous, up
+@subsection Modules system
+@cindex Modules system
+
+Only @code{CONTEXT VOID} modules (both declarations and
+closed-clause) are supported.  This implies that there can be no
+@code{HERE} clauses (@dfn{holes}) or composition modules.  A
+corollary of this is that there can be no standard prelude or
+postlude.
+
+The general form of a @code{DECS} module is
+@cindex DECS module
+
+@example
+DECS decstitle
+CONTEXT VOID
+[ USE uselist ]:
+
+decsbody
+
+KEEP keeplist
+FINISH
+@end example
+@noindent
+
+and the general @code{PROGRAM} module is
+@cindex PROGRAM module
+
+@example
+PROGRAM progtitle
+CONTEXT VOID
+[ USE uselist ]
+
+enclosed clause
+
+FINISH
+@end example
+
+
+@node Standard prelude, FORMAT, Modules system restrictions, Language restrictions
+@comment node-name, next, previous, up
+@subsection Standard prelude library
+@cindex Standard prelude library
+
+The set of identifiers that would normally be provided by the
+ALGOL 68 RS library mechanism (eg @code{print}, @code{newline}) are
+not available.
+
+However, an alternative set of operating interface modules have been supplied
+(@pxref{Prelude Library}) which may be used automatically via the library mechanism.
+
+A POSIX-compatible standard prelude library may be made available in the
+future.
+
+A standard prelude, very similar to the standard prelude described in
+the Revised Report is available provided that the phrase
+@code{USE standard} appears in the program header.
+
+@node FORMAT, Arrays in structures, Standard prelude, Language restrictions
+@comment node-name, next, previous, up
+@subsection @code{FORMAT}
+@cindex FORMAT
+Formatted transput and the modes @code{FORMAT} are not supported.
+
+@node Arrays in structures, XTYPE and YTYPE, FORMAT, Language restrictions
+@comment node-name, next, previous, up
+@subsection Selection from arrays of structures
+@cindex Selection
+
+The selection of a field from an array of structures to yield an
+array is not supported.
+For example, in the following
+@example
+[2] STRUCT (INT i,REAL r) sarray;
+    REF [] REAL rr = r OF sarray;
+@end example
+@noindent
+the selection would be rejected by the translator.
+It is always possible to circumvent this restriction using loops.
+
+@node XTYPE and YTYPE, CYCLE, Arrays in structures, Language restrictions
+@comment node-name, next, previous, up
+@subsection @code{XTYPE} and @code{YTYPE}
+@cindex XTYPE
+@cindex YTYPE
+The generalised modes @code{XTYPE} and @code{YTYPE} are not supported.
+
+@node CYCLE, Rowing dynamic results, XTYPE and YTYPE, Language restrictions
+@comment node-name, next, previous, up
+@subsection @code{CYCLE} operator
+@cindex CYCLE
+The @code{CYCLE} operator is not supported.
+
+@node Rowing dynamic results,  , CYCLE, Language restrictions
+@comment node-name, next, previous, up
+@subsection Rowing dynamic procedure results
+@cindex Rowing
+The translator takes no action to ensure that stack frames
+of procedures containing dynamic results are not collapsed.
+Since the translator allocates all dynamically created data,
+such as arrays, on the heap this is not usually a problem.
+However, the following extract will give erroneous results due to
+the rowing coercion applied to @code{i}
+@example
+PROC p = REF [] INT: ( INT i ; i );
+@end example
+
+@node Language extensions, Language differences, Language restrictions, Language
+@comment node-name, next, previous, up
+@section Language extensions
+@cindex Language extensions
+
+@menu
+* First-class procedures::      
+* Star edit::                   
+@end menu
+
+@node First-class procedures, Star edit, Language extensions, Language extensions
+@comment node-name, next, previous, up
+@subsection First-class procedures
+@cindex First-class procedures
+
+The C code generated by the translator relaxes the usual scoping rules
+as applied to procedures and allows them to be returned as values from
+other procedures.  The environment in which they were created is
+preserved for use in subsequent calls, as in the Flex implementation of
+RS Algol68.
+
+The mechanism relies on all necessary data being allocated on the heap;
+in particular this applies to data which is local to one procedure but
+non-local to that procedure which is to be returned as a value for
+subsequent use.  The user must ensure that data is suitably allocated.
+
+For example, when translating the following program extract
+@example
+PROC a = ( INT i ) PROC INT:
+BEGIN
+   INT k := i;
+   PROC b = INT: k +:= 2;
+   b
+END;
+@end example
+@noindent
+@code{k} has insufficient scope.
+To ensure correct execution of the program, the user should then
+amend the declaration of @code{k} to read
+@example
+HEAP INT k := i;
+@end example
+
+@node Star edit,  , First-class procedures, Language extensions
+@comment node-name, next, previous, up
+@subsection Star-edit preprocessor
+@cindex Star-edit preprocessor
+
+A simple conditional compilation feature is built into the translator.
+
+If a source line contains a @code{*} or @code{%} in the first column,
+then the next character is matched with the @dfn{starflags} for the
+current translation, which may be specified by the @code{-staredit}
+option (@pxref{Translator options}) or the @code{A68_STAREDIT}
+(@pxref{Environment variables}) environment variable.
+
+If a match is found, the source line is translated if the first
+character is @code{*}, and suppressed if the first character is
+@code{%}.
+
+If no match is found, the source line is suppressed if the first
+character is @code{*}, and translated if the first character is
+@code{%}.
+
+
+@node Language differences, C naming conventions, Language extensions, Language
+@comment node-name, next, previous, up
+@section Language differences
+@cindex Language differences
+
+@menu
+* LOC generators::              
+* C inserts::                   
+* ALIEN declarations::          
+@end menu
+
+@node LOC generators, C inserts, Language differences, Language differences
+@comment node-name, next, previous, up
+@subsection @code{LOC} generators
+@cindex LOC generators
+The translator treats @code{LOC} generators as if they were @code{HEAP}
+generators.
+
+@node C inserts, ALIEN declarations, LOC generators, Language differences
+@comment node-name, next, previous, up
+@subsection C inserts
+@cindex C inserts
+A C insert is a primary of the form
+@example
+[ mode ] CODE [ ( identifier [ , identifier ... ] ) ] "C code"
+@end example
+@noindent
+where
+@table @var
+@item mode
+is the required mode of the primary (@code{VOID} by default)
+
+@item identifier
+is an identifier in the Algol68 program which is to be referred
+to in the C insert
+
+@item C code
+is the required C insertion using the specified Algol68
+identifiers.
+@end table
+
+If mode is not void, the C insert must contain an assignment to
+@code{RESULT} to represent the result of the clause.
+The translator encloses the insert in a block and generates
+pre-processor definitions for the required identifiers and result.
+
+An example of the use of the code construct is
+@example
+INT a, b;
+...
+IF b = INT CODE (a) "a += 42; RESULT = a*a;"
+THEN
+  ...
+FI;
+@end example
+@noindent
+which is equivalent to
+@example
+INT a, b;
+...
+IF b = ( a +:= 42; a*a )
+THEN
+  ...
+FI;
+@end example
+
+@node ALIEN declarations,  , C inserts, Language differences
+@comment node-name, next, previous, up
+@subsection @code{ALIEN} declarations
+@cindex ALIEN declarations
+The ALGOL 68 RS alien construct has the form
+@example
+MODE identifier =
+  ALIEN "C identifier"
+        "C definition"
+      [ "C definition continued" ... ];
+@end example
+
+Note that it is only allowed in the form of an identity declaration.
+
+The @code{ALIEN} construct is used to give access to functions and
+data items that are declared externally to ALGOL 68 modules, such as
+C library routines.  The translator generates a C macro definition
+that maps the C name onto a Ctrans unique name, and copies the C
+definition unchanged to the output C file.
+
+The C definition part will usually consist of a @code{#include} of
+the C header file defining the C identifier being used.  If
+portability is a major consideration, a macro definition may be used
+to invoke conversion macros (from @code{include/Atypes.h} on the
+arguments and result.  There are many examples of this in the library
+prelude sources (@code{liba68prel/a/*.a68}).
+
+@menu
+* Prelude actions::             
+@end menu
+
+@node Prelude actions,  , ALIEN declarations, ALIEN declarations
+@comment node-name, next, previous, up
+@subsubsection Prelude and postlude actions
+@cindex Prelude and postlude actions
+
+Because Ctrans is restricted to @code{CONTEXT VOID} modules, it is
+impossible to implement preludes and postludes in the traditional way
+using contexts.
+
+However, a simple mechanism has been provided to allow side-effects to
+occur before and after the main program.
+
+At the beginning of every program Ctrans generates
+
+@example
+#ifdef A_prelude
+A_prelude(argc,argv,envp); /*envp added by SL*/
+#endif
+@end example
+
+and at the end it generates
+
+@example
+#ifdef A_postlude
+A_postlude;
+#endif
+@end example
+
+Actions can be specified by providing definitions for these macros.
+See @code{liba68prel/a/osshell.a68} for an example from the prelude
+library.
+
+@node C naming conventions,  , Language differences, Language
+@comment node-name, next, previous, up
+@section C naming conventions
+@cindex C naming conventions
+
+The translator and run-time library reserve a set of identifiers for
+their own use.  When writing C code to be combined with a translated
+Algol68 program (either as a separate module or as a C insert) the
+reserved identifiers must not be used.  They are
+
+@itemize @bullet
+@item
+identifiers starting with seven uppercase letters followed by
+an underscore (the unique prefix, @pxref{Unique names})
+@item
+identifiers starting with @code{A_}, @code{Agc_} or @code{A68_}
+@end itemize
+
+@c ----------------------------------------------------------------------------
+@node Prelude Library, Using the translator, Language, Top
+@comment node-name, next, previous, up
+@chapter Prelude Library
+@cindex Prelude Library
+
+The prelude library @file{liba68prel.a} contains a number of useful
+procedures and operators that can be used in your ALGOL 68 programs.
+These replace the ALGOL 68 standard prelude facilties as defined in the
+Revised Report (but see the book ``Programming Algol 68 Made Easy''
+for a full description of the QAD standard prelude which @emph{does}
+provide most of the standard facilities).
+
+The library contains
+
+@table @code
+@item a68config
+@vindex a68config
+operations on the configuration information generated by @code{a68toc}
+
+@item cif
+@vindex cif
+Conversions between C pointers and ALGOL 68 vectors.
+Some environment enquiries, and @code{CHAR} constants.
+
+@item messageproc
+@vindex messageproc
+General error handling mechanism.
+
+@item oscommon
+@vindex oscommon
+Filename parsing.
+
+@item oserrors
+@vindex oserrors
+Interpretation of operating system errors.
+
+@item osfiles
+@vindex osfiles
+File and directory handling, I/O.
+
+@item osgc
+@vindex osgc
+Manipulation of garbage collector parameters.
+
+@item osif
+@vindex osif
+Library initialisation.
+
+@item osmisc
+@vindex osmisc
+Current time, CPU time, working directory, execute shell command, read
+environment variable etc.
+
+@item osshell
+@vindex osshell
+Program argument handling.
+Shell meta-character expansion.
+
+@item ossignals
+@vindex ossignals
+Signal handling
+
+@item strops
+@vindex strops
+Memory-efficient concatenation of @code{VECTOR [] CHAR}s.
+Conversion of @code{INT} to @code{VECTOR [] CHAR} (i.e. like
+@code{sprintf})
+
+@item usefulops
+@vindex usefulops
+Miscellaneous mode cheats and string operations.
+@end table
+
+You can make these available to your ALGOL 68 compilations by specifying
+the directory containing the library modules with the @code{-lib} option
+of @code{a68toc}(@pxref{Translator options}) or the @code{A68_LIB}
+environment variable (@pxref{Environment variables}.
+
+Consult the prelude library source files (@code{liba68prel}/*.a68) for
+further details.
+
+@c ----------------------------------------------------------------------------
+@node Using the translator, Building complete programs, Prelude Library, Top
+@comment node-name, next, previous, up
+@chapter Using the translator
+@cindex Using the translator
+
+@menu
+* Translator files::            
+* Unique names::                
+* Modules system::              
+@end menu
+
+@node Translator files, Unique names, Using the translator, Using the translator
+@comment node-name, next, previous, up
+@section Input and output files
+@cindex Input and output files
+
+All output files are created in the current working directory with the
+same basename as the input ALGOL 68 source file.
+
+Both @code{PROGRAM} and @code{DECS} modules generate a C output file
+(@code{.c} suffix).
+
+In addition, @code{DECS} modules generate a module information file
+(@code{.m} suffix) which is read by the translator when processing ALGOL
+68 source files that @code{USE} that @code{DECS} module.
+The search path for module information files can be specified with the
+@code{-dir} option (@pxref{Translator options}) or the @code{A68_DIR}
+environment variable (@pxref{Environment variables}).
+
+
+@node Unique names, Modules system, Translator files, Using the translator
+@comment node-name, next, previous, up
+@section Unique names
+@cindex Unique names
+
+In order to ensure the uniqueness of C identifiers, the translator
+prefixes ALGOL 68 identifiers of non-local scope with a string of seven
+upper-case letters followed by underscore.
+For example, @code{filename} might be translated into
+@code{GBDTFYV_filename}.
+
+The unique prefixes are generated in a fixed sequence starting from a
+specified seed value determined from the @code{-uname} option
+(@pxref{Translator options}).
+
+@node Modules system,  , Unique names, Using the translator
+@comment node-name, next, previous, up
+@section Multiple-module ALGOL 68 programs
+@cindex Multiple-module ALGOL 68 programs
+
+The translator does not implement the full ALGOL 68 RS modules system
+(@pxref{Modules system restrictions}).
+
+The translator needs to access information about previously
+translated modules in order to
+
+@itemize @bullet
+@item
+check that the identifiers imported from @code{USE}d modules are used
+correctly;
+@item
+check whether the interface of the @code{DECS} module currently being
+translated is identical with a previously translated version.
+@end itemize
+
+As mentioned above, the information required by the translator
+is contained in files with a suffix of @code{.m}.
+
+Note that a declaration of the form
+@example
+PROC(REF FLOBJECT,VECTOR[]CHAR,INT)VOID
+   fl set button shortcut = fl set object shortcut;
+@end example
+will not work due to an obscure error in the generated C code.
+
+The form
+@example
+PROC fl set button short cut =
+   (REF FLOBJECT ob,VECTOR[]CHAR str,INT showit)VOID:
+   fl set object shortcut(ob,str,showit);
+@end example
+will work.
+
+When a previous version of a @code{DECS} module (i.e. a @code{.m file})
+is found, the translator outputs a warning if the current version is
+incompatible with the previous version.
+
+If the current version is compatible with the previous version, the
+translator outputs a comment and ensures that externally visible objects
+have the same C identifiers as in the previous version by propagating
+the unique prefixes.  For a module to be compatible with its previous
+version
+
+@itemize @bullet
+@item
+the keeplist must contain the same
+identifiers in the same order
+@item
+the modes of all kept items must be
+unchanged
+@item
+the C representation of all kept items must be unchanged.
+This will not be true if, for example,
+
+@example
+INT i;
+@end example
+@noindent
+
+is changed to
+
+@example
+REF INT i = j;
+@end example
+
+@item
+the C identifier and definition part of kept @code{ALIEN} declarations
+must be identical.
+Thus, changing
+
+@example
+INT sig_block   = ALIEN "SIG_BLOCK" "#include <signal.h>";
+@end example
+
+to
+
+@example
+INT sig_block   = ALIEN "SIG_BLOCK" "#include <sys/signal.h>";
+@end example
+
+would render the current version incompatible.
+
+@item
+all modules that are @code{USE}d by the current module and contribute to
+its keeplist are compatible with the versions @code{USE}d by the
+previous version of the current module.
+@end itemize
+
+Note that the last two criteria are additional to those found in other
+RS Algol68 systems.
+
+If a module is compatible with its previous version then modules
+depending on the module being translated need not be retranslated.
+Failure to retranslate modules that depend on a module that has changed
+its interface will result in subsequent inability to link the compiled
+objects.
+
+@c ----------------------------------------------------------------------------
+@node Building complete programs, Debugging, Using the translator, Top
+@comment node-name, next, previous, up
+@chapter Building complete ALGOL 68 programs
+@cindex Building complete ALGOL 68 programs
+
+This section outlines how to compile ALGOL 68 modules and link them
+together into a runnable program.
+
+The simplest and, perhaps, the best way, to compile and link ALGOL 68
+source programs is to use the @code{mm} Module Manager. @xref{Overview,,,mm}.
+However, if the Module Manager is unavailable, then you may have to
+resort to using a @file{Makefile}.
+
+The instructions are given in terms of rules for GNU make as this is
+widely available.
+
+It is assumed that these macros are available in the Makefile:-
+
+@table @code
+@item A68TOC
+@vindex A68TOC
+the name of the @code{a68toc} executable file
+
+@item A68INCLUDE
+@vindex A68INCLUDE
+the name of the directory containing the Ctrans header files
+
+@item A68LIB
+@vindex A68LIB
+the name of the directory containing the prelude library module
+information files (@code{*.m}) and object library (@code{liba68prel.a})
+@end table
+
+@menu
+* Compiling::                   
+* Linking::                     
+@end menu
+
+@node Compiling, Linking, Building complete programs, Building complete programs
+@comment node-name, next, previous, up
+@section Compiling ALGOL 68 modules
+@cindex Compiling ALGOL 68 modules
+
+Here is a rule that builds an object file from an ALGOL 68 source file.
+
+@example
+%.o : %.a68
+        $(A68TOC) $(A68TOCFLAGS) $<
+        $(CC) $(CFLAGS) -I$($A68INCLUDE) -c $(addsuffix .c,$(basename $<))
+@end example
+
+If the prelude library is required, @code{$(A68TOCFLAGS)} must contain
+@code{-lib $(A68LIB)}.
+
+The Ctrans header files must be made available to the C compiler.
+
+There are C compiler options that enable debugging features
+(@pxref{Debugging}), such as array bound checking.
+
+@node Linking,  , Compiling, Building complete programs
+@comment node-name, next, previous, up
+@section Linking ALGOL 68 programs
+@cindex Linking ALGOL 68 programs
+
+ALGOL 68 programs are linked in exactly the same way as C programs.
+Modules must be linked in the following order if the heap management
+system is to work correctly
+
+@enumerate
+@item
+Object files that do not originate from ALGOL 68 sources (e.g.  native C
+modules)
+
+@item
+@code{library/Afirst.o}
+
+@item
+Object files derived from ALGOL 68 sources.
+
+@item
+Prelude library (e.g. liba68prel/liba68prel.a). Note that if none of the
+facilities in this library are used (for example, the @file{QAD}
+standard prelude is used instead), then this library should be replaced
+by that library, @file{-la68s}.
+
+@item
+ALGOL 68 run-time library, @code{-la68}
+
+@item
+Any other libraries referenced. You will always require @code{-lm -lc}
+@end enumerate
+
+@c ----------------------------------------------------------------------------
+@node Debugging, Translator usage summary, Building complete programs, Top
+@comment node-name, next, previous, up
+@chapter Debugging ALGOL 68 programs
+@cindex Debugging ALGOL 68 programs
+
+Run-time failures fall into two main classes:-
+
+@itemize @bullet
+@item
+the program runs, but does not behave as expected
+@item
+the program crashes, usually with a memory access fault (e.g. segmentation
+fault or bus error), or with an assignment error
+@end itemize
+
+@menu
+* Program debugging::           
+* Program crashes::             
+@end menu
+
+@node Program debugging, Program crashes, Debugging, Debugging
+@comment node-name, next, previous, up
+@section Program debugging
+@cindex Program debugging
+
+Debugging an ALGOL 68 program effectively means debugging the C
+generated by @code{a68toc} using your favourite debugger.
+Although the generated C is not intended for human consumption, it is
+not difficult to follow with a little practice.
+It can help to pass the C file through @code{indent} before you
+compile it.
+
+The main problem is the unique prefix that is added to most C
+identifiers which makes tasks such as the setting of breakpoints on procedures more
+difficult, as you first have to find the C name of the corresponding
+function.
+There is no easy general way to do this, but some debuggers (e.g.
+@code{gdb}) help by allowing regular expression searches through the
+symbol table.
+
+Another problem is how to find the ALGOL 68 code that corresponds to a
+particular line of C, or vice versa.
+The translator provides help here by identifying the ALGOL 68 source
+file and line number in the generated C source by either @code{#line}
+directives (for every C line) or comments (whenever the ALGOL 68 line
+number changes).
+You can choose between these by using the @code{-noline} and
+@code{-verbose} options (@pxref{Translator options}).
+
+@node Program crashes,  , Program debugging, Debugging
+@comment node-name, next, previous, up
+@section Program crashes
+@cindex Program crashes
+
+Program crashes are usually caused by one of:-
+
+@table @asis
+@item Indexing arrays and vectors with out-of-bound indexes
+Run-time bound checking can be turned on by compiling your generated C
+files with @code{A68_CHECK} defined (i.e. @code{CFLAGS=-DA68_CHECK}).
+There is a performance penalty in doing this, so you may choose to do
+this only for the module where you suspect the fault lies.
+
+@item Dereferencing @code{NIL}
+This is usually caused by incorrect deferencing of @code{REF REF MODE}
+or @code{REF REF REF MODE} objects in list processing applications.  All
+you can do is debug the C code with a debugger to find where to apply
+the appropriate cast in your ALGOL 68.
+
+@item Scope errors
+The scope of variables (that is the lifetime of its memory allocation)
+is not checked at run time.
+
+Reading and writing through references to stack locations will produce
+unpredictable results, which you will have to debug by conventional
+means.
+
+Writing through bad heap references will potentially confuse the heap
+management system by corrupting its private data structure.  You can
+check if this is the case by either disabling the garbage collector
+(@pxref{Debugging the garbage collector}) or periodically checking that
+the heap is self-consistent by calling @code{Agc_check_heap}.
+
+@code{a68toc} generates a call of the macros @code{A_PROC_ENTRY}
+and @code{A_PROC_EXIT} on each procedure entry and exit.
+These macros may be redefined (they are empty by default), to call
+@code{Agc_check_heap}, or your own debugging code.
+
+@item Garbage collector errors
+@xref{Debugging the garbage collector}.
+@end table
+
+@c ----------------------------------------------------------------------------
+@node Translator usage summary, Further reading, Debugging, Top
+@comment node-name, next, previous, up
+@appendix Summary of translator usage
+@cindex Summary of translator usage
+
+The translator @code{a68toc} may be invoked as
+
+@example
+a68toc [options] sourcefile
+@end example
+
+The behaviour of @code{a68toc} is also affected by certain environment
+variables.
+
+@menu
+* Translator options::          
+* Environment variables::       
+@end menu
+
+@node Translator options, Environment variables, Translator usage summary, Translator usage summary
+@comment node-name, next, previous, up
+@section Translator options
+@cindex Translator options
+
+@table @code
+@item -verbose
+@itemx -v
+@findex -verbose
+@findex -v
+Causes some potentially helpful C comments to be generated.
+
+@item -noline
+@itemx -n
+@findex -noline
+@findex -n
+Prevents the generation of C pre-processor @code{#line} directives.
+In its absence @code{-verbose}, causes comments containing Algol 68
+line number and source file to be generated.
+
+@item -long
+@itemx -l
+@findex -long
+@findex -l
+Causes the translator to accept @code{LONG LONG}modes.  This is the
+default.
+
+@item -short
+@itemx -s
+@findex -short
+@findex -s
+Causes the translator to accept @code{SHORT SHORT} modes. This option
+should be given if the QAD standard prelude is being used.
+
+@item -return_structs
+@itemx -r
+@findex -return_structs
+@findex -r
+Prevents generated C functions from returning structure results directly, it
+uses an extra pointer parameter instead
+
+@item -mark_closures
+@itemx -c
+@findex -mark_closures
+@findex -c
+Causes closures to be marked with a special value for debugging purposes.
+
+@item -stack_closures
+@itemx -C
+@findex -stack_closures
+@findex -C
+Causes closures to be (unsafely) stacked rather than heaped.
+
+@item -f @var{integer}
+@findex -f
+Truncates module names to integer characters long when searching for USE
+and library modules. eg. -f 8 for DOS FAT files.
+
+@item -staredit @var{starflags}
+@findex -staredit
+Sets the required staredit characters to @var{starflags}.  The
+characters specified in the @code{A68_STAREDIT} environment variable are
+overriden unless @var{starflags} starts with @code{+} or @code{-} in
+which cases the @var{starflags} are added to, or removed from, those
+specifed in @code{A68_STAREDIT}
+
+@item -dir @var{directory}
+@findex -staredit
+Add @var{directory} to the front of the list of directories, specified
+in the @code{A68_DIR} environment variable, in which the translator
+searches for module information (@code{.m}) files.
+
+@item -cdir @var{directory}
+@findex -cdir
+Add @var{directory} to the front of the list of directories, specified
+in the @code{A68_CDIR} environment variable, in which the translator
+searches for previously generated (@code{.c}) files when the
+@code{-uname cfile} option is specified.
+
+@item -lib @var{directory}
+@findex -lib
+Specifies that @var{directory} contains the modinfo (@code{.m}) files
+corresponding to library modules.  This overrides any value set in the
+@code{A68_LIB} environment variable.
+
+@item -nolib
+@findex -nolib
+Turns off the library lookup mechanism.
+
+@item -stream
+@findex -stream
+Causes RS stream language to be printed on standard output.
+
+@item -dot
+@findex -dot
+Use dot stropping.  (Note 2)
+
+@item -quote
+@findex -quote
+Use quote stropping. (Note 2)
+
+@item -skip
+@findex -skip
+Suppresses run-time errors when missing non-@code{VOID} @code{OUT} parts
+are selected.
+
+@item -tilde
+@findex -tilde
+Allows tilde as a valid character in identifiers.  (Note 2)
+
+@item -optbool
+@findex -optbool
+Uses the optimised versions of @code{and(bool,bool)} and @code{or(bool,bool)}.
+
+@item -keeplist
+@findex -keeplist
+Allows extension of a keeplist to maintain compatibility.  (Note 2)
+
+@item -trace @var{level}
+@item -t @var{level}
+@findex -trace
+@findex -t
+Controls level of expression tree diagnostics.
+
+@item -debug_level @var{level}
+@item -d @var{level}
+@findex -debug_level
+@findex -d
+Controls level of general diagnostics.
+
+@item -debug_module @var{module-name}
+@item -m @var{module-name}
+@findex -debug_module
+@findex -m
+Turns on general diagnostics in @var{module-name}.
+
+@item -cstream file
+@itemx -cstream memory
+@findex -cstream
+Controls whether the translator's C streams are implemented as files or
+in memory (the default).
+
+@item -uname seedfile
+@itemx -uname cfile
+@itemx -uname @var{prefix}
+@findex -uname
+Controls how the translator's unique name generator is seeded.
+
+@table @code
+@item seedfile
+@findex seedfile
+Read the seed from the file specifed by the @code{A68_NAMESEED}
+environment variable.  This is the default.  The specified file is
+updated after translation.
+
+@item cfile
+@findex cfile
+The seed is read from the first line of the C file
+produced by a previous translation of the current module, causing the
+same seed to be used as when the previous C file was generated.
+The C file is found by searching the directories specified using the
+@code{-cdir} option or @code{$A68_CDIR} environment variable.
+
+@item @var{prefix}
+@findex prefix
+The specified @var{prefix} is used as the seed.  The unique name should consist
+of seven uppercase letters.  It is an error if the specified unique name
+contains invalid characters.  If more than seven characters are specified, the
+extra ones are silently ignored.  If fewer than seven characters are
+specified, the unique name is padded on the right with 'A's.
+@end table
+
+If any error is detected, a warning is issued, and the translator proceeds as
+if -uname AAAAAAA had been specified.
+
+@item -tmp
+@findex -tmp
+The generated C file, and C stream files (if @code{-cstream file} has
+been specified), are placed in @code{/tmp} rather than the current
+directory.  This may improve performance on systems where @code{/tmp} is
+mapped into virtual memory.  Beware of concurrent builds using this
+option.
+
+@item -check
+@findex -check
+Check ALGOL 68 syntax.  No C file is generated, but module information
+is generated normally.
+
+@item -V
+@findex -V
+Outputs the current version of Ctrans to standard output.
+
+@item -version
+@itemx -Version
+@findex -version
+Outputs detailed configuration information to standard output.
+@end table
+
+@node Environment variables,  , Translator options, Translator usage summary
+@comment node-name, next, previous, up
+@section Environment variables
+@cindex Environment variables
+
+@table @code
+@item A68_NAMESEED
+@vindex A68_NAMESEED
+The name of the file containing the unique name seed.
+
+@item A68_STAREDIT
+@vindex A68_STAREDIT
+The set of required staredit characters.  This may be over-ridden or
+modified by the @code{-staredit} option.
+
+@item A68_DIR
+@vindex A68_DIR
+A colon-separated list of directories in which the translator will look
+for module information (@code{.m}) files.  This may be modified by the
+@code{-dir} option.
+
+@item A68_CDIR
+@vindex A68_CDIR
+A colon-separated list of directories in which the translator will look
+for previously generated (@code{.c}) files when the @code{-uname cfile}
+option has been specified.  This may be modified by the @code{-cdir}
+option.
+
+@item A68_LIB
+@vindex A68_LIB
+The name of directory in which the translator will look for module
+information (@code{.m}) files corresponding to library modules.  This
+may be overridden by the @code{-lib} or @code{-nolib} options.
+
+@item A68_GC_DEBUG
+@vindex A68_GC_DEBUG
+Controls the amount of debugging information produced by the heap management
+functions of the Algol 68 run-time library. Its values should be as
+follows:-
+
+@table @asis
+@item 0
+No output																   
+@item 1
+Notification of garbage collection										   
+@item 2
+plus small amount fixed amount of additional garbage collection statistics 
+
+@item 3
+plus further garbage collection statistics								   
+@item 4
+plus function entry and exit (except Agc_Xalloc)						   
+@item 5
+plus small amount fixed amount of additional information				   
+@item 6
+plus tracing in loops													   
+@item 7
+plus full general tracing (including Agc_alloc)							   
+@item 8
+plus special debugging tracing											   
+@item 9
+plus even more special debugging tracing                                   
+@end table
+
+@item A68_GC_POLICY
+@vindex A68_GC_POLICY
+Controls behaviour when a memory allocation cannot be satisfied.  The
+specified behaviour may be overridden by calling @code{set_gc_params}
+from your ALGOL 68 program. Possible values are as follows
+
+@table @asis
+@item 0
+The garbage collector is called if the heap usage is above a certain
+threshold.
+This is the default.
+
+@item 1
+The garbage collector is never called (i.e. the heap is grown).
+
+@item 2
+The garbage collector is always called.  The heap is grown only if
+absolutely necessary.
+@end table
+@end table
+
+Further policies may have been implemented by additions to
+@code{library/Ahpolicy.c}.
+
+@c ----------------------------------------------------------------------------
+@node Further reading, Implementation, Translator usage summary, Top
+@comment node-name, next, previous, up
+@appendix Further reading
+@cindex Further reading
+
+Guide to ALGOL 68 for users of RS systems, Woodward and Bond, ISBN
+0 7131 3490 9.
+
+Revised Report on the Algorithmic Language ALGOL 68, van Wijngaarden et
+al, Springer-Verlag 1976.
+
+Informal Introduction to ALGOL 68, Lindsey and van der Meulen, ISBN
+0 7204 0726 5.
+
+The RS compiler texinfo file (@pxref{The RS Compiler,,,rscompiler}).
+
+@c ----------------------------------------------------------------------------
+@node    Implementation, Option index, Further reading, Top
+@comment node-name,      next,         previous,        up
+@appendix Implementation guide
+@cindex Implementation
+
+The following sections describe in outline the source files that make
+up the various components of the Ctrans system.  Most of these are
+intended to be easily portable to new architectures, so you should
+rarely need to examine these unless you want to find out more about
+how Ctrans is implemented.
+
+The major exception is the part of the garbage collector concerned
+with the scanning of the ALGOL 68 program's data space.  The
+procedure for finding a program's static data and stack are
+inherently architecture dependent, but can usually be implemented
+fairly quickly with code based on the default implementation provided.
+
+Potential porting problems are noted where appropriate.
+@xref{Porting}, for a collated checklist of porting concerns.
+
+@menu
+* Ctrans directories::          
+* Translator sources::          
+* Header files::                
+* Run-time library::            
+* Heap management::             
+* Prelude library sources::     
+* Porting::                     
+@end menu
+
+@node Ctrans directories, Translator sources, Implementation, Implementation
+@comment node-name, next, previous, up
+@section Source directories
+@cindex Source directories
+
+Each Ctrans component is contained in a single subdirectory.
+
+@table @file
+@item ctrans
+@vindex ctrans directory
+@file{Makefile} and ALGOL 68 sources for the ALGOL 68 to C translator itself.
+
+@item include
+@vindex include directory
+C header files required to compile C sources generated by @code{a68toc}.
+
+@item liba68prel
+@vindex liba68prel directory
+@file{Makefile} and ALGOL 68 sources for @file{liba68prel.a}, a library
+providing a simple interface to operating system features which may be
+used by ALGOL 68 programs via the @code{-lib} option of @code{a68toc}.
+This library is used by @code{a68toc} itself.
+
+@item library
+@vindex library directory
+@file{Makefile} and C sources for @file{liba68.a}, which provide some
+ALGOL 68 operations that could not be easily generated in-line by the
+translator.
+
+Also contains @file{Afirst.c}, which is part of the scheme for
+finding the ALGOL 68 static data in the address space of an ALGOL 68 program.
+@end table
+
+@node Translator sources, Header files, Ctrans directories, Implementation
+@comment node-name, next, previous, up
+@section The translator (@code{ctrans/a68toc})
+@cindex The translator a68toc
+The data-flow of the translator can be summarised in a diagram
+
+@example
+@group
+                    ALGOL 68 source
+                           |
+                           V
+                     ---------------
+                    |               |
+        ----------->| rscompiler    |
+        |           | (front-end)   |
+        |           |               |
+     --------        ---------------
+    | module |         |   |   |
+    |  info  |         |   |   |   `stream language'
+    | files  |         V   V   V
+     --------        ---------------
+       ^  |         |               |
+       |  --------->|  compiler     |
+       -------------|  (back-end)   |
+                    |               |
+                     ---------------
+                       |   |   |
+                       |   |   |   C streams
+                       V   V   V
+                     ---------------
+                    |               |
+                    | C stream      |
+                    | collation     |
+                    |               |
+                     ---------------
+                           |
+                           V
+                      C source file
+@end group
+@end example
+
+The ALGOL 68 to C translator has been created by incrementally
+modifying the Multics ALGOL 68 RS compiler.  First of all the code
+for Multics machine code generation were stripped out, then routines
+were added to generate C streams, keeping the structure of the
+original code.  The structure has changed in that some unnecessary
+modules have been removed, some have been added to avoid
+circularities in the dependencies, but most of these changes are
+low-level detail.  The overall structure is still recognisable as the
+Multics compiler.  Some parts of the translator have changed very
+little in content from the original version, while others have been
+completely replaced.
+
+@table @file
+@item adicops.a68
+@vindex adicops.a68
+This is part of the evaluation mechanism, it contains all the built in
+monadic and dyadic operators.  These are
+
+@itemize @asis
+
+@item monadic operators:
+@code{UPB}, @code{LWB}, @code{NOT}, @code{ABS}, @code{BIN}, @code{REPR},
+@code{LENG}, @code{SHORTEN}, @code{ODD}, @code{SIGN}, @code{ROUND},
+@code{ENTIER}, @code{+}, @code{-}
+
+@item dyadic operators:
+@code{+}, @code{-}, @code{UPB}, @code{LWB}, @code{AND}, @code{OR},
+@code{<}, @code{>}, @code{<=}, @code{>=}, @code{=}, @code{/=}, @code{*},
+@code{/}, @code{DIV}, @code{OVER}, @code{MOD}, @code{**}, @code{ELEM},
+@code{SHL}, @code{SHR}, @code{IS}, @code{ISNT}
+
+@item assignment operators:
+@code{+:=}, @code{-:=}, @code{*:=}, @code{OVERAB}, @code{DIVAB},
+@code{MODAB}
+
+@end itemize
+
+@item biops.a68
+@vindex biops.a68
+Generates code for built-in operators (e.g. @code{BIOP 99}), introduced
+via the @code{BIOP} keyword in ALGOL 68 source.
+
+@item centities.a68
+@vindex centities.a68
+Modes and simple procedures related to manipulating fragments of C code.
+
+@item clauses.a68
+@vindex clauses.a68
+Here are the code generation routines for the following constructs:
+
+@itemize @bullet
+@item
+units, the returned values are stored in temporaries
+@item
+closed clauses, @code{BEGIN} @var{serial clause} @code{END}
+@item
+@code{IF-THEN-ELSE-FI}
+@item
+@code{CASE-IN-OUT-ESAC}, both integer and conformity versions
+@item
+optbools, @code{ANDTH} and @code{OREL}
+@item
+exits, the @code{EXIT} bold-word
+@item
+code inserts, the @code{CODE} bold-word
+@end itemize
+
+@item common.a68
+@vindex common.a68
+This module is just a keeplist of the modes required by
+@code{rscompiler} and the rest of the translator.
+
+@item compiler.a68
+@vindex compiler.a68
+This is the top-level module of the back-end which reads the stream
+language generated by the front end.  It contains a number of recursive
+routines to activate the various code generation routines in
+@code{clauses}, @code{modules} and the evaluator modules.
+
+@item coutput.a68
+@vindex coutput.a68
+This is a self-contained mechanism for collating the C output streams
+used by the translator for each procedure level.  The C streams may be
+in memory or in files, controlled by the @code{-cstream} option of
+@code{a68toc}.
+
+@item ctrans_version.a68
+@vindex ctrans_version.a68
+Contains the current version number of Ctrans.  @code{a68toc} generates
+code that inserts this into the @code{A_CONFIG_INFO} structure.
+
+@item denotations.a68
+@vindex denotations.a68
+Supplied.
+
+@item entryandreturn.a68
+@vindex entryandreturn.a68
+Generates code for function headers and trailers, and the start and end
+of modules.
+
+@item environ.a68
+@vindex environ.a68
+Supplied.
+
+@item environment.a68
+@vindex environment.a68
+This module is responsible for
+
+@itemize @bullet
+@item
+reading the command line and environment variables, and setting
+option flags accordingly
+@item
+opening and closing the source file
+@item
+output of diagnostic and error messages
+@item
+aborting on a fatal error
+@end itemize
+
+@item evalbase.a68
+@vindex evalbase.a68
+This module exists to overcome a circularity in the keeplists of the
+modules comprising the evaluation mechanism.  It is for routines
+which decompose a value into calls to @code{evaluate}.  It also
+contains some useful facilities for tracing an evaluation in progress.
+
+@item evaluator.a68
+@vindex evaluator.a68
+This module contains the lookup table for all the semantic routines in
+the evaluation mechanism.  The actual routines themselves are defined in
+@code{adicops} and @code{operators}.
+
+The main entry point for the module, @code{evaluate} (defined in
+@code{evalbase}) is a @code{REF PROC} to which is assigned one of
+@code{eval trace} or @code{eval no trace} at run-time.
+@code{evaluate} is called at the end of a phrase to read values from
+the valuestack and produce object code.  The semantic routine for
+each operation is obtained by indexing into the table of procedures
+given in this module.  If it is an arithmetic operator then further
+selection by the same method takes place in @code{adicops}.
+
+The C code is yielded by assignment to the parameter of
+@code{evaluate}.  The operator semantics may emit lines of code
+directly in order to set up temporary values for the code fragment
+yielded.
+
+@item identifiers.a68
+@vindex identifiers.a68
+This contains all the routines to process identifiers.  It contains
+procedures to create new entries in the identifier table (see
+@code{idtable}) and procedures to emit:
+
+@itemize @bullet
+@item
+identity declarations
+@item
+name declarations
+@item
+external declarations
+@item
+union choice (conformity clause) declarations
+@item
+label declarations
+@item
+C routines
+@end itemize
+
+@item idtable.a68
+@vindex idtable.a68
+This contains the declaration of the identifier table which contains
+all information known to the translator about an identifier. There
+are routines to initialise the table and to yield a field of the
+table given an index into the table.
+
+@item incenviron.a68
+@vindex incenviron.a68
+This contains the mechanism for tracking non-local data---the
+@code{ENVIRONSTACK}.  The procedures and functions to manipulate the
+stack of non-locals and to determine the current nesting level are
+defined here.
+
+@item incid.a68
+@vindex incid.a68
+This contains some predefined constants for use in the identifier
+table.
+
+@item incimperatives.a68
+@vindex incimperatives.a68
+This is a set of declarations of the format of stream imperatives on the
+input to the back-end as returned by @code{next stream imperative}.  The
+stream imperatives output by @code{rscompiler} are converted into
+imperatives of the form given by these declarations.
+
+@item incinstallation.a68
+@vindex incinstallation.a68
+This module contains some installation-defined constants, such as the
+maximum length of an identifier (in the identifier table) the upper
+bound of the mode table, the length of the unique name prefix, and
+the largest indexable structure.
+
+@item incmode.a68
+@vindex incmode.a68
+This module contains a set of symbolic constants for all the fixed
+mode numbers (1-31).
+
+@item incoperfn.a68
+@vindex incoperfn.a68
+This contains a set of symbolic constants for some of the indexes
+to the table of operator semantics in @code{evaluator}.
+
+@item incvalue.a68
+@vindex incvalue.a68
+This contains the definition of a @code{VALUE} in the evaluation
+tree.  The @code{EXTRA} field can take on many different types prior
+to evaluation, and becomes a fragment of C code during evaluation.
+To pass extra information about a @code{VALUE} during evaluation, a
+set of flags is defined here called the @dfn{attributes} of a value.
+
+@item initialiser.a68
+@vindex initialiser.a68
+Several modules have initialisation procedures.  By convention these
+are called from this module, so that only one call is necessary in
+the @code{shell} to start up the back end.
+
+@item liblookup.a68
+@vindex liblookup.a68
+This module attempts to map undeclared identifiers onto library
+modules by decoding the RS compiler keeplists of the modules in the
+@code{-lib} directories.
+
+@item loads.a68
+@vindex loads.a68
+The @code{compiler} module calls the routines in this module to add a
+@code{VALUE} to operand stack, prior to calling @code{oper} to
+construct a tree from the operators which act upon them.  This is
+called from @code{compiler} when a @code{LOAD} stream imperative is
+read.
+
+@item lookup.a68
+@vindex lookup.a68
+This is the bold-word lookup table for @code{rscompiler}.
+
+@item loops.a68
+@vindex loops.a68
+This contains the code generation routines for loops, both
+@code{FOR-FROM-BY-TO-WHILE-DO-OD} loops and @code{FORALL-IN-DO-OD}
+types.  The routines in this module are called from @code{compiler}.
+
+@item message.a68
+@vindex message.a68
+This contains a procedure which maps an error number onto a message.
+
+@item mnemonics.a68
+@vindex mnemonics.a68
+Returns a human-readable representation of a stream imperative for
+debugging.
+
+@item modes.a68
+@vindex modes.a68
+This contains routines to manage the mode table (see also
+@code{incmode}).  The mode table is provided as an array by
+@code{rscompiler}.
+
+There are a number of routines of importance in declaring C objects:
+
+@table @code
+@item find deflexed mode
+@vindex find deflexed mode
+gives the static equivalent of a @code{FLEX} mode.
+
+@item ctype
+@vindex ctype
+gives a C type declaration of the specified mode for use in casts and
+the declaration of temporaries.
+
+@item write c typedef
+@vindex write c typedef
+returns a C @code{typedef} statement for a particular mode.
+
+@item declare c temporary
+@vindex declare c temporary
+emits a declaration on the local declaration stream and returns a
+temporary.
+@end table
+
+@item modules.a68
+@vindex modules.a68
+This module contains the procedures for constructing a keeplist for
+USEing a module.
+
+This module has all the data structures relating to the modules
+involved in the current compilation, and the procedures which operate
+on them.  It contains code to decode a `module specification' and
+create new module information for the current module.
+
+@item moduletracer.a68
+@vindex moduletracer.a68
+Controls module-specific tracing.
+
+@item oper.a68
+@vindex oper.a68
+This module constructs a subtree from the evaluation stack.  The
+procedure @code{oper} takes the operands off the value stack and
+replaces them with an operator.  It removes the operands into a new
+@code{VALUELIST}, leaving the @code{OPER} at the top of the value stack
+pointing at the operands.
+
+@item operators.a68
+@vindex operators.a68
+This module contains operator semantic routines for the evaluation
+mechanism.  This includes language coercions (widening, rowing,
+dereferencing, voiding, uniting), procedure calling, selection of
+structures, assignment, jumps, indexation, trimming, straightening,
+space generation.
+
+@item rscompiler.a68
+@vindex rscompiler.a68
+This is the portable front-end of the translator.
+
+@item shell.a68
+@vindex shell.a68
+The shell controls the streams interface between the front-end and
+the back-end of the translator.  It calls the front-end
+(@code{rscompiler}) and back-end (@code{compiler}) and collates the C
+streams output by the back-end prior to their being written to the C
+file by @code{close coutput}.
+
+@item tracer.a68
+@vindex tracer.a68
+This contains a debugging routine to print out the value tree during
+an evaluation.
+
+@item unionaids.a68
+@vindex unionaids.a68
+Here are several routines to assist in the scanning of united modes in
+the mode table.
+
+@item uniquenameserver.a68
+@vindex uniquenameserver.a68
+This module generates a unique prefix for all the C constants and
+variables output by the translator.  The prefix is an alphabetic
+string of characters which is incremented as if it were a base-26
+number each time a new identifier is required.  The starting value of
+the unique prefix is read from a seed-file at the start of
+translation, or may be specified in other ways with the @code{-uname}
+option.  The final value is written back into the file at the end of
+translation.
+
+@item values.a68
+@vindex values.a68
+This module contains a collection of operators and procedures which
+take a @code{VALUE} as an argument.
+
+There are a number of predicates on @code{VALUE}s, e.g. to determine
+which constituent of the @code{EXTRA} field is present.
+
+A routine used by most operator semantics is @code{GETCFRAGMENT}
+which turns most kinds of leaf node in the evaluation tree into a
+fragment of C code.
+
+There are two routines which logically belong to the evaluator
+tracing mechanism here; one to give a human readable representation
+of a value, the other to give a printable name of an operator.
+
+Finally, there are a set of functions and operators, to assist in
+concatenating fragments of C prior to output, and to assign partial
+results to temporaries.  This is the set of operators using the
+definition of @code{UVALUE}.
+@end table
+
+@node Header files, Run-time library, Translator sources, Implementation
+@comment node-name, next, previous, up
+@section The ALGOL 68 header files (@code{include/*.h})
+@cindex The ALGOL 68 header files
+
+@table @file
+@item Aassign.h
+@vindex Aassign.h
+C macros concerned with assignment and copying of vectors and rows.
+The corresponding functions are in @file{library/Aassign.c}.
+
+@item Acoerce.h
+@vindex Acoerce.h
+Widening of @code{BITS} to @code{VECTOR [] BOOL}.  The corresponding
+functions are in @file{library/Acoerce.c}.
+
+@item Aconfig.h
+@vindex Aconfig.h
+Type definition of @code{A_CONFIG_INFO}.  @code{a68toc} generates C
+code to initialise this structure.  Facilities for manipulating this
+structure are available in @code{liba68prel/a68config.a68}.
+
+@item Asupport.h
+@vindex Asupport.h
+Includes all the other header files.
+
+@item Alibrary.h
+@vindex Alibrary.h
+C @code{extern} declarations for all interfaces in the run-time support
+library @code{liba68.a}.
+
+@item Amacros.h
+@vindex Amacros.h
+C macros for miscellaneous operations and features, including indexing,
+uniting, rowing, straightening, trimming and procedure environments.
+
+@item Aalloc.h
+@vindex Aalloc.h
+C macros for dynamic space allocation (@code{HEAP} and @code{LOC}
+generators).
+
+@item Astrings.h
+@vindex Astrings.h
+C macros for operations on @code{[] CHAR} and @code{VECTOR [] CHAR}.
+The corresponding functions are in @file{library/Astrings.c}.
+
+@item Atypes.h
+@vindex Atypes.h
+Type definitions mapping ALGOL 68 modes onto C concrete types; macros
+mapping between ALGOL 68 primitive modes and C abstract types (such
+as @code{size_t}).  These should be reviewed whenever porting Ctrans
+to a new architecture (@pxref{Porting}).
+@end table
+
+@node Run-time library, Heap management, Header files, Implementation
+@comment node-name, next, previous, up
+@section The ALGOL 68 run-time support library (@code{library/liba68.a})
+
+@xref{Heap management}, for the majority of the run-time library which
+is concerned with heap management and garbage collection.
+
+This section outlines the other parts of the library.
+
+@table @file
+@item Aassign.c
+@vindex Aassign.c
+These contain the run-time functions for array and union assignments.
+The interfaces fall into these groups
+
+@itemize @bullet
+@item
+Vector and row assignments of the data from the data pointer of one
+descriptor to the data pointer of the other.
+
+@item
+Vector and row assignments of the data from one descriptor to dynamic
+storage generated by an invocation of the assignment macro.
+
+@item
+Union assignments
+@end itemize
+
+@item Acoerce.c
+@vindex Acoerce.c
+This contains functions associated with coercions.  Currently this is
+only the widening of @code{BITS} to @code{[]BOOL}.  There is a
+version of this call for each length of @code{BITS} value.  The
+widening @code{BITS} to a row is unusual because it returns a vector.
+The returned vector is assigned to a temporary provided by the C
+translator.  This assignment is encapsulated in the macro
+@code{A_WB_CALL}.
+
+@item Aerror.c
+@vindex Aerror.c
+This contains a routine to display an error message, stop and if
+possible, core-dump.  An error message is currently a literal string of
+characters.
+
+@item Afirst.c
+@vindex Afirst.c
+Not strictly part of the library, this module is used by the garbage
+collector to deduce the extent of static data belonging to ALGOL 68
+modules.
+
+@item Aindex.c
+@vindex Aindex.c
+This is run-time support for array trimming and indexing.  The
+calling of the functions to perform trimming is only done if array
+bound checks are enabled, otherwise the macro implementation of the
+indexing function is used.
+
+@item Amath.c
+@vindex Amath.c
+An implementation of @code{LONG INT} to the power of an @code{INT}.
+
+@item Astrings.c
+@vindex Astrings.c
+This contains vector and row versions of the string operators @code{EQ},
+@code{GT}, @code{+} and @code{*}.
+
+@end table
+
+@node Heap management, Prelude library sources, Run-time library, Implementation
+@comment node-name, next, previous, up
+@section Heap management and garbage collection (@code{library/liba68.a})
+@cindex Heap management and garbage collection
+
+The garbage collection scheme relies on the ability to find pointers
+into the heap simply by looking for words (pairs of words in the case
+of arrays and vectors) with the right format.  The major task of
+porting Ctrans to a new architecture is teaching the garbage
+collector how to find the data areas to scan.
+
+It is, of course, possible that a non-pointer may be taken to be a
+pointer resulting in some garbage not being collected.  The
+probability of this happening depends on the format of pointers in a
+particular architecture, but is usually small.  However, it will
+usually increase as the size of the heap increases.  Because of the
+possible misinterpretation of non-pointers, the garbage collector is
+not allowed to modify heap references effectively forcing the use of
+a non-compacting algorithm.
+
+The heap is arranged in segments according to the size of an
+allocated object (or element size for arrays).  The garbage collector
+can therefore deduce the size of a heaped object given just its
+address.  The garbage collector knows the format of array descriptors
+(they are marked with a special bit pattern, see @code{A_GC_MARK} in
+@code{include/Aalloc.h}) and hence the number of elements in the
+heaped array.
+
+Note that an indexable structure has no descriptor, and must
+therefore be allocated in the heap segment appropriate to its total
+size, rather than element size.
+
+NB. Unfortunately, due to the limitations of the implementation of
+the heap, all Algol 68 code can only appear in static code. Only code
+written in C/C++ can appear in shared-object libraries.
+
+@menu
+* Internal macros::             
+* Garbage collector headers::   
+* Garbage collector modules::   
+* Garbage collector parameters::  
+* Garbage collector statistics::  
+* Debugging the garbage collector::  
+@end menu
+
+@node Internal macros, Garbage collector headers, Heap management, Heap management
+@comment node-name, next, previous, up
+@subsection Internal macro interface
+@cindex Internal macro interface
+
+Most of the heap management and garbage collection code should be
+easily ported.  The C modules have been written to an internal macro
+interface, implemented by the header files, behind which is hidden
+the architecture dependence.
+
+At the end of each header file is a section of the form
+
+@example
+#ifndef XXXX
+#error XXXX is not defined
+#endif
+@end example
+@noindent
+
+which defines the macro interface required to be exported by that
+header file.
+
+A portable default definition is provided for most macros, protected
+by @code{#ifndef} so that it may be overriden with a definition
+appropriate for a specific architecture.
+
+You can enable the default definitions for a particular header file
+by defining @code{A_GC_xxx_DEFAULTS}, where @code{xxx} is the
+variable part of the header file name
+(@code{area},@code{basics},etc.).  @code{Aharea.h} has a number of
+logical sections each protected by its own @code{A_GC_xxx_DEFAULTS}
+macro.  Remember that these defaults can be overriden with
+architecture-specific definitions that preceed them in the header
+file.
+
+All defaults in all headers can be enabled by defining
+@code{A_GC_DEFAULTS}.
+This should only be done whilst debugging a port.
+Once it is established that the defaults are satisfactory, they should
+be explicitly enabled.
+
+The generic form of the header files is therefore
+
+@example
+/* architecture-specific section */
+#if arch1
+#define XXX  xxx   /* specific to arch1 */
+
+#define A_GC_XXX_DEFAULTS   /* use defaults for everything else */
+#endif
+
+#if arch2
+#define YYY yyy
+#define A_GC_XXX_DEFAULTS
+#endif
+
+/* defaults section */
+#ifdef A_GC_XXX_DEFAULTS
+#ifndef XXX
+#define XXX default_xxx
+#endif
+
+#ifndef YYY
+#define YYY default_yyy
+#endif
+
+#endif
+
+/* interface check section */
+#ifndef XXX
+#error XXX is not defined
+#endif
+
+#ifndef YYY
+#error YYY is not defined
+#endif
+@end example
+
+@node Garbage collector headers, Garbage collector modules, Internal macros, Heap management
+@comment node-name, next, previous, up
+@subsection Garbage collector header files
+@cindex Garbage collector header files
+
+@table @file
+@item Aharea.h
+@vindex Aharea.h
+This header file defines the type @code{AREA} which represents an
+area of memory to be traced for heap pointers by @code{Agc_trace}.
+
+It also provides @code{TRACINGSTACK} which is a stack of @code{AREA}s
+(with @code{PUSH} and @code{POP} macros) which is used to follow
+nested heap references.  This should be portable.
+
+Finally, it defines @code{INIT_AREA} and @code{NEXT_AREA} which
+return the first and subsequent @code{AREA}s to be traced.  These
+will have to be implemented for each new architecture (see below).
+
+This header file is divided into a number of distinct sections, each
+protected by its own @code{A_GC_xxx_DEFAULTS} macro.  These are
+
+@table @code
+
+@item A_GC_AREA_DEFAULTS
+@vindex A_GC_AREA_DEFAULTS
+The type @code{AREA}, plus @code{STEPAREA}, @code{NILAREA} and
+@code{PTRINAREA}.  You should not need to change these for new
+architectures.
+
+@item A_GC_TRACINGSTACK_DEFAULTS
+@vindex A_GC_TRACINGSTACK_DEFAULTS
+The type @code{TRACINGSTACK} and associated operations.  Again, You
+should not need to change these for new architectures.
+
+@item A_GC_STATIC_DEFAULTS
+@vindex A_GC_STATIC_DEFAULTS
+This is concerned with finding the area of memory occupied by the
+static data associated with ALGOL 68 modules so that it can be traced
+for heap references.  The default mechanism looks at the addresses of
+symbols defined in @code{library/Afirst.o} and the run-time library
+(see @code{Agc_last_statics} in @code{Ahtrace.c} to deduce the extent
+of the static area.  The mechanism relies on the linker and loader
+locating static data incrementally in the same order in which the
+modules are presented to the loader.  Then all that is necessary is
+to ensure that the ALGOL 68 program is linked with all ALGOL 68
+modules (including the prelude library @code{liba68prel.a})
+sandwiched betweeen @code{Afirst.o} and @code{liba68.a}.
+
+@item A_GC_STACK_DEFAULTS
+@vindex A_GC_STACK_DEFAULTS
+This is concerned with finding stack frames so that they can be
+traced for heap references.  It is essential that all registers that
+may contain heap references are flushed, or inspected some other way.
+It is impossible to do this in a portable way, so @emph{there is no
+default implementation}.
+
+It is not usually necessary to understand the red tape associated
+with each stack frame---it is normally safe to regard the whole stack
+as a single @code{AREA}.
+
+@code{Agc_main_frame} is initialised by @code{Agc_startup} to the
+address of @code{argc}, which may help in detecting the last stack
+frame to trace.
+
+@item A_GC_TRACINGAREA_DEFAULTS
+@vindex A_GC_TRACINGAREA_DEFAULTS
+This contains the definitions of @code{INIT_AREA} and
+@code{NEXT_AREA}, usually in terms of operations defined in the
+previous two sections.
+@end table
+
+@item Ahbasics.h
+@vindex Ahbasics.h
+This contains miscellaneous type definitions and general macro
+definitions which should not require modification for porting.
+
+@item Ahbitmap.h
+@vindex Ahbitmap.h
+This file contains some general bit manipulation macros adapted from
+a set of public domain macros, plus some macros specific to the
+bitmaps used to mark used areas of the heap in @code{Agc_trace}.  All
+these macros should not require modification for porting.
+
+@item Ahclr.h
+@vindex Ahclr.h
+This file contains macros for the clearing of elements on allocation,
+freeing and so on.  There are various compile-time options that
+control when clearing is done, and what bit pattern is used on
+initialisation.  The default is to zeroise elements.  All these
+macros should not require modification for porting.
+
+@item Ahdesc.h
+@vindex Ahdesc.h
+This file contains portable macros for decoding ALGOL 68 array
+descriptors.  No modification should be necessary.
+
+@item Ahptr.h
+@vindex Ahptr.h
+This file contains pointer manipulation macros.  It defines the
+following macros, which may require modification
+@table @code
+@item ALIGN_NEXT
+@vindex ALIGN_NEXT
+Aligns pointer to appropriate boundary for specified object size.
+
+@item VALIDPTR
+@vindex VALIDPTR
+Decides whether a word could possibly be a pointer (prior to checking
+that it points into the heap).
+
+@item RESIZE1ALLOCATION
+@vindex RESIZE1ALLOCATION
+Modifies the size of a single object to be allocated.  This must take
+into account any alignment constraints.  It also allows object sizes
+to be rounded up so that fewer heap segments are required in total
+(fewer different sizes of objects), at the expense of wasting space
+within segments.
+
+@item RESIZENALLOCATION
+@vindex RESIZENALLOCATION
+Similarly for array allocations.
+
+@end table
+
+@item Ahseg.h
+@vindex Ahseg.h
+Type definitions for segments (@code{SEGCTL}), free list elements
+(@code{EL} and operations on them.  These should not require
+modification for porting.
+
+The pointers chaining together free list items must be disguised so
+that they are not traced.  Such pointers are defined as
+@code{CODEDPTR}s, and the operations @code{ENCODEPTR} and
+@code{DECODEPTR} convert them from/to real addresses.  These should
+be reviewed when porting to a new architecture.
+@end table
+
+@node Garbage collector modules, Garbage collector parameters, Garbage collector headers, Heap management
+@comment node-name, next, previous, up
+@subsection Garbage collector modules
+
+@table @file
+
+@item Ah1alloc.c
+@itemx Ah1alloc.h
+@vindex Ah1alloc.c
+@vindex Ah1alloc.h
+Implements a fast allocation cache for single small objects.  The
+cache is accessed via in-line code (see macro @code{A_GC_1ALLOC}),
+and slots are filled on demand using @code{Agc_nalloc}.  The cache is
+not traced during garbage collection, so the cache slots must be
+emptied after each garbage collection.
+
+@item Ahalloc.c
+@item Ahalloc.h
+@vindex Ahalloc.c
+@vindex Ahalloc.h
+This module implements the following interfaces for heap allocation
+
+@table @code
+@item Agc_nalloc
+@vindex Agc_nalloc
+for allocating arrays
+@item Agc_1alloc
+@vindex Agc_1alloc
+for allocating single objects
+@item Agc_alloc4
+@vindex Agc_alloc4
+optimised for allocating arrays of words
+@end table
+
+@item Ahcollec.c
+@item Ahcollec.h
+@vindex Ahcollec.c
+@vindex Ahcollec.h
+This module implements the entry point to the garbage collector,
+@code{Agc_collect}, and an initialisation function,
+@code{Agc_startup}, which is called by generated C code at the start
+of @code{main}.
+
+@code{Agc_startup} is typically used to remember the base of
+@code{main}'s stack frame to limit the extent of pointer tracing in
+the stack.
+
+The main functions of the garbage collector (marking used data, and
+freeing unused data) is imported from @code{Ahtrace.c} and
+@code{Ahsweep.c}.
+
+@item Ahdebug.c
+@item Ahdebug.h
+@vindex Ahdebug.c
+@vindex Ahdebug.h
+This module implements various aids to debugging, including a
+publicly accessible heap consistency check, @code{Agc_check_heap}
+(@pxref{Debugging the garbage collector}).
+
+@item Ahparam.c
+@item Ahparam.h
+@vindex Ahparam.c
+@vindex Ahparam.h
+This module collects together the parameters that affect the
+operation of the garbage collector (@pxref{Garbage collector
+parameters}).  A function, @code{Agc_param}, is provided to inspect
+and modify these which is accessible from ALGOL 68 through the
+prelude library procedures @code{get_gc_param} and
+@code{set_gc_params}.
+
+@item Ahpolicy.c
+@item Ahpolicy.h
+@vindex Ahpolicy.c
+@vindex Ahpolicy.h
+When the allocator cannot satisfy an allocation request it must
+decide whether to proceed by extending the heap (i.e. allocating a
+new segment), or invoking garbage collection.  It decides by invoking
+a function that implements the required policy.  This module
+implements a set of three simple policies that may be selected at
+run-time either via the @code{A68_GC_DEBUG} environment variable, or from
+within the ALGOL 68 program via the @code{set_gc_params} procedure.
+Further policies may be added if needed.
+
+@item Ahstats.c
+@item Ahstats.h
+@vindex Ahstats.c
+@vindex Ahstats.h
+This module defines various statistics that can help in tuning the
+heap management for a particular application.  Some statistics that
+are expensive to collect are only collected if the library is
+compiled with @code{A_DEBUG} defined (@pxref{Garbage collector
+statistics}.
+
+@item Ahsweep.c
+@item Ahsweep.h
+@vindex Ahsweep.c
+@vindex Ahsweep.h
+This module implements @code{Agc_sweep} (internal to the library).
+This function traverses the list of heap segments examining the
+bitmap (set up by @code{Agc_trace}) which marks used areas of the
+heap.  In each segment, unmarked areas are returned to the free list,
+merging contiguous free list elements when possible.
+
+@item Ahtrace.c
+@item Ahtrace.h
+@vindex Ahtrace.c
+@vindex Ahtrace.h
+This module defines the function @code{Agc_trace} which scans areas
+of memory for potential pointers into the heap.  The areas to be
+traced are returned by @code{INIT_AREA} and @code{NEXT_AREA} which
+are defined in @code{Ahseg.h}.
+@end table
+
+@node Garbage collector parameters, Garbage collector statistics, Garbage collector modules, Heap management
+@comment node-name, next, previous, up
+@subsection Garbage collector parameters
+@cindex Garbage collector parameters
+
+A number of parameters that affect the behaviour of the garbage
+collector can be inspected and/or modified at run-time using the
+@code{Agc_param} run-time library function in
+@code{library/Ahparam.c}, or the prelude library procedures
+@code{get_gc_param} and @code{set_gc_params}.
+
+Each parameter is identified by a name string as follows
+@table @samp
+@item MAX HEAP SIZE
+@vindex MAX HEAP SIZE
+The maximum number of bytes to be allocated to the heap.
+The default value is 1Gb, which effectively means as much memory as can
+be obtained via @code{malloc}.
+
+It may be set to a smaller size if you wish to constrain the
+process size, e.g. on non-virtual memory architectures.
+
+@item MIN SEGMENT SIZE
+@vindex MIN SEGMENT SIZE
+The minimum number of bytes to be allocated to a segment.  The
+default value is 4kb.  This parameter interacts with the adjustment
+of allocated object sizes (@code{RESIZE1ALLOCATION} and
+@code{RESIZENALLOCATION} in @code{Ahptr.h}), to determine the number
+and size of segments that are allocated, and hence the fragmentation
+properties of the heap.
+
+@item POLICY
+@vindex POLICY
+Controls the behaviour when a memory allocation cannot be satisfied
+(@pxref{Environment variables}, @code{A68_GC_POLICY}).  @end table
+
+The following parameters affect the behaviour of the default policy
+
+@table @samp
+@item MIN HEAP SIZE
+@vindex MIN HEAP SIZE
+The minimum number of bytes to be allocated to the heap.
+@item HEAP INCREMENT
+@vindex HEAP INCREMENT
+The amount by which the collection threshold should be increased
+after each garbage collection.  A positive value indicates an
+absolute number of bytes.  A negative value indicates a fraction
+(denominator of 256) of the current number of bytes in use.  Thus, a
+value of @code{-128} indicates that the threshold should increase by
+half the amount currently in use.  The default value is @code{-256},
+i.e. increase the threshold by the amount currently in use.
+
+@item COLLECTION THRESHOLD
+@vindex COLLECTION THRESHOLD
+Collect garbage if the number of allocated bytes exceeds this value.
+This is automatically adjusted at the end of every garbage
+collection.  Its initial value is zero, so the first garbage
+collection is triggered when the amount in use exceeds
+@code{MIN HEAP SIZE}.
+@end table
+
+@node Garbage collector statistics, Debugging the garbage collector, Garbage collector parameters, Heap management
+@comment node-name, next, previous, up
+@subsection Garbage collector statistics
+
+The following C integers are declared in @code{Ahstats.c} and maintained
+by the heap management system
+
+@table @code
+@item Agc_collections
+@vindex Agc_collections
+The number of garbage collections performed.
+@item Agc_s_grabbed
+@vindex Agc_s_grabbed
+The number of heap segments currently in use.
+@item Agc_b_grabbed
+@vindex Agc_b_grabbed
+The number of bytes occupied by the segments currently in use.
+@item Agc_b_allocated
+@vindex Agc_b_allocated
+The number of bytes in use by the ALGOL 68 program.
+@end table
+
+If the run-time library was built with @code{A_DEBUG} defined, the
+following extra statistics are available
+
+@table @asis
+@item @code{Agc_allocations}
+@vindex Agc_allocations
+The total number of allocations performed.
+@item @code{Agc_s_examined}
+@vindex Agc_s_examined
+The number of heap segments examined in satisfying those allocations.
+@item @code{Agc_e_examined}
+@vindex Agc_e_examined
+The number of free list elements examined in satisfying those allocations.
+@item @code{Agc_s_freed}
+@vindex Agc_s_freed
+The number of heap segments freed (i.e. returned to the operating
+system).
+@item for each object size up to 512 bytes
+@table @code
+@item alloc_1
+@vindex alloc_1
+the number of calls of @code{Agc_1alloc}.
+@item refills
+@vindex refills
+the number of times the fast allocation cache has been filled.
+@item alloc_n
+@vindex alloc_n
+the number of calls of @code{Agc_nalloc}, including those to fill the
+fast allocation cache
+@item elements
+@vindex elements
+the total number of array elements requested in calls of @code{Agc_nalloc}.
+@end table
+@end table
+
+@node Debugging the garbage collector,  , Garbage collector statistics, Heap management
+@comment node-name, next, previous, up
+@subsection Debugging the garbage collector
+
+By defining @code{A_DEBUG} when you build the library, you can turn on
+extensive consistency checking and diagnostic reports within the garbage
+collector.
+
+The quantity of diagnostics is controlled by setting
+@code{Agc_debug_level} by one of
+
+@itemize @bullet
+@item
+setting the @code{A68_GC_DEBUG} environment level before you run the
+ALGOL 68 program
+@item
+calling @code{set_gc_params} from your ALGOL 68 module
+@item
+using a debugger
+@end itemize
+
+You can disable garbage collection at any time by calling the prelude
+library procedure @code{disable_garbage_collector} (module
+@code{osgc}) from your ALGOL 68 code.
+
+@node Prelude library sources, Porting, Heap management, Implementation
+@comment node-name, next, previous, up
+@section The ALGOL 68 prelude library (@code{liba68prel/liba68prel.a})
+
+The sources of these modules assume the existence of an XPG3
+compliant library.  Porting to other operating system environments
+will require changes to the @code{ALIEN} definitions of the prelude
+library.
+
+@node Porting,  , Prelude library sources, Implementation
+@comment node-name, next, previous, up
+@section Porting checklist
+
+@table @file
+@item include/Atypes.h
+@vindex Atypes.h
+Review the type definitions and mapping macros.
+
+@item library/Ahbasic.h
+@vindex Ahbasic.h
+Review this file.
+You should not need to change any definitions.
+
+@item library/Ahptr.h
+@vindex Ahptr.h
+Review this file bearing in mind alignment constraints.
+
+@item library/Ahseg.h
+@vindex Ahseg.h
+Review @code{CODEDPTR} and its operations.
+
+@item library/Aharea.h
+@vindex Aharea.h
+Implement @code{INIT_AREA} and @code{NEXT_AREA}.  You can test
+allocation independent of garbage collection by defining these to
+return @code{NIL_AREA}, and running your program with garbage
+collection disabled by setting the @code{A68_GC_POLICY} environment
+variable to 1.
+
+@item liba68prel/*.a68
+@vindex liba68prel
+Review operating system interfaces used in @code{ALIEN} declarations.
+Check @code{ossignals.a68} particularly. Ensure that the signals are
+declared in the right order for @code{signal_facility}.
+@end table
+
+@node    Option index, Symbol index, Implementation, Top
+@comment node-name,    next,         previous,       up
+@unnumbered Option index
+
+@printindex fn
+
+@node    Symbol index, Concept index, Option index, Top
+@comment node-name,    next,          previous,     up
+@unnumbered Symbol index
+
+@printindex vr
+
+@node    Concept index,  , Symbol index, Top
+@comment node-name,     next, previous,     up
+@unnumbered Concept index
+
+@printindex cp
+
+@summarycontents
+@contents
+@bye

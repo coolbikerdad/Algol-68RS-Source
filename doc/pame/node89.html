@@ -1,0 +1,139 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Internal books</title>
+<meta name="description" content="internal books">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node90.html">
+<link rel="previous" href="node88.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node90.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2138"
+  href="node90.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2132"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2126"
+  href="node88.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2134"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2136"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2139"
+  href="node90.html">Other transput procedures</a>
+<b> Up:</b> <a name="tex2html2133"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2127"
+  href="node88.html">Binary books</a>
+ &nbsp; <b>  <a name="tex2html2135"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2137"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section0011100000000000000000"></a><a name="trans-intern"></a>
+Internal books</h1>
+
+<p>Sometimes it is desirable to convert information from binary to
+text forms and then manipulate the resulting values. Conversely, when
+performing data entry (that is, reading data from the keyboard), it is
+usually better to perform the actual data entry in character format
+and then convert to internal values rather than converting the
+external data to internal values directly. The means of accomplishing
+this sort of specialised transput is provided by internal
+books<a name="5931"></a>.</p>
+
+<p>Unfortunately, the QAD transput provided with the
+a68toc<a name="5932"></a> compiler does not provide the usual
+Algol&nbsp;68 mechanism for internal books. However, a book consisting
+of a single line can be established using the <code>mem
+channel</code>. Here is an example:</p>
+
+<pre>
+   PROGRAM memch CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE mf;
+      establish(mf,"",mem channel,1,1,36);
+      FOR i TO 3 DO put(mf,i**3) OD;
+      print((file buffer(mf)[:current pos(mf)],
+             newline));
+      close(mf)
+   END
+   FINISH
+</pre>
+
+<p>When establishing a memory book using the <code>mem channel</code>,
+both the <code>p</code> and the <code>l</code> parameters should be
+<code>1</code> and the <code>c</code> parameter should be positive
+indicating the length of the line. All the transput procedures
+mentioned may be used on memory books. The procedure <code>file
+buffer</code> yields the internal buffer of a file, but uses a mode we
+have not yet met (see chapter&nbsp;13: Standard Prelude). The
+procedure <code>current pos</code> gives the current position of its
+<code>REF FILE</code> parameter. For examples of files opened using
+the <code>mem channel</code>, see the example program <code>lf</code>
+described in sections&nbsp;<a href="node123.html#dev-lf">12.3</a>
+to&nbsp;<a href="node123.html#dev-dry">12.3.3</a>.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2138"
+  href="node90.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2132"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2126"
+  href="node88.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2134"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2136"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2139"
+  href="node90.html">Other transput procedures</a>
+<b> Up:</b> <a name="tex2html2133"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2127"
+  href="node88.html">Binary books</a>
+ &nbsp; <b>  <a name="tex2html2135"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2137"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

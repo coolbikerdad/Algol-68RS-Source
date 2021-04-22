@@ -1,0 +1,223 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Comments</title>
+<meta name="description" content="comments">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node13.html">
+<link rel="previous" href="node11.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node13.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html829"
+  href="node13.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html823"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html817"
+  href="node11.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html825"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html827"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html830"
+  href="node13.html">External values</a>
+<b> Up:</b> <a name="tex2html824"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html818"
+  href="node11.html">Program structure</a>
+ &nbsp; <b>  <a name="tex2html826"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html828"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html831"
+  href="node12.html#section00391000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00390000000000000000"></a><a name="intro-co"></a>
+<br>
+Comments
+</h1>
+
+<p>When you write a program in Algol 68, the pieces of program which do
+the work are called &ldquo;source code&rdquo;<a name="360"></a>. The
+Algol&nbsp;68 compiler translates this source code into C source code
+which is then translated by the GNU C compiler into
+&ldquo;object code&rdquo;<a name="361"></a>.  This is then converted by
+a program called a
+linker<a name="362"></a> into machine code<a name="363"></a>, which is
+understood by the computer.  You then execute the program by typing
+its name at the command-line plus any arguments needed.  This is
+called <b>running</b><a name="365"></a> the program.</p>
+
+<p> When you write the program, it is usually quite clear to you what
+the program is doing.  However, if you return to that program after a
+gap of several months, the source code may not be at all clear to you.
+To help you understand what you have written in the program, it is
+possible, and recommended, to write comments<a name="366"></a> in the
+source code.  Comments can be put almost anywhere, but not in the
+middle of mode indicants<a name="367"></a> and not in the middle of
+denotations.  A comment is ignored by the compiler, except that
+comments can be nested.  A comment is surrounded by one of the
+following pairs:</p>
+
+<pre>
+   COMMENT ... COMMENT
+   CO ... CO
+   #...#
+   {...}
+</pre>
+
+<p>where the <span class="math">...</span> represent the actual
+comment. The paired braces are peculiar to the
+a68toc<a name="370"></a> compiler. Other compilers may not accept
+them. Here is an Algol&nbsp;68 program with comments added:</p>
+
+<pre>
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 23,  # My brother's age #
+          s = 27; CO My sister's age CO
+      CHAR z = "&amp;",  COMMENT An ampersand
+      COMMENT  y{acht}="y";
+      REAL x = 1.25;
+      print(i); print(s); print(z);
+      print(y); print(x)
+   END
+   FINISH
+</pre>
+
+<p>There are four comments in the above program. If you start a
+comment with <code>CO</code> then you must also finish it with
+<code>CO</code>, and likewise for the other comment symbols (except
+the braces). Here is a program with a bit of source code
+&ldquo;commented out&rdquo;:</p>
+
+<pre>
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 1, j = 2 #, k = 3#;
+      print(i); print(j)
+   END
+   FINISH
+</pre>
+
+<p>The advantage of commenting out source is that you only have to
+remove two characters and that source can be included in the program
+again.  You can use any of the comment symbols for commenting out.
+Here is another program with a part of the program containing a
+comment commented-out:</p>
+
+<pre>
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 1;
+      COMMENT
+      REAL six = 6.0, # Used subsequently #
+           one by 2 = 0.5;COMMENT
+      CHAR x = "X";
+      print(i); {print(six);} print(x)
+   END
+   FINISH
+</pre>
+
+<p>This is an example of nested comments. You can use any of the
+comment symbols for this purpose as long as you finish the comment
+with the matching symbol. However, if the part of your program that
+you want to comment out already contains comments, you should ensure
+that the enclosing comment symbols should be different. One way of
+using comment symbols is to develop a standard method. For example,
+the author uses the <code>#...#</code> comment symbols for one line
+comments in the code, <code>CO</code> symbols for multiline comments
+and <code>COMMENT</code> symbols for extensive comments required at
+the start of programs or similar code chunks.</p>
+
+<hr>
+<h2><a name="section00391000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact> <dt>1.14<a name="ex-i-xiv"></a>
+<dd>Write a short program
+which will print the letters of your first name. You should declare an
+identifier of mode <code>CHAR</code> for each letter, and write a
+<code>print</code> phrase for each letter.  Remember to put semicolons
+in the right places. Add comments to your program to explain what the
+program does.  Ans<a href="node135.html#ans-i-xiv"><img align="bottom"
+border="1" alt="[*]" src="answer.png"></a>
+/DD>
+</dl>
+
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html829"
+  href="node13.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html823"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html817"
+  href="node11.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html825"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html827"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html830"
+  href="node13.html">External values</a>
+<b> Up:</b> <a name="tex2html824"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html818"
+  href="node11.html">Program structure</a>
+ &nbsp; <b>  <a name="tex2html826"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html828"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

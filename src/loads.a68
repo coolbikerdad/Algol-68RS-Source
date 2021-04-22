@@ -1,0 +1,304 @@
+DECS  loads  CONTEXT VOID  USE
+*L    osif,
+      centities, common, coutput, environ, environment, denotations,
+      identifiers, incid, idtable, incimperatives, incmode, incoperfn,
+      modes, uniquenameserver, values, tracer:
+
+configinfo A68CONFIG "$Id: loads.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.9 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC   	check non local declared = ( INT decno, declevel ) VOID:
+{
+	Ensures that the non-local identifier or routine identified by
+	'decno' has been propogated to this level from its original
+	declaration level.
+}
+BEGIN
+	INT    	curlev = current level;
+	IF	NOT non local declared( decno, curlev )
+	THEN    { first time used at this level - so declare it }
+		add non local( decno, curlev );
+		non local dec( decno, curlev );
+		{ ensure non local dec exists at any intervening level }
+		FOR	i FROM declevel + 1 TO curlev - 1
+		DO
+			IF	NOT non local declared( decno, i )
+			THEN    add non local( decno, i );
+				non local dec( decno, i )
+			FI
+		OD
+	FI
+	{ The above is equivalent to simply looping TO curlev }
+END;
+
+PROC	alien = ( ALIENX alienx ) VALUE:
+{
+  'alienx' is a LOAD imperative which will form the rhs of an identity
+  declaration. An extern declaration is output for the quoted name by
+  'optimised identity' in identifiers.a68. 
+
+   The required Algol68 mode is derefed (if possible) to give the type of
+   the C external variable. Otherwise the mode is left unchanged, except
+   that proc definitions are output in their optimised global form. The
+   value returned is an IDENTIFIER representing the C extern definition. 
+}
+BEGIN
+
+  PROC parse alien string = (RVC string, REF RVC name, definition) VOID:
+  {
+    parses 'string' writing the name part to 'name' and definition to 'definition'
+  }
+  BEGIN
+    INT name start, name end, def start;
+
+    { skip leading spaces }
+    FROM name start := 1 TO UPB string
+    WHILE string[name start] = " " 
+    DO
+      name start +:= 1
+    OD;
+
+    { find end of name prt }
+    FROM name end := name start TO UPB string
+    WHILE (NOT old alien option OREL (string[name end] /= " ")) ANDTH ( string[name end] /= newline_char )
+    DO
+      name end +:= 1
+    OD;
+
+    REF RVC (name) := string[name start:name end - 1];
+    
+    { skip leading newlines and spaces before definition part }
+    FROM def start := name end TO UPB string
+    WHILE ( string[def start] = newline_char ) OREL ( string[def start] = " " )
+    DO
+      def start +:= 1
+    OD;
+
+    REF RVC (definition) := ( def start > UPB string | NIL | string[def start:] )
+  END;
+
+  INT alien mode = mode OF alienx;
+  INT alien mode type = modetype(alienmode);
+
+  RVC alien name, alien definition;
+
+  parse alien string( string OF alienx, alien name, alien definition );
+
+  BITS alienflags =
+    IF alien mode < refmark ANDTH (alien mode type = proc OREL alien mode type = procp)
+    THEN id gproc flag
+    ELSE id no flags
+    FI;
+
+  alienidinfo :=
+    ( alienmode,
+      give c variable type( alien mode, FALSE), 
+      null environ,           { ALIENs are global }
+      alien name,
+      NIL,
+      SKIP,
+      alien flags,
+      alien definition,
+      NIL 
+    );
+
+  ( alienmode, 
+    default info,
+    ( IDENTIFIER alien; idno OF alien := alien idno; alien )
+  )    
+END;
+
+PROC	load = ( LOAD l ) VALUE:
+{
+        Delivers a value to be put on the value stack for a load stream imperative.
+}
+CASE	l  IN
+(INT i):
+	IF  	i < min id no
+	THEN	{CCC biop identifier( -i ) } skip value
+	ELIF	i <= max id no
+	THEN
+		REF IDINFO idinfo = ids[i];
+                flags OF idinfo := flags OF idinfo OR id loaded flag;
+		( mode OF idinfo,
+		  ( ENVIRON env = environ OF idinfo;
+		    ( (flags OF idinfo >= id optimised flag)
+		          { optimised => effectively global }
+		      OREL ISGLOBALLEVEL env OREL ISLOCALLEVEL env
+		    | default info
+		    | check non local declared(i, level OF env); 
+		      nonloc
+		    )
+		  ),
+		  (IDENTIFIER id; idno OF id := i; id)
+		)
+	ELIF	i <= max rd no
+	THEN	
+		REF RDINFO rdinfo = rds[i];
+                flags OF rdinfo := flags OF rdinfo OR rd loaded flag;
+		( mode OF rdinfo, 
+		  ( flags OF rdinfo >= rd global flag 
+			OREL declevel OF rdinfo = current level  { impossible? }
+		  | default info
+		  | check non local declared( i, declevel OF rdinfo);
+		    nonloc
+		  ),
+		  (ROUTINEINFO rd; rdenno OF rd := i; rd)
+		)
+	ELIF	i <= max libid
+	THEN
+		REF IDINFO idinfo = library ids[i];
+                flags OF idinfo := flags OF idinfo OR id loaded flag;
+		( mode OF idinfo,
+		  ( ENVIRON env = environ OF idinfo;
+		    ( (flags OF idinfo >= id optimised flag)
+		          { optimised => effectively global }
+		      OREL ISGLOBALLEVEL env OREL ISLOCALLEVEL env
+		    | default info
+		    | check non local declared(i, level OF env); 
+		      nonloc
+		    )
+		  ),
+		  (IDENTIFIER id; idno OF id := i; id)
+		)
+	ELIF	i <= max kept generator proc
+	THEN	{ ref generator proc }
+		( deref mode
+		  ( deref mode
+		    ( mode OF (ids[ i-kept generator proc correction ])
+		    )
+		  ),
+		  default info,
+		  ( IDENTIFIER id; idno OF id := i; id
+		  )
+		)
+	ELSE	"unknown load of id" ASSERT FALSE; SKIP
+	FI,
+
+( NUMBER number ):
+	( mode OF number, constant, translate denotation( nu OF number ) ),
+
+( NUMERICDENOTATION numeric ):
+	( mode OF numeric, constant, denotation OF numeric ),
+
+( STRINGDENOTATION s ):
+BEGIN	{ Use a static initialiser to make the string an istruct }
+	INT stream = NONLOCDECSTREAM 0;
+	UNAME name = new unique name;
+	RVC string = denotation OF s;
+	write c stream
+	(( "static ", ctype( mode OF s ), "  ", name, " = "
+	 ),NONLOCDECSTREAM 0
+	);
+	IF	UPB string < 256
+	THEN	write c stream
+		( curly( double quote( replace control chars(string) ) ),
+		  stream
+		)
+	ELSE	write c stream((c newline,"{ "), stream );
+		FOR i	TO UPB string
+		DO     	REF VECTOR[]CHAR rvc = string[i];
+			write c stream
+			(( " '"+ replace control chars(rvc),
+			   ( i = UPB string | "' " | "'," )
+			 ), stream
+			);
+			IF	(i MOD 8) = 0
+			THEN    write c stream((c newline,"  "), stream )
+			FI	{ this is just a beutification }
+		OD;
+		write c stream( ( cnewline, "} "), stream )
+	FI;
+	write c stream(( "; ", cnewline ), stream );
+	( mode OF s, constant, TEMPORARY( name, mode OF s ) )
+END,
+	 
+( STRUCT(INT nse) nil skip or empty ):
+BEGIN
+	INT mode =
+	  ( nse OF nil skip or empty
+	  | void mode, skip mode, nil mode
+	  | "LOADS - invalid STRUCT(INT nse)" ASSERT FALSE; SKIP
+	  );
+	VALUE
+        ( mode,
+	  ( mode = nil mode | constant OR is nil | default info ),
+	  EXTRA( nil skip or empty )
+        )
+END,
+         
+( BOOL bool ):
+   	( bool mode, constant, ( bool | "A68_TRUE" | "A68_FALSE" ) ),
+
+( CHARDENOTATION char ):
+      	( char mode, constant, single quote( representation OF char ) ),
+
+( ALIENX alienx ):	alien( alienx ),
+
+( LABNO label ):
+BEGIN
+	ENVIRON	env = environ OF labels[ labno OF label ];
+	IF	level OF env /= current level
+	THEN	declare non local label( labno OF label )
+	FI;
+
+	VALUE
+	( goto mode,
+	  ( ISGLOBALLEVEL env OREL ISLOCALLEVEL env
+	    | default info
+	    | check non local declared(labno OF label + min lab, level OF env); 
+	      nonloc
+	  ),
+	  label
+	)
+END
+OUT	"LOADS - unknown mode in load" ASSERT FALSE; SKIP
+ESAC;                                  
+
+SKIP
+
+KEEP	load
+
+FINISH
+
+{
+Local Variables:
+eval: (auto-fill-mode 0)
+End:
+}

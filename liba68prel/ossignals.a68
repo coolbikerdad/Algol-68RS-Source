@@ -1,0 +1,410 @@
+DECS  ossignals  CONTEXT VOID  USE  cif,  messageproc,  oserrors,  osgc,
+      usefulops:
+
+{  Id: ossignals.a68,v 2.6 1993/08/03 10:00:56 aap Exp $ }
+
+configinfo A68CONFIG "$Id: ossignals.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+11:08:93  Extra REFs removed from sig_msgprocs - not needed ??? -
+            should be using global_msg to alter behaviour.  DCT
+13:10:93  *%T replaced by #ifdef sunosgcc.  DCT
+26:11:93  #include <unistd.h> needed.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.003 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ Low level operating system interface for signal handling.
+
+  Low level routines for accessing OS facilities, defined with POSIX.1 in mind.
+  Staredits for deviations from POSIX are:
+    to be supplied.
+}
+
+{
+  ALIEN proc declarations
+}
+
+{
+  Only the names of these modes matter -- an ALIEN trick is
+  used when declaring objects of these modes to make sure that the correct C
+  type is used.  The objects are used only as parameters to C library functions
+}
+
+MODE
+  SIGSET = STRUCT( INT sigset ),
+  SIGACTION = STRUCT( INT sigaction );
+
+PROC (INT,INT) INT kill =
+  ALIEN "KILL"
+        "#include <signal.h>"
+        "#include <unistd.h>"
+        "#define KILL(pid,sig) A_int_INT(kill(A_INT_pid_t(pid),A_INT_int(sig)))";
+
+PROC (INT) INT raise =
+  ALIEN "RAISE"
+        "/* extern int raise(); */ /* #include <signal.h> */"
+        "#define myraise(sig) kill(getpid(),(sig))"
+        "#define RAISE(sig) A_int_INT(myraise(A_INT_int(sig)))";
+
+PROC (INT,REF SIGACTION, REF SIGACTION) INT sigaction =
+  ALIEN "SIGACTION"
+        "#include <signal.h>"
+        "#define SIGACTION(sig,act,oact) A_int_INT(sigaction(A_INT_int(sig),(void *)(act),(void *)(oact)))";
+
+PROC (REF SIGSET,INT) INT sigaddset =
+  ALIEN "SIGADDSET"
+        "#include <signal.h>"
+        "#define SIGADDSET(set,signo) A_int_INT(sigaddset((sigset_t *)(set),A_INT_int(signo)))";
+
+PROC (REF SIGSET,INT) INT sigdelset =
+  ALIEN "SIGDELSET"
+        "#include <signal.h>"
+        "#define SIGDELSET(set,signo) A_int_INT(sigdelset((sigset_t *)(set),A_INT_int(signo)))";
+
+PROC (REF SIGSET) INT sigemptyset =
+  ALIEN "SIGEMPTYSET"
+        "#include <signal.h>"
+        "#define SIGEMPTYSET(set) A_int_INT(sigemptyset((sigset_t *)(set)))";
+
+PROC (REF SIGSET) INT sigfillset =
+  ALIEN "SIGFILLSET"
+        "#include <signal.h>"
+        "#define SIGFILLSET(set) A_int_INT(sigfillset((sigset_t *)(set)))";
+
+PROC (REF SIGSET,INT) INT sigismember =
+  ALIEN "SIGISMEMBER"
+        "#include <signal.h>"
+        "#define SIGISMEMBER(set,signo) A_int_INT(sigismember((sigset_t *)(set),A_INT_int(signo)))";
+
+PROC (REF SIGSET) INT sigpending =
+  ALIEN "SIGPENDING"
+        "#include <signal.h>"
+        "#define SIGPENDING(set) A_int_INT(sigpending((sigset_t *)(set)))";
+
+PROC (INT,REF SIGSET, REF SIGSET) INT sigprocmask =
+  ALIEN "SIGPROCMASK"
+        "#include <signal.h>"
+        "#define SIGPROCMASK(how,set,oset) A_int_INT(sigprocmask(A_INT_int(how),(sigset_t *)(set),(sigset_t *)(oset)))";
+
+{ "how" values }
+INT
+  sig_block   = ALIEN "SIG_BLOCK" "#include <signal.h>",
+  sig_unblock = ALIEN "SIG_UNBLOCK" "#include <signal.h>",
+  sig_setmask = ALIEN "SIG_SETMASK" "#include <signal.h>";
+
+PROC (REF SIGSET) INT sigsuspend =
+  ALIEN "SIGSUSPEND"
+        "#include <signal.h>"
+        "#define SIGSUSPEND(sigmask) A_int_INT(sigsuspend((sigmask)))";
+
+
+{
+  SIGNALS
+
+  All signal numbers are indexes into 'sig_info', unless specifically named 'os_signum',
+  in which case they are numbers as defined in <signal.h>.  They are the same on SunOS systems
+  and (probably) most other Unix systems.
+}
+
+{ Linux Signal Names }
+INT  sighup    = ALIEN "SIGHUP"  "#include <signal.h>",
+     sigint    = ALIEN "SIGINT"  "/**/",
+     sigquit   = ALIEN "SIGQUIT" "/**/",
+     sigill    = ALIEN "SIGILL"  "/**/",
+     sigtrap   = ALIEN "SIGTRAP" "/**/",
+     sigabrt   = ALIEN "SIGABRT" "/**/",
+     sigbus    = ALIEN "SIGBUS"  "/**/",
+     sigfpe    = ALIEN "SIGFPE"  "/**/",
+     sigkill   = ALIEN "SIGKILL" "/**/",
+     sigusr1   = ALIEN "SIGUSR1" "/**/",
+     sigsegv   = ALIEN "SIGSEGV" "/**/",
+     sigusr2   = ALIEN "SIGUSR2" "/**/",
+     sigpipe   = ALIEN "SIGPIPE" "/**/",
+     sigalrm   = ALIEN "SIGALRM" "/**/",
+     sigterm   = ALIEN "SIGTERM" "/**/",
+     sigstkflt = ALIEN "SIGSTKFLT" "#if !defined(SIGSTKFLT)" "#define SIGSTKFLT 32" "#endif" "/**/",
+     sigchld   = ALIEN "SIGCHLD" "/**/",
+     sigcont   = ALIEN "SIGCONT" "/**/",
+     sigstop   = ALIEN "SIGSTOP" "/**/",
+     sigtstp   = ALIEN "SIGTSTP" "/**/",
+     sigttin   = ALIEN "SIGTTIN" "/**/",
+     sigttou   = ALIEN "SIGTTOU" "/**/",
+     sigurg    = ALIEN "SIGURG"  "/**/",
+     sigxcpu   = ALIEN "SIGXCPU" "/**/",
+     sigxfsz   = ALIEN "SIGXFSZ" "/**/",
+     sigvtalrm = ALIEN "SIGVTALRM" "/**/",
+     sigprof   = ALIEN "SIGPROF" "/**/",
+     sigwinch  = ALIEN "SIGWINCH" "/**/",
+     sigio     = ALIEN "SIGIO"   "/**/",
+     sigpwr    = ALIEN "SIGPWR"   "#if !defined(SIGPWR)" "#define SIGPWR 33" "#endif" "/**/";
+
+CFUNCPTR
+  sig_err = ALIEN "SIG_ERR" "/**/",
+  sig_dfl = ALIEN "SIG_DFL" "/**/",
+  sig_ign = ALIEN "SIG_IGN" "/**/",
+  sig_hold = ALIEN "SIG_HOLD" "/**/";
+
+
+INT max signals = 31;
+FACILITY signal_facility = (
+  "OS signals",
+  LOC VECTOR [max signals] MESSAGE,
+  LOC BOOL := FALSE,
+  (
+    ( sighup, output_class, "hangup" ),
+    ( sigint, output_class, "interrupt" ),
+    ( sigquit, output_class, "quit" ),
+    ( sigill, output_class, "illegal instruction (not reset when caught)" ),
+    ( sigtrap, output_class, "trace trap (not reset when caught)" ),
+    ( sigabrt, output_class, "used by abort, replace SIGIOT in the future" ),
+    ( sigbus, output_class, "bus error" ),
+    ( sigfpe, output_class, "floating point exception" ),
+    ( sigkill, output_class, "kill (cannot be caught or ignored)" ),
+    ( sigusr1, output_class, "user defined signal 1" ),
+    ( sigsegv, output_class, "segmentation violation" ),
+    ( sigusr2, output_class, "user defined signal 2" ),
+    ( sigpipe, output_class, "write on a pipe with no one to read it" ),
+    ( sigalrm, output_class, "alarm clock" ),
+    ( sigterm, output_class, "software termination signal from kill" ),
+	 ( sigstkflt, output_class, "stack fault" ),
+    ( sigchld, output_class, "to parent on child stop or exit" ),
+    ( sigcont, output_class, "continue a stopped process" ),
+    ( sigstop, output_class, "sendable stop signal not from tty" ),
+    ( sigtstp, output_class, "stop signal from tty" ),
+    ( sigttin, output_class, "to readers pgrp upon background tty read" ),
+    ( sigttou, output_class, "like TTIN for output if (tp->t_local&LTOSTOP)" ),
+    ( sigurg, output_class, "urgent condition on IO channel" ),
+    ( sigxcpu, output_class, "exceeded CPU time limit" ),
+    ( sigxfsz, output_class, "exceeded file size limit" ),
+    ( sigvtalrm, output_class, "virtual time alarm" ),
+    ( sigprof, output_class, "profiling time alarm" ),
+    ( sigwinch, output_class, "window changed" ),
+    ( sigio, output_class, "input/output possible signal" ),
+    ( sigpwr, output_class, "power failure restart" )
+  )
+);
+
+VECTOR [max signals] MESSAGEPROC sig_msgprocs;
+
+{
+  Internal signal handlers -- all trapped signals go via 'osif_handler'
+  The sa_handler fields are initialised in 'init_ossignals'.
+}
+
+REF SIGACTION osif_handler_sigaction = ALIEN "OSIF_HANDLER_SIGACTION"
+  "A_STATIC struct sigaction osif_handler_sigaction;"
+  "#define OSIF_HANDLER_SIGACTION osif_handler_sigaction";
+
+REF SIGACTION sigusr1_sigaction = ALIEN "SIGUSR1_SIGACTION"
+  "A_STATIC struct sigaction sigusr1_sigaction;"
+  "#define SIGUSR1_SIGACTION sigusr1_sigaction";
+
+REF SIGACTION ignore_sigaction = ALIEN "IGNORE_SIGACTION"
+  "A_STATIC struct sigaction ignore_sigaction;"
+  "#define IGNORE_SIGACTION ignore_sigaction";
+
+REF SIGACTION default_sigaction = ALIEN "DEFAULT_SIGACTION"
+  "A_STATIC struct sigaction default_sigaction;"
+  "#define DEFAULT_SIGACTION default_sigaction";
+
+{ set in 'osif_handler'; restored in 'sigusr1_handler' }
+REF SIGACTION saved_sigaction = ALIEN "SAVED_SIGACTION"
+  "A_STATIC struct sigaction saved_sigaction;"
+  "#define SAVED_SIGACTION saved_sigaction";
+
+REF SIGACTION nil_sigaction = NIL;
+REF SIGSET nil_sigset = NIL;
+
+REF SIGSET all_sigset = ALIEN "ALL_SIGSET"
+  "A_STATIC sigset_t all_sigset;"
+  "#define ALL_SIGSET all_sigset";
+
+PROC sigusr1_handler = (INT os_signum) VOID:
+BEGIN
+  { block all signals }
+  sigfillset(all_sigset);
+  sigprocmask(sig_block,all_sigset,nil_sigset);
+
+  { reinstate previous sigusr1 handler }
+  sigaction(sigusr1, saved_sigaction, nil_sigaction);
+
+  enable_garbage_collector
+END;
+
+PROC osif_handler = (INT os_signum) VOID:
+{
+  Operations that use the HEAP are not allowed here!!!
+}
+BEGIN
+  SIGSET sigusr1_sigset;
+  sigemptyset(sigusr1_sigset);
+  sigaddset(sigusr1_sigset,sigusr1);
+
+  disable_garbage_collector;
+
+{   add sigusr1 to blocked signals; }
+  sigprocmask(sig_block,sigusr1_sigset,nil_sigset);
+
+{   set 'sigusr1_handler' as the handler for sigusr1; }
+  sigaction(sigusr1, sigusr1_sigaction, saved_sigaction);
+
+  raise(sigusr1);
+     { blocked until sigusr1_handler exits (GOTO must reset procmask for this to work)}
+
+  sig_msgprocs[os_signum] (make_msgno(os_signum,signal_facility),())
+END;
+
+PROC set_sigmsgproc = (
+  VECTOR [] INT signals,     { the signals whose disposition is to be changed }
+  MESSAGEPROC sigmsgproc,    { to be used for signal handling }
+  MESSAGEPROC msg            { to be used for reporting errors in this PROC }
+) VOID:
+{
+  Arranges for 'sigmsgproc' to be called (from 'osif_handler') when any of the
+  specified set of signals is delivered to the current process
+}
+FORALL s IN signals
+DO
+  IF
+    (s <= 0) OREL (s > max signals) OREL
+       (sigaction(s, osif_handler_sigaction, nil_sigaction) /= 0)
+  THEN
+    osif message(99,("set_sigmsgproc","signal no " + whole(s,0)),msg)
+  ELSE
+    sig_msgprocs[s] := sigmsgproc
+  FI
+OD;
+
+PROC set_sigignore = (
+  VECTOR [] INT signals,     { the signals whose disposition is to be changed }
+  MESSAGEPROC msg            { to be used for reporting errors in this PROC }
+) VOID:
+{
+  Arranges for the specified set of signals to be ignored
+  when delivered to the current process
+}
+FORALL s IN signals
+DO
+  IF
+    (s <= 0) OREL (s > max signals) OREL
+       (sigaction(s, ignore_sigaction, nil_sigaction) /= 0)
+  THEN
+    osif message(99,("set_sigignore","signal no " + whole(s,0)),msg)
+  FI
+OD;
+
+PROC set_sigdefault = (
+  VECTOR [] INT signals,     { the signals whose disposition is to be changed }
+  MESSAGEPROC msg            { to be used for reporting errors in this PROC }
+) VOID:
+{
+  Arranges for the POSIX-defined default action to be carried out when
+  any of the specified set of signals is delivered to the current process
+}
+FORALL s IN signals
+DO
+  IF
+    (s <= 0) OREL (s > max signals) OREL
+       (sigaction(s, default_sigaction, nil_sigaction) /= 0)
+  THEN
+    osif message(99,("set_sigdefault","signal no " + whole(s,0)),msg)
+  FI
+OD;
+
+PROC get_sigmsgproc = (INT signal, MESSAGEPROC msg) MESSAGEPROC:
+{
+  Returns the current handler for the specified signal
+}
+IF
+  (signal <= 0) OREL (signal > max signals)
+THEN
+  osif message(99,("get_sigmsgproc","out of range signal: " + whole(signal,0)),msg);
+  ignore_msg
+ELSE
+  sig_msgprocs[signal]
+FI;
+
+PROC init_ossignals = VOID:
+{
+  To be called from init_osif.
+}
+BEGIN
+  FORALL m IN sig_msgprocs DO m := global_msg OD;
+
+  CODE(osif_handler,sigusr1_handler)
+    "osif_handler_sigaction.sa_handler = osif_handler;"
+    "sigusr1_sigaction.sa_handler = sigusr1_handler;"
+    "ignore_sigaction.sa_handler = SIG_IGN;"
+    "default_sigaction.sa_handler = SIG_DFL;"
+END;
+
+SKIP
+
+KEEP
+  sighup,
+  sigint,
+  sigquit,
+  sigill,
+  sigtrap,
+  sigabrt,
+  sigbus,
+  sigfpe,
+  sigkill,
+  sigusr1,
+  sigsegv,
+  sigusr2,
+  sigpipe,
+  sigalrm,
+  sigterm,
+  sigstkflt,
+  sigchld,
+  sigcont,
+  sigstop,
+  sigtstp,
+  sigttin,
+  sigttou,
+  sigurg,
+  sigxcpu,
+  sigxfsz,
+  sigvtalrm,
+  sigprof,
+  sigwinch,
+  sigio,
+  sigpwr,
+
+  init_ossignals,
+  set_sigmsgproc, set_sigignore, set_sigdefault, sig_msgprocs, get_sigmsgproc
+FINISH

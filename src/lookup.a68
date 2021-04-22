@@ -1,0 +1,413 @@
+DECS  lookup  CONTEXT VOID  USE  environment:
+
+configinfo A68CONFIG "$Id: lookup.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{CCC
+	Shell PROC 'lookup' converted from PL/1 for C translator.
+	Not very efficient, but it works and it's clean.
+}
+
+MODE LOOKUPPAIR = STRUCT ( VECTOR [0] CHAR word, INT value );
+
+[] [] LOOKUPPAIR long long bold set =
+(
+	(
+		LOOKUPPAIR ( "i", 217 )
+	),
+	(
+		( "of", 116 ),
+		( "co", 60 ),
+		( "if", 52 ),
+		( "fi", 56 ),
+		( "do", 147 ),
+		( "in", 47 ),
+		( "or", 230 ),
+		( "to", 151 ),
+		( "od", 145 ),
+		( "is", 227 ),
+		( "op", 167 ),
+		( "ge", 209 ),
+		( "by", 150 ),
+		( "at", 154 ),
+		( "ne", 211 ),
+		( "up", 233 ),
+		( "le", 208 ),
+		( "eq", 210 ),
+		( "im", 251 ),
+		( "re", 250 ),
+		( "go", 115 ),
+		( "gt", 207 ),
+		( "lt", 206 ),
+		( "pr", 65 )
+	),
+	(
+		( "int", 138 ),
+		( "ref", 141 ),
+		( "and", 229 ),
+		( "abs", 241 ),
+		( "nil", 121 ),
+		( "bin", 242 ),
+		( "end", 55 ),
+		( "for", 148 ),
+		( "not", 240 ),
+		( "out", 49 ),
+		( "loc", 157 ),
+		( "upb", 202 ),
+		( "mod", 215 ),
+		( "shr", 219 ),
+		( "odd", 246 ),
+		( "shl", 218 ),
+		( "lwb", 203 ),
+		( "arg", 252 ),
+		( "use", 183 )
+	),
+	(
+		( "then", 46 ),
+		( "else", 48 ),
+		( "skip", 122 ),
+		( "proc", 144 ),
+		( "isnt", 228 ),
+		( "case", 53 ),
+		( "true", 119 ),
+		( "esac", 57 ),
+		( "bool", 134 ),
+		( "void", 133 ),
+		( "char", 135 ),
+		( "goto", 126 ),
+		( "elif", 43 ),
+		( "bits", 137 ),
+		( "mode", 165 ),
+		( "from", 149 ),
+		( "real", 139 ),
+		( "repr", 243 ),
+		( "leng", 244 ),
+		( "long", 155 ),
+		( "elem", 220 ),
+		( "exit", 123 ),
+		( "sign", 247 ),
+		( "flex", 131 ),
+		( "heap", 178 ),
+		( "prio", 166 ),
+		( "ouse", 44 ),
+		( "over", 214 ),
+		( "conj", 253 ),
+		( "decs", 180 ),
+		( "down", 219 ),
+		( "here", 184 ),
+		( "keep", 113 ),
+		( "biop", 192 ),
+		( "orel", 205 ),
+		( "code", 162 )
+	),
+	(
+		( "while", 152 ),
+		( "false", 120 ),
+		( "begin", 51 ),
+		( "union", 142 ),
+		( "compl", 140 ),
+		( "round", 248 ),
+		( "divab", 226 ),
+		( "short", 172 ),
+		( "modab", 225 ),
+		( "empty", 189 ),
+		( "alien", 112 ),
+		( "andth", 204 ),
+                ( "xtype", 194 ),
+                ( "ytype", 195 )
+		{ no "cycle", 232 }
+	),
+	(
+		( "struct", 143 ),
+		( "plusab", 221 ),
+		( "entier", 249 ),
+		( "finish", 174 ),
+		( "format", 136 ),
+		( "overab", 224 ),
+		( "vector", 164 ),
+		( "forall", 170 ),
+		( "plusto", 231 )
+	),
+	(
+		( "minusab", 222 ),
+		( "comment", 61 ),
+		( "timesab", 223 ),
+		( "program", 179 ),
+		( "shorten", 245 ),
+		( "compose", 181 ),
+		( "context", 182 ),
+		( "pragmat", 66 )
+	),
+	(
+		LOOKUPPAIR ( "straight", 169 )
+	)
+);
+
+[] [] LOOKUPPAIR short short bold set =
+(
+	(
+		LOOKUPPAIR ( "i", 217 )
+	),
+	(
+		( "of", 116 ),
+		( "co", 60 ),
+		( "if", 52 ),
+		( "fi", 56 ),
+		( "do", 147 ),
+		( "in", 47 ),
+		( "or", 230 ),
+		( "to", 151 ),
+		( "od", 145 ),
+		( "is", 227 ),
+		( "op", 167 ),
+		( "ge", 209 ),
+		( "by", 150 ),
+		( "at", 154 ),
+		( "ne", 211 ),
+		( "up", 233 ),
+		( "le", 208 ),
+		( "eq", 210 ),
+		( "im", 251 ),
+		( "re", 250 ),
+		( "go", 115 ),
+		( "gt", 207 ),
+		( "lt", 206 ),
+		( "pr", 65 )
+	),
+	(
+		( "int", 138 ),
+		( "ref", 141 ),
+		( "and", 229 ),
+		( "abs", 241 ),
+		( "nil", 121 ),
+		( "bin", 242 ),
+		( "end", 55 ),
+		( "for", 148 ),
+		( "not", 240 ),
+		( "out", 49 ),
+		( "loc", 157 ),
+		( "upb", 202 ),
+		( "mod", 215 ),
+		( "shr", 219 ),
+		( "odd", 246 ),
+		( "shl", 218 ),
+		( "lwb", 203 ),
+		( "arg", 252 ),
+		( "use", 183 )
+	),
+	(
+		( "then", 46 ),
+		( "else", 48 ),
+		( "skip", 122 ),
+		( "proc", 144 ),
+		( "isnt", 228 ),
+		( "case", 53 ),
+		( "true", 119 ),
+		( "esac", 57 ),
+		( "bool", 134 ),
+		( "void", 133 ),
+		( "char", 135 ),
+		( "goto", 126 ),
+		( "elif", 43 ),
+		( "bits", 137 ),
+		( "mode", 165 ),
+		( "from", 149 ),
+		( "real", 139 ),
+		( "repr", 243 ),
+		( "leng", 245 ),
+		( "long", 172 ),
+		( "elem", 220 ),
+		( "exit", 123 ),
+		( "sign", 247 ),
+		( "flex", 131 ),
+		( "heap", 178 ),
+		( "prio", 166 ),
+		( "ouse", 44 ),
+		( "over", 214 ),
+		( "conj", 253 ),
+		( "decs", 180 ),
+		( "down", 219 ),
+		( "here", 184 ),
+		( "keep", 113 ),
+		( "biop", 192 ),
+		( "orel", 205 ),
+		( "code", 162 )
+	),
+	(
+		( "while", 152 ),
+		( "false", 120 ),
+		( "begin", 51 ),
+		( "union", 142 ),
+		( "compl", 140 ),
+		( "round", 248 ),
+		( "divab", 226 ),
+		( "short", 155 ),
+		( "modab", 225 ),
+		( "empty", 189 ),
+		( "alien", 112 ),
+		( "andth", 204 ),
+                ( "xtype", 194 ),
+                ( "ytype", 195 )
+		{ no "cycle", 232 }
+	),
+	(
+		( "struct", 143 ),
+		( "plusab", 221 ),
+		( "entier", 249 ),
+		( "finish", 174 ),
+		( "format", 136 ),
+		( "overab", 224 ),
+		( "vector", 164 ),
+		( "forall", 170 ),
+		( "plusto", 231 )
+	),
+	(
+		( "minusab", 222 ),
+		( "comment", 61 ),
+		( "timesab", 223 ),
+		( "program", 179 ),
+		( "shorten", 244 ),
+		( "compose", 181 ),
+		( "context", 182 ),
+		( "pragmat", 66 )
+	),
+	(
+		LOOKUPPAIR ( "straight", 169 )
+	)
+);
+
+[] [] LOOKUPPAIR symbol set =
+(
+	(
+	),
+	(
+		( ":=", 163 ),
+		( "/=", 211 ),
+		( ">=", 209 ),
+		( "<=", 208 ),
+		( "**", 216 ),
+		( "%*", 215 ),
+		( "+*", 217 )
+	),
+	(
+		( "+:=", 221 ),
+		( "-:=", 222 ),
+		( ":=:", 227 ),
+		( "*:=", 223 ),
+		( "/:=", 226 ),
+		( "%:=", 224 ),
+		( "+=:", 231 )
+	),
+	(
+		( ":/=:", 228 ),
+		( "%*:=", 225 )
+	)
+);
+
+
+PROC lookup = ( REF VECTOR [] CHAR word, BOOL bold ) INT:
+BEGIN
+	[] [] LOOKUPPAIR set =
+		IF bold
+		THEN ( long long option | long long bold set
+		                        | short short bold set )
+		ELSE symbol set
+		FI;
+
+	INT answer;
+
+	IF UPB word <= UPB set
+	THEN                                               
+		{ set contains words of similar length, look for match }
+		FORALL pair IN set[ UPB word]
+		DO
+			IF word = word OF pair
+			THEN
+				{ found it }
+				answer := value OF pair;
+				GOTO found it
+			FI
+		OD
+	FI;
+
+{ couldnt find it: }
+
+	{ return failure value }
+	IF bold THEN 156 ELSE 176 FI
+	EXIT
+
+found it:
+	answer
+END;
+
+
+PROC optbool lookup = ( REF VECTOR [] CHAR word, BOOL bold ) INT:
+{
+	This version forces all AND and OR to be optimised versions, not strict Algol 68.
+	AND is mapped onto ANDTH value, and OR onto OREL.
+
+	Implementation is simple, clean but possibly slow.
+}
+IF bold ANDTH word = "or"
+THEN
+	205
+ELIF bold ANDTH word = "and"
+THEN
+	204
+ELSE
+	lookup( word, bold )
+FI;
+
+
+
+{ TEST
+TEST	FLEX VECTOR [0] CHAR s;
+TEST	
+TEST	WHILE read((s,newline)); s /= ""
+TEST	DO
+TEST		print((s,"  ",lookup(s[],TRUE),lookup(s[],FALSE),newline))
+TEST	OD
+TEST }
+
+
+SKIP
+
+KEEP 
+    lookup, optbool lookup
+FINISH

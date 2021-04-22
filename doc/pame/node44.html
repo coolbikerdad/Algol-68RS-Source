@@ -1,0 +1,209 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Compound Boolean formul&#230;</title>
+<meta name="description" content="compound boolean formul&#230;">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node45.html">
+<link rel="previous" href="node43.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node45.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1344"
+  href="node45.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1338"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1332"
+  href="node43.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1340"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1342"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1345"
+  href="node45.html">Conditional clauses</a>
+<b> Up:</b> <a name="tex2html1339"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1333"
+  href="node43.html">Relational operators</a>
+ &nbsp; <b>  <a name="tex2html1341"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1343"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1346"
+  href="node44.html#section00641000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00640000000000000000"></a><a name="choice-comp"></a>
+Compound Boolean formul&#230;</h1>
+
+<p>Formul&#230; yielding <code>TRUE</code> or <code>FALSE</code> can
+be combined. For example, here is a formula which tests whether &pi;
+lies between <code>3</code> and <code>4</code></p>
+
+<pre>
+   pi &gt; 3 &amp; pi &lt; 4
+</pre>
+
+<p>which yields <code>TRUE</code>. The priorities of
+<code>&lt;</code>, <code>&gt;</code> and <code>&amp;</code> are so
+defined that parentheses are unnecessary in this case.  Likewise, we
+may write</p>
+
+<pre>
+   "ab" &lt; "aac" OR 3 &lt; 2
+</pre>
+
+<p>which yields <code>FALSE</code>. More complicated formul&#230; can
+be written:</p>
+
+<pre>
+   3.4 &gt; 2 &amp; "a" &lt; "c" OR "b" &gt;= "ab"
+</pre>
+
+<p>which yields <code>TRUE</code>. Because the priority of the
+operator <code>&amp;</code> is higher than the
+priority<a name="2201"></a> of <tt>OR</tt><a name="2459"></a>, the
+<code>&amp;</code> in the above formula is elaborated first. The order
+of elaboration can be changed using parentheses.</p>
+
+<p> There does not seem much point to these formul&#230; since
+everything is known beforehand, but all will become clear in the next
+chapter.</p>
+
+<p>Compound Boolean formul&#230; can be confusing. Being aware of the
+converse of a compound condition<a name="2206"></a> helps you to
+ensure you have considered all possibilities. For example, the
+converse of the formula</p>
+
+<pre>
+   a &lt; b &amp; c = d
+</pre>
+
+<p>is the formula</p>
+
+<pre>
+   a &gt;= b OR c /= d
+</pre>
+
+<p>One of the formul&#230; would yield <code>TRUE</code> and the other
+<code>FALSE</code>.</p>
+
+<hr>
+<h2><a name="section00641000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>4.3<a name="ex-iv-iii"></a>
+<dd>What is the value of each of the following: Ans<a href="node138.html#ans-iv-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>NOT ODD 3 OR 3 &lt; 4</code>  
+<p>
+<dt>(b)
+<dd><code>3 &gt; 2 &amp; (5 &gt; 12 OR 7 &lt;= 8)</code>  
+<p>
+<dt>(c)
+<dd><code>(TRUE OR FALSE) AND (FALSE OR TRUE)</code>  
+<p>
+<dt>(d)
+<dd>
+<p>
+<dt>(e)
+<dd><code>3&lt;4 &amp; 4&lt;5 &amp; 5&lt;6 &amp; 6&gt;7</code>  
+<p>
+</dd>
+</dl>
+<dt>4.4<a name="ex-iv-iv"></a>
+<dd>For each condition, write out its converse: Ans<a href="node138.html#ans-iv-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>FALSE</code>  
+<p>
+<dt>(b)
+<dd><code>4 &gt; 2</code>  
+<p>
+<dt>(c)
+<dd><code>a &gt; b AND b &gt; c</code>  
+<p>
+<dt>(d)
+<dd><code>x = y OR x = z</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1344"
+  href="node45.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1338"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1332"
+  href="node43.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1340"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1342"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1345"
+  href="node45.html">Conditional clauses</a>
+<b> Up:</b> <a name="tex2html1339"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1333"
+  href="node43.html">Relational operators</a>
+ &nbsp; <b>  <a name="tex2html1341"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1343"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

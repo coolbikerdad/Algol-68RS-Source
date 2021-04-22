@@ -1,0 +1,102 @@
+DECS  incoperfn  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incoperfn.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT
+	param pack fn	= 2,
+	trim fn		= 5,
+	bound pack fn	= 9,
+	dyop fn		= 10,
+        monop fn	= 11,
+	assign fn	= 15,
+	default bd fn	= 16,
+	deref fn	= 17,
+        call fn		= 18,
+	void fn		= 19,
+	int to real fn	= 24,
+	is to vec fn	= 28,
+	vec fn		= 34;
+
+{ translator introduced opers, starting at 50, to allow RSRE numbers to grow: }
+
+INT	generator fn		= 50,
+	format fn		= 51;
+
+{ constants for analysing params to op numbers and version }
+
+INT	biop numbers start  = 1000,
+	op number divisor   = 16,
+	biop number divisor = 100;
+
+{
+	AB operators (plusab etc) are presumed contiguous
+}
+
+INT	ab operators start {plusab}	= 21,
+	ab operators end   {divab}	= 26;
+
+
+INT operands shift	= 18;
+INT operands offset	= ABS (8r1 SHL operands shift);
+BITS param mask	= BIN ( operands offset - 1)
+
+KEEP
+	param pack fn,
+	trim fn,
+	bound pack fn,
+	dyop fn,
+        monop fn,
+	assign fn,
+	default bd fn,
+	deref fn,
+        call fn,
+	void fn,
+	int to real fn,
+	is to vec fn,
+	vec fn,
+	generator fn,		format fn,
+	biop numbers start,
+	op number divisor,	biop number divisor,
+	ab operators start,	ab operators end,
+
+        operands shift, param mask
+
+FINISH
+

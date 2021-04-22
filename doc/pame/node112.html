@@ -1,0 +1,243 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Identity relations</title>
+<meta name="description" content="identity relations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node113.html">
+<link rel="previous" href="node111.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node113.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2536"
+  href="node113.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2530"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2524"
+  href="node111.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2532"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2534"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2537"
+  href="node113.html">The value NIL</a>
+<b> Up:</b> <a name="tex2html2531"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2525"
+  href="node111.html">References to names</a>
+ &nbsp; <b>  <a name="tex2html2533"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2535"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2538"
+  href="node112.html#section001361000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001360000000000000000"></a><a name="adv-idrel"></a>
+Identity relations</h1>
+
+<p>Consider the declarations of the last section:</p>
+
+<pre>
+   INT x,y; REF INT xx,yy
+</pre>
+
+<p>We had assigned a name to <code>xx</code> with the assignment</p>
+
+<pre>
+   xx:=(random &gt; 0.8|x|y)
+</pre>
+
+<p>and we wished to ascertain whether <code>xx</code> referred to
+<code>x</code> or to <code>y</code>. Unfortunately, we cannot use the
+equals operator <code>=</code> for this purpose because its operands
+would be completely dereferenced and the underlying integers would be
+compared. Instead, we use an <b>identity
+relation</b><a name="7644"></a> which is used exclusively for
+comparing names. The identity relation</p>
+
+<pre>
+   xx :=: x
+</pre>
+
+<p>yields <code>TRUE</code> if <code>xx</code> refers to
+<code>x</code>. The alternative representation of
+<tt>:=:</tt><a name="7982"></a> is <tt>IS</tt><a name="7983"></a>. The
+identity relation</p>
+
+<pre>
+   xx :/=: x
+</pre>
+
+<p>yields <code>TRUE</code> if <code>xx</code> does not refer to <code>x</code>. The
+alternative representation of <tt>:/=:</tt><a name="7984"></a> is
+<tt>ISNT</tt><a name="7985"></a>. Here is a short program which
+illustrates the difference between <code>=</code> and
+<code>IS</code>:</p>
+
+<pre>
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT xx, INT x:=2,y:=3;
+      TO 3
+      DO
+         xx:=(random&gt;0.5|x|y);
+         print(("xx :=: x =",
+                (xx :=: x|"TRUE"|"FALSE"),
+                newline,"xx = ",xx,newline))
+      OD
+   END
+   FINISH
+</pre>
+
+<p>If you want to compare the names that both <code>xx</code> and
+<code>yy</code> refer to, it is no good writing</p>
+
+<pre>
+   xx IS yy
+</pre>
+
+<p>This always yields <code>FALSE</code> because the names that
+<code>xx</code> and <code>yy</code> identify always differ (they were
+created using two local generators so the names are bound to be
+different). The point is that no automatic dereferencing takes place
+in an identity relation. To compare the names that both
+<code>xx</code> and <code>yy</code> refer to, you should place one
+side or both sides in a cast<a name="7661"></a>:</p>
+
+<pre>
+   REF INT(xx) IS yy
+</pre>
+
+<p>This will ensure that the right-hand side (in this case) is
+dereferenced to yield a name of the same mode as the left-hand side.
+This is because an identity relation is subject to
+balancing<a name="7664"></a>: one side of the relation is in a soft
+context<a name="7665"></a> and the other side is in a strong
+context<a name="7666"></a>.  Given the cast on the left-hand side, the
+two sides of the identity relation<a name="7667"></a> would yield
+<code>REF INT</code> and <code>REF REF INT</code>.  Since no
+dereferencing is allowed in a soft context, it can be seen that the
+left-hand side is in the soft context and the right-hand side is in
+the strong context.</p>
+
+<p>The <code>IS</code> and <code>ISNT</code> in the identity relation
+are not operators. Since the identity relation is a
+quaternary<a name="7668"></a> (see
+section&nbsp;<a href="node100.html#gram-quat">10.8</a>), remember to
+enclose it in parentheses<a name="7670"></a> if you want to use it in
+a formula:</p>
+
+<pre>
+   IF (field OF struct ISNT xx) &amp; x&gt;=-5
+   THEN field OF struct = 0
+   ELSE FALSE
+   FI
+</pre>
+
+<hr>
+<h2><a name="section001361000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.10<a name="ex-xi-x"></a>
+<dd>The program fragment
+<pre>
+   REF STRING ff, ss; STRING f, s;
+   f:="Joan of Arc";
+   s:="Robert Burns";
+   ff:=(random&lt;0.1|f|s);
+   ss:=(ff IS f|s|f)
+</pre>
+
+applies to this and the following exercises.
+What are the modes of <code>f</code> and <code>ss</code>?  Ans<a href="node145.html#ans-xi-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.11<a name="ex-xi-xi"></a>
+<dd>What does <code>f</code> refer to?  Ans<a href="node145.html#ans-xi-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.12<a name="ex-xi-xii"></a>
+<dd>Write a formula which compares the 3<sup>rd</sup> and
+4<sup>th</sup>
+characters of the multiple <code>f</code> refers to with the
+7<sup>th</sup> and 8<sup>th</sup> characters of the multiple
+<code>s</code> refers to. What
+are the modes of the operands of the operator?
+ Ans<a href="node145.html#ans-xi-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.13<a name="ex-xi-xiii"></a>
+<dd>Write an expression which compares the name referred to by
+<code>ff</code> with the name referred to by <code>ss</code>.  Ans<a href="node145.html#ans-xi-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2536"
+  href="node113.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2530"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2524"
+  href="node111.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2532"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2534"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2537"
+  href="node113.html">The value NIL</a>
+<b> Up:</b> <a name="tex2html2531"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2525"
+  href="node111.html">References to names</a>
+ &nbsp; <b>  <a name="tex2html2533"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2535"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node38.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node40.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1259"
+  href="node40.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1253"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1249"
+  href="node38.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1255"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1257"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1260"
+  href="node40.html">Choice</a>
+<b> Up:</b> <a name="tex2html1254"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1250"
+  href="node38.html">The FORALL loop</a>
+ &nbsp; <b>  <a name="tex2html1256"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1258"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1261"
+  href="node39.html#section005111000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section005110000000000000000"></a><a name="rep-summ"></a>
+Summary</h1>
+
+<p>Modes of multiples start with brackets (<code>[]</code>). A
+multiple of characters has a special denotation. All multiples can be
+constructed using a row-display. Rows have bounds and dimensions. Rows
+can be sliced and trimmed, and their bounds can be changed using the
+<code>@</code> construct.</p>
+
+<p>The <code>FOR</code> loop has the form</p>
+
+<pre>
+   FOR id FROM a BY b TO c DO ... OD
+</pre>
+
+<p>where the default values of <code>a</code>, <code>b</code> and
+<code>c</code> are <code>1</code>, <code>1</code> and &#8734;
+respectively, but may take any value of mode <code>INT</code> in a
+meek context. If <code>c</code> is greater than or equal to
+<code>a</code> and <code>b</code> is negative, the loop will not be
+executed. If <code>b</code> is zero, the loop will be executed
+indefinitely. The range of <code>id</code> excludes the units
+<code>a</code>, <code>b</code> and <code>c</code>.  The
+<code>FORALL</code> loop has the form</p>
+
+<pre>
+   FORALL id1 IN row1 DO ... OD
+</pre>
+
+<p>We have covered a good deal of ground in this chapter, so here are
+some more exercises revising what you have learnt.  It is most
+instructive to verify your answers by writing appropriate
+Algol&nbsp;68 programs.</p>
+
+<hr>
+<h2><a name="section005111000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.15<a name="ex-iii-xv"></a>
+<dd>What is wrong with the following identity declarations? Ans<a href="node137.html#ans-iii-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>[]REAL r1 = [2.5,-2.5,3.5]</code>  
+<p>
+<dt>(b)
+<dd><code>[,]INT i1 = ((1,2,3),(4,5,6,7))</code>  
+<p>
+<dt>(c)
+<dd><code>[]CHAR s1 = "abcde'fg"</code>  
+<p>
+</dd>
+</dl>
+<dt>3.16<a name="ex-iii-xvi"></a>
+<dd>What are the upper and lower bounds of the following? Ans<a href="node137.html#ans-iii-xvi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>((10,20,30),(-10,-20,-30))</code>  
+<p>
+<dt>(b)
+<dd><code>("a","b","c")</code>  
+<p>
+<dt>(c)
+<dd><code>"abcdef"[3:4]</code>  
+<p>
+</dd>
+</dl>
+<dt>3.17<a name="ex-iii-xvii"></a>
+<dd>If <code>a</code> is declared as
+<pre>
+   [,]INT a = ((9,8,7),
+               (6,5,4),
+               (3,2,1))
+</pre>
+
+what is the value and mode of Ans<a href="node137.html#ans-iii-xvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>a[2,]</code>  
+<p>
+<dt>(b)
+<dd><code>a[,2]</code>  
+<p>
+<dt>(c)
+<dd><code>a[:2,3]</code>  
+<p>
+<dt>(d)
+<dd><code>a[2:,:2]</code>  
+<p>
+</dd>
+</dl>
+<dt>3.18<a name="ex-iii-xviii"></a>
+<dd>What value does <code>"abc"*3+"defg"</code> yield?
+ Ans<a href="node137.html#ans-iii-xviii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>3.19<a name="ex-iii-xix"></a>
+<dd>Write a program to display every fifth letter of the alphabet
+all on one line.  Ans<a href="node137.html#ans-iii-xix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1259"
+  href="node40.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1253"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1249"
+  href="node38.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1255"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1257"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1260"
+  href="node40.html">Choice</a>
+<b> Up:</b> <a name="tex2html1254"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1250"
+  href="node38.html">The FORALL loop</a>
+ &nbsp; <b>  <a name="tex2html1256"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1258"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,122 @@
+DECS  osmessages  CONTEXT VOID  USE  messageproc:
+
+{ " Id: osmessages.sta,v 1.1 91/10/14 14:30:56 edcad Exp $" }
+configinfo A68CONFIG "$Id: osmessages.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+22:02:89  Messages file to go with osinterface (currently osshell).  DCT
+08:08:89  First pass update for OSINTERFACE.  DCT
+22:03:91  Modify for more general form of MSGNO, see messageproc. DJS
+27:06:91  R6B50 Initialise vector of messages in os_facility to put NIL
+             into the references.  DJS
+22:06:93  "name" added to facility in messageproc.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.005 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{  In general messages are passed through from the operating system dependent
+   procedures below OSINTERFACE.  This Module may be used to identify which
+   OSINTERFACE procedure was called but not which particular O/S failure
+   occured.  Some O/S failures may affect several OSINTERFACE procedures - for
+   example, access violation on VMS.  These might need trapping specifically.
+   This would probably require changes to Modules beneath OSINTERFACE which may
+   not be desirable (?).  Alternatively, particular strings may be tested for
+   in PROC os_msg (in OSINTERFACE) - efficiency should not be important after
+   a failure.  In principle, this Module is O/S dependent but it is hoped that
+   this single file will siffice by making it the set union of particular O/S
+   requirements.  FLEX is ignored as so little is in common (and FLEX is
+   unlikely to host EPI).  DCT
+
+   If modifications are made to the vector in 'os_facility' they
+   will need to be reflected in  PROC os_mp  in module EPIETISUPPORT.STA.
+}
+
+INT max_os_messages = 57;
+
+FACILITY os_facility = ( "osinterface",
+                         LOC VECTOR [max_os_messages] MESSAGE,
+                         LOC BOOL := FALSE,
+                         (  { Vector of messages }
+         { 0 test_and_fail }
+(  1, fatal_class,  "Aborted due to unexpected VAX/VMS error *"),
+         { 1 open_fail }
+(  5, user_class,   "File ""*"" not found"),
+(  6, user_class,   "Error in file name ""*"""),
+(  7, user_class,   "File ""*"" locked by another user"),
+(  8, user_class,   "Could not open file ""*"""),
+         { 2 get_vm }
+(  9, fatal_class,   "Insufficient virtual memory available"),
+         { 3 get_ethernet_address }
+( 13, fatal_class,  "get_ethernet_address - length = *"),
+         { 4 spawn }
+( 17, user_class,  "Insufficient virtual memory"),
+( 18, user_class,   "Cannot spawn subprocess"),
+         { 5 search_file }
+( 21, user_class,   "File name  ""*""  should not contain wildcards"),
+         { 6 and 7 exclusive_open_file }
+( 25, user_class,   "Deadlock detected whilst trying to lock file ""*"""),
+( 26, user_class,   "Error whilst trying to lock file ""*"""),
+( 27, user_class,   "Unable to lock file : ""*"""),
+( 28, user_class,   "fault with sys_readef OF exclusive_open_file"),
+( 29, fatal_class,  "Insufficient privilege. Ask your System Manager for SYSLCK privilege."),
+( 30, system_class, "exclusive_open: *" ),  { UNIX only }
+         { 8 prompt }
+( 33, user_class,   "Line too long"),
+( 34, user_class,   "End of file"),
+         { 9 trap_break_in }
+( 37, fatal_class,  "You can only trap user interrupts in an interactive session"),
+         { 10 flt_if_interrupted }
+( 41, user_class,   "Operation aborted after user interrupt"),
+         { 11 and 12 UNIX parse_filename }
+( 45, fatal_class, "*: No match" ),
+( 46, fatal_class, "*: Ambiguous" ),
+( 47, fatal_class, "parse_filename: Buffer overflow expanding *" ),
+( 48, fatal_class, "parse_filename: ""echo"" failed" ),
+( 49, user_class, "Null filename ""*""" ),
+         { 13 UNIX exclusive_close }
+( 53, system_class, "Invalid call to exclusive_close_file" ),
+         { 14 UNIX truncate_file }
+( 57, system_class, "Invalid call to truncate_file" )
+                         ));
+
+PROC os_msg = (INT number) MSGNO: make_msgno(number, os_facility);
+
+PROC is_os_msg = (MSGNO msgno) BOOL: is_facility_msg(msgno, os_facility);
+
+FORALL message IN messages OF os_facility
+DO  message := ( ( 0, NIL, 2r0 ), NIL )  OD
+
+KEEP  os_msg, is_os_msg
+FINISH

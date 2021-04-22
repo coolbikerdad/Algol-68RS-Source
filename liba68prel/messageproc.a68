@@ -1,0 +1,323 @@
+DECS  messageproc  CONTEXT VOID USE  strops:
+
+{ " Id: messageproc.a68,v 2.2 1993/07/07 11:34:00 aap Exp $" }
+configinfo A68CONFIG "$Id: messageproc.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+24:01:89  Module defining fault procedures for the ELLA kernel and command
+             line interpreter.  DCT
+07:02:89  MESSAGEPROC rationalised (ERRORPROC removed).  DCT
+22:10:90  Mods involving RSRE customer file handling. DJS
+26:10:90  Modification to simplify MSGNO etc DJS
+01:10:90  Renamed from fault to messageproc DJS
+29:01:91  OP XOR defined for UNIX.  DCT
+22:03:91  Modified for a more general form of MSGNO, this now contains
+             a reference to the vector of messages.  Module translatemsg is
+             no longer needed, and modules **_messages contain the procedures
+             for obtaining the relavent MSGNOs.  DJS
+22:04:91  R6B17:  Ctrans side effects removed.  DCT
+09:09:91  R6B61:  Message buffer too small.  Also add 'make_sysmsg'. DJS
+03:03:93  Hack - deactivate crash.  DCT
+06:04:93  Remove unnecessary HEAP generator form make_msgno.  DCT
+17:06:93  Security mechanism removed.  DCT
+21:06:93  "name" added to msgfacility.  "screen" renamed "log"
+27:09:93  USEs strops instead of putstrings to support ELLA and Ctrans.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.014 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{  **************************************************************************
+
+   This Module defines the base level of the ELLA Kernel Interface.  It
+   defines how events are signaled to clients of the Kernel Interface.
+
+   NB:  Message texts are held globally but need to be referenced - to avoid
+   unnecessary copies onto the HEAP, they are BIOP 99'ed.  This form of
+   equivalencing of VECTOR [] MODE with REF VECTOR [] MODE should be portable
+   when compiled through an RS front-end.  These BIOP's may need to be
+   replaced by proper operators if ever compiled by a non-RS front-end.
+   If 'translate_msg' is to be called several times, the messages must be
+   be completely dealt with or copied between such calls.   DCT
+
+   ************************************************************************** }
+
+ {{{ This module handles general messages, as well as fault messages. }}}
+
+MODE  MSGFACILITY,
+      MSGNO        = STRUCT ( INT          number,    { which event in region }
+                              MSGFACILITY  facility,  { from which region }
+                              BITS         class      { sort of message }
+                            ),
+      STR          = VECTOR [0] CHAR,
+      VECSTR       = VECTOR [0] STR,
+      RVC          = REF STR,
+      MESSAGE      = STRUCT (MSGNO  msgno,  RVC  text),
+      MSGSTRUCT    = STRUCT (RVC  name,  REF VECTOR [] MESSAGE  messages),
+      MSGFACILITY  = REF MSGSTRUCT,
+      MESSAGEPROC  = PROC (MSGNO, VECSTR) VOID,
+      FACILITY     = STRUCT ( STR  name,
+                              REF VECTOR [] MESSAGE  messages,
+                              REF BOOL  initialised,
+                              VECTOR [0] STRUCT ( INT number,
+                                                  BITS class,
+                                                  STR text ) setup );
+
+OP  XOR = (BITS  a, b) BITS:  a AND NOT b OR b AND NOT a;
+
+{ BIOP 99's - will probably need rewriting if compiled using a non RS compiler }
+
+OP (STR) RVC                        STRTORVC      = BIOP 99;
+OP (VECSTR) VECTOR [] RVC           VSTRTOVRVC    = BIOP 99;
+OP (VECTOR [] RVC) VECSTR           VRVCTOVSTR    = BIOP 99;
+
+MSGSTRUCT  nilmsg:=
+      ( (STR  s = "direct call"; LOC VECTOR [UPB s] CHAR:= s), NIL );
+
+{ Message / Error categories }
+
+COMMENT
+   Categories:
+   system   system fault = 16r0   programming error
+   fatal    non-recoverable user error
+   user     standard user error - return to cli
+   error    report an error but continue for further information
+   log      log information to the screen
+   output   output information
+   diag0    Jump back to cli if diagnosing
+   diag1    log diagnostics level (n % 2) + 1
+   diag2    output diagnostics level n % 2
+   .part    part information - do not write buffer to next line
+
+            error    print     diag       diag       no newline   environ
+                               level 1    level 2
+            bit 4    5         6          5 + 6      7              11
+
+
+   abort    fatal
+   bit 0
+
+   ->cli    user                diag0
+   1
+
+   screen   error    log        diag1     diag3       logpart
+   2
+
+   out      outerr   output     diag2     diag4       outpart
+   3
+
+COMMENT
+
+MSGNO
+   { error }
+        system = ( 0, nilmsg, 16r000 ),  { system fault / programming error -
+                                       request SSR }
+         fatal = ( 0, nilmsg, 16r011 ),  { non-recoverable user error }
+          user = ( 0, nilmsg, 16r012 ),  { user error - return to interpreter }
+         error = ( 0, nilmsg, 16r014 ),  { report error, but continue }
+        outerr = ( 0, nilmsg, 16r018 ),  { report error to 'out' and continue }
+   { printing }
+           log = ( 0, nilmsg, 16r024 ),  { log information to the screen }
+        output = ( 0, nilmsg, 16r028 ),  { output information }
+       logpart = ( 0, nilmsg, 16r0a4 ),  { part of log - no newline }
+       outpart = ( 0, nilmsg, 16r0a8 ),  { part of output - no newline }
+   { diagnostics }
+         diag0 = ( 0, nilmsg, 16r042 ),  { user error at level 1 only -> cli }
+         diag1 = ( 0, nilmsg, 16r044 ),  { level 1 - log }
+         diag2 = ( 0, nilmsg, 16r048 ),  { level 1 - output }
+         diag3 = ( 0, nilmsg, 16r064 ),  { level 2 - log }
+         diag4 = ( 0, nilmsg, 16r068 );  { must be last }
+
+BITS  system_class = class OF system,
+       fatal_class = class OF fatal,
+        user_class = class OF user,
+       error_class = class OF error,
+      outerr_class = class OF outerr,
+         log_class = class OF log,
+      output_class = class OF output,
+     logpart_class = class OF logpart,
+     outpart_class = class OF outpart,
+       diag0_class = class OF diag0,
+       diag1_class = class OF diag1,
+       diag2_class = class OF diag2,
+       diag3_class = class OF diag3,
+       diag4_class = class OF diag4;
+
+MESSAGE  unsetmsg = ( (-1, nilmsg, class OF system), STRTORVC "????" );
+VECTOR [] STR  nullmsg = LOC VECTOR [0] STR;
+VECTOR [0] MESSAGE  no_messages;
+INT  diagnostic_level:= 0;
+
+PROC  get = (UNION (MSGNO, MESSAGE)  m) BITS:
+   CASE m IN (MSGNO  mno)    class OF mno,
+             (MESSAGE  msg)  class OF msgno OF msg
+   ESAC;
+
+PROC  enabled = (BITS  m) BOOL:
+   (m AND 16r40) /= 16r40   OREL   diagnostic_level > 1  OREL
+      diagnostic_level = 1  ANDTH  (m AND 16r20) /= 16r20;
+
+PROC  sysfault_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:
+   ( BITS  m = get(msg);  m = 16r0 );
+
+PROC  error_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:     { An error occurred }
+   ( BITS  m = get(msg);  m = 16r0  OREL  (m AND 16r10) /= 16r0  OREL
+                          (m AND 16r2) = 16r2  ANDTH  enabled(m) );
+
+PROC  abort_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:   { Should abort }
+   ( BITS  m = get(msg);  m = 16r0  OREL  (m AND 16r1) = 16r1 );
+
+PROC  cli_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:     { Should return to cli }
+   ( BITS  m = get(msg);  (m AND 16r2) = 16r2  ANDTH  enabled(m) );
+
+PROC  log_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:  { Print to scrren }
+   ( BITS  m = get(msg);  (m AND 16r4) = 16r4  ANDTH  enabled(m) );
+
+PROC  out_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:  { Print to output ch }
+   ( BITS  m = get(msg);  (m AND 16r8) = 16r8  ANDTH  enabled(m) );
+
+PROC  newline_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL: { Take a newline }
+   (get(msg) AND 16r80) /= 16r80;
+
+PROC  diag_msg = (UNION (MSGNO, MESSAGE)  msg) BOOL:
+   (get(msg) AND 16r40) = 16r40;
+
+PROC  msg_number = (MSGNO  msgno) INT: ( number OF msgno );
+
+INT  buf_size = 2048;
+RVC  buffer = LOC STRUCT 2048 CHAR;
+
+
+PROC  make_msgno = (INT  number, FACILITY  facility) MSGNO:
+BEGIN
+   REF VECTOR [] MESSAGE  messages = messages OF facility;
+   INT upb = UPB messages;
+
+   IF NOT initialised OF facility
+   THEN  FORALL msg IN messages DO msg := unsetmsg OD;
+         HEAP MSGSTRUCT  msgfacility:= (MAKERVC name OF facility, messages);
+         FORALL setup IN setup OF facility
+         DO  messages[number OF setup] :=
+                   ( (number OF setup, msgfacility, class OF setup),
+                     STRTORVC text OF setup )
+         OD;
+         initialised OF facility := TRUE
+    FI;
+    IF number <= 0 OREL number > upb
+    THEN  ( number, HEAP MSGSTRUCT:= (MAKERVC name OF facility, messages),
+            class OF system )
+    ELSE  MSGNO  no = msgno OF messages[number];
+          IF number OF no <= 0
+          THEN  (number OF no, facility OF no, class OF system)
+          ELSE  no
+          FI
+    FI
+END;
+
+
+PROC is_facility_msg = (MSGNO  msgno,  FACILITY  facility) BOOL:
+    messages OF facility OF msgno IS messages OF facility;
+
+
+PROC  translate_msg = (MSGNO  msgno,  VECSTR  params) MESSAGE:
+BEGIN
+   { Used to translate a message for a particular facility - TRUE if done }
+
+   PROC  fail = (STR  text) MESSAGE:
+      ( (number OF msgno, facility OF msgno, class OF system),
+        concat(("translate_msg:  ", name OF facility OF msgno, " - ", text)) );
+
+   IF facility OF msgno ISNT nilmsg
+   THEN  MSGFACILITY  facility = facility OF msgno;
+         REF VECTOR [] MESSAGE  messages = messages OF facility;
+         INT number = number OF msgno;
+         IF number < 0
+         THEN  fail("unset message number")
+         ELIF number = 0  OREL  number > UPB messages
+         THEN  fail("number out of range")
+         ELSE  MESSAGE  message:= messages[number];
+               STR  text = text OF message;
+               INT  bind:= 0,  tind:= 0,  pno:= 0;
+               BOOL  failed:= FALSE;
+
+               PROC  make_sysmsg = (STR  text) VOID:
+                  ( failed:= TRUE;  message:= fail(text) );
+
+               WHILE (tind PLUSAB 1) <= UPB text  ANDTH  NOT failed
+               DO  IF text[tind] = "*"
+                   THEN  IF (pno PLUSAB 1) > UPB params
+                         THEN  make_sysmsg("insufficient parameters")
+                         ELSE  STR  p = params[pno];
+                               IF bind + UPB p > buf_size
+                               THEN  make_sysmsg("message too long")
+                               ELSE  INT  lwb = bind + 1;
+                                     buffer[lwb : bind PLUSAB UPB p]:= p
+                               FI
+                         FI
+                   ELIF  (bind PLUSAB 1) > buf_size
+                   THEN  make_sysmsg("message too long")
+                   ELSE  buffer[bind]:= text[tind]
+                   FI
+               OD;
+               IF failed
+               THEN  message
+               ELIF pno < UPB params
+               THEN  fail("too many parameters")
+               ELSE  (msgno OF message, { MAKERVC } buffer[: bind])
+               FI
+         FI
+   ELSE  { Have a direct call of a MESSAGEPROC - expect one parameter }
+         IF UPB params = 1
+         THEN  (msgno, STRTORVC params[1] )
+         ELSE  fail("UPB params must be 1")
+         FI
+   FI
+END
+
+
+KEEP  MSGNO,  STR,  VECSTR,  RVC,  MESSAGE,  MSGFACILITY,  MESSAGEPROC,
+      FACILITY,
+      MAKERVC (STR),  STRTORVC (STR),  VSTRTOVRVC (VECSTR),
+      VRVCTOVSTR (VECTOR [] RVC),
+      nilmsg,
+      system,  fatal,  user,  error,  outerr,  log,  output,  logpart,  outpart,
+      diag0,  diag1,  diag2,  diag3,  diag4,
+      system_class, fatal_class, user_class, error_class, outerr_class,
+      log_class, output_class, logpart_class, outpart_class, diag0_class,
+      diag1_class, diag2_class, diag3_class, diag4_class,
+      nullmsg,  no_messages,  diagnostic_level,
+      sysfault_msg,  error_msg,  abort_msg,  cli_msg,  log_msg,  out_msg,
+      newline_msg,  diag_msg,   msg_number,
+      make_msgno,  is_facility_msg,  translate_msg
+FINISH

@@ -1,0 +1,318 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Complex numbers</title>
+<meta name="description" content="complex numbers">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node70.html">
+<link rel="previous" href="node68.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node70.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1808"
+  href="node70.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1802"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1796"
+  href="node68.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1804"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1806"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1809"
+  href="node70.html">Multiples in structures</a>
+<b> Up:</b> <a name="tex2html1803"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1797"
+  href="node68.html">Mode declarations</a>
+ &nbsp; <b>  <a name="tex2html1805"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1807"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1810"
+  href="node69.html#section00941000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00940000000000000000"></a><a name="struc-compl"></a>
+Complex numbers</h1>
+
+<p>This section describes the mode used to perform complex arithmetic.
+This kind of arithmetic is useful to engineers, particularly electrical
+engineers. Even if you know nothing about complex numbers, you may
+still find this section useful.</p>
+
+<p>The standard prelude<a name="4756"></a> contains the mode
+declaration<a name="4757"></a></p>
+
+<pre>
+   MODE COMPL = STRUCT(REAL re,im)
+</pre>
+
+<p>You can use values based on this mode to perform complex
+arithmetic.  Here are declarations for values of modes
+<tt>COMPL</tt><a name="4982"></a> and <code>REF COMPL</code>
+respectively:</p>
+
+<pre>
+   COMPL z1 = (2.4,-4.6);
+   COMPL z2:=z1
+</pre>
+
+<p>Most of the operators you need to manipulate complex
+numbers<a name="4764"></a> have been declared in the standard
+prelude.</p>
+
+<p>You can use the monadic operators <tt>+</tt><a name="4983"></a> and
+<tt>-</tt><a name="4984"></a> which have also been declared for values
+of mode <code>COMPL</code>.</p>
+
+<p>The dyadic operator <tt>**</tt><a name="4985"></a> has been
+declared for a left-operand of mode <code>COMPL</code> and a
+right-operand of mode <code>INT</code>.  The dyadic operators <code>+
+- * /</code> have been declared for all combinations of complex
+numbers, real numbers and integers, and so have the boolean operators
+<tt>=</tt><a name="4986"></a> and <tt>/=</tt><a name="4987"></a>.  The
+assigning operators <tt>TIMESAB</tt><a name="4988"></a>,
+<tt>DIVAB</tt><a name="4989"></a>, <tt>PLUSAB</tt><a name="4990"></a>,
+and <tt>MINUSAB</tt><a name="4991"></a> all take a left operand of
+mode <code>REF COMPL</code> and a right-operand of modes
+<code>INT</code>, <code>REAL</code> or <code>COMPL</code>.  In a
+strong context<a name="4783"></a>, a real number will be
+widened<a name="4784"></a> to a complex number.  So, for example, in
+the following identity declaration</p>
+
+<pre>
+   COMPL z3 = -3.4
+</pre>
+
+<p><code>z3</code> will have the same value as if it had been
+declared by</p>
+
+<pre>
+   COMPL z3 = (-3.4,0)
+</pre>
+
+<p>This is the only case where a real number can be widened into a
+structure.</p>
+
+<p>The dyadic operator <tt>I</tt><a name="4992"></a> takes left- and
+right-operands of any combination of <code>REAL</code> and
+<code>INT</code> and yields a complex number.  It has a priority
+of&nbsp;9. For example, in a formula, the context of operands is firm
+and so widening is not allowed.  Nevertheless, the yield of this
+formula is <code>COMPL</code>:</p>
+
+<pre>
+   2 * 3 I 4
+</pre>
+
+<p>Some operators act only on complex numbers. The monadic operator
+<tt>RE</tt><a name="4993"></a> takes a <code>COMPL</code> operand and
+yields its <code>re</code> field with mode <code>REAL</code>.
+Likewise, the monadic operator <tt>IM</tt><a name="4994"></a> takes an
+operand of mode <code>COMPL</code> and yields its <code>im</code>
+field with mode <code>REAL</code>. For example, given the declaration
+above of <code>z3</code>, <code>RE z3</code> would yield
+<code>-3.4</code>, and <code>IM z3</code> would yield
+<code>0.0</code>. Given the complex number <code>z</code> declared
+as</p>
+
+<pre>
+   COMPL z = 2 I 3
+</pre>
+
+<p>then <tt>CONJ z</tt><a name="4995"></a> would yield <code>RE z I -
+IM z</code> or <code>(2.0,-3.0)</code>. The operator
+<tt>ARG</tt><a name="4996"></a> gives the argument of its operand:
+<code>ARG z</code> would yield 0&sdot;982&nbsp;793&nbsp;723&nbsp;2,
+lying in the interval (-&pi;,&pi;].  The monadic operator
+<tt>ABS</tt><a name="4997"></a> with a complex number may be defined
+as</p>
+
+<pre>
+   OP ABS = (COMPL z)REAL:
+      sqrt(RE z**2 + IM z**2)
+</pre>
+
+<p>Remember that in the formula <code>RE z**2</code>, the operator
+<code>RE</code> is monadic and so is elaborated first.</p>
+
+<p> As described in the previous section, the mode
+<tt>COMPL</tt><a name="4998"></a> can be used wherever a mode is
+required.  In particular, procedures taking <code>COMPL</code>
+parameters and yielding <code>COMPL</code> values can be declared.
+Structures containing <code>COMPL</code> can be declared as above.</p>
+
+<p>From the section on field selection, it is clear that in the
+declarations</p>
+
+<pre>
+   COMPL z = (2.0,3.0);
+   COMPL w:=z
+</pre>
+
+<p>the selection</p>
+
+<pre>
+   re OF z
+</pre>
+
+<p>has mode <code>REAL</code> (and value <code>2.0</code>), while the
+selection</p>
+
+<pre>
+   re OF w
+</pre>
+
+<p>has mode <code>REF REAL</code> (and its value is a name). However, the
+formula</p>
+
+<pre>
+   RE w
+</pre>
+
+<p>still yields a value of mode <code>REAL</code> because
+<tt>RE</tt><a name="4999"></a> is an operator whose single operand has mode
+<code>COMPL</code>. In the above phrase, the <code>w</code> will be dereferenced
+before <code>RE</code> is elaborated. Thus it is quite legal to
+write</p>
+
+<pre>
+   im OF w:=RE w
+</pre>
+
+<p>or</p>
+
+<pre>
+   im OF w:=re OF w
+</pre>
+
+<p>in which case the right-hand side of the assignment will be
+dereferenced before a copy is assigned.</p>
+
+<hr>
+<h2><a name="section00941000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.8<a name="ex-vii-viii"></a>
+<dd>If the complex number <code>za</code> has the mode <code>COMPL</code> and the
+value yielded by <code>(2,-3)</code>, what is the value of Ans<a href="node141.html#ans-vii-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>CONJ za</code>  
+<p>
+<dt>(b)
+<dd><code>IM za * RE za * RE za</code>  
+<p>
+<dt>(c)
+<dd><code>ABS za</code>  
+<p>
+<dt>(d)
+<dd><code>ARG za</code>  
+<p>
+</dd>
+</dl>
+<dt>7.9<a name="ex-vii-ix"></a>
+<dd>What is the value of the formula <code>23 - 11 I -10</code>?
+ Ans<a href="node141.html#ans-vii-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.10<a name="ex-vii-x"></a>
+<dd>Given the declarations
+<pre>
+   COMPL a = 2 I 3;
+   COMPL b:= CONJ a
+</pre>
+
+what is the mode and value of each of the following: Ans<a href="node141.html#ans-vii-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>im OF b</code>  
+<p>
+<dt>(b)
+<dd><code>IM b</code>  
+<p>
+<dt>(c)
+<dd><code>im OF a</code>  
+<p>
+<dt>(d)
+<dd><code>IM a</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1808"
+  href="node70.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1802"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1796"
+  href="node68.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1804"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1806"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1809"
+  href="node70.html">Multiples in structures</a>
+<b> Up:</b> <a name="tex2html1803"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1797"
+  href="node68.html">Mode declarations</a>
+ &nbsp; <b>  <a name="tex2html1805"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1807"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

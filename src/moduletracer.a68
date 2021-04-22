@@ -1,0 +1,98 @@
+DECS  moduletracer  CONTEXT VOID
+*L    USE  usefulops :
+%L :
+
+configinfo A68CONFIG "$Id: moduletracer.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.5 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE
+  TRACEINFO = STRUCT (
+    REF VECTOR [] CHAR name,
+    INT trace level,
+    REF TRACEINFO next
+  );
+
+REF TRACEINFO nil traceinfo = NIL;
+
+REF TRACEINFO traceinfo := nil traceinfo;
+
+PROC find traceinfo = (VECTOR [] CHAR keyword) REF TRACEINFO:
+{ Returns NIL if not found }
+BEGIN
+  REF TRACEINFO t := traceinfo;
+  BOOL found := FALSE;
+
+  WHILE (t ISNT nil traceinfo) ANDTH NOT found
+  DO
+    IF ( name OF t = keyword ) OREL ( name OF t = "all" )
+    THEN found := TRUE
+    ELSE t := next OF t
+    FI
+  OD;
+
+  t
+END;
+
+OP SETTRACELEVEL = (INT level, VECTOR [] CHAR keyword) BOOL:
+BEGIN
+  traceinfo := HEAP TRACEINFO := ( MAKERVC keyword, level, traceinfo );
+  TRUE
+END;
+
+OP TRACELEVEL = (VECTOR [] CHAR keyword) INT:
+  IF
+    REF TRACEINFO t = find traceinfo(keyword);
+    t IS nil traceinfo
+  THEN 0
+  ELSE trace level OF t
+  FI;
+
+SKIP
+
+KEEP
+  SETTRACELEVEL(INT,VECTOR [] CHAR),
+  TRACELEVEL(VECTOR [] CHAR)
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

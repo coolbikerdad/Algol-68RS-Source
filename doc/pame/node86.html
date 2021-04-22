@@ -1,0 +1,200 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Environment strings</title>
+<meta name="description" content="environment strings">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node87.html">
+<link rel="previous" href="node85.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node87.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2093"
+  href="node87.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2087"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2081"
+  href="node85.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2089"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2091"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2094"
+  href="node87.html">Writing reports</a>
+<b> Up:</b> <a name="tex2html2088"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2082"
+  href="node85.html">The command line</a>
+ &nbsp; <b>  <a name="tex2html2090"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2092"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2095"
+  href="node86.html#section001171000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001170000000000000000"></a><a name="trans-env"></a>
+Environment strings</h1>
+
+<p>In Linux, if, at the command prompt in a Bash shell, you key
+<code>set</code> followed by return, you will get a listing of the
+values of all the environment strings<a name="5765"></a> defined in
+your session. The value of the environment string <code>PATH</code>
+gives all the paths that the operating system will search when you try
+to execute a program.</p>
+
+<p> Each string is identified by what is called an <b>environment
+variable</b> which behaves rather like a name of mode <code>REF
+STRING</code> except that each string is terminated with a <tt>nul
+ch</tt><a name="6013"></a>.  You can open a book containing the
+environment string using <tt>env channel</tt><a name="6014"></a>. For
+example:</p>
+
+<pre>
+   FILE p;  open(p,"PATH",env channel)
+</pre>
+
+<p>The open will fail if <code>PATH</code> has not been defined, so
+a plain <tt>open</tt><a name="6015"></a> (as shown in the above example)
+would be better replaced by</p>
+
+<pre>
+   FILE p;
+   IF open(p,"PATH",env channel)/=0
+   THEN #code to take emergency action#
+   ELSE #code to perform the usual actions#
+   FI
+</pre>
+
+<p>If you now use <tt>make term</tt><a name="6016"></a> to make the
+colon <tt>:</tt><a name="6017"></a> the string terminator, you can get the
+individual paths using <tt>get</tt><a name="6018"></a>:</p>
+
+<pre>
+   make term(p,":"+nul ch);
+   STRING path;
+   on logical file end(p,
+    (REF FILE f)BOOL:
+     (GOTO eof;  SKIP));
+   DO
+      get(p,(skip terminators,path));
+      IF UPB path &gt;= LWB path
+      THEN write((path,newline))
+      FI
+   OD;
+   eof:
+   close(p);
+</pre>
+
+<p>You should close the book after using it. Notice the use of a
+<code>GOTO</code> followed by a label<a name="5785"></a>.  The actual
+label, which looks just like an identifier. is followed by a
+colon<a name="6019"></a>.</p>
+
+<hr>
+<h2><a name="section001171000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.10<a name="ex-ix-x"></a>
+<dd>Write a program which will display the individual paths in the
+<code>PATH</code> environment string, one to a line, on the screen.
+ Ans<a href="node143.html#ans-ix-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.11<a name="ex-ix-xi"></a>
+<dd>Write a program which will read some arguments from its command
+line, each argument consisting of the identifier of an environment
+string terminated by "/" followed by a non-blank terminator. Using
+this data, read the environment string and display its constituent
+parts on the screen, one to a line. Allow for the possibility that
+the string might not end with the terminator (the code given in the
+answer caters for that possibility). Try an environment string
+which exists and one which doesn't.
+ Ans<a href="node143.html#ans-ix-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.12<a name="ex-ix-xii"></a>
+<dd>At the command line, by using the command
+<pre>
+   ABC="12 14 16"
+</pre>
+
+you create (using <code>bash</code>) an environment string identified by
+<code>ABC</code>. Now write a program which will read the individual
+numbers from <code>ABC</code> and print their total. Try changing the value
+of <code>ABC</code> to give different numbers (not in the program). Include
+a test in your program to determine whether <code>ABC</code> is present in
+the environment (verb|open| will fail if it isn't) and terminate your
+program with a useful message if not.  Ans<a href="node143.html#ans-ix-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2093"
+  href="node87.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2087"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2081"
+  href="node85.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2089"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2091"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2094"
+  href="node87.html">Writing reports</a>
+<b> Up:</b> <a name="tex2html2088"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2082"
+  href="node85.html">The command line</a>
+ &nbsp; <b>  <a name="tex2html2090"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2092"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

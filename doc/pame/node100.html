@@ -1,0 +1,296 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Quaternaries</title>
+<meta name="description" content="quaternaries">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node101.html">
+<link rel="previous" href="node99.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node101.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2333"
+  href="node101.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2327"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2321"
+  href="node99.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2329"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2331"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2334"
+  href="node101.html">Balancing</a>
+<b> Up:</b> <a name="tex2html2328"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2322"
+  href="node99.html">Tertiaries</a>
+ &nbsp; <b>  <a name="tex2html2330"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2332"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2335"
+  href="node100.html#section001281000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001280000000000000000"></a><a name="gram-quat"></a>
+Quaternaries</h1>
+
+<p>Quaternaries are assignments, routine denotations, identity
+relations<a name="6731"></a> and <code>SKIP</code>. Of the four, the
+assignment<a name="6732"></a> is the most common.  An assignment
+consists of three parts. The left-hand side must be a
+tertiary<a name="6733"></a>. It is usually an applied
+identifier<a name="6734"></a> or, less commonly, an enclosed
+clause<a name="6735"></a>. Its value must be a
+name<a name="6736"></a>.  Its context is soft<a name="6737"></a>, so
+no dereferencing is allowed unless a cast<a name="6738"></a> is used
+(see the next chapter), but deproceduring<a name="6739"></a> is
+allowed.  The second part is the assignment token<a name="6740"></a>.
+The right-hand side (the third part) can be any quaternary (including,
+of course, another assignment). Its context is
+strong<a name="6741"></a> so any coercion is permitted.  The mode of
+its value must contain one less <code>REF</code> than the mode of the
+left-hand side.</p>
+
+<p>The right-hand side of an assignment is, most commonly, a formula
+which is a tertiary (all tertiaries are quaternaries, but not
+vice-versa).  The left-hand side can also be a formula provided that
+the value yielded is a name (which is the case with the assigning
+operators<a name="6742"></a>--see
+section&nbsp;<a href="node49.html#name-assops">5.1.2</a>). If an
+assignment is to be used as a primary, a secondary or a tertiary, then
+it must be enclosed in parentheses<a name="6744"></a>(or
+<tt>BEGIN</tt><a name="6949"></a> and
+<tt>END</tt><a name="6950"></a>).  The value of an assignment is the
+value of the left-hand side: that is, it is a name.  Assignments were
+discussed in chapter&nbsp;5.</p>
+
+<p>Routine denotations<a name="6749"></a> were discussed in
+chapter&nbsp;6.</p>
+
+<p><tt>SKIP</tt><a name="6951"></a> yields an undefined value of any
+mode and can only occur in a strong context. It is particularly useful
+in the following case. Consider the procedure</p>
+
+<pre>
+   PROC p=(REAL a,b)REAL:
+   IF b=0
+   THEN print(("Division by zero",newline)):
+      stop;  SKIP
+   ELSE a/b
+   FI
+</pre>
+
+<p>Because the yield has mode <code>REAL</code>, and the
+<code>ELSE</code> part of the conditional clause yields a value of
+mode <code>REAL</code>, by the principle of
+balancing<a name="6754"></a> (see below) the <code>THEN</code> part
+also must yield a value of mode <code>REAL</code>.  Now the construct
+<code>stop</code> yields a value of mode <code>VOID</code> which
+cannot be coerced to <code>REAL</code> in any context.  If the
+procedure is going to compile successfully, the <code>THEN</code> part
+must yield <code>REAL</code> (or, at least, a value which can be
+coerced to <code>REAL</code> in the context of the body of the
+procedure which is strong) even though the value yielded will never be
+used (because the <code>stop</code> will terminate the program).  The
+<code>SKIP</code> will yield an undefined value of mode
+<code>REAL</code>.  Although <code>SKIP</code> must occur in a strong
+context, it cannot be coerced<a name="6952"></a>.</p>
+
+<p> Another use for <code>SKIP</code> is in row-<a name="6756"></a> or
+structure-displays<a name="6757"></a> where not all the units are
+known at the time of a declaration.  For example:</p>
+
+<pre>
+   [3]INT ii:=(4,?,5)
+</pre>
+
+<p>Before the multiple <code>ii</code> is used, the second element
+should be given a value. If no such value is assigned, and you try to
+print the value of <code>ii[2]</code> the a68toc<a name="6760"></a>
+compiler will generate code which will print whatever value was there
+at the time the multiple was generated, which may well be rubbish.</p>
+
+<p> The identity relation<a name="6761"></a> is discussed in the next
+chapter, but its grammar has important consequences. The identity
+relation consists of two tertiaries separated by an identity
+relator<a name="6762"></a> (one of <tt>:=:</tt><a name="6953"></a> or
+<tt>:/=:</tt><a name="6954"></a>). Since a formula<a name="6767"></a>
+is a tertiary<a name="6768"></a>, it can safely be included in an
+identity relation.  For example, given the declarations</p>
+
+<pre>
+   INT x:=3, y:=1;
+   PROC x or y = (REAL r)REF INT: (r&lt;0.5|x|y)
+</pre>
+
+<p>the identity relation</p>
+
+<pre>
+   x or y(random) :=: x
+</pre>
+
+<p>is legal. However, if you want to include an identity relation in a
+formula then you must surround it with parentheses to make it into a
+tertiary, as in</p>
+
+<pre>
+   IF (x or y(random) :=: x) AND x*y &gt; 0
+   THEN
+</pre>
+
+<p>Since one side of an identity relation is in a soft
+context<a name="6775"></a> while the other is in a strong
+context<a name="6776"></a>, only one side of an identity relation can
+be strongly-dereferenced. The soft side can be weakly-dereferenced
+which means that one <code>REF</code> will always be left on that
+side. Balancing<a name="6777"></a> applies to identity
+relations<a name="6778"></a> (see the discussion in
+section&nbsp;<a href="node112.html#adv-idrel">11.6</a>).</p>
+
+<p>This completes the general discussion of units.</p>
+
+<hr>
+<h2><a name="section001281000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.10<a name="ex-x-x"></a>
+<dd>What kind of units are each of the following: Ans<a href="node144.html#ans-x-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>A cast.  
+<p>
+<dt>(b)
+<dd>An applied-identifier.  
+<p>
+<dt>(c)
+<dd>A selection.  
+<p>
+<dt>(d)
+<dd>A multiple.  
+<p>
+<dt>(e)
+<dd>A name.  
+<p>
+<dt>(f)
+<dd>A formula.  
+<p>
+<dt>(g)
+<dd>A loop clause.  
+<p>
+<dt>(h)
+<dd>An assignment.  
+<p>
+<dt>(i)
+<dd>A declaration.  
+<p>
+<dt>(j)
+<dd>A procedure denotation.  
+<p>
+</dd>
+</dl>
+<dt>10.11<a name="ex-x-xi"></a>
+<dd>Which units are to be found in each of the following: Ans<a href="node144.html#ans-x-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>3.5 * (a - 2 * x)</code>  
+<p>
+<dt>(b)
+<dd><code>p OR q AND a = 4</code>  
+<p>
+<dt>(c)
+<dd><code>sin(x)</code>  
+<p>
+<dt>(d)
+<dd><code>a[3,2:4]</code>  
+<p>
+<dt>(e)
+<dd><code>x:=(c&lt;"e"|2.4|-y)</code>  
+<p>
+<dt>(f)
+<dd><code>(i|x,y,z):=(p|2|-4)</code>  
+<p>
+<dt>(g)
+<dd><code>PAR(x:=1.2,y:=3.6)</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2333"
+  href="node101.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2327"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2321"
+  href="node99.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2329"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2331"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2334"
+  href="node101.html">Balancing</a>
+<b> Up:</b> <a name="tex2html2328"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2322"
+  href="node99.html">Tertiaries</a>
+ &nbsp; <b>  <a name="tex2html2330"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2332"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

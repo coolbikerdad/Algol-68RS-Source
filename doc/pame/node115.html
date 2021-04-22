@@ -1,0 +1,212 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The procedure add fan</title>
+<meta name="description" content="the procedure add fan">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node116.html">
+<link rel="previous" href="node114.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node116.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2581"
+  href="node116.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2575"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2569"
+  href="node114.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2577"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2579"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2582"
+  href="node116.html">More queue procedures</a>
+<b> Up:</b> <a name="tex2html2576"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2570"
+  href="node114.html">Queues</a>
+ &nbsp; <b>  <a name="tex2html2578"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2580"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2583"
+  href="node115.html#section001391000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001390000000000000000"></a><a name="adv-addfan"></a>
+The procedure <tt>add fan</tt></h1>
+
+<p>We are now ready to develop a procedure to add a fan to the end of
+the queue. Clearly, there are two different situations: an empty queue
+and a non-empty queue. Although we only need <code>tail</code> to
+extend the queue, we need <code>head</code> to determine whether the
+queue is empty. So here is the header:</p>
+
+<pre>
+   PROC add fan = (REF REF REF QUEUE head,tail,
+                   REF FAN fan)VOID:
+</pre>
+
+<p>Firstly, we need to test whether the queue is empty:</p>
+
+<pre>
+   IF head IS nilq
+</pre>
+
+<p>Remember that the mode of <code>head</code> is <code>REF REF REF
+QUEUE</code>, so in the identity relation<a name="7849"></a>
+<code>head</code> is dereferenced<a name="7850"></a> twice.</p>
+
+<p>Secondly, if the queue is empty, we assign an
+anonymous<a name="7851"></a> <code>REF QUEUE</code> to the name
+<code>head</code> refers to and assign <code>(fan,nilq)</code> to the
+<code>REF QUEUE</code>:</p>
+
+<pre>
+   THEN REF REF QUEUE(head):=
+            LOC QUEUE:=(fan,nilq)
+</pre>
+
+<p>but this will not work because the scope of the <code>LOC
+QUEUE</code> is limited to the routine denotation. We must use a
+global generator:</p>
+
+<pre>
+   THEN REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq)
+</pre>
+
+<p>Then we have to ensure that <code>tail</code> refers to the tail
+of the queue:</p>
+
+<pre>
+   tail:=next OF head
+</pre>
+
+<p>If the queue is not empty, we assign an anonymous <code>REF</code>
+<code>QUEUE</code> to the name that <code>tail</code> points to:</p>
+
+<pre>
+   ELSE REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq)
+</pre>
+
+<p>and make <code>tail</code> refer to the new tail:</p>
+
+<pre>
+   tail:=next OF tail
+</pre>
+
+<p>Here is the complete procedure:</p>
+
+<pre>
+   PROC add fan = (REF REF REF QUEUE head,tail,
+                   REF FAN fan)VOID:
+   IF head IS nilq
+   THEN #the queue is empty#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF head
+   ELSE
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   FI #add fan#
+</pre>
+
+<hr>
+<h2><a name="section001391000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.19<a name="ex-xi-xix"></a>
+<dd>It looks as though <code>add fan</code> could be
+optimised<a name="7869"></a>. Rewrite the body of <code>add</code>
+<code>fan</code> so that the overall structure is
+<pre>
+   tail:=next OF (REF REF QUEUE
+      CO IF ... FI  plus two assignments CO
+                 )
+</pre>
+Ans<a href="node145.html#ans-xi-xix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.20<a name="ex-xi-xx"></a>
+<dd>Write a program containing the necessary declarations and loop to
+create a queue containing 1000 fans--alternate the names of the fans
+between <code>Iain</code> and <code>Fiona</code> and increment the ticket
+numbers by 1. Compile and run the program to check that there are no
+errors (no output will be produced).  Ans<a href="node145.html#ans-xi-xx"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2581"
+  href="node116.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2575"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2569"
+  href="node114.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2577"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2579"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2582"
+  href="node116.html">More queue procedures</a>
+<b> Up:</b> <a name="tex2html2576"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2570"
+  href="node114.html">Queues</a>
+ &nbsp; <b>  <a name="tex2html2578"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2580"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

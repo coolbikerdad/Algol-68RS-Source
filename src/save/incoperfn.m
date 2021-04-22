@@ -1,0 +1,45 @@
+8
+mod_info
+XFAACTR
+incoperfn                       
+                                
+                                
+0
+                                
+                                
+0
+-1
+       
+       
+incoperfn                       
+0
+0
+0
+1
+311
+010b706172616d7061636b666e000f01067472696d666e000f010b626f756e647061636b666e000f010664796f70666e000f01076d6f6e6f70666e000f010861737369676e666e000f010b64656661756c746264666e000f01076465726566666e000f010663616c6c666e000f0106766f6964666e000f010b696e74746f7265616c666e000f01096973746f766563666e000f0105766563666e000f010b67656e657261746f72666e000f0108666f726d6174666e000f011062696f706e756d626572737374617274000f010f6f706e756d62657264697669736f72000f011162696f706e756d62657264697669736f72000f011061626f70657261746f72737374617274000f010e61626f70657261746f7273656e64000f010d6f706572616e64737368696674000f0109706172616d6d61736b000b
+YFAACTR
+1618772870
+22
+CGAACTRttffff#define CGAACTR_parampackfn 2
+DGAACTRttffff#define DGAACTR_trimfn 5
+EGAACTRttffff#define EGAACTR_boundpackfn 9
+FGAACTRttffff#define FGAACTR_dyopfn 10
+GGAACTRttffff#define GGAACTR_monopfn 11
+HGAACTRttffff#define HGAACTR_assignfn 15
+IGAACTRttffff#define IGAACTR_defaultbdfn 16
+JGAACTRttffff#define JGAACTR_dereffn 17
+KGAACTRttffff#define KGAACTR_callfn 18
+LGAACTRttffff#define LGAACTR_voidfn 19
+MGAACTRttffff#define MGAACTR_inttorealfn 24
+NGAACTRttffff#define NGAACTR_istovecfn 28
+OGAACTRttffff#define OGAACTR_vecfn 34
+PGAACTRttffff#define PGAACTR_generatorfn 50
+QGAACTRttffff#define QGAACTR_formatfn 51
+RGAACTRttffff#define RGAACTR_biopnumbersstart 1000
+SGAACTRttffff#define SGAACTR_opnumberdivisor 16
+TGAACTRttffff#define TGAACTR_biopnumberdivisor 100
+UGAACTRttffff#define UGAACTR_aboperatorsstart 21
+VGAACTRttffff#define VGAACTR_aboperatorsend 26
+WGAACTRttffff#define WGAACTR_operandsshift 18
+ZGAACTRftffff

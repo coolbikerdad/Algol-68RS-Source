@@ -1,0 +1,209 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Reference modes in transput</title>
+<meta name="description" content="reference modes in transput">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node56.html">
+<link rel="previous" href="node54.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node56.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1535"
+  href="node56.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1529"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1523"
+  href="node54.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1531"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1533"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1536"
+  href="node56.html">Dynamic names</a>
+<b> Up:</b> <a name="tex2html1530"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1524"
+  href="node54.html">The mode STRING</a>
+ &nbsp; <b>  <a name="tex2html1532"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1534"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1537"
+  href="node55.html#section00771000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00770000000000000000"></a><a name="name-trans"></a>
+Reference modes in transput</h1>
+
+<p>Wherever previously we have used a value of mode <code>INT</code>
+with <code>print</code>, we can safely use a name with mode <code>REF
+INT</code>, and similarly with all the other modes (such as
+<code>[,]REAL</code>). This is because the
+parameters<a name="3062"></a> for <tt>print</tt><a name="3224"></a>
+(the identifiers or denotations used for <code>print</code>) are in a
+firm context<a name="3065"></a> and so can be
+dereferenced<a name="3066"></a> before being used.</p>
+
+<p> In the preamble to this chapter, <code>print</code>'s counterpart
+<tt>read</tt><a name="3225"></a> was mentioned. It is now time to
+examine <code>read</code> more closely. Generally speaking, values
+displayed with <code>print</code> can be input with <code>read</code>.
+The main differences are that firstly, the parameters for
+<code>read</code> must be names. For example, we may write</p>
+
+<pre>
+   REF REAL r = LOC REAL;
+   read(r)
+</pre>
+
+<p>and the program will skip spaces, tabs and end-of-line and new-page
+characters until it meets an optional sign followed by optional spaces
+and at least one digit, when it will expect to read a number.  If an
+integer is present, it will be read, converted to the internal
+representation<a name="3071"></a> of an integer and then
+widened<a name="3072"></a> to a real.</p>
+
+<p>Likewise, <code>read</code> may be used to read integers.  The
+plus and minus signs (<code>+</code> and <code>-</code>) can precede
+integers and reals.  Absence of a sign<a name="3073"></a> is taken to
+mean that the number is positive. Any non-digit will terminate the
+reading of an integer except for a possible sign at the start. Reals
+can contain <code>e</code> as in <code>3.41e5</code>. It is best to
+ensure that each number is preceded by a sign so that the reading of
+any preceding number will be terminated by that sign.</p>
+
+<p>For a name of mode <code>REF CHAR</code>, a single character will
+be read, <code>newline</code> or <code>newpage</code> being called if
+necessary. In fact, tabs and any other control characters (whose
+absolute value is less than <code>ABS blank</code>) will also be
+skipped.</p>
+
+<p>If <code>read</code> is used to read a <code>[]CHAR</code> with
+fixed bounds as in</p>
+
+<pre>
+   REF[]CHAR sf = LOC[36]CHAR;
+   read(sf)
+</pre>
+
+<p>then the number of characters specified by the bounds will be read,
+<tt>newline</tt><a name="3226"></a> and
+<tt>newpage</tt><a name="3227"></a> being called as needed. You can
+call <code>newline</code> and <code>newpage</code> explicitly to
+ensure that the next value to be input will start at the beginning of
+the next line or page.</p>
+
+<p>Just like <code>print</code>, <code>read</code> can take more than
+one parameter by enclosing them in a
+row-display<a name="3080"></a>.</p>
+
+<p>You should note that the end of a line or page will not terminate
+the reading of a number. So if you want to read a number from the
+keyboard, you should follow the number with a non-digit before
+pressing &ldquo;Enter&rdquo;. In this case, you don't have to read a
+newline as well, but the &ldquo;Enter&rdquo; generates a newline and
+that newline will be pending in the input.<a name="tex2html18"
+href="footnode.html#foot3228"><sup><span
+class="arabic">6</span>.<span class="arabic">7</span></sup></a></p>
+
+<p> The only flexible name for which <code>read</code> can be used is
+<code>REF</code> <code>STRING</code>. When reading values for
+<code>REF</code> <code>STRING</code>, the reading pointer will not go
+past the end of the current line.<a name="tex2html19"
+href="footnode.html#foot3229"><sup><span
+class="arabic">6</span>.<span class="arabic">8</span></sup></a> If the
+reading position is already at the end of the line, the row will have
+no elements.  When reading a <code>STRING</code>, <code>newline</code>
+must be called explicitly for transput to continue.  The characters
+read are assigned to the name.</p>
+
+<hr>
+<h2><a name="section00771000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.13<a name="ex-v-xiii"></a>
+<dd>Write a program to read two real numbers and then print their sum
+and product.  Ans<a href="node139.html#ans-v-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.14<a name="ex-v-xiv"></a>
+<dd>Write a program which will input text line by line (the lines
+being of different length) and which will then write out each line
+with the characters reversed. For example, the line
+<code>"and so on"</code> will be displayed as <code>"no os dna"</code>. Continue
+reading until a line of zero length is read.  Ans<a href="node139.html#ans-v-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1535"
+  href="node56.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1529"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1523"
+  href="node54.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1531"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1533"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1536"
+  href="node56.html">Dynamic names</a>
+<b> Up:</b> <a name="tex2html1530"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1524"
+  href="node54.html">The mode STRING</a>
+ &nbsp; <b>  <a name="tex2html1532"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1534"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

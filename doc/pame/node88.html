@@ -1,0 +1,296 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Binary books</title>
+<meta name="description" content="binary books">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node89.html">
+<link rel="previous" href="node87.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node89.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2123"
+  href="node89.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a>
+
+<a name="tex2html2117"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a>
+
+<a name="tex2html2111"
+  href="node87.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a>
+
+<a name="tex2html2119"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a>
+
+<a name="tex2html2121"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a>
+
+<br>
+<b> Next:</b> <a name="tex2html2124"
+  href="node89.html">Internal books</a>
+<b> Up:</b> <a name="tex2html2118"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2112"
+  href="node87.html">Writing reports</a>
+ &nbsp; <b>  <a name="tex2html2120"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2122"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2125"
+  href="node88.html#section001191000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001190000000000000000"></a><a name="trans-bin"></a>
+Binary books</h1>
+
+<p>In section&nbsp;<a href="node80.html#trans-books">9.1</a>, it was
+mentioned that some books contain data in a compact form which is not
+usually human-readable.  Most large books, especially those containing
+design figures in the engineering sciences as well as books containing
+the payroll data for a number of employees, will be stored in this
+form.  They are called binary books<a name="5857"></a>.</p>
+
+<p>Algol&nbsp;68 allows you to write anything to binary books, just
+as for text books. Indeed, you can write an integer and a character to
+a binary book and then read back the data as a character followed by
+an integer.  The results may not be particularly meaningful, but you
+can do it.</p>
+
+<p>The only difference between transput to, or from, binary books is
+that instead of using the procedures <tt>put</tt><a name="6029"></a>
+and <tt>get</tt><a name="6030"></a>, you use the procedures <tt>put
+bin</tt><a name="6031"></a> and <tt>get bin</tt><a name="6032"></a>.
+The modes accepted by these procedures are identical with those
+accepted by <code>put</code> and <code>get</code> respectively except
+that you cannot transput procedures with mode</p>
+
+<pre>
+   PROC(REF FILE)BOOL
+</pre>
+
+<p>Here is a program which will output the data produced by the
+program in the last exercise:</p>
+
+<pre>
+   PROGRAM binary CONTEXT VOID
+   USE standard
+   BEGIN
+     FILE f;
+
+     IF establish(f,
+                  "pipowers",
+                  stand out channel)/=0
+     THEN
+       put(stand error,
+           ("Cannot create pipowers",
+            newline));
+       stop
+     FI;
+
+     FOR i TO 10
+     DO
+       put bin(f,(i,pi**i))
+     OD;
+     close(f)
+   END
+   FINISH
+</pre>
+
+<p>Run the program and then look at the book it has produced. Compare
+it with the data produced by the program in the last exercise.</p>
+
+<p> Values of mode <code>REF STRING</code> can be read by <tt>get
+bin</tt><a name="6033"></a>, but you should remember to set the string
+terminator using the procedure <tt>make term</tt><a name="6034"></a>.
+However, you should note that the string terminator will
+<span class="textit">always</span> include the character
+<tt>lf</tt><a name="6035"></a>. Furthermore, if <tt>set
+possible</tt><a name="6036"></a> is <tt>FALSE</tt><a name="6037"></a>
+for the <tt>REF FILE</tt><a name="6038"></a> on which transput is
+being performed, the terminator will have been read when the routine
+<tt>get bin</tt><a name="6039"></a> returns. If <tt>set
+possible</tt><a name="6040"></a> is <tt>TRUE</tt><a name="6041"></a>
+for that <tt>REF FILE</tt><a name="6042"></a>, then the terminator
+will not have been read.</p>
+
+<p>Another aspect of binary books is that of being able to
+browse<a name="5891"></a>. The principal procedure provided for this
+purpose is <tt>set</tt><a name="6043"></a> which has the header</p>
+
+<pre>
+   PROC set=(REF FILE f,INT p,l,c)VOID:
+</pre>
+
+<p>The last three parameters specify the position in the book where
+you want to start browsing, whether reading or writing. The QAD
+transput provided with the a68toc<a name="6044"></a> compiler ignores
+the <code>p</code> and <code>l</code> parameters because it regards a
+file as consisting of one page of one line.<a name="tex2html32"
+href="footnode.html#foot5897"><sup><span
+class="arabic">10</span>.<span class="arabic">5</span></sup></a></p>
+
+<p>There are two other related procedures.  One is
+<tt>reset</tt><a name="6045"></a> which has the header</p>
+
+<pre>
+   PROC reset=(REF FILE f)VOID:
+</pre>
+
+<p>and is equivalent to <code>set(f,0,0,0)</code>. One possible use of
+this procedure is to output data to a book, then use
+<code>reset</code> followed by <code>get</code> to read the data from
+the book. The sort of book used in this way is often called a <b>work
+file</b><a name="5903"></a> (in operating system terms). Such a book
+contains data of use while a program is being elaborated, but is
+deleted at the end of the program.  In fact, every program has such a
+book whose controlling <code>FILE</code> is called <code>stand
+back</code>. It uses the <code>stand back channel</code> and is
+deleted when the program has finished. However, you can write to it,
+reset it, then read the contents and copy them to another book.  Note
+that the procedure <code>read bin</code> is equivalent to <code>get
+bin(stand back,...)</code> and the procedure <code>write bin</code> is
+equivalent to <code>put bin(standback,...)</code>.</p>
+
+<p>The other related procedure is <tt>logical
+end</tt><a name="6046"></a> which has the header</p>
+
+<pre>
+   PROC logical end = (REF FILE f)INT:
+</pre>
+
+<p>and yields the value of the position at the end of the book, which
+is the size of the book. The position can be set to the end of the
+book by writing</p>
+
+<pre>
+   set(f,0,0,logical end(f))
+</pre>
+
+<p>Here is a procedure which opens an existing book and sets the writing
+position to its end, then writes data to the end of the book:</p>
+
+<pre>
+   PROC debug=(REF FILE dbg,[]SIMPLOUT st)VOID:
+   (
+     open(dbg,idf(dbg),stand back channel);
+     set(dbg,0,0,logical end(dbg));
+     put(dbg,st);
+     close(dbg)
+   )
+</pre>
+
+<p>We shall use this procedure in chapter&nbsp;12 to store data about
+the running of a program while we are developing it. Notice that
+textual data is written to the book even though the procedures
+<code>set</code> and <code>logical end</code> are used.  The point is
+that binary and textual data can be mixed in any book which allows
+binary transput<a name="5912"></a>.</p>
+
+<p>In the QAD standard prelude, the current position in a book can be
+obtained from the procedure <tt>current pos</tt><a name="6047"></a>
+which has the header</p>
+
+<pre>
+   PROC current pos = (REF FILE f)POS:
+</pre>
+
+<p>This particular procedure is very useful if you want to store the
+book position of the beginning of a group of data in a book (such a
+group is often called a <b>record</b><a name="5918"></a>).  In the QAD
+standard prelude, <code>POS</code> is a synonym for
+<code>INT</code>.</p>
+
+<hr>
+<h2><a name="section001191000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.16<a name="ex-ix-xvi"></a>
+<dd>Write a program which creates a binary book containing the
+first 1000 whole numbers. Use <code>set</code> to read every 17th number
+and display them on the screen, one to a line.  Ans<a href="node143.html#ans-ix-xvi"><img
+ align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.17<a name="ex-ix-xvii"></a>
+<dd>Write a program to read a book containing text and write each
+individual word to one book, and the position of the start of each
+word and the length of the word to another book. Both output books
+should be written using <code>put bin</code>.  Ans<a href="node143.html#ans-ix-xvii"><img
+ align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2123"
+  href="node89.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a>
+
+<a name="tex2html2117"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a>
+
+<a name="tex2html2111"
+  href="node87.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a>
+
+<a name="tex2html2119"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a>
+
+<a name="tex2html2121"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a>
+
+<br>
+<b> Next:</b> <a name="tex2html2124"
+  href="node89.html">Internal books</a>
+<b> Up:</b> <a name="tex2html2118"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2112"
+  href="node87.html">Writing reports</a>
+ &nbsp; <b>  <a name="tex2html2120"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2122"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Well-formed modes</title>
+<meta name="description" content="well-formed modes">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node103.html">
+<link rel="previous" href="node101.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node103.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2363"
+  href="node103.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2357"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2351"
+  href="node101.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2359"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2361"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2364"
+  href="node103.html">Flexible names</a>
+<b> Up:</b> <a name="tex2html2358"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2352"
+  href="node101.html">Balancing</a>
+ &nbsp; <b>  <a name="tex2html2360"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2362"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2365"
+  href="node102.html#section0012101000000000000000">Determination of well-formedness</a>
+<li><a name="tex2html2366"
+  href="node102.html#section0012102000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section0012100000000000000000"></a><a name="gram-well"></a>
+Well-formed modes</h1>
+
+<p>In chapter 6, the mode declaration<a name="6840"></a> was presented
+and it was pointed out that not all possible mode declarations are
+allowed.  The rules for determining whether a mode declaration is
+well-formed<a name="6841"></a> are straightforward.</p>
+
+<p>There are two reasons why a mode might not be well-formed:</p>
+
+<ol>
+<li>the elaboration<a name="6843"></a> of a declaration using that
+mode would need an infinite amount of memory<a name="gram-well1"></a></li>
+<li>the mode can be strongly coerced to a related mode<a name="gram-well2"></a></li>
+</ol>
+
+<p>Let us look at some examples of modes which are not well-formed.
+Firstly, in the mode declaration</p>
+
+<pre>
+   MODE WRONG = STRUCT(CHAR c,WRONG w)
+</pre>
+
+<p>the <code>WRONG</code> within the <code>STRUCT</code> would expand to a further
+<code>STRUCT</code> and so on <i>ad infinitum</i>. Even this
+declaration</p>
+
+<pre>
+   MODE WRONGAGAIN = STRUCT(WRONGAGAIN wa)
+</pre>
+
+<p>will not work for the same reason. However, if the mode within the
+<code>STRUCT</code> is shielded<a name="6852"></a> by <code>REF</code>
+or <code>PROC</code>, then the mode declaration is
+legal<a name="6853"></a>:</p>
+
+<pre>
+   MODE ALRIGHT = STRUCT(CHAR c,REF ALRIGHT a);
+</pre>
+
+<p>In the declaration</p>
+
+<pre>
+   ALRIGHT ar = ("A",LOC ALRIGHT)
+</pre>
+
+<p>the second field of the structure is a name which is quite different
+from a structure. Likewise, the declaration</p>
+
+<pre>
+   MODE OKP = STRUCT(CHAR c,PROC OKP po)
+</pre>
+
+<p>is well-formed because in any declaration, the second field is a
+procedure (or a name referring to such a procedure) which is not the
+original structure and so does not require an infinite amount of
+storage. It should be noted, however, that a
+<tt>UNION</tt><a name="6955"></a> does not shield the mode
+sufficiently.  Thus, the mode declarations</p>
+
+<pre>
+   MODE MW1 = UNION(INT,MW1);
+   MODE MW2 = STRUCT(UNION(CHAR,MW2) u,CHAR c)
+</pre>
+
+<p>are not well-formed. In fact, the mode declaration of
+<code>MW1</code> fails on reason&nbsp;<a href="#gram-well2">2</a>
+above.</p>
+
+<p>Secondly, a mode which could be strongly coerced to a related mode
+would lead to ambiguity in coercions. Thus the mode declarations</p>
+
+<pre>
+   MODE WINT = PROC WINT;
+   MODE WREF = REF WREF;
+   MODE WROW = [5]WROW
+</pre>
+
+<p>are not well-formed.</p>
+
+<p>All the above declarations have been recursive, but not mutually
+recursive<a name="6867"></a>. Is it possible to declare</p>
+
+<pre>
+   MODE WA = STRUCT(WB wb,INT i),
+        WB = STRUCT(WA wa,CHAR c)
+</pre>
+
+<p>Again, the elaboration of declarations using either mode would
+require an infinite amount of storage, so the modes are not
+well-formed. The following pair of mode declarations are all
+right:</p>
+
+<pre>
+   MODE RA = STRUCT(REF RB rb,INT i),
+        RB = STRUCT(PROC RA pra,CHAR c)
+</pre>
+
+<p>All non-recursive mode declarations are well-formed. It is only in
+recursive and mutually-recursive modes that we have to apply a test
+for well-formedness.</p>
+
+<h2><a name="section0012101000000000000000"></a><a name="gram-detwell"></a>
+Determination of well-formedness</h2>
+
+<p>In any mutually-recursive mode declarations, or any recursive mode
+declaration, to get from a particular mode on the left-hand side of a
+mode declaration to the same mode indicant<a name="6874"></a> written
+on the right-hand side of a mode declaration, it is necessary to
+traverse various mode constructors such as <code>REF</code>,
+<code>PROC</code> or <code>UNION</code>. Above each
+<code>STRUCT</code> or set of procedure parameters write
+&ldquo;yang<a name="6875"></a>&rdquo;. Above each <code>REF</code> or
+<code>PROC</code> write &ldquo;yin<a name="6876"></a>&rdquo;. Now
+trace the path from the mode in question on the left-hand side of the
+mode declaration until you arrive at the same mode indicant on the
+right-hand side.  If you have at least one &ldquo;yin&rdquo; and at
+least one &ldquo;yang&rdquo;, the mode is well-formed.</p>
+
+<p>Let us try this method on the recursive mode declarations given in
+this section. In the mode declaration for <code>WRONG</code>, write
+&ldquo;yang&rdquo; above the <code>STRUCT</code>. Thus to get from
+<code>WRONG</code> on the left to <code>WRONG</code> on the right, a
+single &ldquo;yang&rdquo; is traversed. Thus <code>WRONG</code> is not
+well-formed. Likewise, <code>WRONGAGAIN</code> is not well-formed.  In
+mode <code>ALRIGHT</code>, you have to traverse a &ldquo;yang&rdquo;
+(<code>STRUCT</code>) and a &ldquo;yin&rdquo; (<code>REF</code>), so
+<code>ALRIGHT</code> is well-formed.  Try it with the mode
+<code>OKP</code>.</p>
+
+<p>Conversely, to get from <code>MW1</code> to <code>MW1</code>
+requires neither &ldquo;yin&rdquo; nor &ldquo;yang&rdquo;, so
+<code>MW1</code> is not well-formed. To get from <code>MW2</code> to
+<code>MW2</code>, only a <code>STRUCT</code> is traversed (the
+<tt>UNION</tt><a name="6956"></a> does not count) so <code>MW2</code>
+is also not well-formed.  Similar arguments hold for
+<code>WINT</code>, <code>WREF</code> and <code>WROW</code>.</p>
+
+<p>Now consider the mutually-recursive mode declarations of
+<code>WA</code> and <code>WB</code>. At whichever mode we start,
+getting back to that mode means traversing two &ldquo;yangs&rdquo;
+(both <code>STRUCT</code>). Two &ldquo;yangs&rdquo; are all right, but
+there should be at least one &ldquo;yin&rdquo;, so the modes are not
+well-formed.  On the other hand, from <code>RA</code> to
+<code>RA</code> traverses a <code>STRUCT</code> and a <code>REF</code>
+and, via <code>RB</code>, a <code>STRUCT</code> and a
+<code>PROC</code> giving &ldquo;yang-yin-yang-yin&rdquo;, so both
+<code>RA</code> and <code>RB</code> are well-formed.</p>
+
+<p>Remember that if you want to declare modes which are
+mutually-recursive, the a68toc<a name="6879"></a> compiler
+requires that one of the modes should first be declared with a stub
+declaration<a name="6880"></a>.</p>
+
+<hr>
+<h2><a name="section0012102000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.13<a name="ex-x-xiii"></a>
+<dd>For each of the following mode declarations, determine whether
+the modes are well-formed: Ans<a href="node144.html#ans-x-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><tt>MODE MA = INT</tt>  
+<p>
+<dt>(b)
+<dd><tt>MODE MB = PROC(MB)VOID</tt>  
+<p>
+<dt>(c)
+<dd><tt>MODE MC =[3,2]MC</tt>  
+<p>
+<dt>(d)
+<dd><tt>MODE MD = STRUCT(BOOL p,MD m)</tt>  
+<p>
+<dt>(e)
+<dd><tt>MODE ME = STRUCT(STRING s,REF ME m)</tt>  
+<p>
+<dt>(f)
+<dd>
+<p>
+<dt>(g)
+<dd>
+<p>
+<dt>(h)
+<dd>
+<p>
+<dt>(i)
+<dd><code>C = PROC(C)C</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2363"
+  href="node103.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2357"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2351"
+  href="node101.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2359"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2361"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2364"
+  href="node103.html">Flexible names</a>
+<b> Up:</b> <a name="tex2html2358"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2352"
+  href="node101.html">Balancing</a>
+ &nbsp; <b>  <a name="tex2html2360"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2362"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,95 @@
+DECS  heapdebug  CONTEXT VOID:
+
+{ " Id: heapdebug.sta,v 1.1 91/10/14 14:27:03 edcad Exp $", }
+{ This comment must not be removed - would cause recursive call of gc on VAX.
+configinfo A68CONFIG "$Id: heapdebug.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+}
+
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+28:11:89  Support Module for the garbage collector allowing choice of
+             logical name for heap size and whether or not to use a partitioned
+             heap.  Diagnostic flags and procedures are kept for run time
+             monitoring.  DCT
+30:11:89  heap_size_multiplier and heap_size_units added.  DCT
+15:02:90  more diagnostics (gc now version T).  DCT
+15:03:90  print_stats added.  AAP
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  26.011 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+VECTOR [] CHAR  heap_size_logical_name = "ELLA_HEAP_SIZE",
+                heap_size_message      = "ELLA heap size = ",
+                heap_size_units        = " Bytes";
+INT  min_heap_size = 100,  max_heap_size = 100 000 000,
+     heap_size_multiplier = 1;
+
+BITS  heapdebug:= 2r000011;
+
+VECTOR [] VECTOR [] CHAR  heapdebug_options =
+( "0001  Display ""garbage collecting"" message and times",
+  "0003  Display generate free space list time",
+  "0004  Display allocation statistics after garbage collection",
+  "0008  Display free space table after garbage collection",
+  "0010  Display free space table before its recreation",
+  "0020  Print free space chain before recreation",
+  "0040  Print the heap",
+  "0080  Display the first part of the MODE of each item traced",
+  "0100  Enable original ""diagnostics""",
+  "0200  Enable original ""subsidiary diagnostics""",
+  "0400  Display subsequent part of each item",
+  "0800  Set diagnostic width to 132 (default 80)",
+  "", "", "", ""
+);
+
+BOOL  partitioned_heap = TRUE;
+INT  partition_multiplier = 1,  partition_divisor = 2,
+     max_repartitions = 4;
+
+PROC VOID  before_garbage_collection:= VOID: SKIP,
+           before_generate_freespace:= VOID: SKIP,
+           after_garbage_collection:=  VOID: SKIP,
+           print_stats:= VOID: SKIP
+
+
+KEEP  heap_size_logical_name,  heap_size_message,  heap_size_units,
+      min_heap_size,  max_heap_size,  heap_size_multiplier,
+      heapdebug,  heapdebug_options,
+      partitioned_heap,  partition_multiplier,  partition_divisor,
+      max_repartitions,
+      before_garbage_collection,  before_generate_freespace,
+      after_garbage_collection,  print_stats
+FINISH

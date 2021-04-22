@@ -1,0 +1,170 @@
+algol68toc (1.20) unstable; urgency=low
+
+  * Completed addition of envp to main in liba68prel/osshell.a68 and src/a68toc.a68
+  * Corrected sprintf formats for LONG INTs in liba68prel/usefulops.a68
+  * Ported to ARM 32-bit architecture (armhf)
+  * Compile with gcc -fpack-struct=4 on armhf to avoid conformity clause errors on union copies
+  * Include <unistd.h> in library/Aerror.h to avoid warning about write()
+  * Fix Makefiles to remove a68toc.o on target clean and intall info files correctly
+
+ -- Neil Matthew <neil@tilde.co.uk>  Tue, 13 Apr 2021 15:44:00 +0100
+
+algol68toc (1.15) unstable; urgency=low
+
+  * Added pame to the package and renamed reset.a68 to resetseed
+
+ -- Sian Mountbatten <poenikatu@fastmail.co.uk>  Sun, 30 Sep 2012 19:28:14 +0100
+
+algol68toc (1.14) unstable; urgency=low
+
+  * Ensured that the manuals are included in the package
+
+ -- Sian Mountbatten <poenikatu@fastmail.co.uk>  Fri, 09 Mar 2012 18:55:00 +0000
+
+algol68toc (1.13) unstable; urgency=low
+
+  * Altered ENTIER and ROUND to clamp their input value
+
+ -- Sian Mountbatten <poenikatu@fastmail.co.uk>  Fri, 01 Mar 2012 18:53:35 +0000
+
+algol68toc (1.11) unstable; urgency=low
+
+  * Replaced ROUND and ENTIER with new C functions
+
+ -- Sian Mountbatten <poenikatu@fastmail.co.uk>  Wed, 11 Jan 2012 05:46:54 +0000
+
+algol68toc (1.10) unstable; urgency=low
+
+  * 1. Altered the `new filebuffer' to (INT mtu)FILEBUFFER:
+  * 2. Altered bufprocs and `client socket estab' and `server socket estab'
+  *    to accept a `c' parameter specifying the MTU. Also altered `accept'
+
+ -- Sian Leitch <drleitch@nildram.co.uk>  Fri, 28 Jan 2005 20:17:16 +0000
+
+algol68toc (1.9) unstable; urgency=low
+
+  * Removed bin possible from `stand in' and `stand out'
+
+ -- Sian Leitch <sian@Phoenicia>  Fri,  6 Aug 2004 23:51:59 +0100
+
+algol68toc (1.8) unstable; urgency=low
+
+  * Added nulls to the id's used by `rename' in `transput.a68'
+
+ -- Sian Leitch <sian@Phoenicia.PhoenixNet>  Sun,  9 Nov 2003 14:34:17 +0000
+
+algol68toc (1.7) unstable; urgency=low
+
+  * Added envp as well as argv
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Tue, 10 Jun 2003 14:28:25 +0100
+
+algol68toc (1.6) unstable; urgency=low
+
+  * fixed two bugs in search for rounding point
+
+ -- Sian Leitch <sian@Phoenicia.PhoenixNet>  Fri, 30 May 2003 22:05:15 +0100
+
+algol68toc (1.5) unstable; urgency=low
+
+  * Maintenance release
+  * Added to the identifications of the standard files
+  * Changed `stand err' to `stand error'
+  * Deleted the code to open `stand back'. `stand back' is available, but left
+  * unopened
+  * Squashed some minor bugs in PAME
+
+ -- Sian Leitch <sian@sleitch.nildram.co.uk>  Wed,  5 Mar 2003 17:24:22 +0000
+
+algol68toc (1.4) unstable; urgency=low
+
+  * Maintenance release
+  * Squashed a bug in `concat'
+
+ -- Sian Leitch <sian@sleitch.nildram.co.uk>  Mon,  3 Mar 2003 17:38:08 +0000
+
+algol68toc (1.3) unstable; urgency=low
+
+  * Maintenance release
+  * Added a null character (REPR 0) to the end of the command line
+
+ -- Sian Leitch <sian@sleitch.nildram.co.uk>  Tue, 25 Feb 2003 08:35:30 +0000
+
+algol68toc (1.2) unstable; urgency=low
+
+  * Maintenance release
+  * Removed all the padding in structures
+  * Made argc and argv available as Algol 68 argc and argv
+  * Added `ca68' because `make' is not interactive
+  * Replaced references to Ctrans in the book by references to Algol68toC
+  * and a68toc and corrected minor formatting errors
+
+ -- Dr Sian Leitch (Algol 68 specialist) <algol68@sleitch.nildram.co.uk>  Wed, 19 Jun 2002 22:30:00 +0100
+
+algol68toc (1.1) unstable; urgency=low
+
+  * Maintenance release
+  * Changed the name of the package to algol68toc
+  * Deleted all references to `mm'
+  * Changed directories: stanprel->qad, ctrans->src, amalgamated liba68prel
+  * Changed all the Makefiles to remove autobook influence: no configure now
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Sat, 23 Feb 2002 17:25:15 +0000
+
+ctrans (1.0.5) unstable; urgency=low
+
+  * Maintenance release
+  * Added all the standard prelude identifiers to the index in PAME plus any
+  * required text in chapter 13
+  * Minor changes to the QAD standard prelude itself
+  * Revamped all the Makefiles using autoconf and automake
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Wed, 15 Aug 2001 10:57:38 +0100
+
+ctrans (1.0.4) unstable; urgency=low
+
+  * Maintenance release
+  * Modified `kbd channel' to avoid loss of input due to the multi-tasking
+  * of Linux
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Mon, 26 Feb 2001 15:29:48 +0000
+
+ctrans (1.0.3) unstable; urgency=low
+
+  * Maintenance release
+  * Added kbd ensure buf space for the kbd channel
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Sat, 3 Feb 2001 20:23:00 +0000
+
+ctrans (1.0.2) unstable; urgency=low
+
+  * Maintenance release
+  * Kept nearly all the operators from spops.a68
+  * Altered the Makefile so that the debug versions would be produced again.
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Sun, 12 Nov 2000 20:36:45 +0000
+
+ctrans (1.0.1) unstable; urgency=low
+
+  * Maintenance release
+  * Replaced manage/mm_default_database.mmd with the version for the
+  * package.
+  * Replaced all the `Makefile's with a single top-level Makefile.
+  * Recreated all the C source files from the Algol 68 source.
+  * Created the necessary `mm' initialisation files so that the Algol
+  * 68 source could be translated directly using `mm' and `a68toc'.
+  * Cured yet more formatting errors in PAME.
+  * Added indexes to the Ctrans and mm info files.
+  * Debianised the package.
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Wed, 6 Sep 2000 16:23:30 +0100
+
+ctrans (1.0.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Sian Leitch <algol68@sleitch.nildram.co.uk>  Fri, 25 Aug 2000 18:28:28 +0100
+
+Local variables:
+mode: debian-changelog
+End:

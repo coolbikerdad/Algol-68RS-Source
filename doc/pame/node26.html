@@ -1,0 +1,149 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>print revisited</title>
+<meta name="description" content="print revisited">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node27.html">
+<link rel="previous" href="node25.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node27.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1048"
+  href="node27.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1042"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1036"
+  href="node25.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1044"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1046"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1049"
+  href="node27.html">Summary</a>
+<b> Up:</b> <a name="tex2html1043"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html1037"
+  href="node25.html">Operators using CHAR</a>
+ &nbsp; <b>  <a name="tex2html1045"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1047"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section004110000000000000000"></a><a name="form-print"></a>
+<br>
+<tt>print</tt> revisited
+</h1>
+
+<p>In chapter 1, we used the <tt>print</tt><a name="1086"></a> phrase
+to convert internal values to external characters.  We ought to say
+what <code>print</code> is and how it works, but we don't yet know
+enough about the language.  Just use it for the moment, and we shall
+learn more about it later.</p>
+
+<p>Besides being able to convert internal values to external
+characters, <code>print</code> can take two
+parameters<a name="1009"></a> (see chapter&nbsp;6 for the low-down on
+parameters) which can be used to format your output.
+<tt>newline</tt><a name="1087"></a> will cause following output to be
+displayed on a new line, and <tt>newpage</tt><a name="1088"></a> will
+emit a form-feed character (<code>REPR 12</code>).
+<code>newline</code> and <code>newpage</code> will be described in
+detail in section <a href="node132.html#stan-trlay">13.7.11</a>.</p>
+
+<p>If you want to print the characters emitted by your Algol&nbsp;68
+programs you can use file redirection<a name="1015"></a> to redirect
+your output to a file, which you can later copy to the printer.  For
+example, suppose you have compiled a program called <code>tt</code>.
+To redirect its output to a file called <code>tt.res</code>, which you
+can later copy to the printer, you issue the command</p>
+
+<pre>
+   tt &gt; tt.res
+</pre>
+
+<p>at the command line. Alternatively, you send the output directly to
+the printer using the command</p>
+
+<pre>
+   tt | lpr
+</pre>
+
+<p>at the command line. Try compiling and running the following
+program:</p>
+
+<pre>
+   PROGRAM tt CONTEXT VOID
+   USE standard
+   BEGIN
+      print(newpage);
+      INT a = ENTIER (3.6**5);
+      REAL p = 4.3 / 2.7;
+      print(a);  print(newline);
+      print(b);  print(newline)
+   END
+   FINISH
+</pre>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1048"
+  href="node27.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1042"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1036"
+  href="node25.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1044"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1046"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1049"
+  href="node27.html">Summary</a>
+<b> Up:</b> <a name="tex2html1043"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html1037"
+  href="node25.html">Operators using CHAR</a>
+ &nbsp; <b>  <a name="tex2html1045"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1047"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

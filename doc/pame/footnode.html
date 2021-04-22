@@ -1,0 +1,1885 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Footnotes</title>
+<meta name="description" content="footnotes">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node147.html">
+<link rel="up" href="pame.html">
+</head>
+
+<body >
+
+<dl>
+<dt><a name="foot444">... <code>CHAR</code>:</a><a
+ href="node9.html#tex2html1"><sup><span class="arabic">2</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>The
+a68toc<a name="254"></a>
+compiler insists on a semicolon between identity declarations for
+different modes. In the above case, you would have to write
+<tt>INT ninety nine=99 ; CHAR x = "X"</tt>
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot450">...
+symbol).</a><a
+ href="node10.html#tex2html2"><sup><span class="arabic">2</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>The a68toc<a name="307"></a>
+compiler does permit a subsequent declaration to use the value of a
+previous value, but it is strictly non-standard. You would be wise to
+restrict your programs to Algol&nbsp;68 syntax because other Algol&nbsp;68
+compilers will not necessarily be so lax.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot451">...
+screen.</a><a
+ href="node11.html#tex2html3"><sup><span class="arabic">2</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>When Algol 68 was first implemented there were few
+monitors around, so <tt>print</tt> literally printed its output onto
+paper.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot1062">... case.</a><a
+ href="node17.html#tex2html4"><sup><span class="arabic">3</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>The standard
+prelude supplied with the Linux port of the <tt>a68toc</tt> compiler
+provides a means of specifying what should be done if integer
+overflow occurs. See section <a href="node128.html#stan-othop">13.3.13</a> for the details.
+Likewise for &ldquo;floating-point overflow&rdquo; and &ldquo;floating-point
+underflow&rdquo;, see section <a href="node131.html#stan-fpov">13.6.1</a>.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot1776">... declared.</a><a
+ href="node29.html#tex2html5"><sup><span class="arabic">4</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>However, the
+a68toc<a name="1394"></a> Algol&nbsp;68 compiler limits the
+number of dimensions to three. If you try to declare rows having more
+than three dimensions, the translation proceeds without error
+messages, but the resulting C code will fail to compile.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot1422">...subscript</a><a
+ href="node29.html#tex2html6"><sup><span class="arabic">4</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>From the
+practice of mathematicians who write
+<span class="math"><i>x</i><sub>1</sub>, <i>x</i><sub>2</sub>,...</span>
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot1783">... on</a><a
+ href="node32.html#tex2html7"><sup><span class="arabic">4</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>but
+a68toc<a name="1565"></a> will only accept multiples of
+upto three dimensions.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot1800">... write</a><a
+ href="node35.html#tex2html8"><sup><span class="arabic">4</span>.<span class="arabic">4</span></sup></a></dt>
+<dd>Unfortunately,
+there is a bug in the a68toc<a name="1793"></a>
+compiler which prevents you from using a denotation after
+<tt>BY</tt>. Nor does <tt>BY (2)</tt> or <tt>BY +2</tt> work.
+However, <tt>BY -2</tt> or <tt>BY -2</tt> does work. For other ways see chapter 6.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2467">... form</a><a
+ href="node45.html#tex2html9"><sup><span class="arabic">5</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>Some editors insert a different character when you press
+the key marked <tt>|</tt>. Check that the character produced is
+accepted by the Algol&nbsp;68 compiler.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2488">... operand.</a><a
+ href="node45.html#tex2html10"><sup><span class="arabic">5</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>The
+a68toc<a name="2469"></a> compiler
+generates code which will cause a run-time fault if your program
+tries to execute an <tt>ELSE</tt> part which has been omitted. You can
+get around that bug by explicitly writing <tt>ELSE SKIP</tt>.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2487">...
+printed:</a><a
+ href="node46.html#tex2html11"><sup><span class="arabic">5</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>The a68toc compiler objects to this with a run-time
+error.  Ensure that at least <tt>OUT SKIP</tt> occurs in
+every case clause.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2707">... <code>INT</code>.</a><a
+ href="node48.html#tex2html12"><sup><span class="arabic">6</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>Historically,
+programmers were more interested in the value referred to than the
+name (Algol&nbsp;68 was the first language to distinguish clearly between
+a name and the value referred to), so the generator is followed by
+the mode of the value to which the name will refer.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2733">... same.</a><a
+ href="node49.html#tex2html13"><sup><span class="arabic">6</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>Provided that both identifiers appear in
+the same range.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot3198">...PLUSAB@<tt>PLUSAB</tt>.</a><a
+ href="node49.html#tex2html14"><sup><span class="arabic">6</span>.<span class="arabic">3</span></sup></a></dt>
+<dd><tt>PLUSAB</tt>
+stands for &ldquo;plus-and-becomes&rdquo;. When Algol 68 was first designed,
+people were more concerned with the values referred to than the
+names, so <tt>PLUSAB</tt> was intended to describe what happens to
+the value referred to. Bearing in mind the principle of value
+integrity<a name="2786"></a>, the value
+referred to by <tt>a</tt> does not become anything, but is replaced by
+its value plus 1.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot3204">... exercises.</a><a
+ href="node49.html#tex2html15"><sup><span class="arabic">6</span>.<span class="arabic">4</span></sup></a></dt>
+<dd>The
+a68toc<a name="2812"></a> compiler requires that you write semicolons
+instead of commas to separate these three declarations.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot2916">... Then</a><a
+ href="node52.html#tex2html16"><sup><span class="arabic">6</span>.<span class="arabic">5</span></sup></a></dt>
+<dd>But because the two sides of an
+assignment are elaborated collaterally, the RHS might be elaborated
+before the LHS or even in parallel.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot3214">... declaration</a><a
+ href="node53.html#tex2html17"><sup><span class="arabic">6</span>.<span class="arabic">6</span></sup></a></dt>
+<dd>The Revised Report mentions a
+&ldquo;ghost element&rdquo; in this context (see section
+<a href="node103.html#gram-flex">10.11</a> for details)
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot3228">... input.</a><a
+ href="node55.html#tex2html18"><sup><span class="arabic">6</span>.<span class="arabic">7</span></sup></a></dt>
+<dd>Console input is better handled using
+the <tt>kbd channel</tt> described in section
+<a href="node132.html#stan-trchan">13.7.2</a>.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot3229">... line.</a><a
+ href="node55.html#tex2html19"><sup><span class="arabic">6</span>.<span class="arabic">8</span></sup></a></dt>
+<dd>See section <a href="node83.html#trans-term">9.4</a> for
+details of string terminators.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot4198">... globally</a><a
+ href="node61.html#tex2html20"><sup><span class="arabic">7</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>The phrase
+&ldquo;names declared globally&rdquo; is intended to mean here that the names
+have been declared in a range which encloses the routine, not that
+<tt>HEAP</tt> has necessarily been used in the declaration. We use
+the phrase &ldquo;a global name&rdquo; in the latter case.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot4220">... <code>2</code>.</a><a
+ href="node62.html#tex2html21"><sup><span class="arabic">7</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>In chapter 3, we mentioned a bug
+in the a68toc<a name="4200"></a> Algol&nbsp;68 compiler
+connected with the <tt>BY</tt> construct in loop clauses. Using the
+<tt>B</tt> operator is another way of getting round the bug.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot4208">... example:</a><a
+ href="node63.html#tex2html22"><sup><span class="arabic">7</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>A compiler which implements the
+Algol&nbsp;68 defined by the Revised Report would not have to resort to
+this device because the declaration of each procedure would be
+available everywhere in the enclosing range (but see
+section&nbsp;<a href="node63.html#rout-other">6.3.6</a>).
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5001">... <code>[1:10]</code>.</a><a
+ href="node71.html#tex2html23"><sup><span class="arabic">8</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>Unfortunately,
+there is a bug in the a68toc<a name="4912"></a> compiler
+whereby this selection (and similar selections) are disallowed.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5002">... <code>[1:100]</code>.</a><a
+ href="node71.html#tex2html24"><sup><span class="arabic">8</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>But
+this is disallowed by the a68toc<a name="4924"></a> compiler.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5408">...
+irrelevant.</a><a
+ href="node75.html#tex2html25"><sup><span class="arabic">9</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>Unfortunately, for the
+a68toc<a name="5398"></a> compiler, this is
+not true.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5245">... declarations.</a><a
+ href="node75.html#tex2html26"><sup><span class="arabic">9</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>But not
+for the a68toc compiler.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5261">...
+mode.</a><a
+ href="node75.html#tex2html27"><sup><span class="arabic">9</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>Note that an Algol&nbsp;68 union is quite different from a
+C&nbsp;union. The latter is simply a remapping of a piece of memory. In an
+Algol&nbsp;68 union, where the underlying value is kept is the business of
+the compiler and it cannot be remapped by the programmer.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5977">... file.</a><a
+ href="node80.html#tex2html28"><sup><span class="arabic">10</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>In Linux, a
+file has the mode, more-or-less, <tt>REF BOOK</tt>.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5588">...
+closed</a><a
+ href="node81.html#tex2html29"><sup><span class="arabic">10</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>Unless you know what you are doing!
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6004">... <code>BITS</code></a><a
+ href="node84.html#tex2html30"><sup><span class="arabic">10</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>This mode is described in section
+<a href="node108.html#adv-bits">11.2</a>
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6021">... <code>INT</code>)</a><a
+ href="node87.html#tex2html31"><sup><span class="arabic">10</span>.<span class="arabic">4</span></sup></a></dt>
+<dd><tt>NUMBER</tt> is defined for
+more modes than <tt>REAL</tt> and <tt>INT</tt> which you will meet in
+chapter&nbsp;11.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot5897">... line.</a><a
+ href="node88.html#tex2html32"><sup><span class="arabic">10</span>.<span class="arabic">5</span></sup></a></dt>
+<dd>The start of a
+book in the QAD transput is zero.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6440">... mistakes</a><a
+ href="node95.html#tex2html33"><sup><span class="arabic">11</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>You
+should expect to make one mistake every 20 lines.  Congratulate
+yourself if you do better!
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6944">... met.</a><a
+ href="node96.html#tex2html34"><sup><span class="arabic">11</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>Note that a serial clause is
+<span  class="textit">not</span> an enclosed clause.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6947">... are</a><a
+ href="node96.html#tex2html35"><sup><span class="arabic">11</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>The
+a68toc<a name="6572"></a>
+compiler does not provide collateral clauses other than row-
+and structure-displays.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6948">... parallel.</a><a
+ href="node96.html#tex2html36"><sup><span class="arabic">11</span>.<span class="arabic">4</span></sup></a></dt>
+<dd>The
+a68toc<a name="6576"></a> compiler does not
+provide parallel clauses.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot6919">... fail</a><a
+ href="node103.html#tex2html37"><sup><span class="arabic">11</span>.<span class="arabic">5</span></sup></a></dt>
+<dd>The a68toc compiler will wrongly allow this last
+assignment both at compile-time and run-time.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot7493">...
+&ldquo;little-endian&rdquo;</a><a
+ href="node108.html#tex2html38"><sup><span class="arabic">12</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>These terms come from the book by Jonathan
+Swift entitled &ldquo;Gulliver's Travels&rdquo; and they refer to the habit of
+some people of eating boiled eggs at the &ldquo;big&rdquo; end or the
+&ldquo;little&rdquo; end!
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot7994">... upside-down</a><a
+ href="node117.html#tex2html39"><sup><span class="arabic">12</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>The remainder of the intriguing
+limerick runs as follows:-
+</small>
+<blockquote><small class="small">Who ate sour apples and died.
+<br>
+The apples fermented inside the lamented
+<br>
+and made cider inside 'er inside.
+</small></blockquote><small class="small">
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot7928">... order</a><a
+ href="node117.html#tex2html40"><sup><span class="arabic">12</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>but only if the
+tree is reasonably balanced
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8542">...
+errors.</a><a
+ href="node121.html#tex2html41"><sup><span class="arabic">13</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>One way of avoiding this sort of error is to use
+&ldquo;lexical&rdquo; highlighting with your favourite editor. A missing quote
+or sharp will cause large amounts of your program to be displayed as
+a string denotation or a comment.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8565">...
+completed.</a><a
+ href="node121.html#tex2html42"><sup><span class="arabic">13</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>Various schemes have been developed for
+documenting a program as it is written, They are often called
+&ldquo;literate programming&rdquo;.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8683">... C&nbsp;modes</a><a
+ href="node123.html#tex2html43"><sup><span class="arabic">13</span>.<span class="arabic">3</span></sup></a></dt>
+<dd>C people call
+them <tt>types</tt>.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8684">...
+declarations</a><a
+ href="node123.html#tex2html44"><sup><span class="arabic">13</span>.<span class="arabic">4</span></sup></a></dt>
+<dd><tt>typedef</tt>s
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8631">...
+macro</a><a
+ href="node123.html#tex2html45"><sup><span class="arabic">13</span>.<span class="arabic">5</span></sup></a></dt>
+<dd>A synonym for another piece of text which is expanded
+by the C&nbsp;preprocessor
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8688">... address)</a><a
+ href="node123.html#tex2html46"><sup><span class="arabic">13</span>.<span class="arabic">6</span></sup></a></dt>
+<dd>The <tt>VECTOR</tt> mode is not limited
+to <tt>CHAR</tt>. You can use it for any mode. See section
+<a href="node130.html#stan-ctmodes">13.5.1</a> for details
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot8873">...
+prelude</a><a
+ href="node125.html#tex2html47"><sup><span class="arabic">14</span>.<span class="arabic">1</span></sup></a></dt>
+<dd>QAD stands for &ldquo;quick-and-dirty&rdquo; and was supposed
+to represent the provided standard prelude. While it is not entirely
+standard (as far as Algol&nbsp;68 is concerned), it was certainly not
+implemented quickly!
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+<dt><a name="foot10871">... windows.</a><a
+ href="node127.html#tex2html48"><sup><span class="arabic">14</span>.<span class="arabic">2</span></sup></a></dt>
+<dd>See the file
+<tt>/usr/share/doc/xtermcontrol/ctlseqs.txt.gz</tt> for the latter.
+
+<pre>.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+</pre>
+</dd>
+</dl>
+</body>
+</html>

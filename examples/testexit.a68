@@ -1,0 +1,28 @@
+PROGRAM testexit CONTEXT VOID
+USE standard
+BEGIN
+IF at exit(VOID: write(("Proc 1 elaborated",newline)))=0
+THEN write(("Proc 1 registered",newline))
+ELSE write(("Could not register Proc 1",newline));  exit(1)
+FI;
+
+IF on exit((INT n,CPTR ptr)VOID:
+             write(("Called with value ",whole(n,0),
+                    STRING(CPTRTORVC ptr),newline)),", Proc 1o elaborated")=0
+THEN write(("Proc 1o registered",newline))
+ELSE write(("Could not register Proc 1o",newline));  exit(3)
+FI;
+
+IF at exit(VOID: write(("Proc 2 elaborated",newline)))=0
+THEN write(("Proc 2 registered",newline))
+ELSE write(("Could not register Proc 2",newline));  exit(2)
+FI;
+
+IF on exit((INT n,CPTR ptr)VOID:
+             write(("Called with value ",whole(n,0),
+                    STRING(CPTRTORVC ptr),newline)),", Proc 2o elaborated")=0
+THEN write(("Proc 2o registered",newline))
+ELSE write(("Could not register Proc 2o",newline));  exit(4)
+FI
+END
+FINISH

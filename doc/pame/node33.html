@@ -1,0 +1,173 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Operators with multiples</title>
+<meta name="description" content="operators with multiples">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node34.html">
+<link rel="previous" href="node32.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node34.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1174"
+  href="node34.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1168"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1162"
+  href="node32.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1170"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1172"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1175"
+  href="node34.html">Ranges</a>
+<b> Up:</b> <a name="tex2html1169"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1163"
+  href="node32.html">Printing multiples</a>
+ &nbsp; <b>  <a name="tex2html1171"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1173"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1176"
+  href="node33.html#section00551000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00550000000000000000"></a><a name="rep-opmult"></a>
+<br>
+Operators with multiples
+</h1>
+
+<p>No operators are defined in the standard prelude for multiples
+whose elements have modes <code>INT</code> or <code>REAL</code>. This
+is not a drawback as you will learn in chapter&nbsp;6. Nor are there
+any monadic operators in the standard prelude for multiples of
+<code>CHAR</code>. However, multiples of <code>CHAR</code> occur so
+often, that two dyadic operators are available for them.</p>
+
+<p>
+The operator <tt>+</tt><a name="1784"></a> is defined for all combinations of <code>CHAR</code>
+and <code>[]CHAR</code>.  Thus, the formula
+<pre>
+   "abc" + "d"
+</pre>
+
+<p>yields the value denoted by <code>"abcd"</code>. With these
+operands, <code>+</code> acts as a concatenation<a name="1580"></a>
+operator. The operator has a priority<a name="1581"></a> of&nbsp;6 as
+before.</p>
+
+<p>Multiplication of values of mode <code>CHAR</code> or
+<code>[]CHAR</code> is defined using the operator
+<tt>*</tt><a name="1785"></a>. The other operand has mode
+<code>INT</code> and the yield has mode <code>[]CHAR</code>. For
+example, in the declaration</p>
+
+<pre>
+   []CHAR repetitions = "ab" * 3
+</pre>
+
+<p><code>repetitions</code> identifies <code>"ababab"</code>.  The
+formula could have been written with the integer as the left operand.
+In both cases, the operator only makes sense with a positive
+integer.</p>
+
+<hr>
+<h2><a name="section00551000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.10<a name="ex-iii-x"></a>
+<dd>Given the identity declarations
+<pre>
+   []CHAR s = "Dog bites man",
+          t = "aeiou"
+</pre>
+
+what is the value of the following formul&#230;? Ans<a href="node137.html#ans-iii-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>"M"+s[UPB s-1:]+s[4:10]+"d"+s[2:3]</code>
+ 
+<p>
+<dt>(b)
+<dd><code>s[5]*3+2*s[6]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1174"
+  href="node34.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1168"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1162"
+  href="node32.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1170"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1172"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1175"
+  href="node34.html">Ranges</a>
+<b> Up:</b> <a name="tex2html1169"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1163"
+  href="node32.html">Printing multiples</a>
+ &nbsp; <b>  <a name="tex2html1171"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1173"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

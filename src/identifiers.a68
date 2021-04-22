@@ -1,0 +1,1034 @@
+DECS  identifiers  CONTEXT VOID  USE
+*L    usefulops,
+      centities, coutput, denotations, environ, environment, evaluator,
+      idtable, incid, incimperatives, modules, incinstallation, incmode,
+      {incvalue,} modes, moduletracer, unionaids, uniquenameserver, values:
+
+configinfo A68CONFIG "$Id: identifiers.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.19 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC	debug message = ( INT level, VECTOR [] CHAR m)VOID:
+	IF TRACELEVEL "identifiers" >= level
+        THEN
+          list( "identifiers(" + whole(level,0) +"): " + m)
+        FI;
+
+{ initial dummydec is a 'frig' used to declare the initial dummydec
+  before 'current environ' has been set up
+}
+
+PROC	initial dummydec = ( TRANSIDDEC dummy dec ) VOID:
+BEGIN
+	"dummy dec" ASSERT type OF dummy dec = 8;
+	environ OF ids [decno OF dummy dec] :=	( 1, 0 )
+END;
+
+PROC	keeplist position = ( INT decno ) INT:
+{
+	returns the position of 'decno' in the list of kept decnos.
+	'decno' may be an idno or rdno.
+	The result may be used to index 'keptinfo OF specs[1]' to find out
+	the prefix and representation of the previous version.
+	It is an internal error if 'decno' is not found in the keeplist
+	since RS compatibility has already been checked by the front end.
+}
+BEGIN
+	INT	pos := 0;
+	BOOL	found := FALSE;
+	INT	upb kepts = UPB keptdecnos;
+	WHILE   NOT found  ANDTH  pos < upb kepts
+	DO      found := keptdecnos[pos+:=1] = decno
+	OD;
+	"RS/trans keeplist inconsistency" ASSERT found;
+	pos
+END;
+
+PROC	new id info =
+(	INT decno,
+	INT mode,
+	REF VECTOR [] CHAR a68name,
+	UNAME prefix,			{ null except for ext decs }
+	BITS flags,
+        REF VECTOR [] CHAR definition,
+        REF VECTOR [] CHAR rhs
+)	VOID:
+{
+	sets up the idinfo for ids[decno].
+	'id preset flags' are retained.
+}
+BEGIN
+	REF IDINFO newid = get_idinfo(decno);
+
+	INT cvariabletype = give c variable type(mode,
+				((flags >= id identity flag) ANDTH NOT (flags >= id optimised flag)) OREL
+				flags >= id forall flag OREL
+				flags >= id formal flag);
+
+
+	UNAME	new id prefix =
+		IF      { an external declaration }
+			prefix /= null uname
+		THEN
+			IF flags OF newid >= id kept flag
+			ANDTH rs compatible with previous version
+			ANDTH prefix /=
+		         	prefix OF (keptinfo OF specs[1])[keeplistposition(decno)]
+			THEN
+				trans compatible with previous version := FALSE;
+                                time of last change OF (specs[1]) :=
+                                  translation time OF config_info
+			FI;
+			prefix
+		ELIF    { internal to current module }
+			NOT ISGLOBALLEVEL current environ
+			OREL NOT( flags OF newid >= id kept flag )
+			{ maybe not in previous version }
+			OREL	NOT rs compatible with previous version
+		THEN    new unique name
+		ELIF    REF TRANSKEPTINFO keptinfo =
+		    		(keptinfo OF specs[1])[keeplistposition(decno)];
+        
+                        { different translator representation in prev version }
+			( flags >= id identity flag
+			  ANDTH NOT iddec OF keptinfo
+			)
+			OREL
+			(	flags >= id optimised flag
+				ANDTH	NOT optimised OF keptinfo
+			)
+		THEN    trans compatible with previous version := FALSE;
+                        time of last change OF (specs[1]) := translation time OF config_info;
+			new unique name
+		ELSE	{ totally compatible with previous version }
+			prefix OF keptinfo
+		FI;
+
+        BITS new_flags = ( (flags OF newid) AND id preset flags)
+                          OR flags
+			  OR ( standop sym( a68name)| id op flag | id no flags );
+
+        REF VECTOR [] CHAR c_name = 
+          IF
+            (flags >= id formal flag) ANDTH (UPB a68name > 0) ANDTH (a68name[1] /= "!")
+          THEN
+            CAPITALISED a68name
+          ELSE
+            CASTRVC (new id prefix + "_" + ( new_flags >= id op flag | "" | AFTERBANG a68name ))
+          FI;
+
+	newid := 
+		(	mode,
+			cvariabletype,
+			current environ,
+			a68name,
+                        c_name,
+			new id prefix,
+			new_flags,
+                        definition,
+                        rhs
+		)
+END;
+
+PROC	output c declaration = ( INT decno, REF VALUE initvalue ) VOID:
+{
+	Outputs the C declaration for the specified Algol68 id.
+	The output stream depends on whether the id is global or local.
+	In some cases (eg ccdecs) the output stream is forced to be LOCDECSTREAM
+	Declarations of non-locals are handled in 'nonlocaldec' in this module.
+	For global declarations that are not kept, a storage class specifier
+	of "static" is supplied.
+	If 'initvalue' isnt NIL, an assignment is written to the code stream
+	by way of initialisation.
+	If the declaration is representing an Algol68 identity, an attempt
+	is made to use a #define instead. This can only be done if the right
+	hand side contains no operations.
+}
+BEGIN
+	REF IDINFO idinfo = get_idinfo (decno) ;
+	INT	level = level OF environ OF idinfo,
+		block = block OF environ OF idinfo;
+	BOOL	global = (level=0 ANDTH block=0);
+	BOOL	kept = global ANDTH flags OF idinfo >= id kept flag;
+
+	INT	decstream =
+	     	( global 
+		| NONLOCDECSTREAM level
+		| LOCDECSTREAM level
+		);
+
+	INT	codestream = CODESTREAM level;
+
+         PROC opt identity = ( CFRAGMENT rhs ) VOID:               
+         BEGIN
+           REF CFRAGMENT definition := MAKERVC concat(("#define ", idfullname(decno), " ", rhs));
+
+           CASE extra OF initvalue IN
+             (IDENTIFIER id):
+               BEGIN
+                 BOOL alien dec := FALSE;
+                 REF IDINFO rhs idinfo =
+                   ( idno OF id = alienidno
+                   | alien dec := TRUE; alienidinfo
+                   | get_idinfo(idno OF id)
+                   );
+
+                 { RHS must be kept in order to reach here -- make sure an extern is generated }
+                 IF kept
+                 THEN
+                   flags OF rhs idinfo := flags OF rhs idinfo OR id force use flag
+                 FI;
+
+                 { set up rhs for aliens }
+
+                 IF alien dec
+                 THEN
+                   rhs OF idinfo :=
+                      IF UPB ( definition OF rhs idinfo) > 0
+                      THEN
+                        definition OF rhs idinfo
+                      ELIF old alien option
+                      THEN
+                        MAKERVC ("extern " +
+                           IF flags OF rhs idinfo >= id gproc flag
+                           THEN ctype(deproc(mode OF rhsidinfo)) + " "+ name OF rhs idinfo +"();"
+                           ELSE cvartype(c variable type OF rhsidinfo) + " "
+                                + name OF rhsidinfo +";"
+                           FI
+                         )
+                       ELSE
+                         pwarning( 904, name OF rhs idinfo);
+                         MAKERVC concat(("/* no definition of ALIEN supplied for ", name OF rhs idinfo, " */"))
+                      FI;
+
+                   IF kept ANDTH rs compatible with previous version
+                   THEN
+                     { check that definition and rhs are unchanged, and modify unique prefix if necessary }
+                     IF
+                       REF TRANSKEPTINFO keptinfo = (keptinfo OF specs[1])[keeplistposition(decno)];
+                       ( definition /= definition OF keptinfo ) OREL ( rhs OF idinfo /= rhs OF keptinfo )
+                     THEN
+                       trans compatible with previous version := FALSE;
+                       time of last change OF (specs[1]) := translation time OF config_info;
+		       prefix OF idinfo := new unique name;
+                       REF REF VECTOR [] CHAR (c_name OF idinfo) :=
+                         CASTRVC concat((prefix OF idinfo, "_", AFTERBANG name OF idinfo));
+                       REF REF VECTOR [] CHAR (definition) := MAKERVC concat(("#define ", idfullname(decno), " ", rhs))
+                     FI  
+                   FI;
+
+                   write c stream( (rhs OF idinfo,cnewline), NONLOCDECSTREAM 0 )
+                 FI;
+
+                 { ensure types match }
+                 cvariabletype OF idinfo := cvariabletype OF rhs idinfo;
+                 flags OF idinfo :=flags OF idinfo OR flags OF rhs idinfo
+               END
+           OUT SKIP
+           ESAC;
+
+
+           IF kept
+           THEN
+             REF RVC (definition OF idinfo) := MAKERVC definition
+           FI;
+
+           flags OF idinfo := flags OF idinfo OR id optimised flag;
+
+           write c stream((definition,cnewline),NONLOCDECSTREAM 0)
+        END;
+
+	PROC	declare c variable = VOID:
+	BEGIN
+	  	write c stream
+		((( NOT global OREL flags OF idinfo >= id kept flag
+		  | ""    
+		  | "static "
+		  ),
+		  cvartype(cvariabletype OF idinfo) , " " ,
+		  idfullname(decno) , ";",
+		  ( flags OF idinfo >= id op flag 
+		  | " /* OP " + name OF idinfo + " */"
+		  | ""
+		  ),
+		  cnewline
+		 ),decstream
+		);
+
+		IF	initvalue ISNT REF VALUE (NIL)
+		THEN    write c stream
+			(( idfullname(decno) , " = " ,
+			   bracket cfragment( initvalue) , ";",
+			   cnewline
+			 ),codestream
+			)
+		FI
+	END; 
+
+	IF	(initvalue ISNT REF VALUE (NIL))
+	ANDTH	(flags OF idinfo >= id identity flag)
+	THEN    CASE	extra OF initvalue  IN
+		(CONSTANT):
+			opt identity( GETCFRAGMENT initvalue ),
+		(CFRAGMENT cf):
+			IF	( has attribute( initvalue, constant )
+				  ANDTH
+				  NOT has attribute( initvalue, is nil)
+				  ANDTH
+				  modetype( mode OF initvalue ) = primitive
+				)
+			OREL	( has attribute( initvalue, constant OR is nil )
+				  ANDTH
+				  NOT(flags OF idinfo >= idkeptflag)
+				)
+		     	THEN    opt identity( cf )
+			ELSE    declare c variable   
+			FI,
+		(IDENTIFIER id):
+			IF      REF IDINFO rhs idinfo =
+					( idno OF id = alienidno
+					| alienidinfo
+					| get_idinfo(idno OF id)
+					);
+				ISGLOBALLEVEL( environ OF rhs idinfo )
+			ANDTH	{ no operations on rhs }
+				mode OF idinfo = mode OF rhs idinfo
+			ANDTH   { if the lhs identifier is kept then the rhs
+				 must be either an alien or also kept in
+				 order to be optimised }
+				(	NOT((flags OF idinfo) >= idkeptflag)
+			  		OREL idno OF id = alienidno
+					OREL (flags OFrhs idinfo) >= idkeptflag
+				)
+			THEN  	opt identity( idfullname( idno OF id ) )
+			ELSE    declare c variable
+			FI
+		OUT     declare c variable
+		ESAC
+	ELSE    declare c variable
+	FI
+END;
+
+
+PROC	iddec =( TRANSIDDEC identifier dec, REF REF VALUELIST value stack )VOID:
+CO
+	constructs the IDINFO for the declaration and outputs the corresponding
+	C variable declaration on the appropriate stream.
+
+	The C variable type is derived from the Algol68 mode as follows:
+
+	c variable type =               
+		IF identity declaration
+		THEN
+			IF array type THEN deref(a68mode) ELSE a68mode FI
+		ELSE { variable declaration }
+			IF array type THEN deref(deref(a68mode)) ELSE deref(a68mode) FI
+		FI
+
+	Arrays are special cased since ARRAY and REF ARRAY have the same
+	representation in C.   
+CO
+BEGIN	{ This enumeration should appear in the keeplist of common }
+	INT	identity	= 1,
+		variable	= 2,
+		formal param	= 3,    
+		for control	= 4,
+		initialised var = 5,
+		case conformity = 6,
+		forall control  = 7,
+		dummy   	= 8;
+                   
+	INT	type  = type  OF identifier dec,
+		mode  = mode  OF identifier dec,
+		decno = decno OF identifier dec;
+                                        
+	REF VECTOR [] CHAR name = name OF identifier dec;
+	REF IDINFO new id = get_idinfo(decno);
+
+	REF VALUE no initial value = NIL;
+
+	CASE	type  IN                 
+	BEGIN	{ identity }
+		evaluate stack( value stack );
+		REF VALUE initial value = value OF value stack;
+		value stack := rest OF value stack;
+		new id info(decno,mode,name,nulluname,id identity flag,NIL,NIL);
+		output c declaration(decno,initial value)
+	END,
+	BEGIN	{ variable }
+		IF mode > ref ref mark
+		THEN
+			portability warning(810 {uninitialised reference})
+		FI;
+		new id info(decno,mode,name,nulluname,id no flags,NIL,NIL);
+		output c declaration(decno,no initial value)
+	END,
+	BEGIN	{ formal param }
+		new id info(decno,mode,name,nulluname,id formal flag,NIL,NIL)
+	END,
+	BEGIN	{ for control }
+		new id info(decno,mode,name,nulluname,id for flag,NIL,NIL);
+		output c declaration(decno,no initial value)
+	END,
+	BEGIN	{ initialised var }
+		new id info(decno,mode,name,nulluname,id no flags,NIL,NIL);
+	    	evaluate stack ( value stack );
+		REF VALUE initial value = value OF value stack;
+		value stack := rest OF value stack;
+
+		output c declaration(decno, initial value)
+	END,      
+	BEGIN	{ case conformity }
+		"ccdec not handled here" ASSERT FALSE; SKIP
+	END,
+	BEGIN	{ forall control }
+		{ here change mode to be the c variable type }
+		{ to be deduced from the rhs (= valuestack)  } 
+                                                         
+		{ value stack is now defined }
+		INT row mode = mode OF value OF valuestack;
+		INT forall mode = mode;
+COMMENT
+			( is firm array (mode) ANDTH
+			  element mode (row mode) < ref mark ANDTH
+			  dimensions (mode) = 1
+			| mode + ref mark
+			| mode
+       			);
+COMMENT
+
+       		new id info(decno, forallmode, name, nulluname, id forall flag, NIL,NIL);
+		output c declaration(decno, no initial value)
+	END,
+	BEGIN	{ dummy - only environ is important }
+		newid :=
+			(      	mode,            
+				0 {illegal value},
+				current environ,
+				name,
+				NIL,
+				new unique name,
+			        ( (flags OF newid) AND id preset flags)
+					OR id identity flag,
+                                NIL,
+				NIL
+			)
+	END
+	OUT	"This transiddec type should not occur" ASSERT FALSE
+	ESAC
+END;
+
+PROC	ccdec =
+(	TRANSIDDEC choice dec,	{ must be a ccdec }
+	REF VALUE enquiry,	{ validated by caller }
+	INT mode index
+)	VOID:
+{
+	declares the union choice identifier specified by 'choice dec'.
+}
+BEGIN            
+	"ccdec: not a choice dec" ASSERT type OF choicedec = 6; { case conf }
+	INT	decno      = decno OF choicedec,
+		choicemode = mode  OF choicedec;
+
+	IF	mode index > 0
+	THEN	{ not a subunion }
+		new id info(decno, choicemode, name OF choicedec,
+				nulluname,id identity flag OR id ccdec flag,NIL,NIL);
+		output c declaration
+		(	decno,
+			LOC VALUE := (	choicemode, 
+					default info,
+					GETCFRAGMENT enquiry +
+					".data.mode" + whole(modeindex,0))
+		)
+	ELIF	mode index < 0
+	THEN	{ choice dec is a subunion }
+		new id info(decno, choicemode, name OF choicedec,
+				nulluname,id identity flag OR id ccdec flag,NIL,NIL);
+		output c declaration( decno, NIL);
+
+		CFRAGMENT enquiry name = GETCFRAGMENT enquiry,
+			  new union name = idfullname(decno);
+
+		INT codestream = CODESTREAM currentlevel;
+		
+		INT mode offset = findints( constituents(choicemode),
+				  	    constituents(mode OF enquiry)) - 1;
+
+		write c stream
+       		((	"A_UNCPY(" , new union name , "," ,
+			enquiry name , ");",cnewline
+       		 ),    	codestream
+       		);
+
+		IF	mode offset > 0
+		THEN	write c stream
+     			((	new union name , ".mode -= " ,
+				whole(modeoffset,0) , ";", cnewline
+			 ),	codestream
+			)
+		ELIF	mode offset < 0
+		THEN	{ use run-time mapping table }
+			VECTOR [] CHAR union table =
+				replace control chars
+				( union to union table
+				  ( constituents(mode OF enquiry),
+				    constituents(choicemode)
+				) );
+
+			write c stream
+			((	new union name, ".mode = ""\000", union table,
+				"""[", enquiry name, ".mode];", cnewline
+			 ),	codestream
+			)
+		FI { no action for mode offset = 0 }
+	ELSE
+		"ccdec: invalid mode index" ASSERT FALSE
+	FI
+END;
+
+PROC	declare non local label = ( INT labno ) VOID:
+{
+	Declares a local jmp_buf.  Emits sigsetjmp text on the label stream
+	of the routine in which the label was declared. Declares the label
+	to be a non-local of the current level.
+}
+BEGIN
+       	IF	REF LABELINFO labinfo = labels[ labno ];
+		NOT( lab buffer emitted flag <= flags OF labinfo )
+	THEN	INT	level = level OF environ OF labinfo;
+		{ Emit declaration of jump buffer }
+		write c stream
+		( ( "A68_jmp_buf ", label buffer name( labno ), ";", c newline
+		  ),
+		  ( level = 0 | NONLOCDECSTREAM level | LOCDECSTREAM level )
+		);              
+		{ Emit the setmp text to the label stream }
+		write c stream  
+		( ( "if ( sigsetjmp( ", label buffer name( labno )+".label",
+		    ",1) ) goto ", label full name( labno ), ";", c newline
+	 	  ),LABELSTREAM level
+		);
+		flags OF labinfo ORAB lab buffer emitted flag
+	FI        
+END;
+
+PROC	non local dec = ( INT idno, level ) VOID:
+{                                                                             
+       Outputs C code pertaining to a non-local non-global identifier or
+       routine, to make it available to the routine pertaining to 'level'.
+       The output consists of a field in the env typedef structure, and an
+       initialisation of this field in the code stream of the previous level. 
+}                         
+BEGIN
+	INT	idtype = 1, rdtype = 2, libtype = 3, labtype = 4;
+	INT	type of id =
+		(  id no <= max id no | idtype
+		|: id no <= max rd no | rdtype
+		|: id no <= max libid | libtype
+		|  { must be a label }  labtype
+		);
+	INT	previous level = level - 1;	{ level of routine declaration }
+
+	CFRAGMENT full name = id full name( idno );
+ 
+	INT	c type of id =
+		( type of id
+		| mode OF ids[ idno ],
+		  mode OF rds[ idno ],
+		  ("IDENTIFIERS - library ids not supported"ASSERT FALSE;SKIP),
+		  gotomode { labels have mode gotomode, ctype yields jmp_buf }
+		| ("IDENTIFIERS - invalid type of id"ASSERT FALSE;SKIP)
+		);
+
+	{ output field name in env typedef }
+	write c stream
+	( ( ctype(c type of id), " ", full name, ";", cnewline
+	  ),NONLOCDECSTREAM previous level
+	);
+	align next struct field(c type of id, NONLOCDECSTREAM previous level);
+
+	{ output assignment to this field }
+	{ first, construct VALUE for rhs of assignment }
+	VALUE	rhs := 
+		( ctype of id, 
+	  	  ( ( previous level =
+		      ( type of id
+		      | level OF environ OF ids[ idno ],
+			declevel OF rds[ idno ],
+			SKIP, { library ids not supported }
+			level OF environ OF labels[ idno - minlab ]
+		      | SKIP
+		      )
+		    )
+	  	  | default info
+	  	  | nonloc
+	  	  ),
+	  	  ( type of id
+		  | ( IDENTIFIER  id;  id no OF id := idno; id ),
+		    ( ROUTINEINFO rd; rdenno OF rd := idno; rd ),
+		    SKIP, { library ids not supported }
+		    ( LABNO ld; lab no OF ld := idno - min lab; ld )
+		  | SKIP
+		  )
+		);
+
+	{ second, output assignment }
+	INT this rd = find routine( level );
+	write c stream
+       	((	"(( ", rd env name( this rd ), " * ) ( ",
+		id full name( this rd ), ".nonlocals )) -> ",
+		full name, " = ", GETCFRAGMENT rhs, ";", cnewline
+       	 ),     CODESTREAM previous level
+       	)              
+END;
+ 	
+PROC  declare c routine =
+(  INT rdenno, result mode,
+  BOOL global, kept, op sym,
+  REF VECTOR [] INT params
+)  VOID:
+BEGIN
+  CFRAGMENT environment c type = rd env name (rdenno);
+
+  { decide whether to obtain result via temporory }
+  BOOL use temp for result =
+    no struct result option ANDTH is c struct (result mode);
+
+  INT c result mode =
+    ( use temp for result | voidmode | result mode );
+
+  BOOL full dec  = NOT global;  { global procedures are optimised }
+
+  INT a68 param count = UPB params;
+
+  INT c param count =
+    a68 param count + ABS use temp for result + ABS full dec;
+
+  INT codestream = CODESTREAM current level;
+
+  CFRAGMENT fn name =   ( full dec   { name of C function }
+        | rd fn name( rdenno )
+        | id full name( rdenno ) 
+        );
+
+  VECTOR [a68 param count] REF CFRAGMENT paramnames, paramtypes;
+
+  FORALL paramname IN paramnames, paramtype IN paramtypes, param IN params
+  DO
+    paramname := CASTRVC id full name( param );
+    paramtype := CASTRVC cvartype(cvariabletype OF ids[param])
+  OD;
+
+  PROC prototype = (INT proto stream) VOID:
+  { outputs function prototype to specified stream.
+    caller is responsible for correct termination:
+      eg ";" if not a defining occurrence
+  }
+  BEGIN
+    write c stream((
+      cnewline,
+      ( global AND kept | "" | "A_STATIC " ),
+        ctype( c result mode ),
+        " ",
+        fn name,
+        "("
+      ),  proto stream );
+
+    IF c param count = 0
+    THEN
+      write c stream( "void", proto stream )
+    ELSE
+      IF a68 param count > 0
+      THEN
+        write c stream(( paramtypes[1], " ", paramnames[1] ), proto stream );
+        FOR i FROM 2 TO a68 param count
+        DO
+          write c stream(( ", ", paramtypes[i], " ", paramnames[i] ), proto stream )
+        OD
+      FI;
+
+      { extra hidden arguments for structured result and/or environment }
+      IF use temp for result
+      THEN
+        write c stream((
+          ( a68 param count /= 0 | ", " | "" ),
+          ctype(resultmode), " *ReturnedValue"
+        ), proto stream )
+      FI;
+      IF full dec
+      THEN
+        write c stream((
+          ( use temp for result OREL a68 param count /= 0 | ", " | "" ),
+          "void *NonLocals"
+        ), proto stream )
+      FI
+    FI;
+
+    write c stream( ")",  proto stream )
+  END;
+
+  { output pre-declaration }
+  prototype(extern stream);  write c stream ((";",cnewline),extern stream );
+
+  { output function header }
+  prototype(code stream);  write c stream (cnewline, code stream );
+
+  IF  full dec
+  THEN
+    write c stream(( "#define NL(x) (((", environment c type, " *)NonLocals)->x)", cnewline ), code stream);
+
+    CFRAGMENT proc value name = id full name( rdenno ),
+        env name = rd env name( rdenno );
+    INT previous level = current level - 1;
+
+    { declare procedure variable local to previous routine }
+    write c stream
+    (( ctype( mode OF rds[rdenno] ), " ", proc value name, ";",
+       ( verbose option
+       | "   /* proc value of non-global proc */"
+       | ""
+       ), cnewline
+            ),LOCDECSTREAM previous level
+           );
+
+    IF closure on stack option
+    THEN
+      { declare environment local to previous routine }
+      CFRAGMENT env var name = new unique name;
+      write c stream(
+          ( env name, " ", env var name, ";",
+            ( verbose option | "  /* proc non-locals allocated on stack */" | "" ), cnewline
+          ),
+          LOCDECSTREAM previous level);
+      { and code to set it up }
+      write c stream((
+          "A_STACK_CLOSURE( ", 
+          proc value name, ", ", fn name, ", ", env var name, " );",
+          cnewline ),
+          CODESTREAM previous level )
+    ELSE
+      { closure macro in code stream of previous level }
+      write c stream((
+          ( closure mark option | "A_MARKED_CLOSURE( " | "A_CLOSURE( " ), 
+          proc value name, ", ", fn name, ", ", env name, " );",
+          cnewline ),
+          CODESTREAM previous level )
+    FI;
+
+    { finally, typedef on nonlocdecstream of previous level }
+    write c stream((
+      "typedef struct",
+      ( verbose option 
+      | "   /* env of non-global proc */"
+      | ""
+      ),  cnewline, "{", 
+      ( closure mark option
+      | " A68_INT mark;"
+      | ""
+      ), cnewline ),
+      NONLOCDECSTREAM previous level )
+  FI                                      
+END;                                                    
+                                             
+PROC	complete rddec = VOID:
+{
+       Complete the C routine declaration by finishing the env typedef
+       declaration in the case of non-global procedures. 
+}
+BEGIN                
+	REF RDINFO rd = rds[ current routine ];
+	IF	{ currently global procs optimised }
+		NOT (flags OF rd >= rd global flag)
+	THEN
+		{ complete typedef on nonlocdecstream of previous level }
+		INT  	nonloc dec stream = NONLOCDECSTREAM (current level - 1);
+		IF	NOT non locals used
+		THEN
+			{ output 'dummy' field to env typedef }
+			write c stream
+			(( "int dummy;", cnewline ), nonloc dec stream )
+		FI;
+		write c stream
+		(( "} ", rd env name( current routine ), ";", cnewline
+		 ),nonloc dec stream
+		)
+	FI
+END;
+                                      
+PROC 	rd dec =
+( REF VECTOR [] CHAR name,
+  INT	mode, 
+  REF VECTOR [] INT param decnos,
+  INT result mode, rdenno,           
+  ENVIRON environ,         
+  BITS	props
+) VOID:
+BEGIN
+	REF RDINFO rd = rds[ rdenno ];
+	INT	dec level = current level - 1;	{ ie previous level }
+	BITS	other flags =
+		( props >= operatorbit ANDTH standop sym( name )
+		| rd op flag
+		| rd no flags
+		);                        
+	BOOL global = dec level = 0 	{ declared at outer level }
+		OREL ISGLOBALLEVEL( environ );	{ or uses no non-locals }
+	{ set up rdinfo }
+	rd := 	IF	global
+		THEN  ( mode, 
+	    	    	result mode, 
+			dec level,
+		    	environ,
+		    	name,
+			(    NOT (flags OF rd >= rd kept flag)  { not kept }
+			OREL NOT rs compatible with previous version
+			| new unique name
+			|:REF TRANSKEPTINFO keptinfo =
+			   (keptinfo OF specs[1])[keeplistposition(rdenno)];
+			  { different representation in prev version }
+			  iddec OF keptinfo OREL optimised OF keptinfo
+			| trans compatible with previous version := FALSE;
+                          time of last change OF (specs[1]) :=
+                            translation time OF config_info;
+			  new unique name
+			| prefix OF keptinfo
+			),
+		    	null uname,	{ for safety }
+		    	null uname,
+		    	flags OF rd OR rd global flag OR other flags
+		      )                
+		ELSE  ( mode, 
+		    	result mode, 
+			dec level,
+		    	environ,
+		    	name, 
+		    	new unique name, 
+		    	new unique name, 
+		    	new unique name, 
+		    	flags OF rd OR other flags
+		  	) 
+		FI;
+	declare c routine
+	(
+	  rdenno,
+	  result mode,
+	  global,
+	  flags OF rd >= rd kept flag,
+	  flags OF rd >= rd op flag,
+	  param decnos
+	)
+END;                                  
+
+PROC	labdec = ( LABDEC label dec ) VOID:
+BEGIN             
+	INT	labno  = labno  OF label dec,
+		status = status OF label dec;  
+	BOOL	not setting = not setting OF label dec;
+	REF VECTOR [] CHAR name =    name OF label dec;
+	REF LABELINFO labinfo = labels [ labno ];
+	IF	not setting
+	THEN	IF	status = announcing
+		THEN	labinfo :=
+		  	( ( new unique name, FALSE ),
+			  current environ,
+			  name,
+			  new unique name,
+			  lab declared flag,
+                          0
+			)
+			{ declaration of jump buffer is delayed until required }
+		ELIF	status >= aliasing
+		THEN	"IDENTIFIERS - should be aliasing to initialised label"
+			ASSERT	lab declared flag <= flags OF labels[ status ];
+			labinfo := labels[ status ];
+                        alias OF labinfo := status
+		ELSE	{ status = 1 indication of non-local goto in routine  }
+			SKIP	{ Handled elsewhere }
+		FI        
+	ELSE	{ Set the label - output of setjmp text is delayed until reqd }
+		set OF label OF labinfo := TRUE;
+		{ emit the label name on the code stream }
+		write c stream
+		( ( label full name( labno ), ":", cnewline
+		  ),CODESTREAM current level
+		)
+	FI                
+END;
+
+PROC zexternal dec = (
+  REF VECTOR [] CHAR name,       { Algol68 identifier }
+  UNAME prefix,                  { unique prefix }
+  INT mode,                      { Algol68 mode }
+  INT decno,                     { declaration number }
+  BOOL optimised,                { original definition was #define }
+  BOOL iddec,                    { original definition was an identity }
+  BOOL global proc,              { object represented as C function }
+  BOOL gen proc,                 { object is a generator proc }
+  BOOL force use,                { object is kept rhs of kept identity }
+  REF VECTOR [] CHAR definition, { C definition (if optimised }
+  REF VECTOR [] CHAR rhs         { C definition of ALIEN }
+) VOID:
+{
+  set up id information for imported declaration.
+  Output of C extern declarations is delayed (see below), so that unnecessary declarations
+    can be suppressed.
+}
+BEGIN
+  { to circumvent op identification problem }
+  OP MYBEFORE = ( REF VECTOR [] CHAR s, CHAR c) REF VECTOR [] CHAR: s[:c TRUNCATE s];
+
+  "external dec: invalid decno" ASSERT (decno <= max id no) OREL ( (decno >= min libid) ANDTH (decno <= max libid));
+
+  BITS id flags = flags OF ( decno <= max id no | ids[decno] | library ids[decno] );
+
+  new id info
+  ( decno, mode, name MYBEFORE " ", prefix,
+    ( optimised | id optimised flag | id no flags )
+      OR (  iddec    | id identity flag  | id no flags )
+      OR (  gen proc ANDTH (id flags >= id kept flag) | id kept genproc flag | idno flags )
+      OR (  global proc | id gproc flag  | id no flags )
+      OR (  force use    | id force use flag  | id no flags ),
+    definition, rhs
+  )
+END;
+
+PROC z external c dec = (
+  INT decno                     { declaration number }
+) VOID:
+{
+ outputs C definitions for all kept items that have been used (id/rd loaded flag set).
+ Special case: if rhs is "A_prelude", then definition is always output so that #ifdef A_prelude
+   succeeds
+}
+IF
+  "external c dec: invalid decno" ASSERT (decno <= max id no) OREL ( (decno >= min libid) ANDTH (decno <= max libid));
+
+  REF IDINFO id = ( decno <= max id no | ids[decno] | library ids[decno] );
+
+
+  flags OF id >= id loaded flag
+    OREL
+  flags OF id >= id force use flag
+    OREL 
+  ( UPB definition OF id >= 9 ANDTH (definition OF id)[UPB definition OF id - 8:] = "A_prelude" )
+THEN
+  INT mode = mode OF id;
+  BOOL optimised = flags OF id >= id optimised flag;
+  BOOL global proc = flags OF id >= id gproc flag;
+  REF VECTOR [] CHAR definition = definition OF id;
+  REF VECTOR [] CHAR rhs = rhs OF id;
+
+  IF UPB rhs > 0
+  THEN
+    write c stream ( (rhs,cnewline), imports stream)
+  FI;
+
+  IF UPB definition <= 0
+  THEN
+    IF global proc
+    THEN    
+      INT deproc mode = deproc(mode);
+      BOOL void result = no struct result option ANDTH is c struct (deproc mode);
+
+      REF VECTOR [] INT params = ( is procp(mode) | parameters(mode) | HEAP VECTOR [0] INT );
+
+      write c stream((
+        "extern ", ctype((void result | voidmode | deproc mode)), " ",
+        idfullname(decno), "(" ), imports stream );
+
+      IF UPB params = 0 ANDTH NOT void result
+      THEN
+        write c stream( "void", imports stream )
+      ELSE
+        BOOL comma := FALSE;
+        FORALL p IN params
+        DO
+          write c stream( ( (comma|","|""), ctaggedtype(p)), imports stream);
+          comma := TRUE
+        OD;
+
+        IF void result
+        THEN
+          write c stream( ((comma|","|""), ctype(deproc mode), "*"), imports stream)
+        FI
+      FI;
+
+      write c stream(( ");", cnewline),imports stream )
+
+    ELIF NOT optimised
+    THEN 
+      write c stream((
+        "extern ", cvartype(cvariabletype OF get_idinfo(decno)), " ",
+        idfullname(decno), ";", cnewline ),imports stream )
+    FI
+  ELSE
+    write c stream (( definition, cnewline ), imports stream )
+  FI
+FI;
+
+PROC	initialise identifiers = VOID:
+BEGIN
+  { initialise PROCs - declared in idtable }
+  external dec := zexternal dec;
+  external c dec := zexternal c dec
+END;
+
+PROC	level of label = ( INT labno ) INT:
+  level OF environ OF labels [ labno ];
+
+PROC	environ of label = ( INT labno ) ENVIRON:
+  environ OF labels [ labno ];
+
+SKIP
+
+KEEP
+	declare non local label,
+	ccdec, complete rddec, environ of label, non local dec, 
+	external dec, external c dec, id full name, iddec, ids, 
+	initial dummydec, labdec, level of label, library ids,
+    	mode name, rddec, rd env name, rds,
+	initialise identifiers
+FINISH
+
+{
+Local Variables:
+eval:(auto-fill-mode 0)
+End:
+}

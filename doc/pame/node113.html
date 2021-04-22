@@ -1,0 +1,348 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The value NIL</title>
+<meta name="description" content="the value nil">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node114.html">
+<link rel="previous" href="node112.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node114.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2551"
+  href="node114.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2545"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2539"
+  href="node112.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2547"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2549"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2552"
+  href="node114.html">Queues</a>
+<b> Up:</b> <a name="tex2html2546"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2540"
+  href="node112.html">Identity relations</a>
+ &nbsp; <b>  <a name="tex2html2548"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2550"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2553"
+  href="node113.html#section001371000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001370000000000000000"></a><a name="adv-nil"></a>
+The value <tt>NIL</tt></h1>
+
+<p>Sometimes it is desirable that a name of mode <code>REF</code>
+<code>REF</code> <code>whatever</code> should not refer to a definite
+name (see, for example, the discussion of queues below). This can be
+arranged by making it refer to <tt>NIL</tt><a name="7987"></a> which
+is the only denotation of a name.  The mode of <code>NIL</code> is
+<code>REF whatever</code>. For example, consider</p>
+
+<pre>
+   REF[]CHAR rc=NIL;
+   REF INT ri=NIL
+</pre>
+
+<p>The first <code>NIL</code> has the mode <code>REF[]CHAR</code> and the second has
+the mode <code>REF INT</code>.</p>
+
+<p>Given the declaration</p>
+
+<pre>
+   REF INT xx:=NIL
+</pre>
+
+<p>the mode of <code>NIL</code> is <code>REF INT</code>. However, although
+<code>NIL</code> is a name, you cannot assign to it. That is, the
+assignment</p>
+
+<pre>
+   REF INT(xx):=4
+</pre>
+
+<p>would cause the run-time error</p>
+
+<pre>
+   Segmentation fault
+</pre>
+
+<p>and, possibly, a memory dump, when using the
+a68toc<a name="7988"></a> compiler.</p>
+
+<p>Nor can you use <code>NIL</code> in a formula if that would involve
+dereferencing.  The only use of <code>NIL</code> is for determining,
+by using an identity relation, that a name refers to it.  However, we
+shall see in the sections on queues and trees that this is a vital
+function.</p>
+
+<p>Now consider the declaration</p>
+
+<pre>
+   REF REF INT rrri;
+</pre>
+
+<p>where the mode of <code>rrri</code> is <code>REF REF REF INT</code>. We could make
+<code>rrri</code> refer to <code>NIL</code> directly using the
+assignment</p>
+
+<pre>
+   rrri:=NIL
+</pre>
+
+<p>whence the mode of <code>NIL</code> is <code>REF REF INT</code>. Or
+we could use a <code>NIL</code> of mode <code>REF INT</code> by using
+an anonymous name:</p>
+
+<pre>
+   rrri:=LOC REF INT:=NIL
+</pre>
+
+<p>whence the mode of the anonymous name is <code>REF REF INT</code>.
+In the identity relation</p>
+
+<pre>
+   rrri IS NIL
+</pre>
+
+<p>how can we tell which <code>NIL</code> is in use? Of course, we
+could use a cast for <code>rrri</code>, but there is a simpler and
+more useful way. Firstly we declare</p>
+
+<pre>
+   REF INT nil ri = NIL
+</pre>
+
+<p>then balancing<a name="7717"></a> will ensure that the
+identity relation<a name="7718"></a></p>
+
+<pre>
+   rrri IS nil ri
+</pre>
+
+<p>gives the required answer with <code>rrri</code> being dereferenced
+twice.  Alternatively, with the declaration</p>
+
+<pre>
+   REF REF INT nil rri = NIL
+</pre>
+
+<p>we can ensure that the identity relation</p>
+
+<pre>
+   rrri IS nil rri
+</pre>
+
+<p>will also be elaborated correctly. We shall see in the sections on
+queues and trees that the declaration of <code>nil ri</code> is more
+useful.</p>
+
+<p>Now consider the declarations</p>
+
+<pre>
+   INT x:=ENTIER(random * 6), y;
+   REF INT xx,yy;
+   PROC x or y = REF INT: (random&gt;0.8|x|y)
+</pre>
+
+<p>and the identity relation</p>
+
+<pre>
+   CASE randint(3) IN xx,x or y, NIL ESAC
+                   IS
+   CASE y IN x, SKIP, yy ESAC
+</pre>
+
+<p>The balancing of the identity relation includes balancing of the
+case clauses<a name="7729"></a>. The modes yielded are</p>
+
+<table cellpadding=3>
+<tr><td></td>
+<td align="left"><code>xx</code></td>
+<td align="left"><code>REF REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>x or y</code></td>
+<td align="left"><code>PROC REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>NIL</code></td>
+<td align="left"><code>REF whatever</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>x</code></td>
+<td align="left"><code>REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>SKIP</code></td>
+<td align="left">who knows?</td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>yy</code></td>
+<td align="left"><code>REF REF INT</code>
+</td>
+</tr>
+</table>
+In a soft context, these modes become:
+<table cellpadding=3>
+<tr><td></td>
+<td align="left"><code>REF REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>REF whatever</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>REF INT</code></td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left">who knows?</td>
+</tr>
+<tr><td align="left"> 
+</td>
+<td align="left"><code>REF REF INT</code>
+</td>
+</tr>
+</table>
+
+<p>Thus the left-hand side is the soft context and the right-hand side
+(of the identity relation) is the strong context (remember that
+<code>SKIP</code> is only allowed in a strong context), and the final
+modes are all <code>REF INT</code>. In practice, it is rare that
+identity relations are so complicated.</p>
+
+<hr>
+<h2><a name="section001371000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.14<a name="ex-xi-xiv"></a>
+<dd>Given the declarations
+<pre>
+   FILE f1:=stand in, f2;
+   REF FILE cur file:=f2;
+   PROC p = REF FILE:
+      (cur file IS f1|f1|f2)
+</pre>
+
+what is the value of Ans<a href="node145.html#ans-xi-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>cur file:=f2</code>  
+<p>
+<dt>(b)
+<dd><code>cur file :/=: stand in</code>
+ 
+<p>
+<dt>(c)
+<dd><code>p:=f1</code>  
+<p>
+<dt>(d)
+<dd><code>p:=:f1</code>  
+<p>
+</dd>
+</dl>
+<dt>11.15<a name="ex-xi-xv"></a>
+<dd>Given the declarations of exercise 1, what is the mode of
+<code>NIL</code> in Ans<a href="node145.html#ans-xi-xv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>cur file:=NIL</code>  
+<p>
+<dt>(b)
+<dd><code>REF REF FILE ff:=NIL</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2551"
+  href="node114.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2545"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2539"
+  href="node112.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2547"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2549"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2552"
+  href="node114.html">Queues</a>
+<b> Up:</b> <a name="tex2html2546"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2540"
+  href="node112.html">Identity relations</a>
+ &nbsp; <b>  <a name="tex2html2548"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2550"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

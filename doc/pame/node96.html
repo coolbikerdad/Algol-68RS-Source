@@ -1,0 +1,212 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Enclosed clauses</title>
+<meta name="description" content="enclosed clauses">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node97.html">
+<link rel="previous" href="node95.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node97.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2274"
+  href="node97.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2268"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2262"
+  href="node95.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2270"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2272"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2275"
+  href="node97.html">Primaries</a>
+<b> Up:</b> <a name="tex2html2269"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2263"
+  href="node95.html">Coercions</a>
+ &nbsp; <b>  <a name="tex2html2271"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2273"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2276"
+  href="node96.html#section001241000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001240000000000000000"></a><a name="gram-enc"></a>
+Enclosed clauses</h1>
+
+<p>There are nine kinds of enclosed clause<a name="6559"></a>, most of
+which we have already met.<a name="tex2html34"
+href="footnode.html#foot6944"><sup><span
+class="arabic">11</span>.<span class="arabic">2</span></sup></a></p>
+
+<ol>
+<li>The simplest is the closed clause<a name="6562"></a> which
+consists of a serial clause enclosed in parentheses (or
+<tt>BEGIN</tt><a name="6945"></a> and
+<tt>END</tt><a name="6946"></a>).  The range<a name="6567"></a> of any
+identifiers declared in the closed clause is limited to the closed
+clause.  The a68toc<a name="6568"></a> compiler limits the use of any
+identifiers declared in the closed clause to the closed clause at and
+after their declaration.  Here are some examples of closed
+clauses:
+
+<pre>
+   (3)
+   BEGIN p + 3 END
+   (INT s;  read(s);  s)
+   (REAL q:=i+2;  sqrt(q))
+</pre></li>
+
+<li>Collateral clauses<a name="6571"></a> look like
+row-displays: there must be at least two units. Remember that
+declarations are not units.  The units are elaborated collaterally.
+This means that the order is undefined and may well be in parallel.
+Examples of collateral clauses are<a name="tex2html35"
+  href="footnode.html#foot6947"><sup><span class="arabic">11</span>.<span class="arabic">3</span></sup></a>
+
+<pre>
+   (m:=3, n:=-2)
+   ((INT m:=2; m),(CHAR a=REPR i; a))
+</pre>
+
+The second collateral clause has two units each of which is a
+closed clause.
+
+A parallel clause<a name="6575"></a> looks exactly like a
+collateral clause preceded by <code>PAR</code>. The constituent units
+(there must be at least two) are executed in parallel.<a name="tex2html36"
+  href="footnode.html#foot6948"><sup><span class="arabic">11</span>.<span class="arabic">4</span></sup></a>
+</li>
+</ol>
+
+<p>The other enclosed clauses have already been discussed:</p>
+
+<ol>
+<li>row-display<a name="6581"></a> in section&nbsp;<a href="node29.html#rep-rowdisp">3.1.1</a>
+</li>
+<li>loop clause<a name="6583"></a> in section <a href="node35.html#rep-rep">3.7</a>
+</li>
+<li>conditional clause<a name="6585"></a> in section
+<a href="node45.html#choice-cond">4.5</a>
+</li>
+<li>case clause<a name="6587"></a> in section <a href="node46.html#choice-case">4.6</a>
+</li>
+<li>structure-display<a name="6589"></a> in
+section&nbsp;<a href="node66.html#struc-denot">7.1</a>
+</li>
+<li>conformity clause<a name="6591"></a> in
+section&nbsp;<a href="node77.html#union-conf">8.3</a>
+</li>
+</ol>
+
+<p>It should be noted that the enquiry clause (in a conditional- or
+case-clause) is in a meek context<a name="6594"></a> whatever the
+context of the whole clause. Thus, the context of the clause is
+passed on only to the final phrase (it must be a unit) in the
+<code>THEN</code>, <code>ELSE</code>, <code>IN</code> or
+<code>OUT</code> clauses.</p>
+
+<hr>
+<h2><a name="section001241000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.4<a name="ex-x-iv"></a>
+<dd>What kind of enclosed clause could each of the following be? Ans<a href="node144.html#ans-x-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>((INT p:=ENTIER-4.7; p),37.5)</code>  
+<p>
+<dt>(b)
+<dd><code>PAR BEGIN 3, 15 END</code>  
+<p>
+<dt>(c)
+<dd><code>(i|3,-3|4)</code>  
+<p>
+<dt>(d)
+<dd><code>(si|(INT i): i,(STRING i): i)</code>  
+<p>
+<dt>(e)
+<dd><code>(a &lt; 3|4|5)</code>  
+<p>
+<dt>(f)
+<dd><code>(a:=2; b:=-a)</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2274"
+  href="node97.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2268"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2262"
+  href="node95.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2270"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2272"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2275"
+  href="node97.html">Primaries</a>
+<b> Up:</b> <a name="tex2html2269"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2263"
+  href="node95.html">Coercions</a>
+ &nbsp; <b>  <a name="tex2html2271"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2273"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

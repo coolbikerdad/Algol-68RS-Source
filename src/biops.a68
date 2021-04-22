@@ -1,0 +1,159 @@
+DECS  biops  CONTEXT VOID  USE
+*L    usefulops,
+      centities, coutput, environ, environment,
+      evalbase, incoperfn, idtable, incmode, modes, uniquenameserver, values:
+
+configinfo A68CONFIG "$Id: biops.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.5 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ Initialise comment strings }
+CFRAGMENT module name = "BIOPS - ";
+
+PROC biop99 = ( REF VALUE root ) VALUE:
+BEGIN
+  REF VALUE op;  eval1 ( root, op );
+  ( mode OF root,
+    info OF op AND fxwarn OR atomic,
+    IF
+      mode OF root = mode OF op
+    THEN
+      GETCFRAGMENT op
+    ELSE
+      CFRAGMENT temp = new unique name;
+      write c stream
+      (( "union {",
+         ( verbose option |"  /* BIOP 99 */" |"" ), c newline,
+         ctype(mode OF op),  "  source;", c newline,
+         ctype(mode OF root),  "  destination;", c newline,
+         "} ", temp,"; ", c newline
+      ), LOCDECSTREAM current level );
+      emit line(( temp, ".source = ", GETCFRAGMENT op, " ;" ));
+      bracket( temp +".destination" )
+    FI
+  )
+END;
+
+PROC cast_biop {9999} = ( REF VALUE root, INT biop ) VALUE:
+BEGIN
+  REF VALUE op;  eval1 ( root, op );
+  ( mode OF root,
+    info OF op AND fxwarn OR atomic,
+    cast( mode OF root ) + bracket c fragment( YIELD op )
+  )
+END;
+
+PROC istruct_to_amode = ( REF VALUE root, INT biop ) VALUE:
+IF
+  REF VALUE op;  eval1 ( root, op );
+  INT opmode = mode OF op;
+  opmode < refmark ANDTH is istruct(opmode)
+THEN
+  ( mode OF root,
+    info OF op AND fxwarn OR atomic,
+    bracket( "*" + cast(mode OF root + refmark) + bracket(GETCFRAGMENT YIELD op + ".data"))
+  )
+ELSE
+  perror(214 {BIOP operand not supported}, whole( biop, 0 ) );
+  skipvalue
+FI;
+
+PROC generic_monadic_biop = ( REF VALUE root, INT biop ) VALUE:
+{
+  Generates a macro call of the form 
+
+  A_MBIOPnnnn(params)
+
+  where params is
+    op                    for 1000 < biop <= 1999
+    op, tempto            for 2000 <= biop <= 2999
+    op, tempto, tempfrom  for 3000 <= biop <= 3999
+
+  The macro should be defined in "a68_biops.h".
+}
+BEGIN
+  REF VALUE op;  eval1 ( root, op );
+  VECTOR [] CHAR biopstr = "BIOP"+whole(biop,0);
+  ( mode OF root,
+    info OF op AND fxwarn OR atomic,
+    use macro("A_M" + biopstr,
+      CASE biop % 1000
+      IN
+      { 1000 < biop <= 1999 }
+        YIELD op,
+      { 2000 <= biop <= 2999 }
+        (YIELD op, new(mode OF root,biopstr)),
+      { 3000 <= biop <= 3999 }
+        (YIELD op, new(mode OF root,biopstr), new(mode OF op,biopstr))
+      OUT
+        "invalid generic biop" ASSERT FALSE; SKIP
+      ESAC
+    )
+  )
+END;
+
+PROC monadic biop semantics = ( REF VALUE root, INT biop ) VALUE:
+IF
+  biop = 9999
+THEN
+  cast_biop(root,biop)
+ELIF
+  biop = 5001
+THEN
+  istruct_to_amode(root,biop)
+ELIF
+  (biop > 1000) ANDTH (biop < 4000)
+THEN
+  generic_monadic_biop(root,biop)
+ELSE
+  perror(213 {BIOP not implemented}, whole( biop, 0 ) );
+  skipvalue  
+FI;
+
+SKIP             
+
+KEEP
+  monadic biop semantics, biop99
+FINISH                 
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

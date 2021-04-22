@@ -1,0 +1,988 @@
+DECS  kernelreader  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface,
+      basics,  commandsyntax,  commandreader:
+
+{ " Id: kernelreader.sta,v 1.1 91/10/14 14:30:00 edcad Exp $" }
+configinfo A68CONFIG "$Id: kernelreader.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1985
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:06:85  Abstraction of reading procedures from "sim" and "libprocs"
+04:11:85  Additional procedures for new context handling commands.
+             ie rd fullctname, ctimpname, ctname and impname
+22:11:85  1906 removed
+13:12:85  check commandname added for new help
+26:02:86  Bug:  if rd int sub  swallowed up +/- when no digits present (077)
+26:02:86  Bug:  if rd text should not allow continuation (..) - continuation
+             with fault not correct - did not recognise next command (078 +)
+21:10:86  Updated for new os interface  DCT
+13:11:86  rd int bug - first digit in range a - f read wrongly  DCT
+14:11:86  CR 170  if rd int sub changed to read maximum negative int. EVW
+13:05:87  Extra separator characters added (for CR 356).  PAR.
+12:06:87  Procedures 'put back char' and 'has params' added to support
+             Node Naming (amongst other things).  (CR 356).  PAR.
+24:07:87  Separators constrained more for file names and strings.  PAR.
+09.09.87  (if) rd trim added.  CR163.  BJE
+30:09:87  Porting changes integrated.  JER (N.B. these will need changing
+             when ported back to UNIX.  Star numbers are used temporarily)
+26:10:87  Possibility of negative indices int trims requires change to spec
+             of (if) rd trim.  CR 437
+30:01:89  CR 642  Kernel Interface.  DCT
+03:08:89  "word" reader added for reading particular words.  DCT
+23:08:89  Comment updated to reflect change in error reporting.  DCT
+15:12:89  read_quoted_string moved here from attrreader for sim.  DCT
+12:01:90  read_minus and read_period added for sim.  Help added.  DCT
+19:01:90  set_switch needed updating.  Use of next_first_char.  DCT
+01:03:90  context / imports names procedures rationalised.  DCT
+25:06:90  "/" and one character restrictions removed from <string>.  DCT
+01:02:91  <character> reader needed for the simulator.  DCT
+16:04:91  Trim value now defined using printable ASCII (cf R6B27).  DCT
+20:05:91  R6B37:  read_character/delimited_read called check too soon.  DCT
+27:06:91  R6B51:  quoted_string consumed next char / added ")" to separators
+                     for context name for the simulator.  DCT
+26:09:91  R6B74:  filenames one character long not recognised.  DCT
+01:03:93  Some basic character readers moved from simreader to enable the
+             simulator to be split of - note: simreader needs updating.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.029 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+
+{ General ELLA Kernel reader procedures. Each is in two parts. The first part
+  must conform to a particular pattern to interface to the command interpreter
+  and command line syntax analyser. This first part must extract a copy of the
+  command line (using the primitive procedures defined above) containing the
+  complete object (terminal symbol in the syntax) being read. It may only call
+  its failure procedure parameter with caution. This parameter is provided
+  primarily to report lower level reader errors (from the operating system). It
+  should not be called if the first character is incorrect (rather, nilstr
+  should be returned indicating wrong kind of object, or nullstr indicating
+  nothing present (or comma, the command separator)). It may be called if it is
+  fairly certain that the user wished to specify the same sort of object as
+  currently being read but made an error later in its specification (eg reading
+  an integer: "b564" should not fault - it may be a valid name, but "65j7" may
+  fault "65j ? - unexpected character in <int>"). If the read is successfull, a
+  copy of the appropriate part of the command line should be delivered (this
+  may be further processed if required within the constrainst of an RVC). Two
+  different objects starting different arms of an "alt" must be differentiable.
+  [ The MESSAGEPROC failure procedure should not generate any messages from
+    "facilities" other than ioprocs and osinterface (apart from direct "user"
+    faults) as the command interpreter has to be able to translate messages into
+    error strings. ]
+
+  The second procedure is used within the command to convert a VALUE (STRUCT
+  (INT sort, RVC value) to the particular object being sought and can, of
+  course, assume that the object string has been checked by the first
+  procedure.
+
+  To ensure that errors are reported indicating the correct point of failure and
+  that the correct read position is set after a miss-read it is important to
+  make use of either "first_char" or "next_first_char" to start a read (with or
+  without leading spaces) and that "nothing_read" is called if the first
+  character does not match.  "check_read" is provided to test for illegal
+  trailing characters.  "check_separator" may be used as an alternative.
+}
+
+
+{ Special characters used in ELLA }
+
+STR  opsymbols = "+-*/%<>=:.$#^@";
+
+PROC  opsymbol = (CHAR c) BOOL:  instring(c, opsymbols);
+
+
+{ Extra checking procedures }
+
+
+PROC  check_length = (INT  length,  STR  name,  MESSAGEPROC  msg) VOID:
+   IF length > maxid
+   THEN  msg( user, oneline(( "No ", name, " may have more than ",
+                              maxid, " characters" )) )
+   FI;
+
+
+PROC  check_separator = ( RVC  word_read,  STR  name,
+                          PROC (CHAR) BOOL  separator,  MESSAGEPROC  msg) RVC:
+   { May be used when additional separator characters are permissible - ie when
+     the next item is not normally separated from the current one by a " " }
+   IF (word_read ISNT nilstr)  ANDTH  UPB word_read > 0
+   THEN  IF separator(rdbuffer[rdcharno])
+         THEN  rdcharno MINUSAB 1; { set reader ready to re-read the separator }
+               word_read
+         ELSE  check_read(word_read, name, msg)
+         FI
+   ELSE  word_read                 { deliver "nothing" or "wrong sort" }
+   FI;
+
+
+PROC  legal_read = (RVC  word) BOOL:           { Correct item present }
+   (word ISNT nilstr)  ANDTH  UPB word > 0;
+
+PROC  illegal_read = (RVC  word) BOOL:         { Wrong item found }
+   word IS nilstr;
+
+
+
+
+{ Read specific characters }
+
+STR  plus_str = "+",  minus_str = "-",  period_str = ".",  semicolon_str = ";",
+     comma_str = ",",  openrnd_str = "(",  closernd_str = ")",
+     ampersand_str = "&";
+
+INT  plus_no,  minus_no,  period_no,  semicolon_no,  comma_no,
+     openrnd_no,  closernd_no,  ampersand_no;
+
+
+COMMANDSYNTAX  plus_syntax       = plus_no,
+               minus_syntax      = minus_no,
+               period_syntax     = period_no,
+               semicolon_syntax  = semicolon_no,
+               comma_syntax      = comma_no,
+               openrnd_syntax    = openrnd_no,
+               closernd_syntax   = closernd_no,
+               ampersand_syntax  = ampersand_no;
+
+PROC  read_plus      = (MESSAGEPROC  msg) RVC:  read_char("+", msg);
+PROC  read_minus     = (MESSAGEPROC  msg) RVC:  read_char("-", msg);
+PROC  read_period    = (MESSAGEPROC  msg) RVC:  read_char(".", msg);
+PROC  read_semicolon = (MESSAGEPROC  msg) RVC:  read_char(";", msg);
+PROC  read_comma     = (MESSAGEPROC  msg) RVC:  read_char(",", msg);
+PROC  read_openrnd   = (MESSAGEPROC  msg) RVC:  read_char("(", msg);
+PROC  read_closernd  = (MESSAGEPROC  msg) RVC:  read_char(")", msg);
+PROC  read_ampersand = (MESSAGEPROC  msg) RVC:  read_char("&", msg);
+
+
+PROC  is_plus      = (VALUE  v) BOOL:  sort OF v = plus_no;
+PROC  is_minus     = (VALUE  v) BOOL:  sort OF v = minus_no;
+PROC  is_period    = (VALUE  v) BOOL:  sort OF v = period_no;
+PROC  is_semicolon = (VALUE  v) BOOL:  sort OF v = plus_no;
+PROC  is_comma     = (VALUE  v) BOOL:  sort OF v = minus_no;
+PROC  is_openrnd   = (VALUE  v) BOOL:  sort OF v = period_no;
+PROC  is_closernd  = (VALUE  v) BOOL:  sort OF v = plus_no;
+PROC  is_ampersand = (VALUE  v) BOOL:  sort OF v = minus_no;
+
+
+{ Do not need "get_" procedures for these items }
+
+
+
+
+
+{ Integer reader }
+
+STR  int_str = "<number>",
+     int_help = "The character representation of a 32-bit (2's complement)"
+                " integer.  By default the number should be given in decimal"
+                " representation comprising an optional sign character (""+"""
+                " or ""-"") followed by digits ""0"" to ""9"".  Alternatively,"
+                " the number may be specified in radix 2, 4, 8 or 16 by"
+                " prefixing it with the radix followed by the letter ""r""."
+                "  The letters ""a"" to ""f"" (in either case) are used to"
+                " represent the digits 10 to 15 respectively in radix 16.  For"
+                " example, ""-16rff"" may be used to represent -255.";
+INT  zero = ABS "0";
+
+PROC  if_rd_int = (REF INT  int,  MESSAGEPROC  msg) BOOL:
+BEGIN
+   { does not permit leading spaces }
+
+   PROC  is digit value = (CHAR  c,  INT  radix,  REF INT  i) BOOL:
+   BEGIN
+      IF digit(c)  ANDTH  radix = 10
+      THEN  { ***** ASCII (or similar) only ***** }
+            i:= ABS c - zero;
+            TRUE
+      ELSE  INT  j:= 0;
+            FOR k TO 22 WHILE j = 0
+            DO  IF c = "0123456789ABCDEFabcdef"[k] THEN  j:= k  FI  OD;
+            IF j > 16 THEN  j MINUSAB 6  FI;
+            IF j = 0  OREL  j > radix
+            THEN  FALSE
+            ELSE  i:= j - 1;
+                  TRUE
+            FI
+      FI
+   END;
+
+
+   PROC if rd int sub = (INT  radix, radixsign,  MESSAGEPROC msg) BOOL:
+   BEGIN
+      BOOL overflow;
+      INT  digit value;
+      CHAR c:= next_first_char(msg);
+      INT  sign:= radixsign;
+      IF c = "+"  OREL  c = "-"
+      THEN  IF c = "-" THEN  sign:= - sign  FI;
+            c:= next_char(msg)
+      FI;
+      IF is digit value(c, radix, digit value)
+      THEN int := digit value * sign;
+           WHILE is digit value(c := next_char(msg), radix, digit value)
+           DO  IF int >= largeint OREL int <= largeminint
+               THEN  IF int > maxint OVER radix  OREL
+                          int < minint OVER radix  OREL
+                          ( int TIMESAB radix; int > maxint - digit value )
+                             OREL  int < minint + digit value
+                     THEN  msg( user, oneline(( "This ", int_str,
+                                                " is too large" )) )
+                     ELSE  int PLUSAB digit value * sign
+                     FI
+               ELSE  (int TIMESAB radix) PLUSAB (digit value * sign)
+               FI
+           OD;
+           IF c = "r"  OREL  c = "R"
+           THEN  IF ( INT j = ABS int;
+                      BOOL  ok:= FALSE;
+                      FORALL i IN VECTOR [] INT (2,4,8,10,16) WHILE NOT ok
+                      DO  ok:= i = j  OD;
+                      ok
+                    )
+                 THEN  {  radix read - must insist that int follows  }
+                       IF if rd int sub(ABS int, SIGN int, msg)
+                       THEN  TRUE
+                       ELSE  msg( user, oneline(( int_str,
+                                                  " expected after radix" )) );
+                             FALSE
+
+                       FI
+                 ELSE  msg( user, oneline(( "This ", int_str,
+                                            " has an illegal radix" )) );
+                       FALSE
+                 FI
+           ELSE  TRUE
+           FI
+      ELSE  FALSE
+      FI
+   END;
+
+   if rd int sub(10, 1, msg)
+END;
+
+
+PROC  read_int_basic = (READCONTROL  rc,  MESSAGEPROC  msg) RVC:
+BEGIN
+   IF get_first OF rc
+   THEN  { Skip over leading spaces }
+         first_char(msg);  rdcharno MINUSAB 1
+   FI;
+   INT  int;
+   IF if_rd_int(int, msg)
+   THEN  RVC  ans = oneline(int);
+         IF check OF rc THEN  check_read(ans, int_str, msg)  ELSE  ans  FI
+   ELSE  nothing_read
+   FI
+END;
+
+
+
+INT  int_no;
+COMMANDSYNTAX  int_syntax = int_no;
+
+
+PROC  read_int = (MESSAGEPROC  msg) RVC:  read_int_basic(first_and_check, msg);
+
+PROC  is_int = (VALUE  v) BOOL:  sort OF v = int_no;
+
+PROC  get_int = (VALUE  v,  MESSAGEPROC  msg) INT:
+BEGIN
+   check_value(v, int_no, msg);
+   chars to int(value OF v, HEAP BOOL)
+END;
+
+
+
+
+
+{ Identifier reader }
+
+PROC  read_ident_basic = (READCONTROL  rc,  STR  name,  MESSAGEPROC  msg) RVC:
+BEGIN
+   CHAR  c:=
+      IF get_first OF rc THEN  first_char(msg)  ELSE  next_first_char(msg)  FI;
+   IF letter(c)
+   THEN  INT  start = rdcharno;
+         WHILE letter(c) OREL digit(c) OREL visible_space(c)
+         DO  c:= next_char(msg)  OD;
+         RVC  ident = MAKERVC rdbuffer[start : rdcharno - 1];
+         check_length(UPB ident, name, msg);
+         IF check OF rc THEN  check_read(ident, name, msg)  ELSE  ident  FI
+   ELSE  nothing_read
+   FI
+END;
+
+
+
+STR  ident_str = "<identifier>",
+     ident_help = "An ELLA MAKE, LET, INT or TYPE name.  This is a lower case"
+                  " letter followed by further lower case letters, digits or"
+                  " visible spaces (""_"").";
+INT  ident_no;
+COMMANDSYNTAX  ident_syntax = ident_no;
+
+
+PROC  read_ident = (MESSAGEPROC  msg) RVC:
+   read_ident_basic(first_and_check, ident_str, msg);
+
+PROC  is_ident = (VALUE  v) BOOL:  sort OF v = ident_no;
+
+PROC  get_ident = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, ident_no, msg);
+   value OF v
+END;
+
+
+
+
+
+{ Fnname reader }
+
+STR  fnname_str = "<fnname>",
+     fnname_help = "An ELLA FN or MACro name.  This is either an upper case"
+                   " letter followed by further upper case letters, digits or"
+                   " visible spaces (""_""), or, one or more of the symbol"
+                   " characters: "" + opsymbols + "".";
+INT  fnname_no;
+COMMANDSYNTAX  fnname_syntax = fnname_no;
+
+
+PROC  read_fnname_basic = (READCONTROL  rc,  MESSAGEPROC  msg) RVC:
+BEGIN
+   CHAR  c:=
+      IF get_first OF rc THEN  first_char(msg)  ELSE  next_first_char(msg)  FI;
+   VECTOR [rdcharend] CHAR answer;
+   INT endanswer := 0;
+   IF bold(c)
+   THEN  WHILE bold(c) OREL digit(c) OREL visible_space(c)
+         DO  answer[endanswer PLUSAB 1] := c;
+             c := next_char(msg)
+         OD
+   ELSE  WHILE opsymbol(c)
+         DO  answer[endanswer PLUSAB 1] := c;
+             c := next_char(msg)
+         OD
+   FI;
+   IF endanswer > 0
+   THEN  check_length(endanswer, fnname_str, msg);
+         RVC  ans = MAKERVC answer[: endanswer];
+         IF check OF rc THEN  check_read(ans, fnname_str, msg)  ELSE  ans  FI
+   ELSE  nothing_read
+   FI
+END;
+
+
+PROC  read_fnname = (MESSAGEPROC  msg) RVC:
+   read_fnname_basic(first_and_check, msg);
+
+PROC  is_fnname = (VALUE  v) BOOL:  sort OF v = fnname_no;
+
+PROC  get_fnname = (VALUE  v, MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, fnname_no, msg);
+   value OF v
+END;
+
+
+
+
+
+{ Name (and declname) readers }
+
+
+STR  name_str = "<name>",  declname_str = "<declname>",
+     name_help = "An ELLA function name or an ELLA identifier.",
+     declname_help = name_help;
+INT  name_no,  declname_no;
+COMMANDSYNTAX  name_syntax = name_no,  declname_syntax = declname_no;
+
+
+PROC  is_name = (VALUE  v) BOOL:
+   sort OF v = ident_no  OREL  sort OF v = fnname_no;
+
+PROC  get_name = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   IF sort OF v /= ident_no THEN  check_value(v, fnname_no, msg)  FI;
+   value OF v
+END;
+
+
+PROC (VALUE) BOOL  is_declname = is_name;
+PROC (VALUE, MESSAGEPROC) RVC  get_declname = get_name;
+
+
+
+
+{ String reader }
+
+STR  string_str = "<string>",
+     string_help = "An arbitary string of printable characters excluding "
+%4                 " characters used as separators ("" "" and "","")";
+*4                 " characters used as separators ("" "", "","" and ""/"")";
+INT  string_no;
+COMMANDSYNTAX  string_syntax = string_no;
+
+
+PROC  read_string_basic = (BOOL  uc,  MESSAGEPROC  msg) RVC:
+BEGIN
+   { Will accept any non-separator character(s) }
+   CHAR  c:= first_char(msg);
+   INT  start = rdcharno;
+   WHILE NOT separator(c)    { <CTRL> characters terminate ( eg <TAB> ) }
+   DO  c:= next_char(msg)  OD;
+   check_read(MAKERVC rdbuffer[start : rdcharno - 1], string_str, msg)
+END;
+
+
+PROC  read_string = (MESSAGEPROC  msg) RVC:  read_string_basic(TRUE, msg);
+
+PROC  is_string = (VALUE  v) BOOL:  sort OF v = string_no;
+
+PROC  get_string = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, string_no, msg);
+   value OF v
+END;
+
+
+PROC  get_string_uc = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, string_no, msg);
+   FORALL c IN value OF v DO  IF letter(c) THEN  c:= upper_case(c)  FI  OD;
+   value OF v
+END;
+
+
+
+
+
+{ Filename reader }
+
+{ Filename reading is machine dependent.  The name read is checked by the
+  current host operating system (against a supplied default string) in the
+  "get" procedure.  The read procedure does little more than extract a
+  string.
+}
+
+
+STR  filename_str = "<filename>",
+     filename_help = "A string of characters that the host operating system"
+                     " will accept as a valid file name.";
+INT  filename_no;
+COMMANDSYNTAX  filename_syntax = filename_no;
+
+
+PROC  read_filename = (MESSAGEPROC  msg) RVC:
+BEGIN
+   { Checks basic syntax only - must postpone more thorough check to later }
+   CHAR  c:= first_char(msg);
+   INT  start = rdcharno;
+*3 WHILE letter(c) OREL digit(c) OREL visible_space(c)
+*4 WHILE  NOT separator(c)  ANDTH  c /= "/"  { terminator for VAX/VMS }
+*5 WHILE  NOT separator(c)  { this is adequate for UNIX }
+   DO  c:= next_char(msg)  OD;
+   IF rdcharno - start > 0
+   THEN  check_read(MAKERVC rdbuffer[start : rdcharno - 1], filename_str, msg)
+   ELSE  nothing_read
+   FI
+END;
+
+
+PROC  is_filename = (VALUE  v) BOOL:  sort OF v = filename_no;
+
+PROC  get_filename = (VALUE  v,  STR  default,  MESSAGEPROC  msg) FILENAME:
+BEGIN
+   check_value(v, filename_no, msg);
+   parse_filename(value OF v, default, msg)
+END;
+
+
+
+
+
+{ Text reader }
+
+STR  text_str = "<text>",
+     text_help = "The remainder of the current command line.";
+INT  text_no;
+COMMANDSYNTAX  text_syntax = text_no;       { Should be last in any alt }
+
+
+PROC  read_text = (MESSAGEPROC  msg) RVC:
+BEGIN
+   IF rdbuffer[rdcharno] /= sp THEN  rdcharno PLUSAB 1  FI;
+   start_of_word:= rdcharno;
+   WHILE  rdcharno < rdcharend  ANDTH  space(rdbuffer[rdcharno])
+   DO  rdcharno PLUSAB 1  OD;
+   IF rdbuffer[rdcharend] = sp
+   THEN  msg( user, oneline(( text_str, " may not continue "
+                              "onto the next line" )) );
+         nilstr
+   ELIF rdcharno = rdcharend
+   THEN  nothing_read
+   ELSE  RVC  text = MAKERVC rdbuffer[rdcharno : rdcharend - 1];
+         rdcharno:= rdcharend - 1;     { ready to read next command }
+         text
+   FI
+END;
+
+PROC  is_text = (VALUE  v) BOOL:  sort OF v = text_no;
+
+PROC  get_text = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, text_no, msg);
+   value OF v
+END;
+
+
+
+
+
+{ Context and Imports names readers }
+
+
+STR  contextname_str  = "<contextname>",   importname_str = "<importsname>",
+     contextname_help = "An ELLA contextname has the same syntax as an ELLA"
+                        " identifier name.",
+     importname_help  = "The name of an imports region.  This is specified by"
+                        " the ""/"" character immediately followed by an"
+                        " identifier (lower case) name.";
+INT  contextname_no,  importname_no;
+COMMANDSYNTAX  contextname_syntax  = contextname_no,
+               importname_syntax   = importname_no;
+
+
+
+PROC  read_contextname = (MESSAGEPROC  msg) RVC:
+BEGIN
+   { Although a context name in isolation should not be followed by "/"
+     the error message ""/" not expected" is probably confusing.  It is also
+     easier to construct derived readers (eg "<a> [ /<b> ]") when a context
+     name is allowed to have "/" following immediately.
+     ")" is also allowed to follow - used by the "simulate" command.  DCT
+   }
+   RVC  context = read_ident_basic(get_first, contextname_str, msg);
+   check_separator( context, contextname_str,
+                    (CHAR  c) BOOL:  c = "/"  OREL  c = ")", msg )
+END;
+
+PROC  read_importname = (MESSAGEPROC  msg) RVC:
+   IF first_char(msg) = "/"
+   THEN  RVC  import = read_ident_basic(not_first, importname_str, msg);
+         IF NOT legal_read(import)
+         THEN  msg( user,
+                    ident_str + " expected after ""/"" in " + importname_str )
+         FI;
+         check_separator(import, importname_str, (CHAR  c) BOOL:  c = ")", msg)
+   ELSE  nothing_read
+   FI;
+
+
+PROC  is_contextname  = (VALUE  v) BOOL:  sort OF v = contextname_no;
+PROC  is_importname   = (VALUE  v) BOOL:  sort OF v = importname_no;
+PROC  is_ctname       = (VALUE  v) BOOL:  sort OF v = contextname_no  OREL
+                                          sort OF v = importname_no;
+
+
+PROC  get_contextname = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, contextname_no, msg);
+   value OF v
+END;
+
+PROC  get_importname = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, importname_no, msg);
+   value OF v
+END;
+
+PROC  get_ctname = ( VALUES  values,  REF INT  index,  RVC  default_contextname,
+                     MESSAGEPROC  msg ) CTNAME:
+BEGIN
+   { This procedure will read  [<a>] [/<b>]  - if <a> is not specified,
+     "default_contextname" is used.  Where the syntax demands <a> then
+     the "default_contextname" parameter is ignored - use "nilstr" or
+     "nullstr".  "index" should be set to the previous item read (or zero)
+     and will be updated to the last item read.
+   }
+   IF index >= UPB values  OREL  sort OF values[index + 1] = 0  { no param }
+   THEN  (default_contextname, nullstr)
+   ELIF  is_contextname(values[index + 1])
+   THEN  CTNAME  ans:= (value OF values[index PLUSAB 1], nullstr);
+         IF index < UPB values  ANDTH  is_importname(values[index + 1])
+         THEN  import OF ans:= value OF values[index PLUSAB 1]
+         FI;
+         ans
+   ELIF is_importname(values[index + 1])
+   THEN  (default_contextname, value OF values[index PLUSAB 1])
+   ELSE  check_value(values[index + 1], contextname_no, msg);
+         (nullstr, nullstr)
+   FI
+END;
+
+
+
+
+
+{ Reader for some diagnostic commands }
+
+STR  switch_str = "ON | OFF",
+     switch_help = "This is used by certain commands to set or reset a flag."
+                   """ON"" or ""OFF"" may be given in either case.";
+INT  switch_no;
+COMMANDSYNTAX  switch_syntax = { opt(switch_no); }
+   RULE (opt_syn, HEAP VECTOR [1] COMMANDSYNTAX:= switch_no);
+
+
+PROC  read_switch = (MESSAGEPROC  msg) RVC:
+   IF RVC  first_try = read_token(first_and_check, "ON", msg);
+      legal_read(first_try)
+   THEN  first_try
+   ELSE  read_token(first_and_check, "OFF", msg)
+   FI;
+
+
+PROC  is_switch = (VALUE  v) BOOL:  sort OF v = switch_no;
+
+PROC  set_switch = ( VALUE  v,  REF BOOL  flag,
+                     STR  name,  MESSAGEPROC  msg ) RVC:
+   { Used to set a boolean flag when switch_syntax is the only parameter }
+   IF is_switch(v)
+   THEN  IF value OF v = "ON"
+         THEN  oneline(( name, IF flag
+                               THEN  " "
+                               ELSE  flag:= TRUE;  ":"
+                               FI,  "= ON" ))
+         ELSE  oneline(( name, IF flag
+                               THEN  flag:= FALSE;  ":"
+                               ELSE  " "
+                               FI,  "= OFF" ))
+         FI
+   ELSE  check_value(v, 0, msg);
+         oneline(( name, ":= ",  IF flag
+                                 THEN  flag:= FALSE;  "OFF"
+                                 ELSE  flag:= TRUE;  "ON"
+                                 FI ))
+   FI;
+
+
+
+
+
+{ Reader for specific words (same lexicon as command_name) }
+
+STR  word_str = "<word>",
+     word_help = "A word is like a command name.";
+INT  word_no;
+COMMANDSYNTAX  word_syntax = word_no;
+
+{ Uses command_name_reader }
+
+PROC  is_word = (VALUE  v) BOOL:  sort OF v = word_no;
+
+PROC  get_word = (VALUE  v,  MESSAGEPROC  msg,  VECTOR [] STR  words) INT:
+BEGIN   { List of words should be upper case - delivers index }
+   INT  index:= 0,  count:= 0;
+   IF is_word(v)
+   THEN  FORALL test IN words WHILE index = 0
+         DO  count PLUSAB 1;
+             IF test = value OF v THEN  index:= count  FI
+         OD
+   FI;
+   IF index = 0
+   THEN  RVC  str:= oneline(words[1]);
+         FORALL w IN words[2:] DO  str:= oneline((str, " | ", w))  OD;
+         msg(user, oneline((str, " expected")))
+   FI;
+   index
+END;
+
+
+
+
+
+
+
+{ Reader for trim (not used in kernel) }
+
+STR  trim_str = "<trim>",             { "<[> [<int>] [<..> [<int>]] <]>" }
+     trim_help = "Enclosed in square brackets (""[ ]"") either: ""<number> .."
+                 " <number>"", ""<number>"" implying a trim of size one,"
+                 " "".. <number>"" implying everything up to <number>, or,"
+                 " ""<number> .."" implying everything from <number>.";
+INT  trim_no;
+COMMANDSYNTAX  trim_syntax = trim_no;
+
+CHAR  trimsep = ",";
+
+
+PROC  read_trim = (MESSAGEPROC  msg) RVC:
+   { A missing <int> is taken to be the appropriate bound
+     (except [a] which is equivalent to [a..a]). }
+   IF first_char(msg) = "["
+   THEN  RVC  first = IF RVC  int1 = read_int_basic(get_first, msg);
+                         legal_read(int1)
+                      THEN  rdcharno MINUSAB 1;
+                            int1
+                      ELSE  MAKERVC "."
+                      FI;
+         IF IF first_char(msg) = "."
+            THEN  IF next_char(msg) = "."
+                  THEN  TRUE
+                  ELSE  msg(user, oneline((""".."" expected in ", trim_str)));
+                        FALSE
+                  FI
+            ELSE  rdcharno MINUSAB 1;
+                  FALSE
+            FI
+         THEN  RVC  second =
+                  IF RVC  int2 = read_int_basic(get_first, msg);
+                     legal_read(int2)
+                  THEN  rdcharno MINUSAB 1;
+                        int2
+                  ELSE  MAKERVC "."
+                  FI;
+               IF first_char(msg) = "]"
+               THEN  RVC  ans = oneline((first, trimsep, second));
+                     next_char(msg);  { check_read expects the next char read }
+                     check_read(ans, trim_str, msg)
+               ELSE  msg(user, oneline(("""]"" expected in ", trim_str)));
+                     nilstr
+               FI
+         ELIF first /= "."
+         THEN  IF first_char(msg) = "]"
+               THEN  { one <int> and no <..> }
+                     next_char(msg);
+                     check_read(oneline((first, trimsep, first)), trim_str, msg)
+               ELSE  msg( user, oneline(( """.."" or ""]"" expected in ",
+                                          trim_str )) );
+                     nilstr
+               FI
+         ELSE  msg( user, oneline(( int_str,
+                                    " or "".."" expected after ""["" in ",
+                                    trim_str )) );
+               nilstr
+         FI
+   ELSE  nothing_read
+   FI;
+
+
+PROC  is_trim = (VALUE  v) BOOL:  sort OF v = trim_no;
+
+MODE  TRIM = STRUCT (INT  lwb, upb);
+
+PROC  get_trim = (VALUE  v,  TRIM  bounds,  MESSAGEPROC  msg) TRIM:
+BEGIN
+   { Syntax: trim ::=  <lwb> <trimsep> <upb>.  <lwb>|<upb> :== <int> | "." }
+   check_value(v, trim_no, msg);
+   TRIM  ans:= bounds;
+   RVC  trim = value OF v;
+   INT  sep:= 0,  count:= 0;
+   FORALL c IN trim WHILE sep = 0
+   DO  count PLUSAB 1;
+       IF c = trimsep THEN  sep:= count  FI
+   OD;
+   IF sep = 0 THEN  msg(system, "get_trim:  illegal value")  FI;
+   RVC  int1 = trim[: sep-1], int2 = trim[sep+1 :];
+         IF int1 /= "." THEN  lwb OF ans:= chars to int(int1, HEAP BOOL)  FI;
+         IF int2 /= "." THEN  upb OF ans:= chars to int(int2, HEAP BOOL)  FI;
+   IF lwb OF ans < lwb OF bounds
+   THEN  msg( user,
+              oneline((lwb OF ans, " can't be less than ", lwb OF bounds)) )
+   ELIF upb OF ans > upb OF bounds
+   THEN  msg( user,
+              oneline((upb OF ans, " can't be more than ", upb OF bounds)) )
+   ELIF upb OF ans < lwb OF ans
+   THEN  msg(user, oneline((upb OF ans, " can't be less than ", lwb OF ans)))
+   FI;
+   ans
+END;
+
+
+
+
+{ Quoted strings and a procedure for reading other delimited strings }
+
+INT  quoted_string_no;
+COMMANDSYNTAX  quoted_string_syntax = quoted_string_no;
+STR  quoted_string_str = """<string>""",
+     quoted_string_help = "Any characters enclosed in string quotes ("" "")."
+                          "  If the string quote character is required within"
+                          " the string it should be repeated ("""").";
+
+
+PROC  delimited_read = (CHAR  delim,  STR  missing,  MESSAGEPROC  msg) RVC:
+BEGIN   { Also used in attrreader by read_data }
+   { Use "check_read" afterwards as the next character has been read }
+   VECTOR [rdcharend] CHAR  ans;
+   INT  index:= 0;
+   WHILE
+      IF rdcharno = rdcharend
+      THEN  msg(user, missing);                   FALSE
+      ELSE  CHAR  c = next_char(msg);
+            IF c = delim
+            THEN  IF next_char(msg) = delim
+                  THEN  ans[index PLUSAB 1]:= c;  TRUE
+                  ELSE  { The next char has been read ready for check_read }
+                                                  FALSE
+                  FI
+            ELSE  ans[index PLUSAB 1]:= c;        TRUE
+            FI
+      FI
+   DO  SKIP  OD;
+   MAKERVC ans[: index]
+END;
+
+
+PROC  read_quoted_string = (MESSAGEPROC  msg) RVC:
+   IF first_char(msg) = """"
+   THEN  check_read( delimited_read( """", quoted_string_str +
+                                     " not finished at end of line", msg ),
+                     quoted_string_str, msg )
+   ELSE  nothing_read
+   FI;
+
+
+PROC  is_quoted_string = (VALUE  v) BOOL:  sort OF v = quoted_string_no;
+
+PROC  get_quoted_string = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, quoted_string_no, msg);
+   value OF v
+END;
+
+
+
+{ Reader for a single character - "," is not allowed }
+
+INT  character_no;
+COMMANDSYNTAX  character_syntax = character_no;
+STR  character_str = "<character>",
+     character_help = "Any single printable character except comma and space "
+                      "("","" and "" "") which are used as separators.";
+
+PROC  read_character = (MESSAGEPROC  msg) RVC:
+   IF CHAR  c:= first_char(msg);
+      c /= sep
+   THEN  next_char(msg);  { check_read expects the next char read }
+         check_read( MAKERVC c, character_str, msg )
+   ELSE  nothing_read
+   FI;
+
+
+PROC  is_character = (VALUE  v) BOOL:  sort OF v = character_no;
+
+PROC  get_character = (VALUE  v,  MESSAGEPROC  msg) CHAR:
+BEGIN
+   check_value(v, character_no, msg);
+   (value OF v)[1]
+END;
+
+
+
+
+PROC  make_kernel_readers = REF READERS:
+   add_readers( HEAP READERS:=
+                   ( ( command_name_no, read_command_name,
+                       MAKERVC command_name_str, MAKERVC command_name_help ),
+                     REF READERS (NIL) ),
+                ( (plus_no, read_plus, plus_str, nullstr),
+                  (minus_no, read_minus, minus_str, nullstr),
+                  (period_no, read_period, period_str, nullstr),
+                  (semicolon_no, read_semicolon, semicolon_str, nullstr),
+                  (openrnd_no, read_openrnd, openrnd_str, nullstr),
+                  (closernd_no, read_closernd, closernd_str, nullstr),
+                  (ampersand_no, read_ampersand, ampersand_str, nullstr),
+                  (int_no, read_int, int_str, int_help),
+                  (ident_no, read_ident, ident_str, ident_help),
+                  (fnname_no, read_fnname, fnname_str, fnname_help),
+                  ( name_no, alt((ident_syntax, fnname_syntax)), name_str,
+                    name_help ),
+                  ( declname_no, alt((ident_syntax, fnname_syntax)),
+                    declname_str, declname_help ),
+                  (string_no, read_string, string_str, string_help),
+                  (filename_no, read_filename, filename_str, filename_help),
+                  (text_no, read_text, text_str, text_help),
+                  ( contextname_no, read_contextname, contextname_str,
+                    contextname_help ),
+                  ( importname_no, read_importname, importname_str,
+                    importname_help ),
+                  (switch_no, read_switch, switch_str, switch_help),
+                  (word_no, read_command_name, word_str, word_help),
+                  (trim_no, read_trim, trim_str, trim_help),
+                  ( quoted_string_no, read_quoted_string,  quoted_string_str,
+                    quoted_string_help ),
+                  (character_no, read_character, character_str, character_help)
+              ) )
+
+
+
+KEEP  { Procedures for building other ELLA readers }
+
+   opsymbol,  check_length,  check_separator,  legal_read,  illegal_read,
+   if_rd_int,  read_int_basic,  read_ident_basic,  read_fnname_basic,
+   read_string_basic,
+
+
+   { STR (name), COMMANDSYNTAX, is_ and get_ procedure for each reader }
+
+   plus_str,          plus_syntax,          is_plus,
+   minus_str,         minus_syntax,         is_minus,
+   period_str,        period_syntax,        is_period,
+   semicolon_str,     semicolon_syntax,     is_semicolon,
+   comma_str,         comma_syntax,         is_comma,
+   openrnd_str,       openrnd_syntax,       is_openrnd,
+   closernd_str,      closernd_syntax,      is_closernd,
+   ampersand_str,     ampersand_syntax,     is_ampersand,
+   int_str,           int_syntax,           is_int,           get_int,
+   ident_str,         ident_syntax,         is_ident,         get_ident,
+   fnname_str,        fnname_syntax,        is_fnname,        get_fnname,
+   name_str,          name_syntax,          is_name,          get_name,
+   declname_str,      declname_syntax,      is_declname,      get_declname,
+   string_str,        string_syntax,        is_string,        get_string,
+   filename_str,      filename_syntax,      is_filename,      get_filename,
+   text_str,          text_syntax,          is_text,          get_text,
+   contextname_str,   contextname_syntax,   is_contextname,   get_contextname,
+   importname_str,    importname_syntax,    is_importname,    get_importname,
+                                            is_ctname,        get_ctname,
+   switch_str,        switch_syntax,        is_switch,        set_switch,
+   word_str,          word_syntax,          is_word,          get_word,
+   TRIM,
+   trim_str,          trim_syntax,          is_trim,          get_trim,
+   delimited_read,
+   quoted_string_str, quoted_string_syntax, is_quoted_string, get_quoted_string,
+   character_str,     character_syntax,     is_character,     get_character,
+
+   make_kernel_readers
+FINISH

@@ -1,0 +1,105 @@
+DECS  centities  CONTEXT VOID  USE  incinstallation:
+
+configinfo A68CONFIG "$Id: centities.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.7 
+05:12:94  33.002  DJS   CmplxNos   Only add brackets if not already there. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+	CFRAGMENT	- A fragment of C code
+}
+MODE	CFRAGMENT = VECTOR [0]CHAR,
+	RVC   = REF VECTOR [] CHAR,
+	CNEWLINE  = SHORT INT;	{ a union mode of COUTPUT }
+
+CNEWLINE cnewline = SHORTEN 0;	{ value not important }
+
+{
+	LABEL
+}
+MODE	LABEL	  = STRUCT( UNAME name, BOOL set );
+MODE	LABNO	= STRUCT( INT labno );
+LABEL	unset label = ( "*UNSET*", FALSE );
+
+PROC	bracket = ( CFRAGMENT s ) CFRAGMENT:
+{
+	This puts parentheses around an expression, it is called frequently
+}
+   IF UPB s > 2  ANDTH  s[1] = "("  ANDTH  s[UPB s] = ")"  ANDTH
+      BEGIN   { already have brackets with at least one character in between -
+                do they balance ? }
+         INT  count:= 1,  ind:= 0;
+         FORALL c IN s[2:] WHILE count > 0
+         DO  ind PLUSAB 1;
+             IF c = "(" THEN  count PLUSAB 1
+             ELIF c = ")" THEN  count MINUSAB 1
+             FI
+         OD;
+         ind = UPB s
+      END
+   THEN  s
+   ELSE  VECTOR [UPB s+2] CHAR result;
+         result[1] :="(";
+         result[2:UPB s+1] := s;
+         result[UPB result] :=")";
+         result
+   FI;
+
+PROC	double quote   = ( CFRAGMENT c ) CFRAGMENT:
+	"""" + c + """";
+        
+PROC	single quote   = ( CFRAGMENT c ) CFRAGMENT:
+	"'" + c + "'";
+
+PROC	curly	= ( CFRAGMENT c ) CFRAGMENT:
+	"{" + c + "}";
+
+SKIP
+
+KEEP
+	CFRAGMENT, CNEWLINE, cnewline,
+	LABEL, LABNO, unset label,
+	bracket, single quote, double quote, curly
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

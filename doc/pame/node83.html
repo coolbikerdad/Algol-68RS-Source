@@ -1,0 +1,159 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>String terminators</title>
+<meta name="description" content="string terminators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node84.html">
+<link rel="previous" href="node82.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node84.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2044"
+  href="node84.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2038"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2032"
+  href="node82.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2040"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2042"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2045"
+  href="node84.html">Events</a>
+<b> Up:</b> <a name="tex2html2039"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2033"
+  href="node82.html">Writing to books</a>
+ &nbsp; <b>  <a name="tex2html2041"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2043"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2046"
+  href="node83.html#section001141000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001140000000000000000"></a><a name="trans-term"></a>
+String terminators</h1>
+
+<p>One of the really useful facilities available for reading data from
+books is that of being able to specify when the reading of a string
+should terminate. Usually, this is set as the end of the line only.
+However, using the procedure <tt>make term</tt><a name="6003"></a>,
+the string terminator<a name="5649"></a> can be a single character or
+any one of a set of characters. The header of <code>make term</code>
+is</p>
+
+<pre>
+   PROC make term=(REF FILE f,STRING term)VOID:
+</pre>
+
+<p>so if you want to read a line word by word, defining a word as any
+sequence of non-space characters, you can make the string terminator a
+space by writing</p>
+
+<pre>
+   make term(inf,blank)
+</pre>
+
+<p>because <code>blank</code> (synonymous with <code>"&nbsp;"</code>)
+is rowed in the strong context<a name="5654"></a> of a parameter to
+<code>[]CHAR</code>.  This will not remove the
+end-of-line<a name="5655"></a> as a terminator because the character
+<code>lf</code> is always added whatever characters you specify.  You
+should remember that when a string is read, the string terminator is
+available for the next read--it has <span class="textit">not</span>
+been read by the previous read (but see
+<a href="node88.html#trans-bin">9.9</a>).</p>
+
+<hr>
+<h2><a name="section001141000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.5<a name="ex-ix-v"></a>
+<dd>Write a program called <code>copy</code> which copies its input text
+book to its output text book, stopping when a blank line is read (all
+blanks or zero length). The input book is called <code>inbook</code> and the
+output book <code>outbook</code>.<a name="trans-term-a"></a> Ans<a href="node143.html#ans-ix-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.6<a name="ex-ix-vi"></a>
+<dd>Rewrite the program in exercise&nbsp;<a href="node139.html#name-ex5-12-3">A</a> using
+<code>make term</code>. The data should be read from a book called
+<code>lines</code> and written to a book called <code>words</code>. Write one word
+to a line. Terminate the <code>lines</code> with an asterisk (<code>*</code>) on a
+line by itself.  Ans<a href="node143.html#ans-ix-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2044"
+  href="node84.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2038"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2032"
+  href="node82.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2040"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2042"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2045"
+  href="node84.html">Events</a>
+<b> Up:</b> <a name="tex2html2039"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2033"
+  href="node82.html">Writing to books</a>
+ &nbsp; <b>  <a name="tex2html2041"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2043"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

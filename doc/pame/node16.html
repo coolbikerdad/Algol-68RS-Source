@@ -1,0 +1,169 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Monadic operators</title>
+<meta name="description" content="monadic operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node17.html">
+<link rel="previous" href="node15.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node17.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html903"
+  href="node17.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html897"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html891"
+  href="node15.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html899"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html901"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html904"
+  href="node17.html">Dyadic operators</a>
+<b> Up:</b> <a name="tex2html898"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html892"
+  href="node15.html">Formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html900"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html902"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00410000000000000000"></a><a name="form-monad"></a>
+<br>
+Monadic operators
+</h1>
+
+<p>Operators come in two flavours: <b>monadic</b><a name="729"></a>
+and <b>dyadic</b><a name="731"></a>. A monadic operator has only one
+operand, but a dyadic operator has two operands. A monadic operator is
+written before its operand. For example, the monadic minus
+<tt>-</tt><a name="1052"></a> reverses the sign of its operand:</p>
+
+<pre>
+   -3000
+</pre>
+
+<p>This could equally well be written <code>- 3000</code> since spaces
+are, generally speaking, not significant. There is, likewise, a
+monadic <tt>+</tt><a name="1053"></a> operator which doesn't do
+anything to its operand, but is useful where you want to refer
+expressly to a positive number.  It has been provided for the sake of
+consistency.  You should note that <code>-3000</code> is not a
+denotation, but a formula consisting of a monadic operator operating
+on an operand which is a denotation<a name="738"></a>.  We say that
+the monadic operator <code>-</code> takes an operand of mode
+<tt>INT</tt><a name="1054"></a> and <b>yields</b><a name="742"></a> a
+value of mode <code>INT</code>.  It can also take an operand of
+mode<a name="1055"></a> <tt>REAL</tt><a name="1056"></a> when it will
+yield a value of mode <code>REAL</code>.</p>
+
+<p> A formula can be used as the value part of an identity
+declaration<a name="746"></a>.  Thus the following identity
+declarations are both valid:</p>
+
+<pre>
+   INT  minus 2 = -2;
+   REAL minus point five = -0.5
+</pre>
+
+<p>The operator <tt>ABS</tt><a name="1057"></a> takes an operand of
+mode <code>INT</code> and yields the absolute value again of mode
+<code>INT</code>. For example, <code>ABS -5</code> yields the value
+denoted by&nbsp;<code>5</code>:</p>
+
+<pre>
+   INT five = ABS -5
+</pre>
+
+<p>Note that when two monadic operators are
+combined<a name="753"></a>, they are elaborated in right-to-left
+order, as in the above example<a name="754"></a>.  That is, the
+<code>-</code> acts on the <code>5</code> to yield <code>-5</code>,
+then the <code>ABS</code> acts on <code>-5</code> to yield
+<code>+5</code>. This is just what you might expect.  <code>ABS</code>
+can also take an operand of mode <code>REAL</code> yielding a value of
+mode <code>REAL</code>.  For example:</p>
+
+<pre>
+   REAL x = -1.234;
+   REAL y = ABS x
+</pre>
+<p>
+
+<p>Another monadic operator which takes an <code>INT</code> operand is
+<tt>SIGN</tt><a name="1058"></a>. This yields
+<span class="math">-1</span> if the operand is negative,
+<span class="math">0</span> if it is zero, and
+<span class="math">+1</span> if it is positive.  Thus you can
+declare</p>
+
+<pre>
+   INT res = SIGN i
+</pre>
+
+<p>if <i>i</i> has been previously declared.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html903"
+  href="node17.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html897"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html891"
+  href="node15.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html899"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html901"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html904"
+  href="node17.html">Dyadic operators</a>
+<b> Up:</b> <a name="tex2html898"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html892"
+  href="node15.html">Formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html900"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html902"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

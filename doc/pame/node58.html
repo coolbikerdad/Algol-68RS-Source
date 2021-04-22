@@ -1,0 +1,222 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Abbreviated declarations</title>
+<meta name="description" content="abbreviated declarations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node59.html">
+<link rel="previous" href="node57.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node59.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1580"
+  href="node59.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1574"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1568"
+  href="node57.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1576"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1578"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1581"
+  href="node59.html">Summary</a>
+<b> Up:</b> <a name="tex2html1575"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1569"
+  href="node57.html">Loops revisited</a>
+ &nbsp; <b>  <a name="tex2html1577"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1579"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1582"
+  href="node58.html#section007101000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section007100000000000000000"></a><a name="name-abbr"></a>
+Abbreviated declarations</h1>
+
+<p>You have now met many identity declarations. When declaring names, it
+is apparent that much of the declaration is repeated on both sides.
+For example:</p>
+
+<pre>
+   REF[]REAL r = LOC[10]REAL
+</pre>
+
+<p>Declarations of names are very common in Algol&nbsp;68 programs and
+abbreviated declarations<a name="3149"></a> are available. The above
+declaration can be written</p>
+
+<pre>
+   LOC[10]REAL r
+</pre>
+
+<p>or, most commonly</p>
+
+<pre>
+   [10]REAL r
+</pre>
+
+<p>An abbreviated declaration uses the
+actual-declarer<a name="3154"></a> (the right-hand side of an identity
+declaration) followed by the identifier; and if the actual-declarer
+contains the generator <code>LOC</code>, you can omit the
+<code>LOC</code> (see section <a href="node61.html#rout-rout">6.1</a>
+which explains actual-declarers and formal-declarers).</p>
+
+<p>Here are some of the declarations given as examples in this
+chapter rewritten in their abbreviated form:</p>
+
+<pre>
+   INT a;
+   REAL x:=pi;
+   CHAR s;
+   [7]INT i7;
+   [0:6]INT i7 at 0;
+   [3]INT k:=(1,2,3);
+   [3,3]REAL x; [0:2,0:2]REAL y;
+   FLEX[1:0]INT fn;
+   [36]CHAR sf;
+   [(INT i; read(i); i)]INT r
+</pre>
+
+<p>It is important to note that identity declarations should not be
+mixed with abbreviated name declarations because the modes are quite
+different. For example, in</p>
+
+<pre>
+   REAL a:=2.4;
+   REAL b = a+2.1
+</pre>
+
+<p>the mode of <code>a</code> is <code>REF REAL</code>, but the mode
+of <code>b</code> is <code>REAL</code>. In the abbreviated declaration
+of a name, the mode given is that of the value to which the name will
+refer (the actual-declarer).</p>
+
+<p>When you declare a new object, if you do not intend assigning to
+it, use an identity declaration. Only declare it as a name if you
+intend superseding the value to which it will refer. Remember that
+assignment can be dangerous because values are superseded.</p>
+
+<hr>
+<h2><a name="section007101000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.19<a name="ex-v-xix"></a>
+<dd>Write abbreviated declarations for the following:
+<br>
+Ans<a href="node139.html#ans-v-xix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>REF[]CHAR rc = LOC[1000]CHAR</code>
+ 
+<p>
+<dt>(b)
+<dd><code>REF FLEX[]INT fi = LOC FLEX[1:0]INT</code>
+ 
+<p>
+<dt>(c)
+<dd><code>REF BOOL b = LOC BOOL := TRUE</code>
+ 
+<p>
+</dd>
+</dl>
+<dt>5.20<a name="ex-v-xx"></a>
+<dd>Write full identity declarations for the following:
+<br>
+Ans<a href="node139.html#ans-v-xx"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>INT a,b,c</code>
+ 
+<p>
+<dt>(b)
+<dd><code>REAL x;[5]CHAR y;[3,3]REAL z</code>
+ 
+<p>
+<dt>(c)
+<dd><code>FLEX[1:0]CHAR s</code>
+ 
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1580"
+  href="node59.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1574"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1568"
+  href="node57.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1576"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1578"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1581"
+  href="node59.html">Summary</a>
+<b> Up:</b> <a name="tex2html1575"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1569"
+  href="node57.html">Loops revisited</a>
+ &nbsp; <b>  <a name="tex2html1577"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1579"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Completers</title>
+<meta name="description" content="completers">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node111.html">
+<link rel="previous" href="node109.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node111.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2507"
+  href="node111.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2501"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2495"
+  href="node109.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2503"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2505"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2508"
+  href="node111.html">References to names</a>
+<b> Up:</b> <a name="tex2html2502"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2496"
+  href="node109.html">Overlapping slices</a>
+ &nbsp; <b>  <a name="tex2html2504"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2506"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001340000000000000000"></a><a name="adv-exit"></a>
+Completers</h1>
+
+<p>Sometimes it is desirable to have more than one possible end-point
+of a serial clause. This often happens when a loop needs to be
+prematurely terminated so that a surrounding serial clause can yield a
+value which is unexpected. A <b>completer</b><a name="7562"></a> is
+so-called because it provides a completion point for a serial
+clause<a name="7563"></a>.  A completer can be placed wherever a
+semicolon (the go-on symbol<a name="7977"></a>) can appear except in
+enquiry clauses (whether BOOL enquiry clauses or INT enquiry clauses).
+It consists of the construct <tt>EXIT</tt><a name="7978"></a> followed
+by a <b>label</b><a name="7568"></a> and a colon (<code>:</code>). A
+label is formed with the same rules as for an identifier and should
+not be the same as any identifier in the current
+range<a name="7569"></a>. Here is an example of a completer:</p>
+
+<pre>
+   EXIT label:
+</pre>
+
+<p>The label must be referenced by a <tt>GOTO</tt><a name="7979"></a>
+clause within the same serial clause in which the completer occurs, or
+in an inner clause (not necessarily serial). Here is an example of
+such a completer:</p>
+
+<pre>
+   a:=(INT i;  read((i,newline));
+       IF i &lt; 0 THEN GOTO negative FI;
+       sqrt(i) EXIT
+   negative:
+       sqrt(-i)
+      )
+</pre>
+
+<p>The example is artificial, but serves to illustrate the use of a
+completer.</p>
+
+<p>A completer can sometimes save the declaration of a boolean name. For
+example, here is a procedure without a completer:</p>
+
+<pre>
+   PROC is in str = (STRING t, CHAR c)BOOL:
+   (
+      BOOL found := FALSE;
+   
+      FOR n FROM LWB t TO UPB t
+      WHILE ~found
+      DO
+         found:=c = t[n]
+      OD;
+   
+      found
+   );
+</pre>
+
+<p>Here is the procedure with a completer:</p>
+
+<pre>
+   PROC is in str = (STRING t,CHAR c)BOOL:
+   (
+      FOR n FROM LWB t TO UPB t
+      DO
+         IF c = t[n] THEN GOTO found
+      OD;
+      FALSE EXIT
+   found:
+      TRUE
+   )
+</pre>
+
+<p>In fact, <code>GOTO</code> clauses are valid almost anywhere in
+Algol&nbsp;68.  They are particularly useful when it is required to
+jump out of nested clauses. Let us reconsider the program
+<code>echo</code> in
+section&nbsp;<a href="node84.html#trans-logi">9.5.1</a> with a
+<code>GOTO</code> clause:</p>
+
+<pre>
+   PROGRAM echo CONTEXT VOID
+   USE standard
+   BEGIN
+   FILE args;
+   IF open(args,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the arguments",
+           newline));
+      stop
+   ELSE
+      FILE ff:=args;
+      on logical file end(
+         ff,
+         (REF FILE f)BOOL:
+            close(f);  GOTO end;  FALSE));
+      DO
+         STRING arg;
+         get(ff,(skip terminators,arg));
+         print((arg,newline))
+      OD;
+   end:
+      print(("End of arguments",newline))
+   FI
+   END
+   FINISH
+</pre>
+
+<p>Use of <code>GOTO</code> clauses should be confined to exceptions because
+otherwise they can destroy the natural structure of your programs
+making them much more difficult to understand and maintain.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2507"
+  href="node111.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2501"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2495"
+  href="node109.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2503"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2505"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2508"
+  href="node111.html">References to names</a>
+<b> Up:</b> <a name="tex2html2502"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2496"
+  href="node109.html">Overlapping slices</a>
+ &nbsp; <b>  <a name="tex2html2504"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2506"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

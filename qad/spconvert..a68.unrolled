@@ -1,0 +1,666 @@
+DECS spconvert CONTEXT VOID
+USE spmodes, spaliens, spplain, spops:
+
+COMMENT
+   $Log: spconvert.a68,v $
+   Revision 1.2  2003-05-30 21:20:47  sian
+   Cured two bugs in spconvert.a68
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.2  2000/07/05 14:55:46  sian
+   Ready for release 0.1.0
+
+   Revision 1.1  2000/01/10 05:56:25  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   This module contains the source for `whole', `fixed' and `float'
+   and their associated routines, and also of `string to l real'
+   which is used by `transput.a68'.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+LONG INT
+   long amax = long max int OVER LONG 10,
+   long dmax = long max int MOD LONG 10;
+
+INT
+   amax = max int OVER 10,
+   dmax = max int MOD 10;
+
+SHORT INT
+   short amax = short max int OVER SHORT 10,
+   short dmax = short max int MOD SHORT 10;
+
+SHORT SHORT INT
+   short short amax = short short max int OVER SHORT SHORT 10,
+   short short dmax = short short max int MOD SHORT SHORT 10;
+
+PRIO {?} ADD = 1;
+OP ADD = (REF LONG INT a, INT d) BOOL:
+IF a > long amax OR a = long amax AND LENG d > long dmax
+THEN FALSE
+ELSE a:= LONG 10 * a + LENG d; TRUE
+FI;
+
+OP {?} ADD = (REF INT a, INT d) BOOL:
+IF a > amax OR a = amax AND d > dmax
+THEN FALSE
+ELSE a:= 10 * a + d; TRUE
+FI;
+
+OP {?} ADD = (REF SHORT INT a, INT d) BOOL:
+IF a > short amax OR a = short amax AND SHORTEN d > short dmax
+THEN FALSE
+ELSE a:= SHORT 10 * a + SHORTEN d; TRUE
+FI;
+
+OP {?} ADD = (REF SHORT SHORT INT a, INT d) BOOL:
+IF a > short short amax
+   OR a = short short amax AND SHORTEN SHORTEN d > short short dmax
+THEN FALSE
+ELSE a:= SHORT SHORT 10 * a + SHORTEN SHORTEN d; TRUE
+FI;
+
+{o}
+PROC {?} string to l real =
+   (REF [] CHAR s, INT exp, BOOL neg, UNION(REF REAL,REF SHORT REAL) x) BOOL:
+CASE
+   REAL res = ansi strtod(Z MAKERVC s);  INT e=errno;
+   REAL a=(neg|-1|1)*res*10.0**exp;
+
+   x
+IN
+   (REF REAL r):   IF e = erange err OR a = infinity OR a = -infinity
+                  THEN FALSE
+                  ELSE r:=a;  TRUE
+                  FI,
+   (REF SHORT REAL r):
+                  IF e = erange err OR a = infinity OR a = -infinity
+                     OR a > LENG short max real OR a < LENG -short max real
+                  THEN FALSE
+                  ELSE r:=SHORTEN a;  TRUE
+                  FI
+ESAC; #string to l real#
+
+{k}
+PROC {?} dig char = (INT x) CHAR:
+   (x>9|REPR(ABS"a"+x-10)|REPR(ABS"0"+x));
+
+{p}
+PROC {?} char dig = (CHAR x) INT:
+   (x > "9"|ABS x-ABS"a"+10|ABS x-ABS"0");
+
+{q}
+PROC char in string = (CHAR c, REF INT i, STRING s) BOOL:
+   (BOOL found:= FALSE;
+    FOR k FROM LWB s TO UPB s WHILE NOT found
+    DO (c = s[k] | i:=k; found:= TRUE) OD;
+    found);
+
+{u}
+OP {?} INTWIDTH = (UNION(LONG INT,INT,SHORT INT,SHORT SHORT INT) x) INT:
+   CASE x IN (LONG INT):        long int width,
+             (INT):             int width,
+             (SHORT INT):       short int width,
+             (SHORT SHORT INT): short short int width
+   ESAC;
+
+OP {?} REALWIDTH = (UNION(REAL,SHORT REAL) x) INT:
+   CASE x IN (REAL): real width, (SHORT REAL): short real width ESAC;
+
+OP {?} RREALWIDTH = (UNION(REF REAL,REF SHORT REAL) x) INT:
+   CASE x IN (REF REAL): real width, (REF SHORT REAL): short real width ESAC;
+
+OP {?} EXPWIDTH = (UNION(REAL,SHORT REAL) x) INT:
+   CASE x IN (REAL): exp width,(SHORT REAL): short exp width ESAC;
+
+{e}
+PROC {?} subwhole =
+   (UNION(LONG INT,INT,SHORT INT,SHORT SHORT INT) x,
+    REF INT first, INT upb, REF [] CHAR s)INT:
+    CO The digits of 'x' are placed in 's' (right justified to the
+        position with index 'upb'); the result will be SIGN `x'.
+        As a result, 'first' will point to the first digit
+        of 'x' in 's'. Leading spaces will be placed from position F
+        onwards, where F is the initial value of 'first'. CO
+   CASE x IN
+      (LONG INT  x):
+         BEGIN
+            LONG INT n:= ABS x; INT f = first; first:= upb + 1;
+            WHILE
+               s[first -:= 1]:= dig char(SHORTEN(n MOD LONG 10));
+               n OVERAB LONG 10;
+               n /= LONG 0
+            DO SKIP OD;
+            FOR i FROM f TO first - 1 DO s[i]:= " " OD;
+            SIGN x
+         END,
+      (INT  x):
+         BEGIN
+            INT n := x;
+            INT sign = SIGN n;  n:=ABS n;
+            INT f = first; first:= upb + 1;
+
+            WHILE
+               s[first -:= 1]:= dig char(n MOD 10);
+               n OVERAB 10;
+               n /= 0
+            DO SKIP OD;
+
+            FOR i FROM f TO first - 1 DO s[i]:= " " OD;
+            sign
+         END,
+      (SHORT INT  x):
+         BEGIN
+            INT n := LENG x;
+            INT sign = SIGN n;  n:=ABS n;
+            INT f = first; first:= upb + 1;
+
+            WHILE
+               s[first -:= 1]:= dig char(n MOD 10);
+               n OVERAB 10;
+               n /= 0
+            DO SKIP OD;
+
+            FOR i FROM f TO first - 1 DO s[i]:= " " OD;
+            sign
+         END,
+      (SHORT SHORT INT  x):
+         BEGIN
+            INT n := LENG LENG x;
+            INT sign = SIGN n;  n:=ABS n;
+            INT f = first; first:= upb + 1;
+
+            WHILE
+               s[first -:= 1]:= dig char(n MOD 10);
+               n OVERAB 10;
+               n /= 0
+            DO SKIP OD;
+
+            FOR i FROM f TO first - 1 DO s[i]:= " " OD;
+            sign
+         END
+   ESAC; #subwhole#
+
+{g}
+PROC {?} log10 = (NUMBER v) INT:
+CASE v IN
+   (UNION(REAL,SHORT REAL) x):
+      IF REAL r=(x|(REAL a): ABS a,(SHORT REAL a): ABS LENG a);
+         r<1.0
+      THEN 0
+      ELSE
+         STRUCT 2 BITS b=FLATR r;
+         0 MAX(1+ENTIER(log2*(1+ABS((b[fp64 exp word]&fp64 exp mask)
+                                             SHR
+                                      fp64 bits after exp)-max exp)))
+      FI,
+   (UNION(INT,SHORT INT,SHORT SHORT INT) x):
+      (BITS r:=BIN(x|(INT n):             ABS n,
+		               (SHORT INT n):       ABS LENG n,
+                     (SHORT SHORT INT n): ABS LENG LENG n);
+       INT p:=0;
+       WHILE r/=2r0 DO r:=r SHR 1; p+:=1 OD;
+       0 MAX(1+ENTIER(log2*p))),
+   (LONG INT x): (LONG BITS r:=BIN ABS x; r=LONG 2r0|1|
+                  INT p:=0;
+                  WHILE r/=LONG 2r0 DO r:=r SHR 1;  p+:=1 OD;
+                  0 MAX(1+ENTIER(log2*p)))
+ESAC; #log10#
+
+{h}
+PRIO {?} EXPLENGTH = 9;
+OP EXPLENGTH = (BOOL sign exp, INT exponent) INT:
+   log10(LENG exponent)+(sign exp OR exponent<0|1|0);
+
+{i}
+PROC {?} search for rounding point=(REF [] CHAR s, REF INT rp, INT last) BOOL:
+IF CHAR c;
+	IF (rp:=last+1) > UPB s
+	THEN TRUE
+	ELSE (c:=s[rp]) = "." & rp = UPB s
+	FI
+THEN FALSE
+ELIF char dig((c = "." | s[rp + 1] | c)) >= 5
+THEN
+   WHILE c:= s[rp -:= 1]; c = "9" OR c = "." DO SKIP OD;
+   rp = 0
+ELSE FALSE
+FI; #search for rounding point#
+
+{j}
+PROC {?} spround = (REF [] CHAR s, INT rp, last) VOID:
+IF rp <= last
+THEN
+   REF CHAR srp = s[rp]; srp:= dig char(char dig(srp)+1);
+   FOR i FROM rp + 1 TO last
+   DO
+      REF CHAR si = s[i]; (si /= "." | si:="0")
+   OD
+FI; #spround#
+
+{f}
+PROC #?# subfixed = (NUMBER v, INT after, REF INT p, REF[]CHAR s)INT:
+BEGIN
+   CO
+      The routine yields:-
+         all digits from the integral part, followed by `.',
+         followed by after+1 digits from the fractional part.
+   CO
+   FOR i FROM LWB s TO -1 DO s[i]:=blank OD;  s[0]:="0";
+
+   CASE v
+   IN
+      (UNION(REAL,SHORT REAL) x):
+         IF REAL r:=(x|(REAL rr): rr,(SHORT REAL rr): LENG rr);
+            NOT VALID r
+         THEN s[LWB s]:=errorchar;  0
+         ELSE
+            VECTOR[UPB s+2+ABS(p<0)]CHAR buff;
+            CO digits + `.' + `+/-' + `\0' CO
+            bsd real snprintf(buff,
+                              "%-+*2$.*3$f",  #fmt#
+                              r,              #value to convert#
+                              UPB buff-1,     #width excluding nul ch#
+                              after+1);       #precision#
+
+            IF r=0.0
+            THEN s[1]:=".";  s[2:]:=(UPB s-1)*"0";  p:=0
+            ELIF p<0
+            THEN #Copy from `.' in buff onwards#
+               p:=UPB buff-1;
+					WHILE buff[p]/="." & p>1 DO p-:=1 OD;
+               s[1:UPB buff-p]:=buff[p:UPB buff-1];
+               p:=1
+            ELSE
+					s[1:UPB s]:=buff[2:UPB s+1];
+               p:=1;
+               FROM p TO UPB s WHILE s[p]/="." DO p+:=1 OD
+            FI;
+            
+            SIGN r
+         FI,
+      (UNION(LONG INT,INT,SHORT INT,SHORT SHORT INT) x):
+         (
+            INT sign; INT point:=p+1, first:=1;
+            IF sign:=subwhole(x,first,point,s[0:point@0]);
+               first > 1
+            THEN #s=[  0  fd1..dn..] shift digits to abut the "0"#
+               INT uf=point-first+1;
+               #shift first:upb => 1:upb-first+1#
+               s[1:uf]:=s[first:point];
+               FOR i FROM uf+1 TO UPB s DO s[i]:="0" OD;
+               point:=uf
+            FI;
+            s[(p:=(point+1)MIN UPB s)]:=".";
+            FOR i FROM p+1 TO UPB s DO s[i]:="0" OD;
+            sign
+         )
+   ESAC
+END; #subfixed#
+
+PROC #?# subfloat = (NUMBER v, INT after, REF INT p, REF[]CHAR s)INT:
+CASE s[-1:0]:=" 0"; v
+IN
+   (UNION(REAL,SHORT REAL,INT,SHORT INT,SHORT SHORT INT) x):
+      IF INT q=p; #no. of digits before "."#
+         REAL r=(x|(REAL rr          ): rr,
+                   (SHORT REAL rr    ): LENG rr,
+                   (INT n            ): n,
+                   (SHORT INT n      ): LENG n,
+                   (SHORT SHORT INT n): LENG LENG n);
+         NOT VALID r
+      THEN s[-1]:=errorchar;  0
+      ELIF
+         CO Length of buffer required=before+after
+           +1   extra digit for rounding
+           +1   sign
+           +1   `.'
+           +1   e
+           +1   exponent sign
+           +3   exponent (`dd ' or `ddd')
+           +1   trailing nul ch                 CO
+         VECTOR[q+after+9]CHAR buff;
+         CO snprintf yields the number of characters output or, if
+          the output has to be truncated, the number of chars
+          which would have been output.
+
+          Because sufficient space has been left, we do not need
+          to check the returned value. CO
+         bsd real snprintf(buff,
+                           "%-+*2$.*3$e",  #fmt#
+                           r,              #value to convert#
+                           UPB buff-1,     #width excluding nul ch#
+                           q+after);       #precision#
+         CO buff now contains (a=after,u=UPB buff)
+          index       meaning
+            1         sign (+ or -)
+            2         single digit
+            3         `.'
+            4:3+a+q   digits after point
+            4+a+q     exponent indicator          u-5
+            5+a+q     exponent sign (+ or -)      u-4
+            6+a+q:    exponent (dd or ddd)        u-3:u-2/1
+          If the exponent contains only two digits, then
+          buff[u-1] is a space.
+          buff[u] is the trailing nul ch. CO
+         IF q = 1
+         THEN s[1:2+after+q]:=buff[2:3+after+q] #transfer digits & `.'#
+         ELIF s[q+1]:=".";  q=0
+			THEN
+         	s[2]:=buff[2]; #1st digit#
+            s[3:2+after]:=buff[4:3+after] #after digits#
+         ELSE #q>1#
+				s[1]:=buff[2];  #1st digit#
+            s[2:q]:=buff[4:2+q]; #other digits before `.'#
+            s[2+q:2+q+after]:=buff[3+q:3+q+after] #remaining digits#
+         FI;
+         r=0.0
+      THEN p:=q;  0
+      ELSE
+         INT s=(buff[UPB buff-4]="-"|-1|1);
+			p:=char dig(buff[UPB buff-3])*10+char dig(buff[UPB buff-2]);
+         p:=(CHAR c=buff[UPB buff-1]; c/=" "|(p*10+char dig(c))|p)*s+1;
+			SIGN r
+      FI,
+   (LONG INT x):#long int width > real width#
+      BEGIN
+         INT before=p; #no. of digits before "."#
+         [(p:=log10(x))]CHAR ss; #ss can receive all the digits of x#
+         INT first:=1;
+         INT sign=subwhole(x,first,UPB ss,ss);
+         
+         s[1:before]:=ss[first:first+before-1];
+         s[before+1]:=".";
+         CO How many digits are there in `x' and how many will fit
+            into `s'?. There are before+2:UPB s places in `s' and
+            first+before:UPB ss digits in `ss'. We compare the two
+            numbers and deal with all three cases: CO
+         CASE SIGN(UPB ss-UPB s-first+2)+2
+         IN
+            #`s' is longer than `ss'#
+            (
+               s[before+2:UPB ss-first+2]:=ss[first+before:];
+               FOR i FROM UPB ss-first+3 TO UPB s
+               DO
+                  s[i]:="0"
+               OD
+            ),
+            #`s' is the same length as `ss'#
+            s[before+2:]:=ss[first+before:],
+            #`s' is shorter than `ss'#
+            s[before+2:]:=ss[first+before:UPB s-first+2]
+         ESAC;
+         sign
+      END
+ESAC; #subfloat#
+
+{c}
+PROC fixed = (NUMBER v, INT width, after) STRING:
+IF INT abs width = ABS width;
+   BOOL poswidth = width > 0, zerowidth = width = 0;
+   INT point:= log10(v) - 1, length:= abs width - ABS poswidth;
+   CO there will be either 'point' or 'point+1' digits before the
+       decimal point CO
+   after < 0 OR
+   NOT zerowidth AND (after >= length OR point > length)
+      # a partial test for the correctness of the parameters #
+THEN
+   1 MAX abs width * errorchar
+ELIF
+   INT aft = (zerowidth | after | after MIN (length - point));
+   CO now `aft' equals the maximum number of digits to be delivered
+	   after the decimal point CO
+   INT upb = point + aft + 3;
+   [0 MIN (upb - abs width) - 2 : upb] CHAR s;
+   INT sign = subfixed(v, aft, point, s);
+   s[LWB s]=errorchar
+THEN #invalid REAL#
+   IF abs width < 3
+   THEN 1 MAX abs width * errorchar
+   ELSE (abs width-3)*errorchar+"NaN"
+   FI
+ELIF
+	CO `s[1 : point + aft + 1]' contains the relevant digits,
+   	`s[point]' = ".", s[0] = "0" CO
+	sign = 0
+THEN #v was 0.0#
+	IF after > 0
+	THEN (abs width-after-3)*blank+(poswidth|"+"|blank)+"0."+after*"0"
+	ELSE (abs width-1)*blank+"0"
+	FI
+ELIF
+   INT last:= point + aft, first:= 1, rp;
+   IF zerowidth
+   THEN length:= last
+   ELSE
+      length:= abs width - ABS(sign<0 OR poswidth);
+      last:= last MIN length
+   FI;
+   CO 'last' is the index of the last character that can be returned;
+   	'length' is the total space available for digits and decimal point CO
+   IF search for rounding point(s, rp, last)
+   THEN
+      first:= 0;
+      (NOT zerowidth AND last = length | last -:= 1)
+         # decrement 'last' because of rounding #
+   FI;
+   (last = point | last -:= 1);
+      # the result should not end with "." #
+   (point = 1 AND last < length | first:=0);
+      # deliver "0" or "0.xxx" #
+   point > last + 1 OR last < first
+      # definitive test for the correctness of the parameters #
+THEN
+   abs width * errorchar
+ELSE
+   s[first - 1]:= (sign<0| "-" |: poswidth | "+" | " ");
+   spround(s, rp, last);
+   s[(zerowidth | first - ABS(sign<0)| last - abs width + 1) : last]
+FI; #fixed#
+
+{b}
+PROC whole = (NUMBER v, INT width) STRING:
+CASE v IN
+   (UNION(LONG INT, INT, SHORT INT, SHORT SHORT INT) x):
+      (INT abs width = ABS width;
+       INT upb = abs width MAX INTWIDTH x; #Ensure enough space#
+       INT lwb:= upb - abs width + 1;
+       INT first:= lwb;
+       [0 : upb] CHAR s;
+       IF INT sign = subwhole(x, first, upb, s); sign < 0 OR width > 0
+       THEN s[first -:= 1]:= (sign<0| "-" | "+")
+       FI;
+       CO the converted number (including a possible sign) is stored in
+           `s[first : ]', while the elements 's[lwb MAX 0]' ...
+           `s[first-1]' contain spaces CO
+       (width = 0 | lwb:= first);  # no leading spaces needed #
+       IF first >= lwb
+       THEN
+          s[lwb : ]
+       ELSE
+          abs width * errorchar
+       FI)
+OUT fixed(v, width, 0)
+ESAC; #whole#
+
+{d}
+PROC float = (NUMBER v, INT width, after, exp) STRING:
+IF INT loc after, loc exp;
+
+   IF exp=0
+   THEN #Deal with anomalous case that causes trouble#
+      loc after:=(after>0|after-1|after); loc exp:=-1
+   ELSE loc after:=after;  loc exp:=exp
+   FI;
+
+   INT
+      abs width  = ABS width,                     #count#
+      sign after = SIGN loc after;                 #flag#
+   INT exp places:=ABS loc exp;                  #count#
+   INT last:=abs width - exp places - 2;      #position#
+   CO 1 for `e', 1 for the sign.
+       Position of the last significant digit. The digit
+		 checked for rounding will be at `last+1'.       CO
+   INT before:=last - loc after - sign after;    #count#
+      # `-sign after' if `.' present#
+   SIGN before + sign after <= 0
+      # partial test for correctness of parameters #
+THEN #invalid parameters#
+   1 MAX abs width * errorchar
+ELIF
+   BOOL exp sign = loc exp > 0;                    #flag#
+   INT
+      first:=1,            #position of the first digit#
+      exponent:=before,                          #count#
+      rp:=last + 1;     #position of the rounding point#
+   [-1 : abs width - sign after] CHAR s;
+   INT sign:=subfloat(v, loc after, exponent, s); #flag#
+   s[LWB s]=errorchar
+THEN
+   1 MAX abs width * errorchar
+ELIF
+	CO `s[1 : before + after + 2]' contains the relevant digits,
+         (before+"."+after+extra digit for rounding).
+   	`s[before + 1]' = "." CO
+   exponent -:= before;
+      # now `exponent' is the real exponent (count) #
+   WHILE
+      IF rp > last
+      THEN
+         IF search for rounding point(s, rp, last)
+         THEN
+            CO If the rounding point is s[0] (which is "0"), then the
+               rounding will add an extra significant digit. So the
+               point is moved one place to the left and `last' and
+               `exponent' adjusted. Because the rounding has not yet
+               been done, this shifting reduces the number of digits
+               before the point, so `before' is also decremented. CO
+            first:= 0; #Will have to round to s[0], so change `first'#
+            s[before]:=".";
+            s[before + 1]:= IF before = 0
+                            THEN
+                            	CO If `before' is zero, there are no digits
+                                 before the point, so no nines. Therefore,
+                                 insert a zero, and make it the rounding
+                                 point. CO
+                               rp:= 1; "0"
+                            ELSE
+                            	CO Because `rp' is zero and `before' is
+                                 non-zero, there must be a "9" in front
+                                 of the "." CO
+                               "9"
+                            FI;
+            before -:= 1; last -:= 1; exponent +:= 1
+         FI
+      FI;
+      exp sign EXPLENGTH exponent > exp places AND last >= first
+		CO the exponent does not fit and it is still possible to sacrifice
+         digits CO
+   DO
+      last -:= 1; exp places +:= 1;
+      CASE SIGN(last - before - 1) + 2 #comparing `last' with `before+1'#
+      IN
+         CO The argument in each case for changing the
+            exponent breaks down when the number is zero. CO
+         (before -:= 1; (sign/=0|exponent +:= 1)),
+            # `after' is zero, so decrement `before' #
+         (before +:= 1; (sign/=0|exponent -:= 1);
+          REF CHAR sb1 = s[before + 1]; s[before]:= sb1; sb1:= ".")
+          CO `after' is zero, so the decimal point also disappears;
+              as a consequence, `before' can be incremented CO
+      OUT # "after" has been decremented, but is still greater than 0 #
+         SKIP
+      ESAC
+   OD;
+   last < first   # no digits left in the mantissa #
+THEN
+   abs width * errorchar
+ELSE
+   spround(s, rp, last);
+   INT p:= (sign=0|0|first);
+   WHILE s[p] = "0" AND s[p+1] /= "." AND p < last
+   DO
+      s[p]:= " "; p +:= 1
+   OD;
+      # change "000.00" to "  0.00" #
+   s[p - 1]:= (sign=-1| "-" |: width > 0 | "+" | " ");
+   s[last +:= 1]:="e";
+   INT l = last + exp places;
+      # convert the exponent into `s[last + 1 : l]': #
+   sign:= subwhole(exponent, last +:= 1, l, s);
+   (sign<0 OR exp sign | s[last - 1]:= (sign<0| "-" | "+"));
+      # place the sign of the exponent #
+   s[first-1:l]
+FI; #float#
+
+OP HEX = (LONG BITS v)[]CHAR:
+(
+   STRUCT 16 CHAR s;
+   LONG BITS t:=v;
+   FOR i TO UPB s
+   DO
+      s[(UPB s-i+1)]:=dig char(ABS SHORTEN(t&LONG 16rf));
+      t:=t SHR 4
+   OD;
+   s
+); #HEX(LONG BITS)#
+
+OP HEX = (BITS v)[]CHAR:
+(
+   STRUCT 8 CHAR s;
+   BITS t:=v;
+   FOR i TO UPB s
+   DO
+      s[(UPB s-i+1)]:=dig char(ABS(t&16rf));
+      t:=t SHR 4
+   OD;
+   s
+); #HEX(BITS)#
+
+OP HEX = (SHORT BITS v)[]CHAR:
+(
+   STRUCT 4 CHAR s;
+   SHORT BITS t:=v;
+   FOR i TO UPB s
+   DO
+      s[(UPB s-i+1)]:=dig char(LENG ABS(t&SHORT 16rf));
+      t:=t SHR 4
+   OD;
+   s
+); #HEX(SHORT BITS)#
+
+OP HEX = (SHORT SHORT BITS v)[]CHAR:
+(
+   STRUCT 2 CHAR s;
+   SHORT SHORT BITS t:=v;
+   FOR i TO UPB s
+   DO
+      s[(UPB s-i+1)]:=dig char(LENG LENG ABS(t&SHORT SHORT 16rf));
+      t:=t SHR 4
+   OD;
+   s
+); #HEX(SHORT SHORT BITS)#
+
+SKIP
+
+KEEP
+ADD(REF LONG INT,INT), ADD(REF INT,INT),
+ADD(REF SHORT INT,INT), ADD(REF SHORT SHORT INT,INT),
+string to l real,
+char dig, char in string,
+INTWIDTH(UNION(LONG INT,INT,SHORT INT,SHORT SHORT INT)),
+REALWIDTH(UNION(REAL,SHORT REAL)),
+RREALWIDTH(UNION(REF REAL,REF SHORT REAL)),
+EXPWIDTH(UNION(REAL,SHORT REAL)),
+EXPLENGTH(BOOL,INT),
+whole, fixed, float,
+HEX(LONG BITS), HEX(BITS), HEX(SHORT BITS), HEX(SHORT SHORT BITS)
+
+FINISH

@@ -1,0 +1,259 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Structure denotations</title>
+<meta name="description" content="structure denotations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node67.html">
+<link rel="previous" href="node65.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node67.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1763"
+  href="node67.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1757"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1751"
+  href="node65.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1759"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1761"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1764"
+  href="node67.html">Field selection</a>
+<b> Up:</b> <a name="tex2html1758"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1752"
+  href="node65.html">Structures</a>
+ &nbsp; <b>  <a name="tex2html1760"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1762"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1765"
+  href="node66.html#section00911000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00910000000000000000"></a><a name="struc-denot"></a>
+Structure denotations</h1>
+
+<p>In chapter 3, we saw how a number of individual values can be
+collected together to form a multiple whose mode was expressed as
+&ldquo;row of&rdquo; the base mode. The principal characteristic of
+multiples is that all the elements have the same mode. A structure is
+another way of grouping data elements, but in this case, the
+individual parts can be, but need not be, of different modes. In
+general, accessing the elements of a multiple is determined at
+run-time by the elaboration of a slice. In a
+structure<a name="4585"></a>, access to the individual parts, called
+<b>fields</b><a name="4587"></a>, are determined at compile time.
+Structures are, therefore, an efficient means of grouping data
+elements.</p>
+
+<p>The mode constructor <tt>STRUCT</tt><a name="4976"></a> is used to
+create structure modes.  Here is a simple identity
+declaration<a name="4977"></a> of a structure:</p>
+
+<pre>
+   STRUCT(INT i,CHAR c) s = (2,"e")
+</pre>
+
+<p>The mode of the structure is</p>
+
+<pre>
+   STRUCT(INT i,CHAR c)
+</pre>
+
+<p>and its identifier is <code>s</code>. The <code>i</code> and the
+<code>c</code> are called <b>field selectors</b><a name="4596"></a>
+and are part of the mode. They are not identifiers, even though the
+rule for identifier construction applies to them, because they are not
+values in themselves.  You cannot say that <code>i</code> has mode
+<code>INT</code> because <code>i</code> cannot stand by itself. We
+shall see in the next section how they are used.</p>
+
+<p> The expression to the right of the equals symbol is called a
+<b>structure-display</b><a name="4598"></a>. Like row-displays,
+structure-displays can only appear in a strong
+context<a name="4599"></a>.  In a strong context, the compiler can
+determine which mode is required and so it can tell whether a
+row-display or a structure-display has been provided.  We could now
+declare another such structure:</p>
+
+<pre>
+   STRUCT(INT i,CHAR c) t = s
+</pre>
+
+<p>and <code>t</code> would have the same value as <code>s</code>.</p>
+
+<p>Here is a structure declaration</p>
+
+<pre>
+   STRUCT(INT j,CHAR c) ss = (2,"e")
+</pre>
+
+<p>which looks almost exactly like the first structure declaration
+above, except that the field selector <code>i</code> has been replaced
+with <code>j</code>.  The structure <code>ss</code> has a different
+mode from <code>s</code> because not only must the constituent
+modes<a name="4604"></a> be the same, but the field selectors must
+also be identical.</p>
+
+<p>Structure names can be declared:</p>
+
+<pre>
+   REF STRUCT(INT i,CHAR c) sn =
+             LOC STRUCT(INT i,CHAR c)
+</pre>
+
+<p>Because the field selectors are part of the mode, they appear on both
+sides of the declaration. The abbreviated form is</p>
+
+<pre>
+   STRUCT(INT i,CHAR c) sn
+</pre>
+
+<p>We could then write</p>
+
+<pre>
+   sn:=s
+</pre>
+
+<p>in the usual way.</p>
+
+<p>The modes of the fields can be any mode.  For example, we can
+declare</p>
+
+<pre>
+   STRUCT(REAL x,REAL y,REAL z) vector
+</pre>
+
+<p>which can be abbreviated to</p>
+
+<pre>
+   STRUCT(REAL x,y,z)vector
+</pre>
+
+<p>and here is a possible assignment:</p>
+
+<pre>
+   vector:=(1.3,-4,5.6e10)
+</pre>
+
+<p>where the value <code>-4</code> would be widened<a name="4617"></a>
+to <code>-4.0</code>.</p>
+
+<p>Here is a structure with a procedure field<a name="4618"></a>:</p>
+
+<pre>
+   STRUCT(INT int,
+          PROC(REAL)REAL p,
+          CHAR char) method = (1,sin,"s")
+</pre>
+
+<p>Here is a name referring to such a structure:</p>
+
+<pre>
+   STRUCT(INT int,
+          PROC(REAL)REAL p,
+          CHAR char) m := method
+</pre>
+
+<p>A structure can even contain another
+structure<a name="4623"></a>:</p>
+
+<pre>
+   STRUCT(CHAR c,
+          STRUCT(INT i,j)s) double=("c",(1,2))
+</pre>
+
+<p>In this case, the inner structure has the field selector<a name="4626"></a>
+<code>s</code> and <i>its</i> field selectors are <code>i</code> and
+<code>j</code>.</p>
+
+<hr>
+<h2><a name="section00911000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.1<a name="ex-vii-i"></a>
+<dd>Declare a structure containing three integer values with field
+selectors <code>i</code>, <code>j</code> and <code>k</code>.
+ Ans<a href="node141.html#ans-vii-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.2<a name="ex-vii-ii"></a>
+<dd>Declare a name which can refer to a structure containing an
+integer, a real and a boolean using field selectors <code>i</code>,
+<code>r</code> and <code>b</code> respectively.
+ Ans<a href="node141.html#ans-vii-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1763"
+  href="node67.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1757"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1751"
+  href="node65.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1759"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1761"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1764"
+  href="node67.html">Field selection</a>
+<b> Up:</b> <a name="tex2html1758"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1752"
+  href="node65.html">Structures</a>
+ &nbsp; <b>  <a name="tex2html1760"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1762"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

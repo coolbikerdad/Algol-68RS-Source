@@ -1,0 +1,605 @@
+DECS  clauses  CONTEXT VOID  USE
+*L    usefulops,
+      environ, environment, centities, coutput, values, idtable, moduletracer,
+      tracer, evaluator, incmode, modes, unionaids, incimperatives:
+
+configinfo A68CONFIG "$Id: clauses.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.5 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+07:10:99  34.002  SL    Phoenix Engineering: spelling errors
+COMMENT
+
+{
+ This module contains the clause semantic routines, which are responsible for
+ program flow and storage allocation at the 'clause control' level
+ ( other than loop clauses - see 'loops' ).
+}
+
+MODE PROPERTIES =
+	STRUCT (BOOL block, dynamic result, discarded dynamic result, INT type);
+
+PROC	start clause =
+( PROPERTIES	properties,
+  REF REF LABEL	end of clause,
+  REF BOOL	discard level activated
+) VOID:
+{
+Performs the dynamic storage allocation functions required at the start of a
+choice, loop, or serial clause (called after 'start static level' at the start
+of enclosed clauses), and sets 'end of clause' and 'discard level activated'
+as necessary.
+}
+BEGIN
+	SKIP
+END;
+
+PROC	end clause =
+( PROPERTIES	properties,
+  REF LABEL	end of answer, end of clause,
+  BOOL		discard level activated, pull stack
+) VOID:
+{
+Performs the dynamic storage allocation functions required at the end of
+choice, loop, or serial clauses (before 'end static level' at the end of
+enclosed clauses). N.B. 'end of clause ISNT end of answer' -> a dynamic level
+was started in this clause, and 'end of clause' is set accordingly by
+'end dynamic level'.
+}
+BEGIN
+	SKIP
+END;
+                                
+PROC	cf = ( INT m1, m2 ) BOOL:
+{
+	This compares the two modes deflexing if necessary.
+}
+find deflex mode( m1 ) = find deflex mode( m2 );
+                       
+PROC	evaluate no result = ( REF REF VALUELIST value stack ) VOID:
+{
+
+       Called at the end of a <phrase> terminated by a semi colon, and at the
+       end of a <phrase> returning a VOID result. If 'value OF valuestack' is
+       of mode VOID, and its 'extra' is VOID - this represents the 'void
+       result' of the previously evaluated phrase.  In this case no C need be
+       output, and the value is thrown away. Otherwise, evaluate is called, to
+       yield a single 'value' on the value stack. If this 'value' is a SKIP
+       value, an empty C statement ";" is output, otherwise a C Fragment is
+       output. No result is returned from this phrase, so there is no 'answer'
+       parameter. 
+
+}                       
+BEGIN
+	IF	valuestack ISNT nil value list
+	THEN
+		REF VALUE value = value OF valuestack;
+		IF	(	( extra OF value | ( VOID ): TRUE | FALSE )
+			AND	mode OF value = void mode
+       			)
+		THEN	{ void 'value OF answer' - so discard }
+		    	valuestack := rest OF value stack
+		ELSE
+      		    	INT code stream = CODESTREAM current level;
+			value stack := rest OF valuestack;
+			evaluate ( value );
+			"evaluate no result: mode of value not void"
+  			ASSERT mode OF value = void mode;
+ 			write c stream
+			(( ( ISSKIP value | "" | GETCFRAGMENT value ), ";",
+			   cnewline
+			 ),codestream
+			)
+		FI;
+		IF	TRACELEVEL "clauses" /= 0
+		ANDTH	(valuestack ISNT nil value list)
+		THEN	call trace( value OF valuestack, FALSE )
+		FI
+	FI
+END;
+
+PROC	evaluate result = (REF REF VALUELIST value stack, ANSWER answer) VOID:
+{
+       Called at the end of a <phrase> (other than at a semi colon) to evaluate
+       the result of the phrase, specified by 'value OF value stack', and
+       ensure that this corresponds to the clause, routine or optbool result
+       specified by 'answer'. 'extra OF value OF answer' represents the
+       temporary for the result of the phrase. If this extra is currently VOID,
+       a new temporary name is obtained and a C declaration for the temporary
+       is output. Evaluate stack is called to yield a single 'value'. If the
+       'value' is a SKIP value, a null C statement is output, otherwise, a C
+       Fragment is output consisting of an assignment of the 'value' to the
+       temporary. 
+}
+BEGIN
+	REF VALUE ansvalue = value OF answer;
+	IF	mode OF ansvalue = voidmode                          
+	THEN    evaluate no result( value stack )
+	ELSE
+		INT	code stream = CODESTREAM current level;
+                          
+		CFRAGMENT assignee =
+			CASE extra OF ansvalue IN
+			( VOID ) :
+			(	{ declare a new temporary } 
+				extra OF ansvalue := 
+					declare c temporary
+					( mode OF ansvalue,
+					  "clause result"
+					);
+				GETCFRAGMENT ansvalue
+			),
+			( TEMPORARY t ) :
+				name OF t,
+			( CFRAGMENT c ): c { eg row or structure display}
+			OUT	"evaluate result: unknown value OF answer"
+				ASSERT FALSE; ""
+			ESAC;
+                                          
+		REF VALUE value = value OF value stack;
+		evaluate stack(value stack);
+		"evaluate result: value of value stack has incorrect mode"
+		ASSERT	cf( mode OF ansvalue, mode OF value OF value stack);
+		IF 	ISSKIP value
+		THEN    write c stream( "; ", code stream )
+		ELSE    write c stream
+			(( assignee, " = ", GETCFRAGMENT value, ";"),
+			  codestream
+			)
+		FI;
+		write c stream(	cnewline, codestream );
+		value stack := rest OF valuestack
+	FI                                                 
+END;
+
+PROC	evaluate simple enquiry =
+(	REF REF VALUELIST value stack,
+	ANSWER answer
+)	VOID:
+{ 
+       Evaluates a 'simple' enquiry clause - ie one that contains only one
+       'phrase' (no semi-colons).  The result of evaluation is not assigned to
+       a temporary, but returned in 'answer'.  No C is output. 
+}
+BEGIN
+	REF VALUE value = value OF value stack;
+	evaluate stack ( value stack );
+	"evaluate simple enquiry: value of value stack has incorrect mode"
+	ASSERT	cf( mode OF value OF answer, mode OF value );
+	extra OF value OF answer := GETCFRAGMENT value;
+	value stack := rest OF valuestack
+END;
+	
+{------------------------------------------------------------------------------}
+{
+	<closed clause> ::= begin <serial clause> end
+}
+
+PROC	begin = (BOOL series contains label, routine body) VOID:
+BEGIN
+	write c stream( ("{ ", cnewline ), CODESTREAM current level )
+END;
+
+PROC	end =
+(	BOOL dynamic result, series contains exit, routine body,
+	REF LABEL end of clause label
+)	VOID:
+BEGIN
+	INT	codestream = CODESTREAM current level;
+	IF	series contains exit
+	THEN    "clauses: end: end of clause label not set"
+		ASSERT ( end of clause label ISNT REF LABEL (NIL));
+		write c stream
+		(( name OF end of clause label, ": ;", cnewline
+		 ),codestream
+		)
+	FI;
+	write c stream(( "} ", cnewline), codestream )
+END;
+
+{
+ <choice clause> ::=
+	if	<enquiry clause>
+	then	<serial clause> [else <serial clause>]
+	fi |
+	case	<enquiry clause>
+	in	<serial clause> [comma <serial clause>]*
+	[out	<serial clause>]
+	esac |
+	caseu	<enquiry clause>
+	in	<serial clause> [commau <serial clause>]*
+	[outu	<serial clause>]
+	esacu
+}
+
+PROC	output caseu label = 
+( INT mode, case number, 
+  REF [] BOOL case 
+) VOID :
+{
+	Outputs a C "case" label corresponding to 'case number' and sets the
+	corresponding flag in 'case'.  'mode' is used to optionally output a C 
+	comment indicating the mode of the conformity.
+}
+BEGIN   
+	INT	code stream = CODESTREAM current level;
+	IF	case[ casenumber ]
+	THEN	{ bad case conformity  }
+ 		pmessage( 720, mode name( mode ) );
+		write c stream
+		( ( "A_ERROR(""Bad case conformity - two choices for mode"");",
+		    cnewline
+		  ), code stream
+		)
+	ELSE
+		case[ casenumber ] := TRUE;
+		write c stream
+		( ( "case ", whole( casenumber, 0 ), ": ",
+		    ( verbose option
+		    | "/* "+ mode name( mode ) +" */"
+		    | ""
+		    ), cnewline                      
+		  ), code stream
+		)
+	FI
+END;
+
+PROC	subunion choice =
+( UCHOICE uchoice,
+  VALUE union,
+  REF [] BOOL case
+) VOID:
+{
+Where a uchoice is itself of mode union, a C "case" label for each constituent
+mode must be output.
+}
+BEGIN
+	REF VECTOR [] INT modes of union = constituents( mode OF union );
+     	[] CHAR table =
+		union to union table
+		( modes of union,
+	  	  constituents (mode OF uchoice)
+		) [1:];
+	FOR i	TO UPB table
+	DO      IF 	ABS table[i] /= 0
+		THEN    output caseu label( modes of union[ i ], i, case )
+		FI      
+	OD;                                      
+	SKIP
+END;
+
+PROC	then = ( REF VALUE enquiry ) VOID:
+BEGIN
+	CFRAGMENT boolean expr = 
+		IF	ISSKIP enquiry
+		THEN    "A_ENQ_SKIP"
+		ELSE    GETCFRAGMENT enquiry
+		FI;
+	write c stream
+	(( "if ( ", boolean expr, " )", cnewline,
+	   "{ ", cnewline
+	 ),CODESTREAM current level
+	)
+END;
+
+PROC	else = VOID:
+BEGIN
+	write c stream
+	(( "} ", cnewline, "else", cnewline, "{ ", cnewline
+	 ),CODESTREAM current level
+	)
+END;
+
+PROC	case in = ( REF VALUE enquiry )VOID:
+BEGIN
+	CFRAGMENT integer expr = 
+		IF	ISSKIP enquiry
+		THEN    "A_ENQ_SKIP"
+		ELSE    GETCFRAGMENT enquiry
+		FI;     
+	write c stream
+	(( "switch ( ", integer expr, " )", cnewline,
+	   "{ ", cnewline,
+	   "case 1: ", cnewline
+	 ),CODESTREAM current level
+	)
+END;
+
+PROC	inu = 
+( UCHOICE uchoice, 
+  REF VALUE union, 
+  REF [] BOOL case 
+) VOID:
+BEGIN
+	CFRAGMENT united object = 
+		GETCFRAGMENT 
+		("united object - for case conformity" YIELD union);
+	INT code stream = CODESTREAM current level;
+	write c stream 
+	(( "switch ( ", united object, ".mode", " )", cnewline,
+	   "{ ", cnewline
+	  ),code stream
+	);
+      	IF	param OF uchoice < 0
+	THEN    { uchoice is another union }
+		subunion choice( uchoice, union, case )
+	ELSE    output caseu label( mode OF uchoice, param OF uchoice, case )
+	FI
+END;
+
+PROC	comma = ( INT case no ) VOID :
+BEGIN
+   	write c stream
+	(( "break;", cnewline,
+	   "case ", whole( case no, 0 ), ": ", cnewline
+	 ),CODESTREAM current level
+	)
+END;
+
+PROC	commau = 
+( UCHOICE uchoice,
+  VALUE union,
+  REF [] BOOL case
+) VOID:
+BEGIN                
+	INT code stream = CODESTREAM current level;
+	write c stream( ("break;",cnewline), code stream );
+	IF 	param OF uchoice < 0
+	THEN    { uchoice is another union }
+		subunion choice( uchoice, union, case )
+	ELSE    output caseu label( mode OF uchoice, param OF uchoice, case )
+	FI
+END;
+
+PROC	out = VOID :
+BEGIN
+	INT code stream = CODESTREAM current level;
+	write c stream
+	( ( "break;", cnewline, "default: ", cnewline ),
+	  code stream
+	)
+END;
+
+PROC	VOID outu = out;
+
+PROC	esac = ( BOOL out part, ANSWER answer) VOID:
+BEGIN
+	INT code stream = CODESTREAM current level;
+     	INT result mode = mode OF value OF answer;
+
+     	IF NOT out part
+     	THEN
+		IF result mode = void mode AND skip option
+		THEN
+			SKIP { no C "default:" label }
+		ELSE
+			{ create out-part which causes
+			  runtime error for implied OUT SKIP }
+			out;
+			write c stream( "A_IMP_SKIP ;", code stream );
+			write c stream( cnewline, code stream )
+	     	FI
+	FI;
+	write c stream
+	( ( "break;", cnewline, "} ", cnewline ),
+	  code stream
+	)
+END;
+
+PROC	( BOOL, ANSWER ) VOID esacu = esac;
+
+PROC	fi = ( BOOL else part, ANSWER answer ) VOID:
+BEGIN
+	INT	code stream = CODESTREAM current level;
+	INT	result mode = mode OF value OF answer;
+	IF	NOT else part
+	THEN	IF	NOT( result mode = void mode )
+		THEN	{ create else-part which causes
+			  runtime error for implied ELSE SKIP }
+			else;
+			write c stream(("A_IMP_SKIP ;",cnewline), code stream );
+			warning( 316 { runtime error for implied ELSE SKIP })
+		FI
+	FI;
+	write c stream( ("} ", cnewline), code stream )
+END;
+
+{
+	<optbool expression> ::=  <phrase> OREL  WARN <phrase> OREL
+				| <phrase> ANDTH WARN <phrase> ANDTH
+}
+
+PROC	optbool warning =
+( BOOL orel,
+  REF VALUE operand1
+) VOID:
+BEGIN
+	INT code stream = CODESTREAM current level;
+	evaluate( operand1 );
+	CFRAGMENT tester =
+		IF	ISTEMP operand1
+		THEN    { use this as temporary for optbool clause }
+			GETCFRAGMENT operand1
+		ELSE    { declare a temporary }
+			TEMPORARY temp := 
+			    declare c temporary( bool mode, "optbool result" );
+			write c stream
+			( ( name OF temp, " = ", GETCFRAGMENT operand1, ";",
+			    cnewline
+			  ), code stream
+			);
+			{ replace value by temporary - to be reused in optbool
+			  clause }
+			extra OF operand1 := temp;
+			name OF temp
+		FI;
+	write c stream
+	( ( ( orel | "if ( ! " | "if ( " ), tester, " )",
+	    cnewline, "{"
+	  ), code stream
+	)
+END;
+
+PROC	optbool oper = VOID:
+BEGIN
+	write c stream(( "}", cnewline ), CODESTREAM current level)
+END;
+
+{
+	<serial clause> ::= <phrase> [<separator> <phrase>]*
+	<separator>	::= semi | exit
+}
+
+PROC
+( PROPERTIES,
+  REF REF LABEL {end of clause},
+  REF BOOL	{discard level activated}
+) VOID start series = start clause;
+
+PROC	end series =
+( PROPERTIES	properties,
+  ANSWER	answer,
+  REF LABEL	end of series,
+  BOOL		discard level activated, pull stack, series contains exit
+) VOID:
+BEGIN
+	end clause
+	( properties,
+	  end OF answer,
+	  end of series,
+	  discard level activated,
+	  pull stack
+	)
+END;
+
+PROC	semi = (BOOL outstanding dynamic result, declaration) VOID:
+BEGIN
+	SKIP
+END;
+
+PROC	exit = (BOOL dynamic result, first exit, ANSWER series answer) VOID:
+BEGIN
+	"clauses: exit: end of series label not set"
+	ASSERT	( end OF series answer ISNT REF LABEL (NIL) );
+	write c stream
+	(( "goto ", name OF end OF series answer, ";", cnewline
+	 ),CODESTREAM current level
+	)
+END;
+
+{
+	CODE INSERTS
+	This is not strictly a clause, but since the insert is processed at 
+	this level it is logical to include it here.
+}
+
+PROC	code insert	=
+( CFRAGMENT code,		{ body of code insert			}
+#Next but one line changed by Phoenix Engineering SL BP21500-10-07
+  INT mode,			  mode of yeild of code insert		#
+  INT mode,			{ mode of yield of code insert		}
+  REF VALUELIST visibles	{ values visible to the code insert	}
+) TEMPORARY:			{ value to be loaded by compiler	}
+BEGIN
+	TEMPORARY result	{ This is left undefined if not required };
+	INT	stream = CODESTREAM current level;
+
+	PROC	emit define	= ( VECTOR[]CHAR symbol, text ) VOID:
+		write c stream
+		(( "#define ", symbol, " ", text, cnewline
+		 ), stream
+		);
+
+	PROC	emit undefine	= ( VECTOR[]CHAR symbol ) VOID:
+		write c stream
+		(( "#undef ", symbol, cnewline
+		 ), stream
+		);
+
+	PROC	emit code	= ( REF VALUELIST list ) VOID:
+	BEGIN
+		IF	list ISNT nil value list
+		THEN	INT	id;
+			( extra OF value OF list
+			| (IDENTIFIER i):
+			  ( id := idno OF i;
+			    emit define( id name( id ), id full name( id ) );
+			    emit code( rest OF list );
+			    emit undefine( id name( id ) )
+			  ),
+                          (ROUTINEINFO r):
+                          ( id := rdenno OF r;
+			    emit define( id name( id ), id full name( id ) );
+			    emit code( rest OF list );
+			    emit undefine( id name( id ) )
+                          )
+			| error( 902 );
+			  emit code( rest OF list )
+			)
+		ELSE	( mode /= void mode
+			| result :=
+#Next but one line changed by Phoenix Engineering SL BP21499-10-07
+			    declare c temporary( mode, "yeild of code insert" );#
+			    declare c temporary( mode, "yield of code insert" );
+			  emit define( "RESULT", name OF result )
+			);
+			write c stream( curly(code), stream );
+		       	write c stream( cnewline, stream );
+			( mode /= void mode
+			| emit undefine( "RESULT" )
+			)
+		FI
+	END;
+	{ process the list of identifiers }
+	emit code( visibles );
+	result	{ may be undefined }
+END;
+
+SKIP
+
+KEEP
+	PROPERTIES,
+	start clause,	end clause,
+	exit,		semi,
+	begin,		end,
+	then,		else,		fi,
+	case in,	comma,		out,		esac,
+	inu,		commau,		outu,		esacu, 
+	optbool warning,	optbool oper,
+	start series,	end series,
+	evaluate result, evaluate no result, evaluate simple enquiry,
+	evaluate  {from EVALUATOR},
+	code insert
+FINISH

@@ -1,0 +1,161 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Flexible names</title>
+<meta name="description" content="flexible names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node104.html">
+<link rel="previous" href="node102.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node104.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2379"
+  href="node104.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2373"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2367"
+  href="node102.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2375"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2377"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2380"
+  href="node104.html">Orthogonality</a>
+<b> Up:</b> <a name="tex2html2374"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2368"
+  href="node102.html">Well-formed modes</a>
+ &nbsp; <b>  <a name="tex2html2376"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2378"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section0012110000000000000000"></a><a name="gram-flex"></a>
+Flexible names</h1>
+
+<p>Flexible names were introduced in section
+<a href="node53.html#name-flex">5.5</a>, but only one-dimensional
+names. What has not been made apparent in the text hitherto is that a
+multiple consists of two parts: a <b>descriptor</b><a name="6905"></a>
+and the actual elements. The descriptor contains the lower and upper
+bounds of each dimension, the &ldquo;stride&rdquo; (that is, the
+number of bytes between two successive elements of the dimension in
+question), the address in memory of the first element of that
+dimension and whether the dimension is flexible. Consider the
+declaration</p>
+
+<pre>
+   FLEX[1:0][1:3]INT flexfix
+</pre>
+
+<p>Because the mode of <code>flexfix</code> is <code>REF
+FLEX[][]INT</code>, when it is subscripted, the mode of each element
+is <code>REF[]INT</code> with bounds of <code>[1:3]</code>. Clearly,
+after the declaration, <code>flexfix</code> has no elements. In
+practice, because the first (and only) dimension is flexible, there
+must be some way of referring to a &ldquo;ghost&rdquo; element whose
+descriptor (it is a one-dimensional multiple) will give its
+properties. <code>flexfix</code> is quite different from</p>
+
+<pre>
+   FLEX[1:0]FLEX[1:3]INT flexflex
+</pre>
+
+<p>each of whose elements (when it has any) have the mode
+<code>REF</code> <code>FLEX[]INT</code> with initial bounds
+<code>[1:3]</code>.</p>
+
+<p>If the declaration of <code>flexfix</code> is followed by the
+assignment and slice</p>
+
+<pre>
+   flexfix:=LOC[1:1][1:3]INT;
+   flexfix[1]:=(1,2,3)
+</pre>
+
+<p>then it is clear that the mode of <code>flexfix[1]</code> is
+<code>REF[]INT</code>.  Note that after</p>
+
+<pre>
+   flexfix:=LOC[1:4][1:3]INT
+</pre>
+
+<code>flexfix</code> refers to a multiple of which each element has the mode
+<code>[]INT</code>. However, the single dimension of</p>
+
+<pre>
+   flexfix[1]
+</pre>
+
+<p>is <i>not</i> flexible, which is why the assignment</p>
+
+<pre>
+   flexfix:=LOC[1:4][1:4]REAL #this is wrong#
+</pre>
+
+<p>will fail<a name="tex2html37"
+href="footnode.html#foot6919"><sup><span
+class="arabic">11</span>.<span class="arabic">5</span></sup></a>.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2379"
+  href="node104.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2373"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2367"
+  href="node102.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2375"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2377"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2380"
+  href="node104.html">Orthogonality</a>
+<b> Up:</b> <a name="tex2html2374"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2368"
+  href="node102.html">Well-formed modes</a>
+ &nbsp; <b>  <a name="tex2html2376"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2378"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

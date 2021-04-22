@@ -1,0 +1,323 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Multiples in structures</title>
+<meta name="description" content="multiples in structures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node71.html">
+<link rel="previous" href="node69.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node71.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1823"
+  href="node71.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1817"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1811"
+  href="node69.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1819"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1821"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1824"
+  href="node71.html">Rows of structures</a>
+<b> Up:</b> <a name="tex2html1818"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1812"
+  href="node69.html">Complex numbers</a>
+ &nbsp; <b>  <a name="tex2html1820"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1822"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1825"
+  href="node70.html#section00951000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00950000000000000000"></a><a name="struc-mult"></a>
+Multiples in structures</h1>
+
+<p>If multiples are required in a structure, the structure
+declaration<a name="4847"></a> should only contain the required bounds
+if it is an actual-declarer<a name="4848"></a>.  For example, we could
+declare<p>
+
+<pre>
+   STRUCT([]CHAR forename,
+                 surname,
+                 title)
+      lecturer=
+         ("Nerissa","Leitch","Dr")
+</pre>
+
+<p>where the mode on the left is a formal-declarer<a name="4851"></a> (remember that
+the mode on the left-hand side of an identity
+declaration<a name="4852"></a> is always a
+formal-declarer).  We could equally well declare</p>
+
+<pre>
+   STRUCT([]CHAR forename,
+                 surname,
+                 title)
+      student=
+            ("Tom","MacAllister","Mr")
+</pre>
+
+<p>As you can see, the bounds of the individual multiples differ in the
+two cases.</p>
+
+<p>When declaring a name, because the mode preceding the name
+identifier is an actual-declarer (in an abbreviated declaration), the
+bounds of the required multiples must be included. A suitable
+declaration for a name which could refer to <code>lecturer</code>
+would be</p>
+
+<pre>
+   STRUCT([7]CHAR forename,
+          [6]CHAR surname,
+          [3]CHAR title)
+            new lecturer := lecturer
+</pre>
+
+<p>but this would not be able to refer to <code>student</code>. A better
+declaration would use <tt>STRING</tt><a name="5000"></a>:</p>
+
+<pre>
+   STRUCT(STRING forename,surname,title)person
+</pre>
+
+<p>in which case we could now write</p>
+
+<pre>
+   person:=lecturer;
+   person:=student
+</pre>
+
+<p>Using field selection, we can write</p>
+
+<pre>
+   title OF person
+</pre>
+
+<p>which would have mode <code>REF STRING</code>. Thus, using field
+selection, we can assign to the individual fields of
+<code>person</code>:</p>
+
+<pre>
+   surname OF person:="McRae"
+</pre>
+
+<p>When slicing a field which is a multiple, it is necessary to
+remember that slicing<a name="4867"></a> binds more tightly than
+selecting (see chapter&nbsp;10 for a detailed explanation). Thus the
+first character of the surname of <code>student</code> would be
+accessed by writing</p>
+
+<pre>
+   (surname OF student)[1]
+</pre>
+
+<p>which would have mode <code>CHAR</code>. The parentheses ensure
+that the selection is elaborated before the slicing. Similarly, the
+first five characters of the forename of <code>person</code> would be
+accessed as</p>
+
+<pre>
+   (forename OF person)[:5]
+</pre>
+
+<p>with mode <code>REF[]CHAR</code>.</p>
+
+<p>Consider the following program:</p>
+
+<pre>
+   PROGRAM t1 CONTEXT VOID
+   BEGIN
+      MODE AMODE = STRUCT([4]CHAR a,INT b);
+      AMODE a = ("abcde",3);
+      AMODE b:=a;
+      SKIP
+   END
+   FINISH
+</pre>
+
+<p>In the identity declaration for <code>a</code>, the mode required
+is a formal-declarer<a name="4874"></a>.  In this case, the
+a68toc<a name="4875"></a> compiler will ignore the bounds in the
+declaration of <code>AMODE</code> giving the mode</p>
+
+<pre>
+   STRUCT([]CHAR a,INT b)
+</pre>
+
+<p>which explains why the structure-display on the right is accepted
+(<code>"abcde"</code> has bounds <code>[1:5]</code>). However, although the
+program compiles without errors, when it is run, it fails with the
+error message</p>
+
+<pre>
+   Run time fault (aborting):
+   ASSIGN2: bounds do not match in [] assignment
+</pre>
+
+<p>because the mode used in the declaration of the name <code>b</code>
+is an actual-declarer<a name="4880"></a> (it contains the bounds given
+in the mode declaration<a name="4881"></a>) and you cannot assign a
+<code>[]CHAR</code> with bounds <code>[1:5]</code> to a
+<code>REF[]CHAR</code> with bounds <code>[1:4]</code>.</p>
+
+<p>With more complicated structures, it is better to use a mode
+declaration. For example, we could declare</p>
+
+<pre>
+   MODE EMPLOYEE =
+      STRUCT(STRING name,
+             [2]STRING address,
+             STRING dept,ni code,tax code,
+             REAL basic,overtime rate,
+             [52]REAL net pay,tax);
+
+   EMPLOYEE emp
+</pre>
+
+<p>and then read specific values from the keyboard (chapter 9 covers
+reading data from files):</p>
+
+<pre>
+   read((name OF emp,newline,
+         (address OF emp)[1],newline,
+         (address OF emp)[2],newline,
+   ...
+</pre>
+
+<p>The modes of</p>
+
+<pre>
+   name OF emp
+   address OF emp
+   net pay OF emp
+</pre>
+
+<p>are</p>
+
+<pre>
+   REF STRING
+   REF[]STRING
+   REF[]REAL
+</pre>
+
+<p>respectively. The phrase</p>
+
+<pre>
+   (net pay OF emp)[:10]
+</pre>
+
+<p>has the mode <code>REF[]REAL</code> with bounds <code>[1:10]</code>
+and represents the net pay of <code>emp</code> for the first 10 weeks.
+Note that although the monetary values are held as <code>REAL</code>
+values, the accuracy with which a <code>REAL</code> number is stored
+is such that no rounding errors will ensue. See
+section&nbsp;<a href="node121.html#dev-money">12.1.5</a> which
+describes which modes are suitable for storing monetary values.</p>
+
+<hr>
+<h2><a name="section00951000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.11<a name="ex-vii-xi"></a>
+<dd>Given the declaration of <code>emp</code> in the text, what would be
+the mode of each of the following: Ans<a href="node141.html#ans-vii-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>address OF emp</code>  
+<p>
+<dt>(b)
+<dd><code>basic OF emp</code>  
+<p>
+<dt>(c)
+<dd><code>(tax OF emp)[12]</code>  
+<p>
+<dt>(d)
+<dd><code>(net pay OF emp)[10:12]</code>  
+<p>
+</dd>
+</dl>
+<dt>7.12<a name="ex-vii-xii"></a>
+<dd>What are the bounds of the name in (d) above?
+ Ans<a href="node141.html#ans-vii-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1823"
+  href="node71.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1817"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1811"
+  href="node69.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1819"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1821"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1824"
+  href="node71.html">Rows of structures</a>
+<b> Up:</b> <a name="tex2html1818"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1812"
+  href="node69.html">Complex numbers</a>
+ &nbsp; <b>  <a name="tex2html1820"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1822"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

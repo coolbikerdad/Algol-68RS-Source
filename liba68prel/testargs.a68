@@ -1,0 +1,69 @@
+PROGRAM  testargs  CONTEXT VOID  USE  strops,
+%4  osif,
+*4  vmsif,
+    cif,   { included as needed on VMS for simulator }
+    osmessages  { included as needed by ostools and vmsif }
+BEGIN
+
+{ " Id: " }
+configinfo A68CONFIG "$Id: testargs.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+27:09:93  Simple test program to check build of "osif" modules - tests
+             argument / file name parsing and config system.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.005 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC  print = (VECTOR [] STR  s) VOID:
+   write_buffer(stdout, concat((concat(s), newline_char)), global_msg);
+
+show_a68config( (STR s) VOID:  print(s) );
+WHILE
+   print(16r"a""Arguments list:"16r"a");
+   INT  index:= 0;
+   VECTOR [] STR  args = get_args;
+   WHILE (index PLUSAB 1) <= UPB args
+   DO  STR  arg = args[index];
+       IF arg = "-f" ANDTH  index < UPB args
+       THEN  print(("Parameter:  <", args[index PLUSAB 1], ">"));
+             FILENAME  fname = parse_filename(args[index], ".elt", global_msg);
+             print(("File:  ", filename OF fname))
+       ELSE  print(("<", arg, ">"))
+       FI
+   OD;
+   UPB prompt_args("Give more arguments: ", global_msg) /= 1
+DO  SKIP  OD
+END FINISH

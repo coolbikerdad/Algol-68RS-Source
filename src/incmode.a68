@@ -1,0 +1,106 @@
+DECS  incmode  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: incmode.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.1 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT	primitive	= 1,  {mode types}
+	proc		= 2,
+	procp		= 3,
+	union		= 4,
+	struct		= 5,
+	istruct		= 6,
+	row		= 7,
+	vector		= 8,
+	flex row	= 9,
+	flexvector	= 10,
+	straight	= 11;
+
+INT	no mode		= 0,
+	vacmode		= 1,
+	skipmode	= 2,
+	nilmode		= 3,
+	gotomode	= 4,
+	voidmode	= 5,
+	fault mode	= 6,
+    { fault mode was declared in value.incl because it is only used for special values with fault extra }
+    { now it's also use as the mode field for XTRIM and XBOUNDPACK imperatives }
+	boolmode    	= 7,
+	charmode	= 8,
+	formatmode	= 9,
+	short bits mode = 10,
+	bitsmode	= 11,
+	long bits mode	= 12,
+	long long bits mode = 13,
+	short int mode	= 14,
+	int mode	= 15,
+	long int mode	= 16,
+	long long int mode = 17,
+	short real mode = 18,
+	real mode	= 19,
+	long real mode	= 20,
+	long long real mode = 21,
+	short compl mode = 22,
+	compl mode	= 23,
+	long compl mode = 24,
+	long long compl mode = 25,
+	vector row of char mode = 26,
+	row of char mode = 27,
+	collatmode	= 28,
+	xtype mode	= 29,
+	ytype mode	= 30;
+
+INT	first non fixed mode = 31;
+
+INT	refmark = 1024;
+INT	ref refmark = refmark + refmark
+
+KEEP
+	bitsmode, boolmode, charmode,
+  	collatmode, compl mode, fault mode, 
+	first non fixed mode, flex row, flexvector,
+	formatmode, gotomode, int mode, istruct,
+	long bits mode, long compl mode,
+	long int mode, long long bits mode, long long compl mode,
+	long long int mode, long long real mode, long real mode,
+	nilmode, no mode, primitive, proc, procp, real mode,
+	ref refmark, refmark, row, row of char mode, short bits mode,
+	short compl mode, short int mode, short real mode, skipmode, straight,
+	struct, union, vacmode, vector, vector row of char mode,
+	voidmode, xtype mode, ytype mode
+FINISH

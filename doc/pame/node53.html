@@ -1,0 +1,266 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Flexible names</title>
+<meta name="description" content="flexible names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node54.html">
+<link rel="previous" href="node52.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node54.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1505"
+  href="node54.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1499"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1493"
+  href="node52.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1501"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1503"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1506"
+  href="node54.html">The mode STRING</a>
+<b> Up:</b> <a name="tex2html1500"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1494"
+  href="node52.html">Assigning to multiple names</a>
+ &nbsp; <b>  <a name="tex2html1502"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1504"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1507"
+  href="node53.html#section00751000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00750000000000000000"></a><a name="name-flex"></a>
+Flexible names</h1>
+
+<p>In the previous section, we declared mutliple names. The bounds of
+the multiple to which the name can refer are included in the
+generator. In subsequent assignments, the bounds of the new multiple
+to be assigned must be the same as the bounds given in the generator.
+In Algol&nbsp;68, it is possible to declare names which can refer to a
+multiple of any number of elements (including none) and, at a later
+time, can refer to a different number of elements. They are called
+<b>flexible</b><a name="2957"></a> names. Here is an identity
+declaration<a name="3211"></a> for a flexible
+name<a name="3212"></a>:</p>
+
+<pre>
+   REF FLEX[]INT fn = LOC FLEX[1:0]INT
+</pre>
+
+<p>There are several things to note about this declaration.  Firstly,
+the mode of the name is not <code>REF[]INT</code>, but <tt>REF
+FLEX[]INT</tt>.  The <tt>FLEX</tt><a name="3213"></a> means that the
+bounds<a name="2965"></a> of the multiple to which the name can refer
+can differ from one assignment to the next.  Secondly, the bounds of
+the name generated at the time of the declaration are
+<code>[1:0]</code>. Since the upper bound is less than the lower
+bound, the multiple is said to be <b>flat</b><a name="2967"></a>; in
+other words, it has no elements at the time of its
+declaration<a name="tex2html17"
+href="footnode.html#foot3214"><sup><span
+class="arabic">6</span>.<span class="arabic">6</span></sup></a>.
+Thirdly, <code>FLEX</code> is present on both sides of the identity
+declaration (but in the last section of this chapter we shall see a
+way round that).</p>
+
+<p>We can now assign multiples of integers to <code>fn</code>:</p>
+
+<pre>
+   fn:=(1,2,3,4)
+</pre>
+
+<p>The bounds of the multiple to which <code>fn</code> now refers are
+<code>[1:4]</code>. Again, we can write</p>
+
+<pre>
+   fn:=(2,3,4)
+</pre>
+
+<p>Now the bounds of the multiple to which <code>fn</code> refers are
+<code>[1:3]</code>. We can even write</p>
+
+<pre>
+   fn:=7
+</pre>
+
+<p>in which the right-hand side will be rowed<a name="2975"></a> to yield a
+one-dimensional multiple with bounds <code>[1:1]</code>, and</p>
+
+<pre>
+   fn:=()
+</pre>
+
+<p>giving bounds of <code>[1:0]</code>.</p>
+
+<p>In the original declaration of <code>fn</code> the bounds were
+<code>[1:0]</code>. The compiler will not ignore any bounds other than
+<code>[1:0]</code>, but will generate a name whose initial bounds are
+those given. So the declaration<a name="3215"></a></p>
+
+<pre>
+   REF FLEX[]INT fn1 = LOC FLEX[1:4]INT
+</pre>
+
+<p>will cause <code>fn1</code> to have the bounds <code>[1:4]</code> instead of
+<code>[1:0]</code>.</p>
+
+<p>The lower bound does not have to be <code>1</code>. In this
+example,</p>
+
+<pre>
+   REF[]INT m1 = LOC[-1:1]INT;
+   FOR i FROM LWB m1 TO UPB m1 DO m1[i]:=i+3 OD;
+   REF FLEX[]INT f1 = LOC FLEX[1:0]INT := m1
+</pre>
+
+<p>the bounds of <code>f1</code> after the initial assignment are
+<code>[-1:1]</code>.</p>
+
+<p>If a flexible name is sliced or trimmed, the resulting name is
+called a <b>transient name</b><a name="2984"></a> because it can only
+exist so long as the flexible name stays the same size. Such names
+have a restricted use to avoid the production of names which could
+refer to nothing. For example, consider the declaration and
+assignation</p>
+
+<pre>
+   REF FLEX[]CHAR c1 = LOC FLEX[1:0]INT;
+    c1:="abcdef";
+</pre>
+
+<p>Suppose now we have the declaration</p>
+
+<pre>
+   REF[]CHAR lc1=c1[2:4]; #WRONG#
+</pre>
+
+<p>followed by this assignment:</p>
+
+<pre>
+   c1:="z";
+</pre>
+
+<p>It is clear that <code>lc1</code> no longer refers to anything
+meaningful.  Thus transient names cannot be assigned without being
+dereferenced, nor given identifiers, nor used as parameters for a
+routine (whether operator or procedure).  However there is nothing to
+prevent them being used in an assignment.  For example,</p>
+
+<pre>
+   REF FLEX[]CHAR s=LOC[1:0]CHAR:=
+      "abcdefghijklmnopqrstuvwxyz";
+   s[2:7]:=s[9:14]
+</pre>
+
+<p>where the name yielded by <code>s[9:14]</code> is immediately dereferenced.
+Note that the bounds of a trim are fixed even if the value trimmed is a
+flexible name. So the assignment</p>
+
+<pre>
+   s[2:7]:="abc"
+</pre>
+
+<p>would produce a run-time fault<a name="2995"></a>.</p>
+
+<hr>
+<h2><a name="section00751000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.10<a name="ex-v-x"></a>
+<dd>The declaration
+<pre>
+   REF FLEX[]CHAR s = LOC FLEX[1:0]CHAR
+</pre>
+
+applies to the following: Ans<a href="node139.html#ans-v-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>What is the value of <code>s</code>?  
+<p>
+<dt>(b)
+<dd>
+what are the bounds<a name="3007"></a> of <code>s</code>?  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1505"
+  href="node54.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1499"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1493"
+  href="node52.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1501"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1503"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1506"
+  href="node54.html">The mode STRING</a>
+<b> Up:</b> <a name="tex2html1500"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1494"
+  href="node52.html">Assigning to multiple names</a>
+ &nbsp; <b>  <a name="tex2html1502"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1504"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

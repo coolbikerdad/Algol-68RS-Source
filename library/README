@@ -1,0 +1,45 @@
+
+This file lists the contents and use of directory 
+                 /usr/src/ctrans/library/
+
+
+This area contains:- Aassign.c
+                     Acoerce.c
+                     Aerror.c
+                     Afirst.c
+                     Ah1alloc.c
+                     Ah1alloc.h
+                     Ahalloc.c
+                     Ahalloc.h
+                     Aharea.h
+                     Ahbasic.h
+                     Ahbitmap.h
+                     Ahcheck.h
+                     Ahclr.h
+                     Ahcollec.c
+                     Ahcollec.h
+                     Ahdebug.c
+                     Ahdebug.h
+                     Ahdesc.h
+                     Ahparam.c
+                     Ahparam.h
+                     Ahpolicy.c
+                     Ahpolicy.h
+                     Ahptr.h
+                     Ahseg.h
+                     Ahstats.c
+                     Ahstats.h
+                     Ahsweep.c
+                     Ahsweep.h
+                     Ahtrace.c
+                     Ahtrace.h
+                     Aindex.c
+                     Amath.c
+                     Astrings.c
+
+
+This area depends on:-  library
+                        sunos  or  i386emx  or  Linux
+
+Rebuild using "make"
+

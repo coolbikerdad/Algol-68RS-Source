@@ -1,0 +1,498 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>a68toc extensions</title>
+<meta name="description" content="a68toc extensions">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node131.html">
+<link rel="previous" href="node129.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node131.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2933"
+  href="node131.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2927"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2921"
+  href="node129.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2929"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2931"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2934"
+  href="node131.html">Control routines</a>
+<b> Up:</b> <a name="tex2html2928"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2922"
+  href="node129.html">Standard procedures</a>
+ &nbsp; <b>  <a name="tex2html2930"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2932"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2935"
+  href="node130.html#section001551000000000000000">Modes peculiar to a68toc</a>
+<li><a name="tex2html2936"
+  href="node130.html#section001552000000000000000">a68toc constructs</a>
+<li><a name="tex2html2937"
+  href="node130.html#section001553000000000000000">Operators</a>
+<ul>
+<li><a name="tex2html2938"
+  href="node130.html#section001553100000000000000">Operators using <tt>BIOP 99</tt></a>
+<li><a name="tex2html2939"
+  href="node130.html#section001553200000000000000">Other operators</a>
+</ul></ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001550000000000000000"></a><a name="stan-a68toc"></a>
+a68toc extensions</h1>
+
+<p>The a68toc manual describes the language restrictions of the
+translator. Chapter&nbsp;3 contains details of the <code>FORALL</code>
+construct.  This section is intended to document those extensions used
+in the QAD standard prelude.</p>
+
+<h2><a name="section001551000000000000000"></a><a name="stan-ctmodes"></a>
+Modes peculiar to a68toc</h2>
+
+<p>The principal extensions to Algol 68 modes are the introduction of
+multiple modes whose housekeeping overhead is less than the standard
+row modes.</p>
+
+<ol>
+
+<li><code>STRUCT n MODE</code><br> This mode is called an
+&ldquo;indexable structure&rdquo;<a name="9920"></a>.  The
+<span class="math"><i>n</i></span>, a non-negative integer, is built
+into the mode and must be an integer denotation. The base mode can be
+any mode. It is equivalent to a C&nbsp;language &ldquo;array&rdquo;.
+Here is a list of modes used in the QAD standard prelude which are
+either indexable structures or references to such:-
+
+<ol>
+<li><tt>CSTR=REF STRUCT 16000000 CHAR</tt><a name="11130"></a>
+<br>
+This is a reference mode and is equivalent to the C&nbsp;type <code>char *</code>.
+It is used in the <code>ALIEN</code> (see section <a href="node123.html#dev-alien">12.3.4</a>)
+definitions of <code>linux getenv</code>, for example, to reference
+data.</li>
+
+<li><tt>CCHARPTRPTR=REF STRUCT 16000000 CSTR</tt><a name="11131"></a>
+<br>
+Again, this is a reference mode and is equivalent to the C&nbsp;type
+<code>char **</code>. It is used to access the program's arguments.
+</li>
+</ol>
+A considerable number of operators use indexable structures for
+converting values of one mode to another using memory mapping (see
+section <a href="#stan-ctbiop">13.5.3</a>.</li>
+<li><code>VECTOR[n]MODE</code> <br>
+The <tt>VECTOR</tt><a name="11132"></a> mode has less overhead than a row mode because its
+lower bound is always one. It is commonly used to provide strings to
+C procedures. The following modes are defined using <code>VECTOR</code>:-
+
+<ol>
+<li><tt>STR=VECTOR[0]CHAR</tt><a name="11133"></a>
+<br>
+Due to the way in which C&nbsp;multiples are defined (without bounds), the
+mode <code>STR</code> can be used for any length <code>VECTOR</code>.
+</li>
+<li><tt>RVC=REF STR</tt><a name="11134"></a><a name="stan-rvc"></a>
+<br>
+This mode is used in a number of operators, such as
+<pre>
+   OP MAKERVC = ([]CHAR s)RVC:
+</pre>
+
+It is also used to construct other modes such as <code>BOOK</code> (see
+section <a href="node132.html#stan-trans">13.7</a>).
+</li>
+</ol>
+</li>
+<li>Coercions provided by a68toc
+<br>
+A value of mode <code>STRUCT n MODE</code> can be coerced directly to a value
+of mode <code>VECTOR[]MODE</code>. Likewise, a value of the latter mode can
+be coerced to a value of mode <code>[]MODE</code>. Therefore, preferably use
+the mode <code>[]MODE</code> for a parameter to a procedure.
+</li>
+<li>Other modes used by a68toc
+<br>
+Some modes are provided to make interfacing with C&nbsp;library procedures
+easier. Here are the ones provided by the QAD standard prelude:-
+
+<ol>
+<li><tt>CPTR=REF BITS</tt><a name="11135"></a>
+<br>
+This mode is equivalent to the C&nbsp;type <code>void *</code>.
+</li>
+<li><tt>CINTPTR=REF INT</tt><a name="11136"></a>
+<br>
+Equivalent to the C&nbsp;type <code>int *</code>.
+</li>
+<li><tt>CCHARPTR=REF CHAR</tt><a name="11137"></a>
+<br>
+Equivalent to the C&nbsp;type <code>char *</code>.
+</li>
+<li><tt>GCPARAM=STRUCT(STR name,INT value)</tt><a name="11138"></a>
+<br>
+Used to access parameters of the garbage-collector (see section
+<a href="node131.html#stan-gc">13.6.3</a> below).
+</li>
+<li><tt>PDESC=STRUCT(CPTR cp,CSTR env)</tt><a name="11139"></a>
+<br>
+This represents the structure created by a68toc for every Algol&nbsp;68
+procedure. The field <code>cp</code> contains the actual memory address of
+the procedure and the field <code>env</code> contains data used by the
+procedure.
+</li>
+<li><code>VDESC=STRUCT(CCHARPTR data,BITS gc,</code>
+<br>
+<tt>             INT upb)</tt><a name="11140"></a>
+<br>
+This mode represents the housekeeping overhead of a <code>VECTOR</code>.
+The <code>data</code> field is the actual memory address of the start of
+the data and the <code>upb</code> field is the upper bound of the vector.
+The <code>gc</code> field is used by the garbage-collector (the heap
+manager).
+</li>
+</ol>
+</li>
+</ol>
+
+<h2><a name="section001552000000000000000"></a><a name="stan-ctcons"></a>
+a68toc constructs</h2>
+
+<p>This section describes those constructs which are either peculiar to
+a68toc or which are in some way different from standard
+Algol&nbsp;68.</p>
+
+<ol>
+<li><code>FORALL</code>
+<br>
+<code>FORALL</code> is described in section <a href="node38.html#rep-forall">3.10</a>.
+
+</li>
+<li><tt>ALIEN</tt><a name="11141"></a> and <tt>CODE</tt><a name="11142"></a>
+<br>
+Both <code>ALIEN</code> and <code>CODE</code> are described in the a68toc manual.
+<code>ALIEN</code> is also described in section <a href="node123.html#dev-alien">12.3.4</a>. All
+<code>ALIEN</code> declarations used in the QAD standard prelude appear in
+the file <code>spaliens.a68</code> which you should consult for further
+details.  You should note that the <code>ALIEN</code> declarations were
+established by trying various modes until a definition was found
+which a68toc translated to a compilable C&nbsp;source file.
+
+<p>As described in the a68toc manual, source files may contain either a
+<tt>PROGRAM</tt><a name="11143"></a> module or a <tt>DECS</tt><a name="11144"></a> module. The latter may contain
+declarations and <code>CODE</code> clauses only. See the file
+<code>transput.a68</code>, lines 1185-92, for an example of how to execute
+code when a <code>DECS</code> module is being elaborated.</p>
+</li>
+<li><tt>USE</tt><a name="11145"></a> lists
+<br>
+The <code>USE</code> list of a <code>DECS</code> or a <code>PROGRAM</code> module
+generates calls to the relevant initialiser <code>PROC</code>s (see the
+generated C&nbsp;file for <code>standard.a68</code> for an example) in the reverse
+order of the given modules. Therefore, if the order matters, ensure
+that the <code>USE</code> clause mentions each module in the proper order.
+</li>
+<li>The <tt>BY</tt><a name="11146"></a> construct in a <code>FOR</code> loop
+<br>
+Unfortunately, the <code>BY</code> construct in a <code>FOR</code> loop (see
+section <a href="node35.html#rep-rep">3.7</a>) generates an internal compiler error if it is
+followed by an integer denotation or a formula consisting of <code>+</code>
+followed by an integer denotation. This
+is a definite bug. The remedy is to use a simple procedure or operator
+or the denotation preceded by two minus symbols. For example, instead of writing
+<pre>
+   FOR i BY 5 TO ...
+</pre>
+
+use
+
+<pre>
+   FOR i BY --5 TO ...
+</pre>
+</li>
+
+<li>The default case<a name="11147"></a> in a
+<code>CASE</code> clause
+<br>
+
+<p>
+If in a <code>CASE</code> clause, whether a simple <code>CASE</code> or a
+conformity <code>CASE</code> clause (one which determines the mode of the
+value in its enquiry clause), the default clause can occur, then you
+must include at least <code>OUT SKIP</code>, otherwise you will get a
+run-time fault.
+</li>
+<li><tt>BIOP 99</tt><a name="11148"></a>
+<br>
+In Algol&nbsp;68, a <code>UNION</code> (see section <a href="node75.html#union-mode">8.1</a>) is a
+well-defined mode composed of constituent modes. A value of one of the
+constituent modes may be assigned to a name of the united mode and only
+that value (with its original mode) can be extracted. In the
+C&nbsp;language, however, a &ldquo;free union&rdquo; or just &ldquo;union&rdquo; is a piece of
+memory which can have different interpretations. The <code>BIOP 99</code>
+construct enables the operand of an operator using it to be
+re-interpreted as a value of the mode given in the yield. for example,
+the operator <code>FLAT</code> declared as
+<pre>
+   OP(REAL)STRUCT 8 CHAR FLAT = BIOP 99;
+</pre>
+
+accepts a <code>REAL</code> parameter which, as the yield, is regarded as an
+indexable structure of 8 characters each of which can be accessed
+separately. See section <a href="#stan-ctbiop">13.5.3</a> for operators using this
+construct.
+</li>
+</ol>
+
+<h2><a name="section001553000000000000000"></a><a name="stan-ctops"></a>
+Operators</h2>
+
+<p>These are largely operators using the <code>BIOP 99</code>
+construct, but there are a number of other operators which ease the
+task of interfacing with C&nbsp;library procedures.</p>
+
+<h3><a name="section001553100000000000000"></a><a name="stan-ctbiop"></a>
+Operators using <tt>BIOP 99</tt></h3>
+
+<p>Most of the operators used in the QAD standard prelude which are
+defined using the <code>BIOP 99</code> construct are for internal use only.
+In the following list, the full declaration</p>
+
+<pre>
+   OP(CPTR)CSTR TOCSTR = BIOP 99;
+</pre>
+
+is abbreviated to
+
+<pre>
+   OP TOCSTR=(CPTR)CSTR:
+</pre>
+
+<p>Here is a list of operators using the <code>BIOP 99</code>
+construct which are made available by the QAD standard prelude:-</p>
+
+<ol>
+<li><tt>OP FLAT=(REAL)STRUCT 8 CHAR:</tt><a name="flatreal"></a></li>
+<li><tt>OP FLAT=(SHORT REAL)STRUCT 4
+   CHAR:</tt><a name="flatshortreal"></a></li>
+<li><tt>OP FLAT=(STRUCT 8 CHAR)REAL:</tt><a name="flat8char"></a></li>
+<li><tt>OP FLAT=(STRUCT 4 CHAR)SHORT REAL:</tt><a name="flat4char"></a></li>
+<li><tt>OP FLATB=(LONG BITS)STRUCT 8
+   CHAR:</tt><a name="flatblbits"></a></li>
+<li><tt>OP FLATB=(BITS)STRUCT 4 CHAR:</tt><a name="flatbbits"></a></li>
+<li><tt>OP FLATB=(SHORT BITS)STRUCT 2
+   CHAR:</tt><a name="flatbsbits"></a></li>
+<li><tt>OP FLATB=(SHORT SHORT BITS)STRUCT 1
+   CHAR:</tt><a name="flatbssbits"></a></li>
+<li><tt>OP FLATB=(STRUCT 8 CHAR)LONG
+   BITS:</tt><a name="flatb8char"></a></li>
+<li><tt>OP FLATB=(STRUCT 4 CHAR)BITS:</tt><a name="flatb4char"></a></li>
+<li><tt>OP FLATB=(STRUCT 2 CHAR)SHORT
+   BITS:</tt><a name="flatb2char"></a></li>
+<li><tt>OP FLATB=(STRUCT 1 CHAR)SHORT SHORT
+   BITS:</tt><a name="flatb1char"></a></li>
+<li><tt>OP CCHARPTRTOCSTR=(CCHARPTR)CSTR:</tt><a name="11150"></a>
+<br>
+This operator is used to define the <code>on exit</code> procedure.
+</li>
+<li><tt>OP CSTRTOCCHARPTR=(CSTR)CCHARPTR:</tt><a name="11151"></a>
+<br>
+This operator converts in the opposite direction.
+</li>
+<li><tt>OP TOCPTR=(INT)CPTR:</tt><a name="11152"></a>
+</li>
+<li><tt>OP TOCSTR=(CPTR)CSTR:</tt><a name="11153"></a>
+</li>
+<li><tt>TOPDESC=(PROC VOID)PDESC:</tt><a name="11154"></a>
+<br>
+This operator provides a means of getting the address of a procedure
+and is used to provide the identifier of an Algol&nbsp;68 procedure which
+must be elaborated by an <code>ALIEN</code> procedure (such as a C&nbsp;library
+routine).
+<br>
+<code>OP TOPDESC=(PROC(INT,CPTR)VOID)PDESC:</code>
+<br>
+<code>OP TOPDESC=(PROC(INT)VOID)PDESC:</code>
+<br>
+<code>OP TOPDESC=(PROC(INT,RVC)PDESC:</code>
+<br>
+You can define as many <code>TOPDESC</code> operators as you wish with
+operands of procedures you will need. You will certainly need more
+definitions of <code>TOPDESC</code> if you write wrapper procedures for X
+Window System procedures which have procedural parameters. See the file
+<code>transput.a68</code> for details of how this operator is used.
+</li>
+<li><tt>OP TORPDESC=(REF PROC VOID)RPDESC:</tt><a name="11155"></a>
+<br>
+This operator converts a reference to a <code>PROC VOID</code> to a
+reference to a value of mode <code>PDESC</code>.
+</li>
+<li><tt>OP TOVDESC=(STR)VDESC:</tt><a name="11156"></a>
+<br>
+This operator provides a means of getting the address of the
+<code>STR</code> in a form suitable as a parameter to C&nbsp;library routines.
+</li>
+<li><tt>OP TOVBDESC=(VECTOR[]BITS)VBDESC</tt><a name="11157"></a>
+<br>
+This operator provides a means of getting the address of the
+<code>VECTOR[]BITS</code>.
+</li>
+<li><tt>OP TOVIDESC=(VECTOR[]INT)VIDESC</tt><a name="11158"></a>
+<br>
+Exactly as for the previous routine, but for a <code>VECTOR[]INT</code>.
+</li>
+</ol>
+
+<h3><a name="section001553200000000000000"></a><a name="stan-ctothops"></a>
+Other operators</h3>
+
+<p>Here is a list of operators not using the <code>BIOP 99</code>
+construct:-</p>
+
+<ol>
+<li><tt>OP CPTRTORVC=(CPTR)RVC:</tt><a name="11159"></a>
+<br>
+Used to cast the C&nbsp;type <code>void *</code> to the type <code>char *</code>.
+</li>
+<li><tt>OP CSTRTORVC=(CSTR)RVC:</tt><a name="11160"></a>
+<br>
+Converts a C string to an <code>RVC</code> using the standard
+RS Algol 68 coercion
+<pre>
+   REF STRUCT n CHAR =&gt; REF VECTOR[]CHAR
+</pre>
+
+It is mainly used to access C strings yielded by C library routines.
+The parameter must be terminated by a <code>null character</code>.
+</li>
+<li><tt>OP FLATRVB=(RVC)BITS:</tt><a name="11161"></a>
+<br>
+Converts a <code>VECTOR[4]CHAR</code> into a <code>BITS</code>.
+</li>
+<li><tt>OP FLATRVLB=(RVC)LONG BITS:</tt><a name="11162"></a>
+<br>
+Converts a <code>VECTOR[8]CHAR</code> into a <code>LONG BITS</code>.
+</li>
+<li><tt>OP FLATRVSB=(RVC)SHORT BITS:</tt><a name="11163"></a>
+<br>
+Converts a <code>VECTOR[2]CHAR</code> into a <code>SHORT BITS</code>.
+</li>
+<li><tt>OP FLATRVSSB=(RVC)SHORT SHORT BITS:</tt><a name="11164"></a>
+<br>
+Converts a <code>BECTOR[1]CHAR</code> into a <code>SHORT SHORT BITS</code>.
+</li>
+<li><tt>OP FLATRVR=(RVC)REAL:</tt><a name="11165"></a>
+<br>
+Converts a <code>VECTOR[8]CHAR</code> into a <code>REAL</code>.
+</li>
+<li><tt>OP FLATRVSR=(RVC)SHORT REAL:</tt><a name="11166"></a>
+<br>
+Converts a <code>VECTOR[4]CHAR</code> into a <code>SHORT REAL</code>.
+</li>
+<li><tt>OP MAKERVC=(CHAR)RVC:</tt><a name="11167"></a>
+<br>
+<code>OP MAKERVC=(STR)RVC:</code>
+<br>
+<code>OP MAKERVC=([]CHAR)RVC:</code>
+</li>
+<li><tt>OP VBTOCPTR=(VECTOR[]BITS)CPTR:</tt><a name="11168"></a>
+<br>
+This operator gets the address of the <code>VECTOR[]BITS</code> in a form
+suitable as a parameter to a C&nbsp;library routine.
+</li>
+<li><tt>OP VCTOCHARPTR=(STR)CCHARPTR:</tt><a name="11169"></a>
+<br>
+Yields the C pointer from an a68toc descriptor. If a C&nbsp;string is
+expected, a <code>null character</code> must be appended to the data before
+the routine is called. This need not be done for string denotations.
+This routine may be used to yield a C&nbsp;pointer from an <code>RVC</code>, as
+the C&nbsp;representation is the same.
+</li>
+<li><tt>OP VITOINTPTR=(VECTOR[]INT)CINTPTR:</tt><a name="11170"></a>
+<br>
+Yields the address of the <code>VECTOR[]INT</code> in a form suitable for
+use as a parameter of a C&nbsp;library routine.
+</li>
+<li><tt>OP STRTOCSTR=(STR)CSTR:</tt><a name="11171"></a>
+<br>
+The operator combines the action of the operators
+<tt>CCHARPTRTOCSTR</tt> and <code>VCTOCHARPTR</code>.
+</li>
+<li><tt>OP Z=(STR str)STR:</tt><a name="11172"></a>
+<br>
+Yields a null-terminated <code>STR</code> from a <code>STR</code> for use with the
+C&nbsp;library.
+</li>
+</ol>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2933"
+  href="node131.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2927"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2921"
+  href="node129.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2929"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2931"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2934"
+  href="node131.html">Control routines</a>
+<b> Up:</b> <a name="tex2html2928"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2922"
+  href="node129.html">Standard procedures</a>
+ &nbsp; <b>  <a name="tex2html2930"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2932"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

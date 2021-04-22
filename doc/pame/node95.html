@@ -1,0 +1,690 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Coercions</title>
+<meta name="description" content="coercions">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node96.html">
+<link rel="previous" href="node94.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node96.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2251"
+  href="node96.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2245"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2239"
+  href="node94.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2247"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2249"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2252"
+  href="node96.html">Enclosed clauses</a>
+<b> Up:</b> <a name="tex2html2246"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2240"
+  href="node94.html">Contexts</a>
+ &nbsp; <b>  <a name="tex2html2248"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2250"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2253"
+  href="node95.html#section001231000000000000000">Deproceduring</a>
+<li><a name="tex2html2254"
+  href="node95.html#section001232000000000000000">Dereferencing</a>
+<li><a name="tex2html2255"
+  href="node95.html#section001233000000000000000">Weakly-dereferencing</a>
+<li><a name="tex2html2256"
+  href="node95.html#section001234000000000000000">Uniting</a>
+<li><a name="tex2html2257"
+  href="node95.html#section001235000000000000000">Widening</a>
+<li><a name="tex2html2258"
+  href="node95.html#section001236000000000000000">Rowing</a>
+<li><a name="tex2html2259"
+  href="node95.html#section001237000000000000000">Voiding</a>
+<li><a name="tex2html2260"
+  href="node95.html#section001238000000000000000">Legal coercions</a>
+<li><a name="tex2html2261"
+  href="node95.html#section001239000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001230000000000000000"></a><a name="gram-coercions"></a>
+Coercions</h1>
+
+<p>There are seven coercions in the language, namely</p>
+
+<ul>
+<li><span  class="textbf">voiding</span>
+</li>
+<li><span  class="textbf">rowing</span>
+</li>
+<li><span  class="textbf">widening</span>
+</li>
+<li><span  class="textbf">uniting</span>,
+</li>
+<li><span  class="textbf">deproceduring</span>
+</li>
+<li><span  class="textbf">dereferencing</span>
+</li>
+<li><span  class="textbf">weakly-dereferencing</span>
+</li>
+</ul>
+
+<p>Roughly speaking, the coercions can be
+arranged in a hierarchy within the hierarchy of contexts thus:</p>
+
+<ul>
+<li>Strong context
+
+<ul>
+<li>deproceduring<a name="6402"></a>
+</li>
+<li>rowing<a name="6403"></a>
+</li>
+<li>voiding<a name="6404"></a>
+</li>
+<li>widening<a name="6405"></a>
+</li>
+</ul>
+</li>
+<li>Firm context
+
+<ul>
+<li>uniting<a name="6408"></a>
+</li>
+</ul>
+</li>
+<li>Meek context
+
+<ul>
+<li>dereferencing<a name="6411"></a>
+</li>
+</ul>
+</li>
+<li>Weak context
+
+<ul>
+<li>weakly-dereferencing<a name="6414"></a>
+</li>
+</ul>
+</li>
+<li>Soft context
+
+<ul>
+<li>deproceduring
+</li>
+</ul>
+</li>
+</ul>
+
+<p>The only coercion not yet met is weakly-dereferencing. However, it
+is useful to describe all the coercions here. Before we do so, it
+should be noted that one of the limitations of the language is that
+you cannot specify the kind of context. Thus if you have a weak
+context and you would like a firm context, you cannot specify it.
+However, in any context, you can use a <b>cast</b><a name="6420"></a>
+(see the section on primaries below) which will always make a context
+strong and because all coercions are available in a strong context,
+you can use the cast to specify the mode you require.</p>
+
+<h2><a name="section001231000000000000000"></a><a name="gram-deproc"></a>
+Deproceduring</h2>
+
+<p>This<a name="6424"></a> coercion is available in all contexts.
+Deproceduring is the process by which a parameterless procedure is
+called.  For example, the procedure
+<tt>random</tt><a name="6940"></a>, declared in the standard
+prelude<a name="6427"></a> as having mode <code>PROC REAL</code>, when
+called yields a <code>REAL</code>.  We can represent the coercion
+by</p>
+
+<div align="center" class="mathdisplay">
+<code>PROC REAL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REAL</code>
+</div>
+
+<p>The <code>PROC</code> is &ldquo;removed&rdquo;, which is why it is
+called deproceduring.</p>
+
+<p>There are occasions when the identifier of a procedure can be
+written without the procedure being called. In the program
+fragment</p>
+
+<pre>
+   PROC REAL rnd:=random
+</pre>
+
+<p>the right-hand side of the assignment requires the mode <code>PROC
+REAL</code> because the mode of the name identified by
+<code>rnd</code> is <code>REF</code> <code>PROC</code>
+<code>REAL</code>.  Clearly, <code>random</code> is not called
+here.</p>
+
+<p>The only possible ambiguities with deproceduring are those of
+assignments and casts. For example, having declared <code>rnd</code>
+above, the subsequent assignment</p>
+
+<pre>
+   rnd:=random;
+</pre>
+
+<p>yields a value of mode <code>REF PROC REAL</code>, because the
+value of an assignment is the value of the left-hand side (see section
+<a href="node100.html#gram-quat">10.8</a>). However, the following
+&ldquo;go-on symbol&rdquo; indicates that the assignment should now be
+voided. It is a rule of the language that voiding takes place before
+deproceduring if the unit being voided is an assignment. If, however,
+<code>rnd</code> had been used on its own, as in</p>
+
+<pre>
+   rnd;
+</pre>
+
+<p>then it would have been dereferenced, then deprocedured and the
+resulting <code>REAL</code> value voided. This would ensure that any
+side-effects (see sections <a href="node61.html#rout-nopar">6.1.6</a>
+and <a href="node62.html#rout-dyad">6.2.3</a>) would take effect.</p>
+
+<p>Similarly, in the unit</p>
+
+<pre>
+   PROC REAL(rnd);
+</pre>
+
+<p><code>rnd</code> (with mode <code>REF PROC REAL</code>) will be dereferenced, but
+the resulting value of mode <code>PROC REAL</code> will be voided
+immediately since it is clear that a <code>REAL</code> value is not
+required. Note that all the code examples using a go-on symbol could
+have been written with <code>END</code> or <code>FI</code> etc, provided that the
+resulting context would have resulted in voiding.</p>
+
+<p>When writing a program, it is common to make
+mistakes<a name="tex2html33"
+href="footnode.html#foot6440"><sup><span
+class="arabic">11</span>.<span class="arabic">1</span></sup></a>, and
+one mistake is to write the identifier of a procedure without its
+parameters (the primary of a call).  This is not, strictly speaking,
+an error. At least, not a grammatical error. However, in such a case,
+the a68toc<a name="6441"></a> compiler will issue a warning:</p>
+
+<pre>
+   Proc with parameters voided,
+   parameters of call forgotten perhaps
+</pre>
+
+<p>in which case the mistake should be obvious. Suppose you write the
+identifier of a procedure in a formula without its parameters, as
+in</p>
+
+<pre>
+   PROC p1 = (INT n)INT:  n**2+3;
+   INT a:=4;  a:=4+p1;
+</pre>
+
+<p>then the a68toc<a name="6941"></a> compiler will
+issue the message</p>
+
+<pre>
+   op + not declared for INT and PROC (INT)INT
+</pre>
+
+<p>The error message for a procedure identifier on the right-hand side
+of an assignment is</p>
+
+<pre>
+   PROC (INT)INT cannot be coerced to INT
+</pre>
+
+<p>Deproceduring only occurs with parameterless procedures.</p>
+
+<h2><a name="section001232000000000000000"></a><a name="gram-deref"></a>
+Dereferencing</h2>
+
+<p>This is the process of moving from a name to the value to which it
+refers (which could also be a name--see chapter&nbsp;11). For example,
+if <code>x</code> has mode <code>REF REAL</code>, then in the
+formula<a name="6454"></a></p>
+
+<pre>
+   x * 3.5
+</pre>
+
+<p>the name <code>x</code> will be dereferenced to yield a new instance of the
+<code>REAL</code> referred to by <code>x</code>. The coercion can be
+represented by</p>
+
+<div align="center" class="mathdisplay">
+<code>REF REAL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REAL</code>
+</div>
+
+<p>If <code>rx</code> has mode <code>REF REF REAL</code> (that is,
+<code>rx</code> can refer to a name of mode <code>REF REAL</code>),
+then the formula</p>
+
+<pre>
+   rx * 3.5
+</pre>
+
+<p>will result in <code>rx</code> being dereferenced twice. In this
+case, the coercion could be represented as</p>
+
+<div align="center" class="mathdisplay">
+<code>REF REF REAL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REAL</code>
+</div>
+
+<p>Dereferencing is available in all contexts except soft.</p>
+
+<p>When a name, such as <code>rx</code>, is dereferenced twice, new
+instances of both the values referred to (in the case of
+<code>rx</code>, the <code>REF REAL</code> and the <code>REAL</code>
+values) are created. However, the new instance of the <code>REF
+REAL</code> value is discarded after the creation of the
+<code>REAL</code> value. This has no effect on the elaboration of the
+program.</p>
+
+<h2><a name="section001233000000000000000"></a><a name="gram-wderef"></a>
+Weakly-dereferencing</h2>
+
+<p>This<a name="6464"></a> is a variant of the dereferencing
+coercion in which any number of <code>REF</code>s can be removed except the
+last. Thus, in the case of <code>rx</code> above, weakly-dereferencing would
+yield a mode of <code>REF REAL</code> and could be represented by</p>
+
+<div align="center" class="mathdisplay">
+<code>REF REF REAL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REF REAL</code>
+</div>
+
+<p>This coercion is only available in weak
+contexts<a name="6466"></a>.  It is particularly useful in the
+selection of secondaries<a name="6467"></a> of structure modes which
+contain fields whose mode starts with <code>REF</code> (see
+section&nbsp;<a href="node98.html#gram-sec">10.6</a> and
+chapter&nbsp;11).</p>
+
+<h2><a name="section001234000000000000000"></a><a name="gram-unite"></a>
+Uniting</h2>
+
+<p>In<a name="6472"></a> this coercion, the mode of a value becomes a
+united-mode. For example, if <code>OO</code> is an operator both of
+whose operands are <code>UNION(INT,REAL)</code>, then in the
+formula</p>
+
+<pre>
+   3.0 OO -2
+</pre>
+
+<p>both operands will be united to <code>UNION(INT,REAL)</code> before the
+operator is elaborated. These coercions can be represented by</p>
+
+<div align="center">
+<table border="0">
+<tr>
+   <td>
+      <table border="0">
+         <tr><td>INT</td><td style="font-size:70px;" rowspan="2">}</td></tr>
+         <tr><td>REAL</td></tr>
+      </table>
+   </td>
+   <td style="font-size:150%">&#8658;</td>
+   <td>
+      <table border="0"
+	<tr><td>UNION(INT,REAL)</td></tr>
+      </table>
+   </td>
+</tr>
+</table>
+</div>
+
+<p>Uniting is available in firm<a name="6481"></a> and
+strong<a name="6482"></a> contexts and must precede rowing.</p>
+
+<h2><a name="section001235000000000000000"></a><a name="gram-wid"></a>
+Widening</h2>
+
+<p>In a strong context, an integer can be replaced by a real number and
+a real number replaced by a complex number, depending on the mode
+required. This can be represented by</p>
+
+<div align="center">
+   <table border="0">
+      <tr>
+	 <td>INT&nbsp;</td>
+	 <td><span style="font-size=150%">&#8658;</span></td>
+         <td>&nbsp;REAL</td>
+      </tr>
+      <tr>
+	 <td>REAL&nbsp;</td>
+	 <td><span style="font-size=150%">&#8658;</span></td>
+	 <td>&nbsp;COMPL</td>
+      </tr>
+    </table>
+</div>
+
+Widening is not available in formul&#230; (firm contexts).
+
+<h2><a name="section001236000000000000000"></a><a name="gram-row"></a>
+Rowing</h2>
+
+<p>If<a name="6496"></a>, in a strong context, a multiple is required
+and a value is provided whose mode is the base mode<a name="6497"></a>
+of the multiple, then the value will be rowed to provide the required
+multiple.  There are two cases to consider:</p>
+
+<ol>
+<li>If the mode required is not a name and the base-mode of the
+multiple is the mode of the value given, then the value will be rowed
+to give <code>[]base-mode</code>.  For example, if the required mode is
+<code>[]INT</code>, then the base-mode is <code>INT</code>.  In the identity
+declaration
+
+<pre>
+   []INT i = 3
+</pre>
+
+the value yielded by the right-hand side (an integer) will be rowed and
+the coercion can be expressed as
+
+<div align="center">
+<code>INT</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>[]INT</code>
+</div>
+
+<p>If the value given is a row mode, such as <code>[]INT</code>, then
+there are two possible rowings that can occur.</p>
+
+<ol type="a">
+<li>In the identity declaration
+<pre>
+   [,]INT a = i
+</pre>
+
+<p>where <code>i</code> was declared above with mode
+<code>[]INT</code>, the coercion can be expressed as</p>
+
+<div align="center">
+<code>[]INT</code>&nbsp;
+<span style="font-size=150%">&#8658;</span>
+&nbsp;<code>[,]INT</code>
+</div>
+
+<p>In this case, an extra dimension is added to the multiple.
+</li>
+<li>If the required mode is <code>[][]INT</code> as in
+
+<pre>
+   [][]INT r = i
+</pre>
+
+<p>then the value on the right-hand side is rowed to yield a
+one-dimensional multiple whose base-mode is <code>[]INT</code>. This
+coercion can be represented as</p>
+
+<div align="center">
+<code>[]INT</code>&nbsp
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>[][]INT</code>
+</div>
+</li>
+</ol>
+</li>
+
+<li>If the multiple required is a name<a name="6510"></a>, then a name of
+a non-multiple can be supplied. For example, if the value supplied is
+a name with mode <code>REF INT</code>, then a name with mode
+<code>REF[]INT</code> will be created. In this identity
+declaration<a name="6511"></a>
+
+<pre>
+   REF[]INT ni = LOC INT
+</pre>
+
+the local generator<a name="6514"></a> yields a name with mode
+<code>REF INT</code> and the rowing coercion yields a name with mode
+<code>REF[]INT</code> and bounds <code>[1:1]</code>. The coercion can be
+represented by
+
+<div align="center">
+<code>REF INT</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REF[]INT</code>
+</div>
+
+The first kind of rowing could also occur. The identity-declaration
+
+<pre>
+   []REF INT rri = LOC INT
+</pre>
+
+produces the coercion represented by
+
+<div align="center">
+<code>REF INT</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>[]REF INT</code>
+</div>
+
+Likewise, a name of mode <code>REF[]INT</code> can be rowed to a name with
+mode <code>REF[,]INT</code> or a non-name with mode <code>[]REF[]INT</code>,
+depending on the mode required. Although <code>INT</code> has been taken as
+an example, any mode could have been used.
+</li>
+</ol>
+
+<h2><a name="section001237000000000000000"></a><a name="gram-voiding"></a>
+Voiding</h2>
+
+<p>In<a name="6523"></a> a strong context<a name="6524"></a>, a value
+can be thrown away, either because the mode
+<tt>VOID</tt><a name="6942"></a> is explicitly stated, as in a
+procedure yielding <code>VOID</code>, or because the context demands
+it, as in the case of a semicolon<a name="6943"></a> (the go-on
+symbol).  In this case, there are two exceptions to the rule that the
+value yielded depends only on the context. Casts and assignments are
+voided after the elaboration of the unit, but all other units are
+subjected to the usual coercions in a strong context.  The following
+program illustrates this:</p>
+
+<pre>
+   PROGRAM tproc CONTEXT VOID
+   USE standard
+   BEGIN
+      PROC INT p;
+      PROC pp = INT:
+      (
+         INT i=random int(6);
+         print(i);
+         i
+      );
+      p:=pp;
+      print((" p:=pp",newline));
+      pp;
+      print((" pp",newline));
+      p;
+      print((" p",newline));
+      PROC INT(p);
+      print((" PROC INT(p)",newline))
+   END
+   FINISH
+</pre>
+
+<p>The output is</p>
+
+<pre>
+    p:=pp
+            +6 pp
+            +1 p
+    PROC INT(p)
+</pre>
+
+<p>In the assignment<a name="6532"></a> <code>p:=pp</code>, the mode required on the
+right-hand side is <code>PROC INT</code> so <code>pp</code> is not
+deprocedured<a name="6533"></a>, and <code>p</code> is neither
+dereferenced<a name="6534"></a> nor deprocedured after the
+assignment has been elaborated. The cast <code>PROC INT(p)</code> is
+elaborated (that is, <code>p</code> is dereferenced) and then voided
+without the procedure <code>p</code> (or <code>pp</code>) being
+called<a name="6535"></a>.</p>
+
+<h2><a name="section001238000000000000000"></a><a name="gram-legal"></a>
+Legal coercions</h2>
+
+<p>In any context, you have a unit which has, or yields, a value of some
+mode; and in that context you have a mode which you need. If the
+value of the mode you have can be coerced to a value of the mode you
+need (assuming that the two modes differ), then the coercion is
+legal.</p>
+
+<p>For example, suppose you have a value of mode <code>PROC</code>
+<code>REF</code> <code>INT</code> in a strong context and the mode you
+want is <code>[]COMPL</code>.  The required mode can be got via</p>
+
+<ul>
+<li>deproceduring to mode <code>REF INT</code>
+</li>
+<li>dereferencing to mode <code>INT</code>
+</li>
+<li>widening to mode <code>REAL</code>
+</li>
+<li>widening to mode <code>COMPL</code>
+</li>
+<li>rowing to mode <code>[]COMPL</code>
+</li>
+</ul>
+
+<p>In practice, coercions are not usually as complicated as this.</p>
+
+<p>Notice that deproceduring can take place before or after
+dereferencing, that widening must occur before rowing and that voiding
+can only take place after all other coercions. For example, you cannot
+coerce <code>[]INT</code> to <code>[]REAL</code>.</p>
+
+<hr>
+<h2><a name="section001239000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>10.1<a name="ex-x-i"></a>
+<dd>Which coercions are available in a meek context?
+ Ans<a href="node144.html#ans-x-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>10.2<a name="ex-x-ii"></a>
+<dd>Which coercions are not available in a strong context?
+ Ans<a href="node144.html#ans-x-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>10.3<a name="ex-x-iii"></a>
+<dd>For each of the following, state whether the given mode can be
+coerced to the mode to the right of the arrow: Ans<a href="node144.html#ans-x-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)</dt>
+<dd>Weak context: <code>REF REF BOOL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>REF BOOL</code></dd>
+
+<dt>(b)</dt>
+<dd><code>PROC INT</code>
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>UNION(REAL,COMPL)</code></dd>
+ 
+<dt>(c)</dt>
+<dd>Soft context: <code>REF PROC CHAR</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>CHAR</code></dd>
+
+<dt>(d)</dt>
+<dd>Meek context: <code>PROC REF REAL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>[]REAL</code></dd>
+
+<dt>(e)</dt>
+<dd>Weak context: <code>PROC REF BOOL</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;<code>BOOL</code></dd>
+
+<dt>(f)</dt>
+<dd><code>PROC INT</code>&nbsp;
+<span style="font-size:150%">&#8658;</span>
+&nbsp;</span><code>UNION([]INT,[]REAL)</code></dd>
+</dd>
+</dl>
+</dd>
+</dl>
+
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2251"
+  href="node96.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2245"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2239"
+  href="node94.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2247"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2249"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2252"
+  href="node96.html">Enclosed clauses</a>
+<b> Up:</b> <a name="tex2html2246"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2240"
+  href="node94.html">Contexts</a>
+ &nbsp; <b>  <a name="tex2html2248"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2250"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

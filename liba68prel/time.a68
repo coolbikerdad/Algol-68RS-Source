@@ -1,0 +1,147 @@
+DECS  time  CONTEXT VOID  USE  strops, messageproc, osif:
+
+configinfo A68CONFIG "$Id: time.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+05:12:94  33.001  ELLA   CmplxNos   Procedures for processing time - taken from
+                                    ELLA basics. 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+INT  zero = ABS "0";
+
+PROC seconds = INT:  SHORTEN get_time;
+
+PROC  days = (INT  seconds) INT:  seconds OVER 86400;
+
+PROC  time_proc = (INT  seconds,  RVC  ans) VOID:
+BEGIN   { parameter must be of length 8 }
+   INT  dsecs = seconds MOD 86400,
+        dmins = dsecs OVER 60,
+        hrs = dmins OVER 60,
+        mins = dmins MOD 60,
+        secs = dsecs MOD 60;
+   ans:= STRUCT 8 CHAR
+      ( REPR (zero + (hrs OVER 10)),  REPR (zero + (hrs MOD 10)),  ":",
+        REPR (zero + (mins OVER 10)),  REPR (zero + (mins MOD 10)), ":",
+        REPR (zero + (secs OVER 10)),  REPR (zero + (secs OVER 10)) )
+END;
+
+PROC  time = (INT  seconds) RVC:
+   ( HEAP VECTOR [8] CHAR  ans;  time_proc(seconds, ans);  ans );
+
+VECTOR [] STR  months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
+
+PROC  date_proc = (INT  seconds,  RVC  ans) VOID:
+BEGIN  { parameter must be of length 11 }
+   IF seconds < 0 THEN  global_msg(system, "date_str:  Illegal time")  FI;
+   INT  days:= (seconds OVER 86400) + 1,
+        year:= 1970;    { ELLA Universal Time (locally adjusted since 1982) }
+                        { **** EUT now defined as POSIX time - since 1/1/1970 }
+   BOOL  leap:= FALSE;
+   WHILE days > 366
+   DO  IF leap:= year MOD 4 = 0
+       THEN  days MINUSAB 366
+       ELSE  days MINUSAB 365
+       FI;
+       year PLUSAB 1
+   OD;
+   IF NOT leap  ANDTH  (days = 366) THEN  year PLUSAB 1;  days:= 1  FI;
+   leap:= year MOD 4 = 0;
+   INT  month:= 1;
+   STRUCT 12 INT  mnths =
+      (31, IF leap THEN 29 ELSE 28 FI, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+   WHILE days > mnths[month]
+   DO  days MINUSAB mnths[month];  month PLUSAB 1  OD;
+   INT  dten = days OVER 10;
+   ans[1]:= IF dten = 0 THEN  " "  ELSE  REPR (zero + dten)  FI;
+   ans[2]:= REPR (zero + (days MOD 10));
+   ans[3]:= ans[7]:= " ";
+   ans[4:6]:= months[month];
+   FOR i FROM 11 BY -1 TO 8
+   DO  ans[i]:= REPR (zero + (year MOD 10));
+       year OVERAB 10
+   OD
+END;
+
+PROC  date = (INT  seconds) RVC:
+   ( HEAP VECTOR [11] CHAR  ans;  date_proc(seconds, ans);  ans );
+
+PROC  date_time = (INT  seconds) RVC:
+BEGIN
+  HEAP VECTOR [21] CHAR  ans;
+  ans[12]:= ans[13]:= " ";
+  date_proc(seconds, ans[: 11]);
+  time_proc(seconds, ans[14:21]);
+  ans
+END;
+
+
+PROC  centichars = (INT  i) RVC:
+BEGIN    { converts a number into a 2 decimal place string }
+   INT  centi:= i;
+   RVC  fr = LOC STRUCT 3 CHAR:= ".00";
+   FOR i FROM 3 BY -1 TO 2
+   DO  fr[i]:= REPR (zero + (centi MOD 10));
+       centi OVERAB 10
+   OD;
+   concat((intchars(centi), fr))
+END;
+
+
+PROC  cpu = RVC:  centichars(get_cpu_time);
+
+
+PROC  time_str = RVC:  { = "<time>__<cpu>__" }
+BEGIN
+   INT  cpu:= get_cpu_time;
+   STRUCT 5 CHAR  fr:= ".00  ";
+   FOR i FROM 3 BY -1 TO 2
+   DO  fr[i]:= REPR (zero + (cpu MOD 10));
+       cpu OVERAB 10
+   OD;
+   STRUCT 10 CHAR  time;
+   time_proc(SHORTEN get_time, time[:8]);
+   time[9]:= time[10]:= " ";
+   concat((time, intchars(cpu), fr))
+END
+
+
+KEEP  get_time,  get_cpu_time,
+      seconds,  time,  date,  date_time,  centichars, cpu, time_str
+FINISH
+
+
+

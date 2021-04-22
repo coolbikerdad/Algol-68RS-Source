@@ -1,0 +1,1016 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+<!--converted with latex2html 2008 (1.71)
+original version by: nikos drakos, cblu, university of leeds
+* revised and updated by: marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+  <title>Standard operators</title>
+  <meta name="description" content="standard operators">
+  <meta name="keywords" content="pame">
+  <meta name="resource-type" content="document">
+  <meta name="distribution" content="global">
+  <meta http-equiv="content-style-type" content="text/css">
+  <link rel="stylesheet" href="pame.css">
+  <link rel="next" href="node129.html">
+  <link rel="previous" href="node127.html">
+  <link rel="up" href="node125.html">
+  <link rel="next" href="node129.html">
+</head>
+
+<body>
+
+<div class="navigation">
+<!--navigation panel-->
+<a name="tex2html2874" href="node129.html"><img width="37" height="24"
+align="bottom" border="0" alt="next" src="next.png"></a> <a name="tex2html2868"
+href="node125.html"><img width="26" height="24" align="bottom" border="0"
+alt="up" src="up.png"></a> <a name="tex2html2862" href="node127.html"><img
+width="63" height="24" align="bottom" border="0" alt="previous"
+src="prev.png"></a> <a name="tex2html2870" href="node1.html"><img width="65"
+height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> <a
+name="tex2html2872" href="node147.html"><img width="43" height="24"
+align="bottom" border="0" alt="index" src="index.png"></a> <br>
+<b>Next:</b> <a name="tex2html2875" href="node129.html">Standard procedures</a>
+<b>Up:</b> <a name="tex2html2869" href="node125.html">Standard Prelude</a>
+<b>Previous:</b> <a name="tex2html2863" href="node127.html">Environment
+enquiries</a> &nbsp; <b><a name="tex2html2871"
+href="node1.html">Contents</a></b> &nbsp; <b><a name="tex2html2873"
+href="node147.html">Index</a></b> <br>
+<br>
+</div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a> 
+<ul class="childlinks">
+  <li><a name="tex2html2876"
+    href="node128.html#section001531000000000000000">Method of description</a>
+ </li>
+  <li><a name="tex2html2877"
+    href="node128.html#section001532000000000000000">Standard priorities</a>
+ </li>
+  <li><a name="tex2html2878"
+    href="node128.html#section001533000000000000000">Operators with row
+    operands</a></li>
+  <li><a name="tex2html2879"
+    href="node128.html#section001534000000000000000">Operators with
+    <tt>BOOL</tt> operands</a></li>
+  <li><a name="tex2html2880"
+    href="node128.html#section001535000000000000000">Operators with
+    <tt>INT</tt> operands</a> 
+    <ul>
+      <li><a name="tex2html2881"
+        href="node128.html#section001535100000000000000">Monadic operators</a>
+     </li>
+      <li><a name="tex2html2882"
+        href="node128.html#section001535200000000000000">Dyadic operators</a>
+     </li>
+    </ul>
+    <br>
+ </li>
+  <li><a name="tex2html2883"
+    href="node128.html#section001536000000000000000">Operators with
+    <tt>REAL</tt> operands</a> 
+    <ul>
+      <li><a name="tex2html2884"
+        href="node128.html#section001536100000000000000">Monadic operators</a>
+     </li>
+      <li><a name="tex2html2885"
+        href="node128.html#section001536200000000000000">Dyadic operators</a>
+     </li>
+    </ul>
+    <br>
+ </li>
+  <li><a name="tex2html2886"
+    href="node128.html#section001537000000000000000">Operators with
+    <tt>COMPL</tt> operands</a> 
+    <ul>
+      <li><a name="tex2html2887"
+        href="node128.html#section001537100000000000000">Monadic operators</a>
+     </li>
+      <li><a name="tex2html2888"
+        href="node128.html#section001537200000000000000">Dyadic operators</a>
+     </li>
+    </ul>
+    <br>
+ </li>
+  <li><a name="tex2html2889"
+    href="node128.html#section001538000000000000000">Operators with mixed
+    operands</a></li>
+  <li><a name="tex2html2890"
+    href="node128.html#section001539000000000000000">Operators with
+    <tt>BITS</tt> operands</a> 
+    <ul>
+      <li><a name="tex2html2891"
+        href="node128.html#section001539100000000000000">Monadic operators</a>
+     </li>
+      <li><a name="tex2html2892"
+        href="node128.html#section001539200000000000000">Dyadic operators</a>
+     </li>
+    </ul>
+    <br>
+ </li>
+  <li><a name="tex2html2893"
+    href="node128.html#section0015310000000000000000">Operators with
+    <tt>CHAR</tt> operands</a></li>
+  <li><a name="tex2html2894"
+    href="node128.html#section0015311000000000000000">Operators with
+    <tt>STRING</tt> operands</a></li>
+  <li><a name="tex2html2895"
+    href="node128.html#section0015312000000000000000">Assigning operators</a>
+ </li>
+  <li><a name="tex2html2896"
+    href="node128.html#section0015313000000000000000">Other operators</a></li>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001530000000000000000"></a><a name="stan-ops"></a> <br>
+Standard operators</h1>
+
+<p>The number of distinct operators is vastly increased by the
+availability of <code>SHORT</code> and <code>LONG</code> modes. Thus
+it is imperative that some kind of shorthand be used to describe the
+operators. Following the subsection on the method of description are
+sections devoted to operators with classes of operands. The end of
+this section contains tables of all the operators.</p>
+
+<h2><a name="section001531000000000000000"></a><a name="stan-opsmeth"></a> <br>
+Method of description</h2>
+
+<p>Where an operator has operands and yield which may include <code>LONG</code> or
+<code>SHORT</code>, the mode is written using <code>L</code>. For example, 
+
+<pre>
+   OP + = (L INT, L INT)L INT:
+</pre>
+
+<p>is a shorthand for the following operators:-</p>
+
+<pre>
+   OP + = (LONG INT,LONG INT)LONG INT:
+   OP + = (INT,INT)INT:
+   OP + = (SHORT INT,SHORT INT)SHORT INT:
+   OP + = (SHORT SHORT INT,SHORT SHORT INT)
+                SHORT SHORT INT:
+</pre>
+
+<p>Ensure that wherever <code>L</code> is replaced by
+<code>SHORT</code>s or <code>LONG</code>s, it should be replaced by
+the same number of <code>SHORT</code>s or <code>LONG</code>s
+throughout the definition of that operator. This is known as
+&ldquo;consistent substitution&rdquo;. Note that any number of
+<code>SHORT</code>s or <code>LONG</code>s can be given in the mode of
+any value whose mode accepts such constructs (<code>INT</code>,
+<code>REAL</code>, <code>COMPL</code> and <code>BITS</code>), but the
+only modes which can be distinguished are those specified by the
+environment enquiries in
+section&nbsp;<a href="node127.html#stan-prec">13.2.1</a>. However, you
+should note that even though values of modes <code>LONG REAL</code>
+and <code>LONG LONG REAL</code> cannot be distinguished internally,
+the Algol&nbsp;68 compiler still regards them as having unique modes
+and you will need to use the <code>LENG</code> operator to convert a
+value of mode <code>LONG REAL</code> to a value of mode <code>LONG
+LONG REAL</code>.</p>
+
+<p>The priority of an operator is independent of the mode of the operator and
+so is given in a separate subsection. Each operator is accompanied by a short
+description of its function.</p>
+
+<h2><a name="section001532000000000000000"></a><a name="stan-prio"></a> <br>
+Standard priorities</h2>
+
+<p>The priority of declarations of the standard operators can be
+changed in subsidiary ranges using the
+<tt>PRIO</tt><a name="10874"></a> declaration (see
+section&nbsp;<a href="node62.html#rout-dyad">6.2.3</a>). Each of the
+following enumerated nine sections contains a list of those operators
+which have that priority. Operators in parentheses are not defined in
+the Revised Report. See
+section&nbsp;<a href="node131.html#stan-cont">13.6</a> for their
+details.</p>
+
+<ol>
+  <li><code>+:=</code>, <code>-:=</code>, <code>*:=</code>, <code>/:=</code>,
+    <code>%:=</code>, <code>%*:=</code>, <code>+=:</code> <br>
+    <tt>PLUSAB</tt><a name="10875"></a>, <tt>MINUSAB</tt><a name="10876"></a>,
+    <tt>TIMESAB</tt><a name="10877"></a>, <tt>DIVAB</tt><a name="10878"></a>,
+    <tt>OVERAB</tt><a name="10879"></a>, <tt>MODAB</tt><a name="10880"></a>,
+    <tt>PLUSTO</tt><a name="10881"></a></li>
+  <li><tt>OR</tt><a name="10882"></a></li>
+  <li><code>&amp;</code>, <tt>AND</tt><a name="10883"></a></li>
+  <li><tt>=</tt><a name="10884"></a>, <tt>/=</tt><a name="10885"></a>,
+    <code>EQ</code>, <code>NE</code></li>
+  <li><tt>&lt;</tt><a name="10886"></a>, <tt>&lt;=</tt><a name="10887"></a>,
+    <tt>&gt;=</tt><a name="10888"></a>, <tt>&gt;</tt><a name="10889"></a> <br>
+    <code>LT</code>, <code>LE</code>, <code>GE</code>, <code>GT</code></li>
+  <li><tt>-</tt><a name="10890"></a>, <tt>+</tt><a name="10891"></a>,</li>
+  <li><tt>*</tt><a name="10892"></a>, <tt>/</tt><a name="10893"></a>,
+    <code>%</code>, <code>%*</code>, <br>
+    <tt>OVER</tt><a name="10894"></a>, <tt>MOD</tt><a name="10895"></a>,
+    <tt>ELEM</tt><a name="10896"></a>,</li>
+  <li><tt>**</tt><a name="10897"></a>, <code>UP</code>, <code>DOWN</code>,
+    <tt>SHL</tt><a name="10898"></a>, <tt>SHR</tt><a name="10899"></a>,
+    <tt>LWB</tt><a name="10900"></a>, <tt>UPB</tt><a name="10901"></a></li>
+  <li><code>+*</code>, <tt>I</tt><a name="10902"></a>, (<tt>MIN</tt><a
+    name="10903"></a>, <tt>MAX</tt><a name="10904"></a>)</li>
+</ol>
+
+<h2><a name="section001533000000000000000"></a><a name="stan-optrow"></a> <br>
+Operators with row operands</h2>
+
+<p>Both monadic and dyadic forms are available. We shall use the mode
+<code>ROW</code> to denote the mode of any multiple.</p>
+
+<ol>
+  <li>Monadic. <br>
+    <tt>OP LWB = (ROW)INT:</tt><a name="10905"></a> <br>
+    <tt>OP UPB = (ROW)INT:</tt><a name="10906"></a> <br>
+    Yields the lower or upper bound of the first or only dimension of its
+    operand.</li>
+  <li>Dyadic. <br>
+    <tt>OP LWB = (INT n,ROW r)INT:</tt><a name="10907"></a> <br>
+    <tt>OP UPB = (INT n,ROW r)INT:</tt><a name="10908"></a> <br>
+    Yields the lower or upper bound of the <span
+    class="math"><i>n</i></span>-th dimension of the multiple <code>r</code>.
+ </li>
+</ol>
+
+<h2><a name="section001534000000000000000"></a><a name="stan-opbool"></a> <br>
+Operators with <tt>BOOL</tt> operands</h2>
+
+<ol>
+  <li><tt>OP OR = (BOOL a,b)BOOL:</tt><a name="10910"></a> <br>
+    Logical <code>OR</code>.</li>
+  <li><code>OP &amp; = (BOOL a,b)BOOL:</code> <br>
+    Logical <code>AND</code> (synonym <tt>AND</tt><a name="10911"></a>).</li>
+  <li><tt>OP NOT = (BOOL a)BOOL:</tt><a name="10912"></a> <br>
+    Logical <code>NOT</code>: <code>TRUE</code> if <code>a</code> is
+    <code>FALSE</code> and vice versa.</li>
+  <li><tt>OP = =(BOOL a,b)BOOL:</tt><a name="10913"></a> <br>
+    <code>TRUE</code> if <code>a</code> equals <code>b</code> (synonym is
+    <code>EQ</code>).</li>
+  <li><tt>OP /= =(BOOL a,b)BOOL:</tt><a name="10914"></a> <br>
+    <code>TRUE</code> if <code>a</code> not equal to <code>b</code> (synonym is
+    <code>NE</code>).</li>
+  <li><tt>OP ABS = (BOOL a)INT:</tt><a name="10915"></a> <br>
+    <code>ABS TRUE</code> is <span class="math">1</span> and <code>ABS
+    FALSE</code> is <span class="math">0</span>.</li>
+</ol>
+
+<h2><a name="section001535000000000000000"></a><a name="stan-opint"></a> <br>
+Operators with <tt>INT</tt> operands</h2>
+
+<p>Most of these operators take values of any precision. The
+<code>L</code> shorthand is used for those that can.</p>
+
+<h3><a name="section001535100000000000000"></a><a name="stan-opintmon"></a> <br>
+Monadic operators</h3>
+
+<p>Consistent substitution applies to all those operators in this
+section which use the <code>L</code> shorthand: apart from
+<code>LENG</code> and <code>SHORTEN</code>, the precision of the yield
+is the same as the precision of the operand.</p>
+
+<ol>
+  <li><tt>OP + = (L INT a)L INT:</tt><a name="10917"></a> <br>
+    The identity operator. Does nothing.</li>
+  <li><tt>OP - = (L INT a)L INT:</tt><a name="10918"></a> <br>
+    The negation operator.</li>
+  <li><code>OP ABS = (L INT a)L INT:</code> <br>
+    The absolute value. <code>ABS -3 = +3</code></li>
+  <li><tt>OP SIGN = (L INT a)INT:</tt><a name="10919"></a> <br>
+    Yields <span class="math">-1</span> for a negative operand, <span
+    class="math">+1</span> for a positive operand and <span
+    class="math">0</span> for a zero operand.</li>
+  <li><tt>OP ODD = (L INT a)BOOL:</tt><a name="10920"></a> <br>
+    Yields <code>TRUE</code> if the operand is odd.</li>
+  <li><tt>OP LENG = (L INT a)LONG L INT:</tt><a name="10921"></a> <br>
+    <code>OP LENG = (SHORT L INT a)L INT:</code> <br>
+    Converts its operand to the next longer precision. Note that you cannot use
+    both <code>SHORT</code> and <code>LONG</code> in the same mode.</li>
+  <li><tt>OP SHORTEN = (L INT a)SHORT L INT:</tt><a name="10922"></a> <br>
+    <code>OP SHORTEN = (LONG L INT a)L INT:</code> <br>
+    Converts its operand to the next shorter precision. If the value exceeds
+    <code>l max int</code> for the next shorter precision, the value will be
+    truncated. This can lead to erroneous results. See also <code>LENG</code>.
+ </li>
+</ol>
+
+<p></p>
+
+<h3><a name="section001535200000000000000"></a><a name="stan-opintdy"></a> <br>
+Dyadic operators</h3>
+
+<p>In this section, consistent substitution is used wherever the <code>L</code>
+shorthand is used. For operators with mixed operands, see section&nbsp;<a
+href="#stan-mixed">13.3.8</a>.</p>
+
+<ol>
+  <li><tt>OP + = (L INT a,L INT b)L INT:</tt><a name="10923"></a> <br>
+    Arithmetic addition: <span class="math"><i>a</i> + <i>b</i></span>. No
+    check is made for integer overflow.</li>
+  <li><tt>OP - = (L INT a,L INT b)L INT:</tt><a name="10924"></a> <br>
+    Arithmetic subtraction: <span class="math"><i>a</i> - <i>b</i></span>. No
+    check is made for integer overflow.</li>
+  <li><tt>OP * = (L INT a,L INT b)L INT:</tt><a name="10925"></a> <br>
+    Arithmetic multiplication: <span class="math"><i>a</i> <tt>x</tt>
+    <i>b</i></span>. No check is made for integer overflow.</li>
+  <li><tt>OP / = (L INT a,L INT b)L REAL:</tt><a name="10926"></a> <br>
+    Arithmetic fractional division. Even if the result is a whole number (for
+    example, <span class="math">6/3</span>), the yield always has mode <code>L
+    REAL</code>. Where a result of mode <code>L REAL</code> needs to be output,
+    but cannot be output due to the limitations built into the definition of
+    the mode <code>SIMPLOUT</code>, the operators <code>LENG</code> or
+    <code>SHORTEN</code> should be used. Floating-point overflow can be checked
+    (see section <a href="node131.html#stan-fpov">13.6.1</a>).</li>
+  <li><code>OP % = (L INT a,L INT b)L INT:</code> <br>
+    Arithmetic integer division. Division by zero in the a68toc<a
+    name="9283"></a> implementation produces a floating-point exception
+    paradoxically (synonym <tt>OVER</tt><a name="10927"></a>).</li>
+  <li><tt>OP ** = (L INT a,INT b)L INT:</tt><a name="10928"></a> <br>
+    Computes <i>a</i><sup>b</sup> for <i>b</i> &#8805; 0.</li>
+  <li><code>OP %* = (L INT a,L INT b)L INT:</code> <br>
+    Arithmetic modulo (synonym <tt>MOD</tt><a name="10929"></a>). For example 
+<pre>
+   5 MOD 3 = 2
+</pre>
+ </li>
+  <li><tt>OP +* = (L INT a,L INT b)L COMPL:</tt><a name="10930"></a> <br>
+    Converts two integers into a complex number of the same precision (synonym
+    <tt>I</tt><a name="10931"></a>).</li>
+  <li><tt>OP &lt; = (L INT a,L INT b)BOOL:</tt><a name="10932"></a> <br>
+    Arithmetic &ldquo;less than&rdquo;: <span class="math"><i>a</i> &lt;
+    <i>b</i></span> (synonym <code>LT</code>).</li>
+  <li><tt>OP &lt;= = (L INT a,L INT b)BOOL:</tt><a name="10933"></a> <br>
+    Arithmetic &ldquo;less than or equals&rdquo;: <i>a</i>
+    &#8804; <i>b</i> (synonym <code>LE</code>).</li>
+  <li><tt>OP &gt;= = (L INT a,L INT b)BOOL:</tt><a name="10934"></a> <br>
+    Arithmetic &ldquo;greater than or equals&rdquo;: <i>a</i> &#8805;
+    <i>b</i> (synonym <code>GE</code>).</li>
+  <li><tt>OP &gt; = (L INT a,L INT b)BOOL:</tt><a name="10935"></a> <br>
+    Arithmetic &ldquo;greater than&rdquo;: <span class="math"><i>a</i> &gt;
+    <i>b</i></span> (synonym <code>GT</code>).</li>
+  <li><tt>OP = = (L INT a,L INT b)BOOL:</tt><a name="10936"></a> <br>
+    Arithmetic equality: <span class="math"><i>a</i> = <i>b</i></span> (synonym
+    <code>EQ</code>).</li>
+  <li><tt>OP /= = (L INT a,L INT b)BOOL:</tt><a name="10937"></a> <br>
+    Arithmetic inequality: <i>a</i> &#8800; <i>b</i> (synonym <code>NE</code>).</li>
+</ol>
+
+<p></p>
+
+<h2><a name="section001536000000000000000"></a><a name="stan-opreal"></a> <br>
+Operators with <tt>REAL</tt> operands</h2>
+
+<p>Most of these operators can have operands of any precision. The
+<code>L</code> shorthand is used for them.</p>
+
+<h3><a name="section001536100000000000000"></a><a name="stan-oprealmon"></a>
+Monadic operators</h3>
+
+<ol>
+  <li><tt>OP + = (L REAL a)L REAL:</tt><a name="10939"></a> <br>
+    Arithmetic identity. Does nothing.</li>
+  <li><tt>OP - = (L REAL a)L REAL:</tt><a name="10940"></a> <br>
+    Arithmetic negation: <span class="math">- <i>a</i></span>.</li>
+  <li><tt>OP ABS = (L REAL a)L REAL:</tt><a name="10941"></a> <br>
+    The absolute value. <code>ABS -3.0 = +3.0</code></li>
+  <li><tt>OP SIGN = (L REAL a)INT:</tt><a name="10942"></a> <br>
+    Yields <span class="math">-1</span> for negative operands, <span
+    class="math">+1</span> for positive operands and <span
+    class="math">0</span> for a zero operand (<span class="math">0.0</span>).
+ </li>
+  <li><tt>OP ROUND = (REAL a)INT:</tt><a name="10943"></a> <br>
+    Rounds its operand to the nearest integer. If the value ends with <span
+    class="math">.5</span>, it is rounded to the nearest even number. This is
+    contrary to normal Linux C&nbsp;library practice, but is an internationally
+    accepted standard which ensures that rounding errors do not accumulate. The
+    operator checks for integer overflow (see section&nbsp;<a
+    href="node131.html#stan-fpov">13.6.1</a> for details).</li>
+  <li><code>OP ROUND = (L REAL a)L INT:</code> (for any precision except
+    <code>REAL</code>) <br>
+    Rounds its operand to the nearest integer. Does not check integer overflow.
+    If its operand exceeds <code>l max int</code>, an erroneous result will
+    ensue. <code>ROUND</code> should be used for a <code>REAL</code> operand if
+    you want to check for integer overflow (see section&nbsp;<a
+    href="node131.html#stan-fpov">13.6.1</a> for details of floating-point
+    overflow checking).</li>
+  <li><tt>OP ENTIER = (REAL a)INT:</tt><a name="10944"></a> <br>
+    Truncates its operand to the next lowest integer. The operator checks for
+    integer overflow (see section&nbsp;<a
+    href="node131.html#stan-fpov">13.6.1</a> for details).</li>
+  <li><code>OP ENTIER = (L REAL a)L INT:</code> (for any precision except
+    <code>REAL</code>) <br>
+    Truncates its operand to the next lowest integer. The operator does not
+    check integer overflow. If its operand exceeds <code>l max int</code>, an
+    erroneous result will ensue. Use <code>ENTIER</code> for a
+    <code>REAL</code> operand if you want to check for integer overflow (see
+    section&nbsp;<a href="node131.html#stan-fpov">13.6.1</a> for details of
+    floating-point overflow checking).</li>
+  <li><tt>OP LENG = (L REAL a)LONG L REAL:</tt><a name="10945"></a> <br>
+    <code>OP LENG = (SHORT L REAL a)L REAL:</code> <br>
+    Converts its operand to the next longer precision. Note that you cannot use
+    both <code>SHORT</code> and <code>LONG</code> in the same mode.</li>
+  <li><tt>OP SHORTEN = (L REAL a)SHORT L REAL:</tt><a name="10946"></a> <br>
+    <code>OP SHORTEN = (LONG L REAL a)L REAL:</code> <br>
+    Converts its operand to the next shorter precision. If a value exceeds
+    <code>l max real</code> for the next shorter precision, the value will be
+    truncated leading to an erroneous result. The mantissa will always be
+    truncated.</li>
+</ol>
+
+<h3><a name="section001536200000000000000"></a><a name="stan-oprealdy"></a> <br>
+Dyadic operators</h3>
+
+<p>In this section, consistent substitution is used wherever the <code>L</code>
+shorthand appears. For operators with mixed operands, see section&nbsp;<a
+href="#stan-mixed">13.3.8</a>.</p>
+
+<ol>
+  <li><tt>OP + = (L REAL a,L REAL b)L REAL:</tt><a name="10947"></a> <br>
+    Floating-point addition: <span class="math"><i>a</i> + <i>b</i></span>.
+    Floating-point overflow will cause a trappable signal (see section&nbsp;<a
+    href="node131.html#stan-fpov">13.6.1</a>).</li>
+  <li><tt>OP - = (L REAL a,L REAL b)L REAL:</tt><a name="10948"></a> <br>
+    Floating-point subtraction: <span class="math"><i>a</i> - <i>b</i></span>.
+    Floating-point overflow will cause a signal which can be trapped (see
+    section <a href="node131.html#stan-fpov">13.6.1</a>).</li>
+  <li><tt>OP * = (L REAL a,L REAl b)L REAL:</tt><a name="10949"></a> <br>
+    Floating-point multiplication: <span class="math"><i>a</i> <tt>x</tt>
+    <i>b</i></span>. Floating-point overflow will cause a signal which can be
+    trapped (see section <a href="node131.html#stan-fpov">13.6.1</a>).</li>
+  <li><tt>OP / = (L REAL a,L REAL b)L REAL:</tt><a name="10950"></a> <br>
+    Floating-point divison: <span class="math"><i>a</i>/<i>b</i></span>.
+    Floating-point overflow and divide-by-zero will cause a trappable signal
+    (see section <a href="node131.html#stan-fpov">13.6.1</a>). Where a result
+    of mode <code>L REAL</code> needs to be output, but it cannot be output due
+    to the limitations built into the definition of the mode
+    <code>SIMPLOUT</code>, the operators <code>LENG</code> or
+    <code>SHORTEN</code> should be used.</li>
+  <li><tt>OP +* = (L REAL a,L REAL b)L COMPL:</tt><a name="10951"></a> <br>
+    Converts two reals into a complex number of the same precision (synonym
+    <tt>I</tt><a name="10952"></a>).</li>
+  <li><tt>OP &lt; = (L REAL a,L REAL b)BOOL:</tt><a name="10953"></a> <br>
+    Floating-point &ldquo;less than&rdquo;: <span class="math"><i>a</i> &lt;
+    <i>b</i></span> (synonym <code>LT</code>).</li>
+  <li><tt>OP &lt;= = (L REAL a,L REAL b)BOOL:</tt><a name="10954"></a> <br>
+    Floating-point &ldquo;less than or equals&rdquo;: <i>a</i>
+    &#8804; <i>b</i> (synonym <code>LE</code>).
+ </li>
+  <li><tt>OP &gt;= = (L REAL a,L REAL b)BOOL:</tt><a name="10955"></a> <br>
+    (synonym <code>GE</code>) <br>
+    Floating-point &ldquo;greater than or equals&rdquo;: <i>a</i> &#8805; <i>b</i>.</li>
+  <li><tt>|OP &gt; = (L REAL a,L REAL b)BOOL:</tt><a name="10956"></a> <br>
+    Floating-point &ldquo;greater than&rdquo;: <span class="math"><i>a</i> &gt;
+    <i>b</i></span> (synonym <code>GT</code>).</li>
+  <li><tt>OP = = (L REAL a,L REAL b)BOOL:</tt><a name="10957"></a> <br>
+    Floating-point equality: <span class="math"><i>a</i> = <i>b</i></span>
+    (synonym <code>EQ</code>).</li>
+  <li><tt>OP /= = (L REAL a,L REAL b)BOOL:</tt><a name="10958"></a> <br>
+    Floating-point inequality: <i>a</i> &#8800; <i>b</i> (synonym <code>NE</code>).</li>
+</ol>
+
+<h2><a name="section001537000000000000000"></a><a name="stan-opcompl"></a> <br>
+Operators with <tt>COMPL</tt> operands</h2>
+
+<p>Algol 68 is one of the few programming languages which have a
+built-in mode for complex numbers. It is complemented by a rich set of
+operators, some of which are only available for values of mode
+<code>COMPL</code>. Again, consistent substitution is applicable to
+all operators using the <code>L</code> shorthand.</p>
+
+<h3><a name="section001537100000000000000"></a><a name="stan-opcomplmon"></a>
+Monadic operators</h3>
+
+<ol>
+  <li><tt>OP RE = (L COMPL a)L REAL:</tt><a name="10960"></a> <br>
+    Yields the real component: <code>re OF a</code>.</li>
+  <li><tt>OP IM = (L COMPL a)L REAL:</tt><a name="10961"></a> <br>
+    Yields the imaginary component: <code>im OF a</code>.</li>
+  <li><tt>OP ABS = (L COMPL a)L REAL:</tt><a name="10962"></a> <br>
+    Yields &radic;<tt>RE</tt>&nbsp;a<sup>2</sup>+<tt>IM</tt>&nbsp;a<sup>2</sup>
+ </li>
+  <li><tt>OP ARG = (L COMPL a)L REAL:</tt><a name="10965"></a> <br>
+    Yields the argument of the complex number.</li>
+  <li><tt>OP CONJ = (L COMPL a)L COMPL:</tt><a name="10966"></a> <br>
+    Yields the conjugate complex number.</li>
+  <li><tt>OP + = (L COMPL a)L COMPL:</tt><a name="10967"></a> <br>
+    Complex identity. Does nothing.</li>
+  <li><tt>OP - = (L COMPL a)L COMPL:</tt><a name="10968"></a> <br>
+    Complex negation.</li>
+  <li><tt>OP LENG = (L COMPL a)LONG L COMPL:</tt><a name="10969"></a> <br>
+    <code>OP LENG = (SHORT L COMPL a)L COMPL:</code> <br>
+    Converts its operand to the next longer precision. Note that you cannot use
+    both <code>SHORT</code> and <code>LONG</code> in the same mode.
+    Unfortunately, although a68toc<a name="10970"></a> will translate a program
+    containing this operator apparently without errors, the resulting
+    C&nbsp;file will not compile. The error produced will be &ldquo;conversion
+    to non-scalar type requested&rdquo;. You should use the following code
+    instead:- 
+<pre>
+   (LENG RE z,LENG IM z)
+</pre>
+
+  </li>
+  <li><tt>OP SHORTEN = (L COMPL a)SHORT L COMPL:</tt><a name="10971"></a> <br>
+    <code>OP SHORTEN = (LONG L COMPL a)L COMPL:</code> <br>
+    Converts its operand to the next shorter precision. Note that you cannot
+    use both <code>SHORT</code> and <code>LONG</code> in the same mode.
+    Unfortunately, the a68toc<a name="10972"></a> translator will generate
+    incorrect code (see the note for the operator <code>LENG</code>). Use the
+    following code instead:- 
+<pre>
+   (SHORTEN RE z,SHORTEN IM z)
+</pre>
+
+If either of the components of the complex number exceeds <code>l max
+real</code> for the next shorter precision, an erroneous result will
+ensue, but no error will be generated.</li>
+</ol>
+
+<h3><a name="section001537200000000000000"></a><a name="stan-opcompldy"></a>
+Dyadic operators</h3>
+
+<p>The remarks in section&nbsp;<a href="#stan-oprealdy">13.3.6</a> concerning
+floating-point overflow apply doubly here.</p>
+
+<ol>
+  <li><tt>OP + = (L COMPL a,L COMPL b)L COMPL:</tt><a name="10973"></a> <br>
+    Floating-point addition for both components.</li>
+  <li><tt>OP - = (L COMPL a,L COMPL b)L COMPL:</tt><a name="10974"></a> <br>
+    Floating-point subtraction for both components.</li>
+  <li><tt>OP * = (L COMPL a,L COMPL b)L COMPL:</tt><a name="10975"></a> <br>
+    Standard complex multiplication with floating-point arithmetic.</li>
+  <li><tt>OP / = (L COMPL a,L COMPL b)L COMPL:</tt><a name="10976"></a> <br>
+    Standard complex division with floating-point arithmetic.</li>
+  <li><tt>OP = = (L COMPL a,L COMPL b)BOOL:</tt><a name="10977"></a> <br>
+    Complex equality with floating-point arithmetic (synonym <code>EQ</code>).
+ </li>
+  <li><tt>OP /= = (L COMPL a,L COMPL b)BOOL:</tt><a name="10978"></a> <br>
+    Complex inequality with floating-point arithmetic (synonym
+    <code>NE</code>).</li>
+</ol>
+
+<h2><a name="section001538000000000000000"></a><a name="stan-mixed"></a> <br>
+Operators with mixed operands</h2>
+
+<p>Consistent substitution is applicable to all operators using the <code>L</code>
+shorthand. Additional shorthands are used as follows:-</p>
+
+<ul>
+  <li>The shorthand <code>P</code> stands for +<a name="10979"></a>,
+    <code>-</code>, <code>*</code> or <code>/</code>.</li>
+  <li>The shorthand <code>R</code> stands for <tt>&lt;</tt><a
+    name="10980"></a>, <tt>&lt;=</tt><a name="10981"></a>, <code>=</code>,
+    <code>/=</code>, <tt>&gt;=</tt><a name="10982"></a>, <tt>&gt;</tt><a
+    name="10983"></a>, <br>
+    or <code>LT</code>, <code>LE</code>, <code>EQ</code>, <code>NE</code>,
+    <code>GE</code>, <code>GT</code>.</li>
+  <li>The shorthand <code>E</code> stands for <code>=</code> <code>/=</code>,
+    <br>
+    or <code>EQ</code> or <code>NE</code>.</li>
+</ul>
+
+<p><br>
+</p>
+<ol>
+  <li><code>OP P = (L INT a,L REAL b)L REAL:</code></li>
+  <li><code>OP P = (L INT a,L COMPL b)L COMPL:</code></li>
+  <li><code>OP P = (L REAL a,L COMPL b)L COMPL:</code></li>
+  <li><code>OP P = (L REAL a,L INT b)L REAL:</code></li>
+  <li><code>OP P = (L COMPL a,L INT b)L COMPL:</code></li>
+  <li><code>OP P = (L COMPL a,L REAL b)L COMPL:</code></li>
+  <li><code>OP R = (L INT a,L REAL b)BOOL:</code></li>
+  <li><code>OP R = (L REAL a,L INT b)BOOL:</code></li>
+  <li><code>OP E = (L INT a,L COMPL b)BOOL:</code></li>
+  <li><code>OP E = (L REAL a,L COMPL b)BOOL:</code></li>
+  <li><code>OP E = (L COMPL a,L INT b)BOOL:</code></li>
+  <li><code>OP E = (L COMPL a,L REAL b)BOOL:</code></li>
+  <li><tt>OP ** = (L REAL a,INT b)L REAL:</tt><a name="10984"></a> <br>
+    <code>OP ** = (L COMPL a,INT b)L COMPL:</code> <br>
+    Exponentiation: <span class="math"><i>a</i><sup>b</sup></span> (synonym
+    <tt>UP</tt>).</li>
+  <li><tt>OP +* = (L INT a,L REAL b)L COMPL:</tt><a name="10985"></a> <br>
+    <code>OP +* = (L REAL a,L INT b)L COMPL:</code> <br>
+    (synonym <tt>I</tt>)</li>
+</ol>
+
+<h2><a name="section001539000000000000000"></a><a name="stan-opbits"></a> <br>
+Operators with <tt>BITS</tt> operands</h2>
+
+<p>Consistent substitution applies to all operators using the
+<code>L</code> shorthand.</p>
+
+<h3><a name="section001539100000000000000"></a><a name="stan-opbitsmon"></a>
+Monadic operators</h3>
+
+<ol>
+  <li><tt>OP BIN = (L INT a)L BITS:</tt><a name="10987"></a> <br>
+    Mode conversion which does not change the internal value.</li>
+  <li><tt>OP ABS = (L BITS a)L INT:</tt><a name="10988"></a> <br>
+    Mode conversion which does not change the internal value.</li>
+  <li><tt>OP NOT = (L BITS a)L BITS:</tt><a name="10989"></a> <br>
+    Yields the bits obtained by inverting each bit in the operand. That is,
+    <span class="math">0</span> goes to <span class="math">1</span>, <span
+    class="math">1</span> goes to <span class="math">0</span>.</li>
+  <li><tt>OP LENG = (L BITS a)LONG L BITS:</tt><a name="10990"></a> <br>
+    <code>OP LENG = (SHORT L BITS a)L BITS:</code> <br>
+    Converts a bits value to the next longer precision by adding zero bits to
+    the more significant end. Note that you cannot use both <code>SHORT</code>
+    and <code>LONG</code> in the same mode.</li>
+  <li><tt>OP SHORTEN = (L BITS a)SHORT L BITS:</tt><a name="10991"></a> <br>
+    <code>OP SHORTEN = (LONG L BITS a)L BITS:</code> <br>
+    Truncates a bits value to a value of the next shorter precision. The more
+    significant bits are simply ignored.</li>
+</ol>
+
+<h3><a name="section001539200000000000000"></a><a name="stan-opbitsdy"></a> <br>
+Dyadic operators</h3>
+
+<ol>
+  <li><code>OP &amp; = (L BITS a,L BITS b)L BITS:</code> <br>
+    (synonym <tt>AND</tt><a name="10992"></a>) <br>
+    The logical &ldquo;and&rdquo; of each pair of binary digits in <span
+    class="math"><i>a</i></span> and <span class="math"><i>b</i></span>.</li>
+  <li><tt>OP OR = (L BITS a,L BITS b)L BITS:</tt><a name="10993"></a> <br>
+    The logical &ldquo;or&rdquo; of each pair of binary digits in <span
+    class="math"><i>a</i></span> and <span class="math"><i>b</i></span>.</li>
+  <li><tt>OP SHL = (L BITS a,INT b)L BITS:</tt><a name="10994"></a> <br>
+    The left operand shifted left by the number of bits specified by the right
+    operand. New bits shifted in are all zero. If the right operand is
+    negative, shifting is to the right (synonym <code>UP</code>).</li>
+  <li><tt>OP SHR = (L BITS a,INT b)L BITS:</tt><a name="10995"></a> <br>
+    (synonym <code>DOWN</code>)</li>
+  <li><tt>OP ELEM = (INT a,L BITS b)BOOL:</tt><a name="10996"></a> <br>
+    Yields <code>TRUE</code> if bit <span class="math"><i>a</i></span> is <span
+    class="math">1</span>.</li>
+  <li><tt>OP = = (L BITS a,L BITS b)BOOL:</tt><a name="10997"></a> <br>
+    Logical equality (synonym <code>EQ</code>).</li>
+  <li><tt>OP /= = (L BITS a,L BITS b)BOOL:</tt><a name="10998"></a> <br>
+    Logical inequality (synonym <code>NE</code>).</li>
+  <li><tt>OP &lt;= = (L BITS a,L BITS b)BOOL:</tt><a name="10999"></a> <br>
+    Yields <code>TRUE</code> if each bit in the left operand implies the
+    corresponding bit in the right operand (synonym <code>LE</code>).</li>
+  <li><tt>OP &gt;= = (L BITS a,L BITS b)BOOL:</tt><a name="11000"></a> <br>
+    Yields <code>TRUE</code> if each bit in the right operand implies the
+    corresponding bit in the left operand (synonym <code>GE</code>).</li>
+</ol>
+
+<h2><a name="section0015310000000000000000"></a><a name="stan-opchar"></a> <br>
+Operators with <tt>CHAR</tt> operands</h2>
+
+<p>The shorthands in section&nbsp;<a href="#stan-mixed">13.3.8</a>
+   apply here.</p>
+
+<ol>
+  <li><tt>OP ABS = (CHAR a)INT:</tt><a name="11002"></a> <br>
+    The integer equivalent of a character.</li>
+  <li><tt>OP REPR = (INT a)CHAR:</tt><a name="11003"></a> <br>
+    The reverse of <code>ABS</code>. The operand should be in the range
+    <code>[0:max abs char]</code>.</li>
+  <li><tt>OP + = (CHAR a,CHAR b)STRING:</tt><a name="11004"></a> <br>
+    The character <span class="math"><i>b</i></span> is appended to the
+    character <span class="math"><i>a</i></span> (concatenation).</li>
+  <li><code>OP E = (CHAR a,CHAR b)BOOL:</code> <br>
+    Comparison<a name="11005"></a> of<a name="11006"></a> the<a
+    name="11007"></a> arithmetic<a name="11008"></a> equivalents<a
+    name="11009"></a> of<a name="11010"></a> <span class="math"><i>a</i></span>
+    and <span class="math"><i>b</i></span>.</li>
+</ol>
+
+<h2><a name="section0015311000000000000000"></a><a name="stan-opstr"></a> <br>
+Operators with <tt>STRING</tt> operands</h2>
+
+<ol>
+  <li><tt>OP + = (STRING a,STRING b)STRING:</tt><a name="11012"></a> <br>
+    String <span class="math"><i>b</i></span> is appended to string <span
+    class="math"><i>a</i></span> (concatenation).</li>
+  <li><code>OP + = (CHAR a,STRING b)STRING:</code> <br>
+    String <span class="math"><i>b</i></span> is appended to character <span
+    class="math"><i>a</i></span>.</li>
+  <li><code>OP + = (STRING a,CHAR b)STRING:</code> <br>
+    Character <span class="math"><i>b</i></span> is appended to string <span
+    class="math"><i>a</i></span>.</li>
+  <li><tt>OP * = (INT a,STRING b)STRING:</tt><a name="11013"></a> <br>
+    Yields <span class="math"><i>a</i></span> lots of string <span
+    class="math"><i>b</i></span> concatenated.</li>
+  <li><code>OP * = (STRING a,INT b)STRING:</code> <br>
+    Yields <span class="math"><i>b</i></span> lots of string <span
+    class="math"><i>a</i></span> concatenated.</li>
+  <li><code>OP * = (INT a,CHAR b)STRING:</code> <br>
+    Yields <span class="math"><i>a</i></span> lots of character <span
+    class="math"><i>b</i></span> concatenated.</li>
+  <li><code>OP * = (CHAR a,INT b)STRING:</code> <br>
+    Yields <span class="math"><i>b</i></span> lots of character <span
+    class="math"><i>a</i></span> concatenated.</li>
+  <li><tt>OP &lt; = (STRING a,STRING b)BOOL:</tt><a name="11014"></a> <br>
+    The absolute value of each character of <span class="math"><i>a</i></span>
+    is compared with the absolute value of the corresponding character in <span
+    class="math"><i>b</i></span> (for the purpose of the comparison, the lower
+    bounds of both strings are regarded as equal to <span
+    class="math">1</span>). If the strings are equal upto the end of the
+    shorter of the strings, then the longer string is the greater (synonym
+    <code>LT</code>).</li>
+  <li><tt>OP &lt;= = (STRING a,STRING b)BOOL:</tt><a name="11015"></a> <br>
+    (synonym <code>LE</code>) <br>
+    The text for the operator <code>&lt;</code> in this section applies.</li>
+  <li><tt>OP &gt;= = (STRING a,STRING b)BOOL:</tt><a name="11016"></a> <br>
+    (synonym <code>GE</code>) <br>
+    The text for the operator <code>&lt;</code> in this section applies.</li>
+  <li><tt>OP &gt; = (STRING a,STRING b)BOOL:</tt><a name="11017"></a> <br>
+    (synonym <code>GT</code>) <br>
+    The text for the operator <code>&lt;</code> in this section applies.</li>
+  <li><tt>OP = = (STRING a,STRING b)BOOL:</tt><a name="11018"></a> <br>
+    If the strings differ in length, they are unequal, else they are compared
+    as for the operator <code>&lt;</code> in this section (synonym
+    <code>EQ</code>).</li>
+  <li><tt>OP /= = (STRING a,STRING b)BOOL</tt><a name="11019"></a> <br>
+    (synonym <code>NE</code>) <br>
+    If the strings differ in length, they are unequal, else they are compared
+    as for the operator <code>&lt;</code> in this section.</li>
+  <li><code>OP E = (STRING a,CHAR b)BOOL:</code> <br>
+    <code>OP E = (CHAR a,STRING b)BOOL:</code> <br>
+    The<a name="11020"></a> shorthand<a name="11021"></a> <tt>E</tt><a
+    name="11022"></a> as<a name="11023"></a> described in section&nbsp;<a
+    href="#stan-mixed">13.3.8</a> applies for these cases.</li>
+</ol>
+
+<h2><a name="section0015312000000000000000"></a><a name="stan-opass"></a> <br>
+Assigning operators</h2>
+
+<p>Consistent substitution applies to all operators containing the
+<code>L</code> shorthand.</p>
+
+<ol>
+  <li><code>+:=</code> (synonym <tt>PLUSAB</tt><a name="11024"></a>) <br>
+    The operator is a shorthand for <code>a:=a+b</code>. <br>
+
+
+    <table cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td align="left">Left operand</td>
+          <td align="left">Right operand</td>
+          <td align="left">Yield</td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L INT</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L INT</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L COMPL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF STRING</tt></td>
+          <td align="left"><tt>CHAR</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF STRING</tt></td>
+          <td align="left"><tt>STRING</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+        </tr>
+      </tbody>
+    </table>
+ </li>
+  <li><code>+=:</code> (synonym <tt>PLUSTO</tt><a name="11025"></a>) <br>
+    The operator is a shorthand for <code>b:=a+b</code>. <br>
+
+    <table cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td align="left">Left operand</td>
+          <td align="left">Right operand</td>
+          <td align="left">Yield</td>
+        </tr>
+        <tr>
+          <td align="left"><tt>STRING</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>CHAR</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+          <td align="left"><tt>REF STRING</tt></td>
+        </tr>
+      </tbody>
+    </table>
+ </li>
+  <li><code>-:=</code> (synonym <tt>MINUSAB</tt><a name="11026"></a>) <br>
+    The operator is a shorthand for <code>a:=a-b</code>. <br>
+
+    <table cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td align="left">Left operand</td>
+          <td align="left">Right operand</td>
+          <td align="left">Yield</td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L INT</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L INT</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L COMPL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+      </tbody>
+    </table>
+ </li>
+  <li><code>*:=</code> (synonym <tt>TIMESAB</tt><a name="11027"></a>) <br>
+    The operator is a shorthand for <code>a:=a*b</code>. <br>
+
+    <table cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td align="left">Left operand</td>
+          <td align="left">Right operand</td>
+          <td align="left">Yield</td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L INT</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L INT</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L COMPL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>INT</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+      </tbody>
+    </table>
+ </li>
+  <li><code>/:=</code> (synonym <tt>DIVAB</tt><a name="11028"></a>) <br>
+    The operator is a shorthand for <code>a:=a/b</code>. <br>
+
+    <table cellpadding="3" border="1">
+      <tbody>
+        <tr>
+          <td align="left">Left operand</td>
+          <td align="left">Right operand</td>
+          <td align="left">Yield</td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L REAL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L REAL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L INT</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L REAL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+        <tr>
+          <td align="left"><tt>REF L COMPL</tt></td>
+          <td align="left"><tt>L COMPL</tt></td>
+          <td align="left"><tt>REF L COMPL</tt></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+ </li>
+  <li><code>OP %:= = (REF L INT a,L INT b)REF L INT:</code> <br>
+    (synonym <tt>OVERAB</tt><a name="11029"></a>) <br>
+    The operator is a shorthand for <code>a:=a%b</code>.</li>
+  <li><code>OP %*:= = (REF L INT a,L INT b)REF L INT:</code> <br>
+    (synonym <tt>MODAB</tt><a name="11030"></a>) <br>
+    The operator is a shorthand for <code>a:=a%*b</code>.</li>
+</ol>
+
+<h2><a name="section0015313000000000000000"></a><a name="stan-othop"></a> <br>
+Other operators</h2>
+
+<p>This section contains those operators which appear neither in the Revised
+Report nor in the section concerning a68toc extensions (section&nbsp;<a
+href="node130.html#stan-a68toc">13.5</a>).</p>
+
+<ol>
+  <li><tt>OP &amp;* = (REAL r,INT e)REAL:</tt><a name="11031"></a> <br>
+    Multiply <code>r</code> by <span class="math">2<sup>e</sup></span>. The
+    routine does not use multiplication, but simply increments the exponent of
+    <code>r</code> accordingly.</li>
+  <li><tt>OP ELEM = (INT a)BITS:</tt><a name="11032"></a> <br>
+    The operator yields a value with all bits zero except the bit specified by
+    the operand.</li>
+  <li><tt>OP MIN = (L INT a,L INT b)L INT:</tt><a name="11033"></a> <br>
+    <code>OP MIN = (L REAL a,L REAL b)L REAL:</code> <br>
+    <code>OP MIN = (L INT a,L REAL b)L REAL:</code> <br>
+    <code>OP MIN = (L REAL a,L INT b)L REAL:</code> <br>
+    The lesser of the two operands.</li>
+  <li><tt>OP MAX = (L INT a,L INT b)L INT:</tt><a name="11034"></a> <br>
+    <code>OP MAX = (L REAL a,L REAL b)L REAL:</code> <br>
+    <code>OP MAX = (L INT a,L REAL b)L REAL:</code> <br>
+    <code>OP MAX = (L REAL a,L INT b)L REAL:</code> <br>
+    The greater of the two operands.</li>
+  <li><tt>OP VALID = (REAL r)BOOL:</tt><a name="11035"></a> <br>
+    Whether the real value <code>r</code> is a valid real in terms of the IEEE
+    standard.</li>
+</ol>
+
+<div class="navigation">
+<hr>
+<!--navigation panel-->
+<a name="tex2html2874" href="node129.html"><img width="37" height="24"
+align="bottom" border="0" alt="next" src="next.png"></a> <a name="tex2html2868"
+href="node125.html"><img width="26" height="24" align="bottom" border="0"
+alt="up" src="up.png"></a> <a name="tex2html2862" href="node127.html"><img
+width="63" height="24" align="bottom" border="0" alt="previous"
+src="prev.png"></a> <a name="tex2html2870" href="node1.html"><img width="65"
+height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> <a
+name="tex2html2872" href="node147.html"><img width="43" height="24"
+align="bottom" border="0" alt="index" src="index.png"></a> <br>
+<b>Next:</b> <a name="tex2html2875" href="node129.html">Standard procedures</a>
+<b>Up:</b> <a name="tex2html2869" href="node125.html">Standard Prelude</a>
+<b>Previous:</b> <a name="tex2html2863" href="node127.html">Environment
+enquiries</a> &nbsp; <b><a name="tex2html2871"
+href="node1.html">Contents</a></b> &nbsp; <b><a name="tex2html2873"
+href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+  Sian Mountbatten 2012-01-19 
+</address>
+</body>
+</html>

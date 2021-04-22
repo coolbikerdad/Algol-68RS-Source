@@ -1,0 +1,212 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Overlapping slices</title>
+<meta name="description" content="overlapping slices">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node110.html">
+<link rel="previous" href="node108.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node110.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2492"
+  href="node110.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2486"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2480"
+  href="node108.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2488"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2490"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2493"
+  href="node110.html">Completers</a>
+<b> Up:</b> <a name="tex2html2487"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2481"
+  href="node108.html">The mode BITS</a>
+ &nbsp; <b>  <a name="tex2html2489"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2491"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2494"
+  href="node109.html#section001331000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001330000000000000000"></a><a name="adv-overlap"></a>
+Overlapping slices</h1>
+
+<p>What <a name="7543"></a>happens<a name="7544"></a> if two
+trimmed multiples overlap? For example, consider the program</p>
+
+<pre>
+   PROGRAM slices CONTEXT VOID
+   USE standard
+   BEGIN
+      [4]INT r;
+
+      PROC res = VOID:
+      FOR n FROM LWB r TO UPB r
+      DO r[n]:=n OD;
+
+      PROC mpr = ([]INT m)VOID:
+      (
+         FOR i FROM LWB m TO UPB m
+         DO
+            print((whole(m[i],0),blank))
+         OD;
+         print(newline)
+      ); #mpr#
+
+      res;
+      print("Original contents:");  mpr(r);
+
+      r[:UPB r-1]:=r[1+LWB r:];
+      print((newline,"r[:3]:=r[2:]",newline,
+             "Compiler does it: "));  mpr(r);
+      res;
+
+      FOR i FROM LWB r TO UPB r-1
+      DO r[i]:=r[i+1] OD;
+      print("Forwards loop:    "); mpr(r);
+      res;
+
+      FOR i FROM UPB r-1 BY -1 TO LWB r
+      DO r[i]:=r[i+1] OD;
+      print("Backwards loop:   "); mpr(r);
+      res;  r[1+LWB r:]:=r[:UPB r-1];
+      print((newline,"r[2:]:=r[:3]",newline,
+             "Compiler does it: "));  mpr(r);
+      res;
+
+      FOR i FROM 1+LWB r TO UPB r
+      DO r[i]:=r[i-1] OD;
+      print("Forwards loop:    "); mpr(r);
+      res;
+
+      FOR i FROM UPB r BY -1 TO 1+LWB r
+      DO r[i]:=r[i-1] OD;
+      print("Backwards loop:   "); mpr(r)
+   END
+   FINISH
+</pre>
+
+<p>When compiled and executed, the program gives the following
+output:</p>
+
+<pre>
+   Original contents:1 2 3 4 
+   
+   r[:3]:=r[2:]
+   Compiler does it: 2 3 4 4 
+   Forwards loop:    2 3 4 4 
+   Backwards loop:   4 4 4 4 
+   
+   r[2:]:=r[:3]
+   Compiler does it: 1 1 2 3 
+   Forwards loop:    1 1 1 1 
+   Backwards loop:   1 1 2 3
+</pre>
+
+<p>Notice that lines 5 and 8 of the results are definitely wrong, but
+that the compiler gets it right both times. The lesson is, do not
+worry about overlapping multiples: the compiler will ensure you get
+the effect you want.</p>
+
+<p>A different matter is when you want to replace a column of a square
+multiple with a row. Here, the overlap is more of a
+&ldquo;crossoverlap&rdquo;.  In this case you need to be careful--see
+the next exercise.</p>
+
+<hr>
+<h2><a name="section001331000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.6<a name="ex-xi-vi"></a>
+<dd>Given a square two-dimensional multiple of integers, write a
+procedure which uses trimmers (not necessarily overlapping) to
+convert its columns to rows and its rows to columns.  For example:
+<pre>
+   ((1,2,3),         ((1,4,7),
+    (4,5,6),   =&gt;     (2,5,8),
+    (7,8,9))          (3,6,9))
+</pre>
+
+Your procedure should cater for any size of square multiple.
+ Ans<a href="node145.html#ans-xi-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2492"
+  href="node110.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2486"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2480"
+  href="node108.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2488"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2490"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2493"
+  href="node110.html">Completers</a>
+<b> Up:</b> <a name="tex2html2487"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2481"
+  href="node108.html">The mode BITS</a>
+ &nbsp; <b>  <a name="tex2html2489"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2491"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

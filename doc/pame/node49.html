@@ -1,0 +1,422 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Assignment</title>
+<meta name="description" content="assignment">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node50.html">
+<link rel="previous" href="node48.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node50.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1442"
+  href="node50.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1436"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1430"
+  href="node48.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1438"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1440"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1443"
+  href="node50.html">Assignments in formul&#230;</a>
+<b> Up:</b> <a name="tex2html1437"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1431"
+  href="node48.html">Names</a>
+ &nbsp; <b>  <a name="tex2html1439"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1441"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1444"
+  href="node49.html#section00711000000000000000">Copying values</a>
+<li><a name="tex2html1445"
+  href="node49.html#section00712000000000000000">Assigning operators</a>
+<li><a name="tex2html1446"
+  href="node49.html#section00713000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00710000000000000000"></a><a name="name-assign"></a>
+Assignment</h1>
+
+<p>The process of causing a name to refer to a value is called
+<b>assignment</b><a name="2724"></a>. Using the identifier declared
+above, we can write</p>
+
+<pre>
+   a:=3
+</pre>
+
+<p>We say &ldquo;a assign 3&rdquo;.  Note that the mode of the name
+identified by <code>a</code> is <code>REF INT</code>, and the mode of
+the denotation <code>3</code> is <code>INT</code>.  After the
+assignment, the name identified by <code>a</code> refers to the value
+denoted by <code>3</code>.</p>
+
+<p>Suppose now we want the name identified by <code>a</code> to refer
+to the value denoted by <code>4</code> (this may seem pedantic, but as
+you will see below, it is necessary to distinguish between the
+denotation of a value and that value itself).  We write</p>
+
+<pre>
+   a:=4
+</pre>
+
+<p>Let us juxtapose these two assignments:</p>
+
+<pre>
+   a:=3
+     ;
+   a:=4
+</pre>
+
+<p>If you look carefully at the two assignments, a number of things
+spring to mind. Firstly, an assignment consists of three parts: on the
+left-hand side is an identifier of a name, in the middle is the
+<b>assignment token</b><a name="2732"></a>, and on the right-hand side
+is a denotation.  Secondly, the left-hand side of the two assignments
+is the same identifier: <code>a</code>.  Since the identifier is the
+same, the value must be the same.<a name="tex2html13"
+href="footnode.html#foot2733"><sup><span
+class="arabic">6</span>.<span class="arabic">2</span></sup></a> That
+is, in the two assignments, <code>a</code> is synonymous with a value
+which <i>does not change</i>. The value is a name<a name="2735"></a>
+and has the mode <code>REF INT</code> (in this case).  Thus the value
+of the left-hand side of an assignment is a name.</p>
+
+<p>Thirdly, the values on the right-hand side of the two assignments
+differ. Firstly, <code>a</code> is assigned the value denoted by
+<code>3</code>, then (after the go-on<a name="2736"></a> symbol),
+<code>a</code> is assigned the value denoted by <code>4</code>.</p>
+
+<p>After the second assignment, <code>a</code> refers to
+<code>4</code>.  Of course, when we say &ldquo;<code>a</code> refers
+to&rdquo;, we mean &ldquo;the name identified by <code>a</code> refers
+to&rdquo;. What has happened to the value <code>3</code>? To
+understand this, we need to look a little more closely at what we mean
+by the value <code>3</code>. The denotation <code>3</code> represents
+the number three. Now, of course, the number three exists
+independently of a computer program. When the digit <code>3</code> is
+elaborated in an Algol&nbsp;68 program, an
+<b>instance</b><a name="2738"></a> of the number three is created.
+Likewise, elaborating the digit <code>4</code> creates an instance of
+the number four.  When <code>a</code> is assigned an instance of the
+value four, the instance of the value three disappears. This property
+of assignment is very important. Because an assignment causes data to
+disappear, it is dangerous to use. You have to be careful that the
+data which disappears is not data you wanted to keep. So the instance
+of a value can disappear, but the value still exists (like the number
+three).</p>
+
+<p>It is worth reiterating that however many times a name is assigned
+a value, the value of the name remains unchanged. It is the value
+referred to which is superseded. Outwith the realm of computers, if an
+individual is assigned to a department of an organisation, clearly the
+department hasn't changed. Only its members have changed.</p>
+
+<p>When an identifier for a name has been declared, the name can be
+made to refer to a value immediately after the declaration.  For
+example<a name="3196"></a></p>
+
+<pre>
+   REF REAL x = LOC REAL := pi
+</pre>
+
+<p>where <code>pi</code> is the value declared in the standard
+prelude<a name="2742"></a>.  <code>LOC REAL</code> generates a name of
+mode <code>REF REAL</code>.</p>
+
+<p>The right-hand side of an assignment is a strong
+context<a name="2743"></a> so widening<a name="2744"></a> is allowed.
+Thus we can write</p>
+
+<pre>
+   x:=3
+</pre>
+
+<p>where the <code>3</code> is widened to <code>3.0</code> before
+being assigned to <code>x</code>. In reality, the value denoted by
+<code>3</code> is not changed to the value denoted by
+<code>3.0</code>: it is replaced by the new value.  There is an
+important principle here. It is called the &ldquo;principle of value
+integrity<a name="2747"></a>&rdquo;: once an instance of a value has
+been created, it does not change until such time as it disappears.
+Thus, in Algol&nbsp;68, every value is a constant<a name="2748"></a>.
+Every coercion<a name="2749"></a> defined in Algol&nbsp;68 replaces a
+value<a name="2750"></a> of one mode with a related value of another
+mode.</p>
+
+<h2><a name="section00711000000000000000"></a><a name="name-copy"></a>
+Copying values</h2>
+
+<p>Here is another identity declaration with an initial
+assignment<a name="2754"></a>:</p>
+
+<pre>
+   REF INT c = LOC INT := 5
+</pre>
+
+<p>Using the identifier <code>a</code> declared earlier, we can
+write</p>
+
+<pre>
+   a:=c
+</pre>
+
+<p>and say &ldquo;a assign c&rdquo;. The name on the left-hand side of
+the assignment has mode <code>REF INT</code>, so a value which has
+mode <code>INT</code> is required on the right-hand side, but what has
+been provided is a name with mode <code>REF INT</code>. Fortunately,
+there is a coercion which replaces a name with the value to which it
+refers. It is called <b>dereferencing</b><a name="2760"></a> and is
+allowed in a strong context<a name="2761"></a>.  In the above
+assignment, the name identified by <code>c</code> is dereferenced
+yielding an instance of the value five which is a copy of the instance
+referred to by <code>c</code>.  That new instance is assigned to
+<code>a</code>.  It is important to remember that the process of
+dereferencing yields a <i>new</i> instance of a value.</p>
+
+<p>Try the following program:</p>
+
+<pre>
+   PROGRAM assign CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT a = LOC INT,
+              b = LOC INT:=7;
+      print(("b=",b,newline));
+      print("Please key 123G:"); read(b);
+      a:=b;
+      print(("a now refers to",a,newline,
+             "b now refers to",b,newline))
+   END
+   FINISH
+</pre>
+
+<p>This should convince you that dereferencing involves copying.</p>
+
+<p>Every construct in Algol 68 has a value except an identity
+declaration. We said above that the value of the left-hand side of an
+assignment is a name. In fact, the value of the whole of the
+assignment is the value of the left-hand side. Because this is a name,
+it can be used on the right-hand side of another assignment.  For
+example:</p>
+
+<pre>
+   a:=b:=c
+</pre>
+
+<p>You should note that an assignment is not an operator. The
+assignments are performed from <i>right to left</i>: firstly,
+<code>c</code> is dereferenced and the resulting value assigned to
+<code>b</code>. Then <code>b</code> is dereferenced and the resulting
+value is assigned to <code>a</code>.</p>
+
+<h2><a name="section00712000000000000000"></a><a name="name-assops"></a>
+Assigning operators</h2>
+
+<p>The following assignment</p>
+
+<pre>
+   a:=a
+</pre>
+
+<p>does not do anything useful, but serves to remind us that the name
+identified by <code>a</code> on the right-hand side of the assignment
+is dereferenced, and the resulting value is assigned to
+<code>a</code>. However, <code>a</code> now refers to a new instance
+of the value it previously referred to and the previous instance has
+now disappeared.</p>
+
+<p>Now consider the phrases</p>
+
+<pre>
+   c:=5; a:=c+1
+</pre>
+
+<p>The right-hand side of the second assignment is now a formula. The
+name identified by <code>c</code> is now in a firm
+context<a name="2775"></a> (it is the left-operand of the
+<code>+</code> operator).  Fortunately,
+dereferencing<a name="2776"></a> is also allowed in a firm context.
+Thus the value of <code>c</code> (a name with mode <code>REF
+INT</code>) is replaced in the formula by a copy of the value to which
+it refers (<code>5</code>), which is added to <code>1</code>, and
+<code>a</code> is assigned the new value (<code>6</code>).  We say
+&ldquo;a is assigned c plus one&rdquo;.</p>
+
+<p>What about the phrase</p>
+
+<pre>
+   a:=a+1
+</pre>
+
+<p>In exactly the same way as the previous phrase, the name on the
+right-hand side is dereferenced, the new value created is added to
+<code>1</code>, and then the same name is assigned the new value.</p>
+
+<p>One of the features of assignment is that the elaboration of the
+two sides is performed collaterally<a name="2779"></a>. This means
+that the order of elaboration is undefined.  This does not matter in
+the last example because the value of the name identified by
+<code>a</code> is the same on the two sides of the assignment.
+Remember that the value of <code>a</code> is a name with mode
+<code>REF INT</code>.  It is the value to which <code>a</code>
+referred which was superceded.</p>
+
+<p>Assignments of this kind are so common that a special operator has
+been devised to perform them. The above assignment can be written</p>
+
+<pre>
+   a+:=1
+</pre>
+
+<p>and is read &ldquo;a plus-and-assign one&rdquo;. The operator has
+the alternative representation
+<tt>PLUSAB</tt><a name="3197"></a>.<a name="tex2html14"
+href="footnode.html#foot3198"><sup><span
+class="arabic">6</span>.<span class="arabic">3</span></sup></a> Note
+that the left-hand operand must be a name.  The right-hand operand
+must be any unit<a name="2788"></a> which yields a value of the
+appropriate mode in a firm<a name="2789"></a> context.</p>
+
+<p>The operator <code>+:=</code> is defined for a left-operand of
+mode <code>REF</code> <code>INT</code> or <code>REF</code>
+<code>REAL</code>, and a right-operand of mode <code>INT</code> or
+<code>REAL</code> respectively.  The yield of the operator is the
+value of the left-operand (the name).  If the left-operand has mode
+<code>REF REAL</code>, the right-operand can also have mode
+<code>INT</code>.  No widening occurs in this case, the operator
+having been declared for operands having these modes. Because the
+operator yields a name, that name can be used as the operand for
+another assigning operator. For example</p>
+
+<pre>
+   x +:= 3.0 *:= 4.0
+</pre>
+
+<p>which results in <code>x</code> referring to
+<code>4.0*(x+3.0)</code>. The formula is elaborated in left-to-right
+order because the operators have the same priority. The operators are
+more efficient than writing out the assignments in full.</p>
+
+<p> There are four other operators like <code>+:=</code>.  They are
+<code>-:=</code>, <code>*:=</code>, <code>/:=</code>, <code>%:=</code>
+and <code>%*:=</code>.  Their alternative representations are
+respectively <tt>MINUSAB</tt><a name="3199"></a>,
+<tt>TIMESAB</tt><a name="3200"></a>,
+<tt>DIVAB</tt><a name="3201"></a>, <tt>OVERAB</tt><a name="3202"></a>
+and <tt>MODAB</tt><a name="3203"></a>.  The operators
+<code>OVERAB</code> and <code>MODAB</code> are only declared for
+operands with modes <code>REF</code> <code>INT</code> and
+<code>INT</code>.  The priority<a name="2802"></a> of all the
+operators is&nbsp;1.</p>
+
+<p>The assignment operators<a name="2803"></a> are operators, not assignments
+(although they perform an assignment), so that the previous example
+is not an assignment, but a formula.</p>
+
+<p>The right-hand side of an assignment can be any
+unit<a name="2804"></a> which yields a value whose mode has one less
+<code>REF</code> than the mode of the name on the left-hand side.
+Names whose mode contains more than one <code>REF</code> will be
+considered in chapter&nbsp;11.</p>
+
+<hr>
+<h2><a name="section00713000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.1<a name="ex-v-i"></a>
+<dd>The following identity declarations
+<pre>
+   REF CHAR s = LOC CHAR,
+   REF INT  i = LOC INT,
+   REF REAL r = LOC REAL
+</pre>
+
+hold in this and the following exercises.<a name="tex2html15"
+  href="footnode.html#foot3204"><sup><span class="arabic">6</span>.<span class="arabic">4</span></sup></a> What is the
+mode of <code>i</code>?  Ans<a href="node139.html#ans-v-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.2<a name="ex-v-ii"></a>
+<dd>After the assignment <code>r:=-2.7</code> has been elaborated, what is
+the mode of the value referred to by <code>r</code>?  Ans<a href="node139.html#ans-v-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.3<a name="ex-v-iii"></a>
+<dd>What is wrong with the assignment <code>i:=r</code> and how would you
+correct it?  Ans<a href="node139.html#ans-v-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1442"
+  href="node50.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1436"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1430"
+  href="node48.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1438"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1440"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1443"
+  href="node50.html">Assignments in formul&#230;</a>
+<b> Up:</b> <a name="tex2html1437"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1431"
+  href="node48.html">Names</a>
+ &nbsp; <b>  <a name="tex2html1439"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1441"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

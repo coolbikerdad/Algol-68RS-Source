@@ -1,0 +1,182 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Integers</title>
+<meta name="description" content="integers">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node8.html">
+<link rel="previous" href="node6.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node8.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html754"
+  href="node8.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html748"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html742"
+  href="node6.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html750"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html752"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html755"
+  href="node8.html">Identity declarations</a>
+<b> Up:</b> <a name="tex2html749"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html743"
+  href="node6.html">Values and modes</a>
+ &nbsp; <b>  <a name="tex2html751"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html753"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html756"
+  href="node7.html#section00341000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00340000000000000000"></a><a name="intro-ints"></a>
+Integers</h1>
+
+<p>Although, strictly speaking, there is no largest positive
+integer<a name="134"></a>, the largest positive
+integer<a name="135"></a> which can be manipulated by
+<code>a68toc</code> is
+<span class="math">2&nbsp;147&nbsp;483&nbsp;647</span>, and the
+largest negative integer<a name="136"></a> is
+<span class="math">-2&nbsp;147&nbsp;483&nbsp;647</span> (the first is
+<span class="math">2<sup>31</sup> - 1</span> and the second is
+<span class="math">-2<sup>31</sup> + 1</span>). The representation of
+a value in an Algol&nbsp;68 program is called a
+<span class="textbf">denotation</span> because it denotes the value.
+It is important to realise that the denotation<a name="140"></a> of a
+value is not the same as the value itself. To be precise, we say that
+the denotation of a value represents an instance<a name="141"></a> of
+that value.  For example, three separate instances of the value
+denoted by the digits <code>31</code> occur in this paragraph.  All
+the instances denote the same value.</p>
+
+<p>
+If you want to write the denotation of an integer in an Algol&nbsp;68
+program, you must use any of the digits <code>0</code> to <code>9</code>.  No
+signs are allowed<a name="142"></a>.  This means that you
+cannot write denotations for negative integers in Algol&nbsp;68 (but this
+is not a problem as you will see).  Although you cannot use commas or
+decimal points, spaces can be inserted anywhere.  Here are some
+examples of denotations of integers separated by commas (the commas
+are not part of the denotations):</p>
+
+<pre style="text-align:center;">
+   0 , 3 , 03 , 3000000 , 2 147 483 647
+</pre>
+
+<p>Note that 3 and 03 denote the same value because the
+leading zero<a name="145"></a> is not significant.  However, the zeros in the
+three million <i>are</i> significant. The mode<a name="146"></a> of each of the five
+denotations is <tt>INT</tt><a name="438"></a>. The following are
+incorrect denotations:</p>
+
+<pre style="text-align:center;">
+   3,451    -2    1e6
+</pre>
+
+<p>The first contains a comma, the second is a formula<a name="151"></a>, and the
+third contains the letter <code>e</code>.  You will see later on that the
+third expression denotes a number, but by definition this denotation
+does not have mode <code>INT</code>.</p>
+
+<hr>
+<h2><a name="section00341000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>1.3<a name="ex-i-iii"></a>
+<dd>Write a denotation for thirty-three.  Ans<a href="node135.html#ans-i-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>1.4<a name="ex-i-iv"></a>
+<dd>What is wrong with the following integer denotations? Ans<a href="node135.html#ans-i-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>1,234,567</code>  
+<p>
+<dt>(b)
+<dd><code>5.</code>  
+<p>
+<dt>(c)
+<dd><code>-4</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html754"
+  href="node8.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html748"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html742"
+  href="node6.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html750"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html752"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html755"
+  href="node8.html">Identity declarations</a>
+<b> Up:</b> <a name="tex2html749"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html743"
+  href="node6.html">Values and modes</a>
+ &nbsp; <b>  <a name="tex2html751"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html753"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

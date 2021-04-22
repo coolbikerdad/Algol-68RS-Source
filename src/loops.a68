@@ -1,0 +1,521 @@
+DECS  loops  CONTEXT VOID  USE  centities,
+*L    usefulops,
+      clauses, coutput, environ, environment, incmode, modes, values:
+
+configinfo A68CONFIG "$Id: loops.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.4 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+	This module contains the loop semantic routines, which are responsible
+	outputting C source code for algol 68 'for' and 'forall' loops.
+}
+
+MODE
+	FORLOOP = STRUCT
+	( REF VALUE control, step,
+	  BOOL for part, from part, by part, to part
+	),
+
+	FORALLCONTROL = STRUCT
+	( VALUE ident, 
+	  REF CFRAGMENT control, 
+	  BOOL needs temp
+	);
+
+	{ for default 'from' and 'by' parts }
+	REF VALUE value 1 := LOC VALUE := ( int mode, default info, LENG 8r1 );
+{
+	<loop clause> ::= [phrase] [phrase] [phrase] for [iddec] <loop body>
+	<forall clause> ::= [phrase]* forall [iddec]* <loop body>
+	<loop body> ::= [while <enquiry clause>] do <serial clause> od
+}
+
+PROC	for =
+( REF FORLOOP loop,                                      
+  INT frobyt count,
+  REF REF VALUELIST frobyt list
+) VOID: 
+{
+Evaluates the 'frobyt list', which contains the 'from', 'by' and 'to'
+values if they exist, and outputs the header and opening curly of a C 
+for-loop.  Temporaries are declared for the 'by' and 'to' parts
+and the loop counter if necessary.  NB the 'frobyt list' is in fact
+a 'tobyf' list - ie it is back to front.
+}
+BEGIN
+	INT code stream = CODESTREAM current level;
+
+ 	PROC	evaluate to or by part = ( REF VALUE part, BOOL to part ) VOID: 
+	{
+	Calls 'evaluate' and if the resulting value is not 'simple'
+	a temporary is declared and the result assigned to. This is necessary
+	as the 'by' and 'to' parts are evaluated each time the C for-loop is
+      	executed.  The temporary is returned by assigning it to 'extra OF part'.
+	}                               
+	BEGIN
+		evaluate( part );
+		IF NOT ISCONSTANT part ANDTH NOT ISTEMP part
+		THEN
+			TEMPORARY temp = 
+				declare c temporary( 
+					mode OF part,
+					( to part | "to part of loop"
+					| "by part of loop" ) );
+			write c stream(
+				( name OF temp, " = ", 
+				  GETCFRAGMENT part, ";", cnewline ),
+				code stream );
+			extra OF part := temp
+		FI
+	END;
+                                  
+	PROC	evaluate from part =  CFRAGMENT:
+	{
+	Calls 'evaluate' and returns the resulting CFRAGMENT. No need
+	to assign this to a temporary, as it will only be evaluated once.
+	}
+	BEGIN
+		IF from part OF loop
+		THEN
+			REF VALUE value = value OF frobyt list;
+			frobyt list := rest OF frobyt list;
+			evaluate ( value );
+			GETCFRAGMENT value
+		ELSE
+			"1"
+		FI
+	END;
+
+	PROC set step = VOID:
+	{
+	Evaluates the 'by part' if there is one. If the resulting value
+	is 'simple' (ie is an identifier, constant or temporary), it is
+	assigned to 'step OF loop', otherwise a temporary is declared, 
+	the value C-assigned to it, and the temporary assigned to 'step'.
+	If there is no 'by part' 'value1' is assigned to step.
+	}
+	BEGIN
+		IF by part OF loop
+		THEN
+			step OF loop := value OF frobyt list;
+			frobyt list := rest OF frobyt list;
+			evaluate to or by part( step OF loop, FALSE )
+		ELSE
+			step OF loop := value 1
+		FI
+	END;
+
+	{ for ( loop, frobyt list ) }
+
+ 	IF to part OF loop
+	THEN
+		{
+		Full for-loop.
+		  C output:
+			for ( <loop counter> = <from> ;
+				(<step> > 0 && <loop counter> <= <end>) ||
+				    (<step> < 0 && <loop counter> >= <end>) ||
+				    (<step> == 0);
+				<loop counter> += <step> )
+
+		Can optimise the loop if <step> is a constant value.
+		}
+		REF VALUE value = value OF frobyt list;
+		frobyt list := rest OF frobyt list;
+ 		evaluate to or by part( value, TRUE );
+		CFRAGMENT end = GETCFRAGMENT value;
+
+		set step;                      
+
+		CFRAGMENT from = evaluate from part;
+
+		CFRAGMENT loop counter =
+	      		IF for part OF loop
+			THEN
+				GETCFRAGMENT control OF loop
+			ELSE
+				{ declare a loop control temporary }
+				name OF declare c temporary( 
+					int mode, "loop control" )
+			FI;                       
+
+		write c stream(
+		( "for ( ", loop counter, " = ", from, ";", cnewline ),
+			code stream );                                  
+		IF ISCONSTANT step OF loop
+		THEN
+			{ optimise the loop counter test }
+			LONG INT constant step = ABS ( GETCONSTANT step OF loop);
+			write c stream(
+			( constant step > LONG 0
+			| ( loop counter, " <= ", end, ";" )
+			|: constant step < LONG 0
+			| ( loop counter, " >= ", end, ";")
+			| "; "
+			),
+				code stream );
+ 			write c stream( cnewline, code stream );
+		  	write c stream(
+			( loop counter, " += ", GETCFRAGMENT step OF loop, " )",
+			  cnewline ),	code stream )
+ 		ELSE
+			CFRAGMENT step = GETCFRAGMENT step OF loop;
+			write c stream(
+			( "( ", step, " > 0 && ", 
+			  loop counter, " <= ", end, ") ||",
+			  cnewline ),
+				code stream );
+	       		write c stream(
+			( "( ", step, " < 0 && ", 
+			  loop counter, " >= ", end, ") ||",
+			  cnewline ),
+				code stream );
+			write c stream(
+			( "( ", step, " == 0 ) ;", cnewline ),
+				code stream );
+		  	write c stream(
+			( loop counter, " += ", step, " )", cnewline ),
+				code stream )
+ 		FI
+	ELSE
+		{
+		No 'to' part, so loop is interminable.
+		}
+		IF for part OF loop
+		THEN
+			{ Interminable loop, but with control variable
+			  C output:
+				for ( <loop counter> = <from> ;;
+				 	<loop counter> += <step> )
+			}
+			set step;
+			CFRAGMENT from = evaluate from part;
+			CFRAGMENT loop counter = GETCFRAGMENT control OF loop;
+			write c stream( 
+			( "for ( ", loop counter, " = ", from, ";;", cnewline ),
+				code stream );
+			write c stream(
+			( loop counter, " += ", 
+			  GETCFRAGMENT step OF loop, " ) ", cnewline ),
+				code stream )
+		ELSE
+			PROC	void result = ( REF VALUE value ) VOID:
+			{
+			Voids the result represented by 'value' by
+			simply outputting the corresponding C, rather
+			than assigning it to anything.
+			}
+			BEGIN
+				evaluate( value );
+				write c stream( 
+				( GETCFRAGMENT value, ";", cnewline ), 
+					code stream )
+			END;
+
+			{ Interminable loop, with no control variable
+			  C output:                              
+			  	for( ;; )
+			}
+			{ evaluate 'from part' and 'by part' if present,
+			  but void the results. }
+			IF frobyt count > 0
+			THEN
+				void result( value OF frobyt list );
+				IF frobyt count > 1
+				THEN
+					void result( value OF rest OF frobyt list )
+				FI
+			FI;
+			{ output for-loop header }
+			write c stream(( "for ( ;; )", cnewline), code stream )
+		FI
+	FI;
+	{ output the loop body opening curly }
+	write c stream(( "{ ", cnewline ), code stream )
+END;
+
+PROC	forall =
+( REF VECTOR [] FORALLCONTROL controls,
+  REF REF VALUELIST forall list                 
+) VOID: 
+{
+Evaluates the 'forall list' which contains the rows which will be
+accessed element by element using a C pointer.
+Temporaries are declared for these rows if they are not
+identifiers or temporaries, as they will be evaluated more than once in C.
+A temporary 'loop counter' is also declared.
+}
+BEGIN
+	VECTOR [UPB controls] REF CFRAGMENT rows;	{ original rows }
+	VECTOR [UPB controls] INT mode of rows;		{ mode of original rows }
+	INT code stream = CODESTREAM current level;
+
+	{ evaluate the forall list and initialise loop controls }
+
+	FORALL 	row IN rows, control IN controls, 
+		mode of row IN mode of rows
+	DO
+		REF VALUE row value = value OF forall list;
+		forall list := rest OF forall list;      
+		evaluate( row value );               
+		mode of row	:= mode OF row value;
+		INT elem mode = element mode (mode of row);
+
+		{
+		If the row is an identifier or a temporary
+		use this as the row name, otherwise declare a
+		temporary and assign the value to it.
+		}
+		CFRAGMENT row name =
+			IF	ISIDENT row value 
+			THEN
+				( has refs (mode of row) ANDTH
+				  is flex array (mode of row)
+				| bracket ("*" + GETCFRAGMENT row value)
+				| GETCFRAGMENT row value
+				)
+			ELSE
+				REF VALUE temp = "forall yield" YIELD row value;
+
+				( ( HASONEREF mode of row ANDTH		{ ref flex [] has * }
+				    is flex array (mode of row)
+				  )
+				| bracket ("*" + GETCFRAGMENT temp)		{ Only ref flex [] x has C * }
+				| GETCFRAGMENT temp
+				)
+			FI;
+		row := LOC VECTOR [UPB row name] CHAR := row name;
+
+		BOOL original has refs = has refs (mode of row);
+
+		IF	is array (mode of row) AND
+			dimensions (mode of row) > 1
+		THEN	
+			{
+			This mode has not been changed by iddec cos the mode
+			supplied by the compiler is correct (Wow). We never need a temp.
+			}
+
+		  	needs temp OF control := FALSE;    
+			control OF control    :=
+			(
+			  CFRAGMENT control name = GETCFRAGMENT ident OF control;
+			  LOC VECTOR [UPB control name] CHAR := control name
+			)                                     
+		
+		ELIF	original  has refs
+		THEN
+			{
+			we need a pointer to the orginal data. This is what we get
+			except in the case of ref [][] x (ie elem mode is non ref firm
+			row) which used to be handled in identifiers.a68, but
+			caused problems elsewhere. In this case we need a temporaray.
+			This DOESN'T apply to ref flex [][] x when the forall mode is
+			ref flex [] x.
+			}
+
+			INT forall mode = mode OF ident OF control;
+
+			IF	is firm array (elem mode) ANDTH
+				elem mode < ref mark ANDTH
+				NOT ( is flex array (forall mode) ANDTH
+				      HASONEREF forall mode
+				    )
+			THEN
+				INT control mode = elem mode + ref mark + ref mark;
+				needs temp OF control := TRUE;
+				control OF control :=
+				(
+				  CFRAGMENT control name = name OF declare c temporary 
+							   (control mode, "forall control - ref [][]x");
+				  LOC VECTOR [UPB control name] CHAR := control name
+				)
+			ELSE
+				needs temp OF control := FALSE;    
+				control OF control    :=
+				(
+				  CFRAGMENT control name = GETCFRAGMENT ident OF control;
+				  LOC VECTOR [UPB control name] CHAR := control name
+				)
+			FI
+		ELSE	
+			{
+			Check ref [][]x.
+			Control mode is correct.
+			Original has no refs - need a temp of mode * x
+			}
+			INT control mode = elem mode +
+				( is firm array (elem mode) ANDTH
+				  NOT has refs (elem mode)
+				| ref mark + ref mark
+ 				  { A [][]x must have a *[]x to be forced by two refs }
+				| ref mark
+				  { In all other cases adding an A68 ref results in a C * }
+				);
+
+			needs temp OF control := TRUE;
+			control OF control :=
+			(
+			  CFRAGMENT control name = name OF declare c temporary 
+						   (control mode, "forall control - []x");
+			  LOC VECTOR [UPB control name] CHAR := control name
+			)
+		FI
+	OD;
+                                                                 
+	{ initialise loop counter }
+
+	CFRAGMENT loop counter = 
+		name OF declare c temporary( int mode, "forall loop counter" );
+
+	write c stream(
+	( loop counter +" = "+
+	  (  is istruct (mode of rows [1])
+ 	  |  whole (istruct length (mode of rows [1]),0)
+	  |: is vector (mode of rows [1])
+	  |  rows [1] +".upb -1"
+      	  |  rows [1] +".dim[0].upb" +" - "+ rows [1] +".dim[0].lwb"
+	  ) , ";", cnewline ),
+	  code stream 
+	);
+
+
+	{ output run-time bounds checking of other rows, if there are any }
+
+	FOR i FROM 2 TO UPB rows
+	DO
+		CFRAGMENT row = rows[i];
+		write c stream(
+		( "if ( "+ loop counter +" != "+ 
+		  (  is istruct (mode of rows [i])
+		  |  whole (istruct length (mode of rows [i]),0)
+		  |: is vector (mode of rows [i])
+		  |  row +".upb -1"
+		  |  row +".dim[0].upb" +" - "+ row +".dim[0].lwb"
+		  ) , " )", cnewline ),
+		  code stream 
+		);     
+	       	write c stream(                               
+		( "{ A_ERROR( ""mismatched bounds in FORALL; row no "+
+		  whole (i, 0)+"""); }", cnewline ),
+			code stream )
+	OD;
+
+          
+	PROC initialise = (INT i) CFRAGMENT:
+	(  CFRAGMENT ctrl = control OF controls [i];
+	   is array (mode of rows [i]) AND
+	   dimensions (mode of rows [i]) > 1
+	|  use macro ( "A_R" + whole (dimensions (mode of rows [i]), 0) +
+		      "STRIP", (rows [i], ctrl)
+		    )
+	|  ctrl + " = " + rows [i] + ".data"
+	);
+           
+	PROC increment = (INT i) CFRAGMENT:
+	(  INT orig mde = mode of rows [i];
+	   CFRAGMENT ctrl = control OF controls [i];
+	   is array (orig mde) ANDTH
+	   dimensions (orig mde) > 1
+	|  ctrl + ".data += " + rows [i] + ".dim[0].stride"
+	|  ctrl + ( is vector (orig mde) OREL is istruct (orig mde)
+		  | "++"
+		  | " += " + rows [i] + ".dim[0].stride"
+		  )
+	);
+
+          
+	FOR i FROM 1 TO UPB controls
+	DO
+		write c stream ((initialise (i), ";", c newline), code stream)
+	OD;
+
+	write c stream (("for (;", loop counter, "-- >= 0;", cnewline,
+			 "(", increment (1), cnewline), code stream);
+
+	FOR i FROM 2 TO UPB controls
+	DO
+		write c stream ((",", increment (i), c newline), code stream)
+	OD;
+
+	write c stream ((") )", cnewline, "{", cnewline), code stream);
+
+	{ If any of the controls are temporaries, output the	}
+	{ control identifier assignments. 			}
+	FORALL control IN controls
+	DO
+		IF needs temp OF control
+		THEN
+ 			write c stream (( GETCFRAGMENT ident OF control, " = *",
+	  				  control OF control, ";", cnewline),
+					  code stream)
+		FI
+	OD
+END;
+
+PROC	while = VOID: SKIP;
+
+PROC	while do = ( REF VALUE enquiry ) VOID:                 
+BEGIN
+	INT code stream = CODESTREAM current level;
+	CFRAGMENT boolean expr = 
+		IF ISSKIP enquiry
+		THEN
+			"A_ENQ_SKIP"
+		ELSE
+			bracket cfragment( enquiry )
+		FI;
+	write c stream(
+	( "if ( !", boolean expr, " ) break;", cnewline ), code stream )
+END;    
+
+PROC	while od = VOID:
+BEGIN
+	INT code stream = CODESTREAM current level;
+	write c stream(( "}", cnewline ), codestream )
+END;
+
+PROC	VOID od = while od;
+
+SKIP
+
+KEEP
+	FORLOOP, FORALLCONTROL,
+	for, forall, while, while do, while od, od
+FINISH

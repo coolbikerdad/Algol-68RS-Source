@@ -1,0 +1,231 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Writing to books</title>
+<meta name="description" content="writing to books">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node83.html">
+<link rel="previous" href="node81.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node83.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2029"
+  href="node83.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2023"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2017"
+  href="node81.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2025"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2027"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2030"
+  href="node83.html">String terminators</a>
+<b> Up:</b> <a name="tex2html2024"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2018"
+  href="node81.html">Reading books</a>
+ &nbsp; <b>  <a name="tex2html2026"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2028"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2031"
+  href="node82.html#section001131000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001130000000000000000"></a><a name="trans-writbook"></a>
+Writing to books</h1>
+
+<p>You should use the <tt>establish</tt><a name="5995"></a> procedure
+to create a new book.  Here is a program fragment which creates a new
+book called <code>results</code>:</p>
+
+<pre>
+   FILE outf;
+
+   IF establish(outf,
+                "results",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      print(("Cannot establish book results",
+             newline));
+      exit(1)
+   FI
+</pre>
+
+<p>As you can see, <code>establish</code> has a similar header to
+<tt>open</tt>.  What are the integers used for? The header for
+<code>establish</code> is</p>
+
+<pre>
+   PROC establish = (REF FILE f,
+                     STRING idf,
+                     CHANNEL chann,
+                     INT p,l,c)INT:
+</pre>
+
+<p>The <code>p</code>, <code>l</code> and <code>c</code> in
+<code>establish</code> determine the maximum number of pages, lines
+and characters in the book which is being created. Values of
+<code>0</code> for all three integers mean that the file should be
+established with zero length. However, they are ignored by the
+<tt>stand out channel</tt> in the QAD standard prelude provided with
+the a68toc<a name="5996"></a> compiler.</p>
+
+<p>The procedure used to write data to a book is
+<tt>put</tt><a name="5997"></a>. Its header is</p>
+
+<pre>
+   PROC put=(REF FILE f,[]SIMPLOUT items)VOID:
+</pre>
+
+<p>You can examine the source of the standard prelude to see how the
+mode <code>SIMPLOUT</code> is declared.</p>
+
+<p>Again, <tt>newline</tt><a name="5998"></a> and
+<tt>newpage</tt><a name="5999"></a> can be used independently of
+<code>put</code> as in the following fragment:</p>
+
+<pre>
+   FILE outf;
+   IF establish(outf,
+                "newbook",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish newbook",
+           newline));
+      exit(2)
+   ELSE
+      put(outf,("Data for newbook",newline));
+      FOR i TO 1000 DO put(outf,i) OD;
+      newline(outf);
+      close(outf)
+   FI
+</pre>
+
+<p>On output, the newline character is written to the book.</p>
+
+<p><code>newpage</code> behaves just like <code>newline</code> except
+that a form feed character is searched for on input, and written on
+output.</p>
+
+<p>The procedure <code>establish</code> can fail if the disk you are
+writing to is full or you do not have write access (in a network, for
+example) in which case it will return a non-zero value.</p>
+
+<p>When you have completed sending data to a book, you must close it
+with the <tt>close</tt><a name="6000"></a> procedure. This is
+particularly important with books you write to because the channel is
+buffered as explained above. Using <code>close</code> ensures that any
+remaining data in the buffer is flushed to the book.</p>
+
+<p>The procedure <tt>print</tt><a name="6001"></a> uses the <code>REF
+FILE</code> name <tt>stand out</tt><a name="6002"></a>. So</p>
+
+<pre>
+   print(("Your name",newline))
+</pre>
+
+<p>is equivalent to</p>
+
+<pre>
+   put(stand out,("Your name",newline))
+</pre>
+
+<p>Again, <code>stand out</code> is open when your program is started
+and it should not be closed. Transput via <code>stand out</code> is
+unbuffered.  You cannot read from <code>stand out</code>, nor write to
+<code>stand in</code>.  The procedure <code>write</code> is synonymous
+with <code>print</code>.</p>
+
+<hr>
+<h2><a name="section001131000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.3<a name="ex-ix-iii"></a>
+<dd>Change the second program in the last set of exercises to put its
+total into a newly-created book whose identification is
+<code>result</code>.  Ans<a href="node143.html#ans-ix-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>9.4<a name="ex-ix-iv"></a>
+<dd>Adapt Eratosthenes' Sieve (see section&nbsp;<a href="node52.html#name-indiv">5.4.1</a>) to
+output all the prime numbers less than 10,000 into a book called
+<code>primes</code>.  Ans<a href="node143.html#ans-ix-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2029"
+  href="node83.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2023"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2017"
+  href="node81.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2025"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2027"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2030"
+  href="node83.html">String terminators</a>
+<b> Up:</b> <a name="tex2html2024"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2018"
+  href="node81.html">Reading books</a>
+ &nbsp; <b>  <a name="tex2html2026"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2028"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

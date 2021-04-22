@@ -1,0 +1,267 @@
+#!/bin/bash
+#
+# Phoenix Engineering (C) 21308
+# Created: SL 21308-05-18
+# Amended: Sian Mountbatten <poenikatu@fastmail.co.uk> 21319-09-05
+#
+#set -x
+
+#------------ Compiler choice ---------
+
+CC="none"
+ARCH=$(arch)
+OS=$(uname -s)
+echo "Architecture is $ARCH, Operating system is $OS"
+
+case $ARCH in
+    "i386")
+	CC="gcc"
+	;;
+    "i686")
+	CC="gcc"
+	;;
+    "x86_64")
+	CC="gcc"
+	;;
+    "armv7l")
+	CC="gcc"
+	;;
+    "aarch64")
+	CC="gcc"
+	;;
+    *)
+	echo "Architecture not supported"
+	exit 1
+	;;
+esac
+echo "Using compiler: $CC"
+
+PROGRAM=/usr/bin/a68toc
+ROOT=/usr/share/algol68toc
+INCLUDES="-I/usr/include/algol68 -I/usr/include"
+
+A68DIRS="-dir ${ROOT}"
+CHECK=-DA68_CHECK
+DEBUG=n
+DESTDIR=${HOME}/lib
+LIBRARIES=-L${DESTDIR}
+UNAME="-uname seedfile"
+WEBDIR="-w${DESTDIR}"
+
+usage() {
+    echo "Usage:"
+    echo "    ca [-c] [-C c-flag] [-d m-files-dir] [-g] [-h|--help] "
+	 echo "       [-I inc-dir] [-L link-dir] [-l link-lib]"
+    echo "       [-M lib-dir] [-m mod-lib]"
+    echo "       [-u uname] [-w web68-dirs] module-path[.a68|.w68]"
+	 echo
+	 echo "  -c   Omit array bound checking in the compiled program"
+	 echo "  -C   Specify a flag for the C compiler (may be repeated)"
+         echo "  -d   Specify a directory to be searched for .m files"
+	 echo "  -g   Switch on debugging"
+	 echo "  -h --help Print this help message"
+	 echo "  -I   Specify an include directory for C header files"
+	 echo "         May be repeated"
+	 echo "  -L   Specify a directory to search for linking libraries"
+	 echo "         May be repeated"
+	 echo "  -l   Specify a library to be searched for functions"
+	 echo "         The directory can be specified immediately following"
+	 echo "         the -l or separated by a space. May be repeated"
+	 echo "  -M   Specify a directory for a module library"
+	 echo "  -m   Specify a module library. The .a and leading lib can"
+	 echo "         be omitted"
+	 echo "  -u   Specify where the compiler will get its seed for unique"
+	 echo "         names. Possible values are: seedfile, cfile, or seven"
+	 echo "         uppercase letters. Default is seedfile"
+	 echo "  -w   Specify additional directories for tang to search for"
+	 echo "         include files (may be repeated). The directory can be"
+	 echo "         specified immediately following the -w or separated by"
+	 echo "         a space"
+	 echo
+    echo "Defaults:"
+    echo "   A68DIRS  =${A68DIRS}"
+    echo "            Use -d to add to this"
+    echo "   DESTDIR  = ${DESTDIR}"
+    echo "            Use -M to replace this"
+    echo "   INCLUDES =${INCLUDES}"
+    echo "            Use -I to add to this"
+    echo "   LIBRARIES=${LIBRARIES}"
+    echo "            Use -L and -l to add to this"
+    echo "   UNAME    =${UNAME}"
+    echo "            Use -u to replace this"
+    echo "   WEBDIR   =${WEBDIR}"
+    echo "            Use -w to add to this"
+    echo
+    echo "If the file is a DECS module, store the .o object file into"
+    echo "the library specified by -m in the directory specified by -M."
+    echo "If the file type is omitted, .a68 is presumed."
+    exit 1
+}
+
+add_to () {
+    if [ "$1" == "A68DIRS" ]
+    then A68DIRS="${A68DIRS} -dir $2"
+	 elif [ "$1" == "CFLAGS" ]
+	 then CFLAGS="${CFLAGS} $2"
+    elif [ "$1" == "DESTDIR" ]
+    then DESTDIR=$2
+    elif [ "$1" == "DESTLIB" ]
+    then # Ensure that the library filename has the form libxxxx.a
+         TEMP="lib${2#lib}"
+         DESTLIB="${TEMP%.a}.a"
+    elif [ "$1" == "INCLUDES" ]
+    then INCLUDES="${INCLUDES} -I$2"
+    elif [ "$1" == "LIBRARY" ]
+    then # Strip "lib" and ".a" from the library filename (if given)
+         TEMP=${2#lib}
+         LIBRARIES="${LIBRARIES} -l${TEMP%.a}"
+    elif [ "$1" == "LIBDIR" ]
+    then LIBRARIES="${LIBRARIES} -L$2"
+    elif [ "$1" == "WEBDIR" ]
+    then WEBDIR="${WEBDIR} -w$2"
+    fi
+}
+
+# Check the options
+if [ $# -eq 0 ]
+then usage; exit 1
+fi
+
+while [ $# -gt 0 ]
+do
+  case $1 in
+      -c) CHECK=""
+          shift 1
+          ;;
+		-C)
+			 add_to CFLAGS $2
+			 shift 2
+			 ;;
+      -d)
+          add_to A68DIRS $2
+          shift 2
+          ;;
+      -g)
+          LIBRARIES="${LIBRARIES} -lg"
+          CFLAGS="-g"
+          DEBUG=y
+          shift 1
+          ;;
+      -h|--help)
+          usage
+         ;;
+      -I)
+         add_to INCLUDES $2
+         shift 2
+         ;;
+      -L)
+         add_to LIBDIR $2
+         shift 2
+         ;;
+      -l)
+         add_to LIBRARY $2
+         shift 2
+         ;;
+      -l*)
+			add_to LIBRARY ${1#-l}
+	 		shift 1
+			;;
+      -m)
+         add_to DESTLIB $2
+         shift 2
+         ;;
+      -M)
+         add_to DESTDIR $2
+         shift 2
+         ;;
+      -u)
+         UNAME="-uname $2"
+         shift 2
+         ;;
+      -w)
+         add_to WEBDIR $2
+         shift 2
+         ;;
+		-w*)
+			add_to WEBDIR ${1#-w}
+			shift 1
+			;;
+      -*|+*)
+         echo "ca: Unknown option $1"
+         exit 1
+         ;;
+      *)
+         FILE=$1
+         W68S=${FILE%.w68}
+         shift
+         ;;
+  esac
+done
+
+# Check the filename and run tang if required
+if [ "${FILE}" != "${W68S}" ]
+then
+    tang ${WEBDIR} ${W68S}.w68
+    if [ $? -ne 0 ]
+    then exit 1
+    fi
+    A68S=${W68S}
+else
+    A68S=${FILE%.a68}
+fi
+
+# Check whether the module is a program
+grep "PROGRAM " ${A68S}.a68 >/dev/null
+if [ $? -eq 0 ]
+then TYPE=p
+else
+    TYPE=m
+    # Ensure that the sub-directory for .m files exists
+    if [ ! -z "${DESTDIR}" ]
+    then
+        if [ ! -e ${DESTDIR}/m ]
+        then mkdir ${DESTDIR}/m
+           echo "ca: Directory ${DESTDIR}/m created"
+        fi
+    fi
+fi
+
+# Translate to C and compile
+echo ${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
+${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
+RES=$?
+
+if [ ${RES} -eq 0 ]
+then
+    echo ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
+    ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
+    RES=$?
+    if [ ${RES} -ne 0 ]
+    then exit ${RES}
+    fi
+else
+    rm -f $(basename ${A68S}).c
+    exit ${RES}
+fi
+
+if [ "${TYPE}" == "p" ]
+then # Link the program
+    echo ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -lm -lc
+    ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -lm -lc
+    RES=$?
+    if [ ${RES} -ne 0 ]
+    then exit ${RES}
+    fi
+
+elif [ ! -z "${DESTDIR}" ]
+then
+    # Put the .o file into the specified library
+    ar rv ${DESTDIR}/${DESTLIB} ${A68S}.o
+    ranlib ${DESTDIR}/${DESTLIB}
+    ar t ${DESTDIR}/${DESTLIB}
+    # Put the .m file into the sub-directory
+    mv $(basename ${A68S}).m ${DESTDIR}/m
+    echo "ca: .m file moved to ${DESTDIR}/m"
+fi
+
+exit 0

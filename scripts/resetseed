@@ -1,0 +1,36 @@
+#!/bin/sh
+# Reset the nameseed file and remove *.c, *.o and *.m files
+
+help() {
+  echo 'Usage: resetseed [-h|--help] [-f|SEED]'
+  echo "    -f: copy rctr to nameseed"
+  echo "  SEED: 7 uppercase letters"
+  echo "        set rctr to SEED and copy to nameseed"
+  echo "  eg)  resetseed AAAAAPM"
+  exit 0
+}
+
+if [ $# -eq 0 ]
+then help;  exit 0
+fi
+
+case $1 in
+  -h|--help)
+	help
+	exit 1
+	;;
+
+  -f)   cp rctr nameseed
+	;;
+	
+  -*)	echo "Unknown option"
+	help
+	exit 1
+	;;
+
+   *)	echo -n "$1" >rctr
+	cp rctr nameseed
+	;;
+esac
+
+# End of resetseed

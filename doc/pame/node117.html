@@ -1,0 +1,255 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Trees</title>
+<meta name="description" content="trees">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node118.html">
+<link rel="previous" href="node116.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node118.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2611"
+  href="node118.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2605"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2599"
+  href="node116.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2607"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2609"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2612"
+  href="node118.html">Parallel programming</a>
+<b> Up:</b> <a name="tex2html2606"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2600"
+  href="node116.html">More queue procedures</a>
+ &nbsp; <b>  <a name="tex2html2608"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2610"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2613"
+  href="node117.html#section0013111000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section0013110000000000000000"></a><a name="adv-trees"></a>
+Trees</h1>
+
+<p>Both queues and trees are examples of recursive
+structures<a name="7912"></a>. Queues contain only one link between
+individual structures, trees contain at least two.  Trees are another
+kind of linked-list<a name="7913"></a> and are interesting because
+they give more examples of how recursive procedures<a name="7914"></a>
+are used to manipulate recursively-defined data structures.</p>
+
+<p>There are two principal kinds of trees<a name="7915"></a> in common
+use: B-trees and binary trees. B-trees<a name="7916"></a> (sometimes
+called <b>balanced trees</b><a name="7918"></a>) are too advanced to
+be described here.</p>
+
+<p>A binary tree consists of a number of forks, usually called
+<b>nodes</b><a name="7920"></a>, which are linked with two links per
+node.</p>
+
+<p>Here is an example of a small tree:</p>
+
+<div align="center"><img align="bottom" border="0"
+ src="ch11-10.png" alt="ch11-10.png">
+</div>
+
+<p>The topmost node is called the <b>root</b><a name="7925"></a>
+(trees are usually depicted upside-down<a name="tex2html39"
+href="footnode.html#foot7994"><sup><span
+class="arabic">12</span>.<span class="arabic">2</span></sup></a>).
+Each node consists of three parts: the data which each node bears and
+left and right references which can refer to other nodes. In the small
+tree shown above, there are seven nodes on five levels. There are 4
+nodes on the left branch of the root and 2 on the right, so that the
+tree is unbalanced.</p>
+
+<p>A binary tree is particularly suitable for the ordering of data:
+that is, for arranging data in a predefined order<a name="tex2html40"
+href="footnode.html#foot7928"><sup><span
+class="arabic">12</span>.<span class="arabic">3</span></sup></a>. In
+the previous section, in procedure <code>insert fan</code>, we
+considered inserting a fan into a queue in ascending order of ticket
+number. This is an inefficient way of ordering data. For example,
+suppose there are 100 fans in the queue.  Then, on average, we can
+expect to insert a fan halfway down the queue; which means 50
+comparisons of ticket numbers. If the fans were stored as a balanced
+binary tree, the maximum number of comparisons would be only 7
+(because <span class="math">2<sup>6</sup> &lt; 100 &lt;
+2<sup>7</sup></span>).  For larger numbers, the difference between the
+two kinds of linked-list is even more marked.  For 1000 fans, a queue
+would need 500 comparisons on average, whereas a balanced binary tree
+would need 10 at most. While it is true that these figures are minima
+(they assume that the tree is balanced<a name="7929"></a>, that is,
+that there are as many nodes to the left of the root as to the right),
+nevertheless, on average, a binary tree is much more efficient than a
+queue for ordering data.</p>
+
+<p>Here is a typical mode declaration for a binary tree:</p>
+
+<pre>
+   MODE WORD = STRUCT(STRING wd,
+                      INT ct,
+                      REAL fq),
+        TREE = STRUCT(REF WORD w,
+                      REF TREE left,right);
+</pre>
+
+<p>The mode of the data in the declaration of <code>TREE</code> is <tt>REF
+WORD</tt> so that if an item of data is moved around, it is only the
+reference which is moved. This is more efficient than moving the data
+item itself.</p>
+
+<p>We shall give two example tree procedures: adding an item of data to
+the tree and printing the tree. We need to check whether the tree at
+some node is empty. For this, we use the declaration</p>
+
+<pre>
+   REF TREE leaf = NIL
+</pre>
+
+<p>Here is the procedure <code>add word</code>:</p>
+
+<pre>
+   PROC add word = (REF REF TREE root,
+                    REF WORD w)VOID:
+   IF   root IS leaf
+   THEN root:=HEAP TREE:=(w,leaf,leaf)
+   ELIF wd OF w &lt; wd OF w OF root
+   THEN add word(left OF root,w)
+   ELIF wd OF w &gt; wd OF w OF root
+   THEN add word(right OF root,w)
+   ELSE ct OF w OF root+:=1
+   FI
+</pre>
+
+<p>The ordering relation in <code>add word</code> is the alphabetical
+ordering of the string in each data item. When the string in the data
+item to be added to the tree has been found in the tree, the
+occurrence number is incremented by&nbsp;1 (see the <code>ELSE</code>
+clause above).  Note the use of recursion<a name="7937"></a>.</p>
+
+<p>Printing the tree follows a similar pattern, but when the &ldquo;root&rdquo; under
+consideration is a leaf, nothing happens:</p>
+
+<pre>
+   PROC print tree=(REF FILE f,
+                    REF REF TREE root)VOID:
+   IF   root ISNT leaf
+   THEN print tree(f,left OF root);
+        put(f,(wd OF w OF root,
+               ct OF w OF root,
+               newline));
+        print tree(f,right OF root)
+   FI
+</pre>
+
+<p>As you can see, recursion is vital here. Although it is true that
+recursion can be avoided by using a loop, recursion is better because
+it clarifies the logic.</p>
+
+<p>The allocation and release of memory for linked-lists (including
+trees) are quite transparent to the program.  When a tree is read, and
+nodes possibly deleted, all the lost memory is collected every so
+often by a <b>garbage collector</b><a name="7941"></a>.  You do not
+have to worry about the details of memory maintenance--it is all done
+for you by the compiler and the run-time system.  If you write a
+program which relies heavily on global generators, then you should
+allocate extra memory to the heap (see the on-line information for
+details of how to use the Algol 68 compilation
+system<a name="7942"></a>).</p>
+
+<hr>
+<h2><a name="section0013111000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.24<a name="ex-xi-xxiv"></a>
+<dd>Write a program which reads a text book and creates a binary tree
+containing the number of occurrences of each of the letters A-Z and
+a-z (that is, case is significant). Print a report with the frequency
+of occurrence represented by a percentage of the total number of
+letters in the book to 2 decimal places. You should print the letters
+going downwards with 13 lines for each column: first the upper case
+letters, then the lower case. Only print lines for those letters which
+occur in the book (use <code>mem channel</code> to build the complete table in
+memory before printing). Ans<a href="node145.html#ans-xi-xxiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2611"
+  href="node118.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2605"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2599"
+  href="node116.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2607"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2609"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2612"
+  href="node118.html">Parallel programming</a>
+<b> Up:</b> <a name="tex2html2606"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2600"
+  href="node116.html">More queue procedures</a>
+ &nbsp; <b>  <a name="tex2html2608"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2610"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

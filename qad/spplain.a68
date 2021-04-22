@@ -1,0 +1,222 @@
+DECS spplain CONTEXT VOID
+USE spmodes, spaliens, spops:
+
+COMMENT
+   $Log: spplain.a68,v $
+   Revision 1.3  2001-09-27 13:06:05  sian
+   Partial conversion to new package
+
+   Revision 1.2  2001/06/18 11:04:27  sian
+   1. Replaced non-standard hexadecimal string denotations with REPR n.
+   2. Added code to resolve symbolic Internet addresses.
+   3. Replaced the temporary file generation in create.
+
+   Revision 1.1.1.1  2001/05/07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.3  2000/07/05 14:55:56  sian
+   Ready for release 0.1.0
+
+   Revision 1.2  2000/01/20 16:43:13  sian
+   Garbage collector prohibits shared libraries.
+
+   Revision 1.1  2000/01/10 05:56:26  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   This module contains the environment enquiries specified in the
+   Revised Report. There are a few additions. Consult `Programming
+   Algol 68 Made Easy' for the details.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+INT int lengths   = 2, int shorths   = 3;
+INT real lengths  = 1, real shorths  = 2;
+INT bits lengths  = 2, bits shorths  = 3;
+INT bytes lengths = 0, bytes shorths = 0;
+
+LONG INT long max int = LONG INT CODE
+   "long long unsigned int l = 0x0; l = ~l; RESULT=(long long int)(l >> 1);";
+
+INT long int width        = 19;
+INT int width             = 10;
+INT short int width       = 5;
+INT short short int width = 3;
+
+INT long bits width       = 64;
+INT bits width            = 32;
+INT short bits width      = 16;
+INT short short bits width= 8;
+
+INT bytes width           = 0;
+
+INT
+   char bin bytes         = 1,
+
+   short short int bin bytes = 1,
+   short int bin bytes    = 2,
+   int bin bytes          = 4,
+   long int bin bytes     = 8,
+
+   short short bits bin bytes = 1,
+   short bits bin bytes   = 2,
+   bits bin bytes         = 4,
+   long bits bin bytes    = 8,
+
+   bool bin bytes         = 4,
+
+   real bin bytes         = 8,
+   short real bin bytes   = 4,
+
+   compl bin bytes        = 16,
+   short compl bin bytes  = 8;
+
+CHAR blank = " ", error char = "*", null character = REPR 0;
+CHAR flip = "T", flop = "F";
+
+CHAR
+   cr = REPR 13, lf = REPR 10, ff = REPR 12,
+   tab ch = REPR 9, esc = REPR 27,
+   nul ch = null character, eof char = REPR 26;
+
+BITS bwm = BIN(bits width-1);
+
+REAL
+   min real = 0.1976262583364986e-322,
+   max real = 1.79769313486231571e+308;
+
+SHORT REAL
+   short min real = SHORTEN 1.17549435082228751e-38,
+   short max real = SHORTEN 3.40282346638528860e+38;
+
+INT
+   exp width       = 3,
+   short exp width = 2;
+
+SHORT REAL short pi = SHORTEN pi;
+
+PROC
+   short sqrt    = (SHORT REAL x)SHORT REAL: SHORTEN sqrt(LENG x),
+   short exp     = (SHORT REAL x)SHORT REAL: SHORTEN exp(LENG x),
+   short ln      = (SHORT REAL x)SHORT REAL: SHORTEN ln(LENG x),
+   short log     = (SHORT REAL x)SHORT REAL: SHORTEN log(LENG x),
+   short cos     = (SHORT REAL x)SHORT REAL: SHORTEN cos(LENG x),
+   short sin     = (SHORT REAL x)SHORT REAL: SHORTEN sin(LENG x),
+   short tan     = (SHORT REAL x)SHORT REAL: SHORTEN tan(LENG x),
+   short arccos  = (SHORT REAL x)SHORT REAL: SHORTEN arccos(LENG x),
+   short arcsin  = (SHORT REAL x)SHORT REAL: SHORTEN arcsin(LENG x),
+   short arctan  = (SHORT REAL x)SHORT REAL: SHORTEN arctan(LENG x);
+
+REAL log2 = 0.30102999566398120;
+
+INT
+   c1 = 2147001325,
+   c2 = 715136305;
+
+LONG INT
+   long c1 = ABS(BIN LENG c1 SHL 32 OR BIN LENG c2),
+   long c2 = LENG c2;
+
+INT last random:=ABS 16rdead d0d0;
+LONG INT long last random:=ABS(LONG 16rdead d0d0 SHL 32 OR LONG 16rdead d0d0);
+
+PROC prbs = (REF INT r)INT: r:=c1*ABS r+c2;
+PROC long prbs = (REF LONG INT r)LONG INT: r:=long c1*ABS r+long c2;
+
+PROC next random = (REF INT r)REAL: (REAL(prbs(r)) &* -32) +0.5;
+PROC random = REAL: next random(last random);
+PROC short random = SHORT REAL: SHORTEN random;
+
+PROC long random int = (LONG INT n)LONG INT: long prbs(long last random) MOD n+ LONG 1;
+PROC random int = (INT n)INT: prbs(last random) MOD n + 1;
+PROC short random int = (SHORT INT n)SHORT INT:
+   SHORTEN prbs(last random) MOD n + SHORT 1;
+PROC short short random int = (SHORT SHORT INT n)SHORT SHORT INT:
+   SHORTEN SHORTEN prbs(last random) MOD n + SHORT SHORT 1;
+
+OP STRINGTOBAG = (STRING s)CHARBAG:
+BEGIN
+   CHARBAG cb;
+   FOR i TO UPB cb DO cb[i]:=2r0 OD;
+   FOR i FROM LWB s TO UPB s
+   DO
+      INT as = ABS s[i];
+      REF BITS bits = cb[1+as % bits width];
+      bits:=ELEM(1+ABS(BIN as & bwm)) OR bits
+   OD;
+   cb
+END; #STRINGTOBAG#
+
+OP ELEM = (CHAR k, CHARBAG m)BOOL:
+   (1+ABS(BIN ABS k & bwm)) ELEM m[1+ABS(BIN ABS k SHR 5)];
+
+CHARBAG radix 10 digit=(2r0,16r0000ffc0,2r0,2r0,2r0,2r0,2r0,2r0);
+CHARBAG radix 2  digit=(2r0,16r0000c000,2r0,2r0,2r0,2r0,2r0,2r0);
+CHARBAG radix 4  digit=(2r0,16r0000f000,2r0,2r0,2r0,2r0,2r0,2r0);
+CHARBAG radix 8  digit=(2r0,16r0000ff00,2r0,2r0,2r0,2r0,2r0,2r0);
+CHARBAG radix 16 digit=(2r0,16r0000ffc0,2r0,16r7fffffe0,2r0,2r0,2r0,2r0);
+CHARBAG times ten to the power=(2r0,2r0,16r04000008,16r04000000,2r0,2r0,2r0,2r0);
+CHARBAG flip flop=(2r0,2r0,16r02000800,2r0,2r0,2r0,2r0,2r0);
+CHARBAG plus i times=(2r0,2r0,16r00400000,16r00400000,2r0,2r0,2r0,2r0);
+CHARBAG lf bag=(16r00200000,2r0,2r0,2r0,2r0,2r0,2r0,2r0);
+
+SKIP
+
+KEEP
+
+#Decs#
+int lengths,                 int shorths,
+real lengths,                real shorths,
+bits lengths,                bits shorths,
+bytes lengths,               bytes shorths,
+
+long max int,
+
+long int width,  int width,  short int width,  short short int width,
+long bits width, bits width, short bits width, short short bits width,
+bytes width,
+
+char bin bytes,             bool bin bytes,
+short short int bin bytes,  short int bin bytes,
+int bin bytes,              long int bin bytes,
+short short bits bin bytes, short bits bin bytes,
+bits bin bytes,             long bits bin bytes,
+real bin bytes,             short real bin bytes,
+compl bin bytes,            short compl bin bytes,
+
+blank, error char,          null character,  nul ch,
+flip, flop,
+cr, lf, ff, tab ch, esc, eof char,
+
+min real,                   short min real,
+max real,                   short max real,
+exp width,                  short exp width,
+
+short pi, log2,
+
+#PROCs#
+short sin,
+short cos,
+short tan,
+short arcsin,
+short arccos,
+short arctan,
+short sqrt,
+short ln,
+short log,
+short exp,
+
+last random,                long last random,
+next random,                random,             short random,
+long random int,            random int,
+short random int,           short short random int,
+
+STRINGTOBAG(STRING), ELEM(CHAR,CHARBAG),
+radix 10 digit, radix 2 digit, radix 4 digit,
+radix 8 digit, radix 16 digit,
+times ten to the power, flip flop, plus i times, lf bag
+
+FINISH

@@ -1,0 +1,90 @@
+DECS  strops  CONTEXT VOID:
+
+{ " Id: " }
+configinfo A68CONFIG "$Id: strops.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+27:09:93  Created from a subset of "usefulops" to avoid problems on VMS -
+             contains "concat" and "MAKERVC" used by low level modules to to
+             both ELLA and Ctrans.  Also contains "intchars" from "putstrings"
+             to form a minimal ALGOL68 string conversion package.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.005 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+MODE  STR = VECTOR [0] CHAR,
+      RVC = REF STR;
+
+OP  MAKERVC = (CHAR  c) RVC:  HEAP VECTOR [1] CHAR:= c;
+OP  MAKERVC = (STR  s) RVC:   HEAP VECTOR [UPB s] CHAR:= s;
+
+
+PROC  concat = (VECTOR [] STR  strs) RVC:
+BEGIN
+   INT  l:= 0;
+   FORALL st IN strs DO  l PLUSAB UPB st  OD;
+   HEAP VECTOR [l] CHAR  ans;
+   l:= 0;
+   FORALL str IN strs
+   DO  INT  lwb = l + 1, upb = l PLUSAB UPB str;
+       ans[lwb : upb]:= str
+   OD;
+   ans
+END;
+
+
+PROC  intchars = (INT  i) STR:
+BEGIN
+   STRUCT 10 CHAR  chars = IF i < 0 THEN "0987654321" ELSE "0123456789" FI;
+   INT  n:= i,  l:= 0;
+   INT  e = IF i < 0 THEN  1  ELSE  0  FI;
+   WHILE n /= 0 DO n OVERAB 10; l PLUSAB 1 OD;
+   IF l = 0
+   THEN  "0"
+   ELSE  VECTOR [l+e] CHAR line;
+         n:= i;
+         FOR i FROM l+e BY -1 TO e+1
+         DO  line[i]:= chars[(n MOD 10) + 1];
+             n OVERAB 10
+         OD;
+         IF e = 1 THEN  line[1]:= "-"  FI;
+         line
+   FI
+END
+
+
+KEEP  STR,  RVC,  MAKERVC (CHAR),  MAKERVC (STR),  concat,  intchars
+FINISH

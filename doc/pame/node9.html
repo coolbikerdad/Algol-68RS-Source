@@ -1,0 +1,182 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Characters</title>
+<meta name="description" content="characters">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node10.html">
+<link rel="previous" href="node8.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node10.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html784"
+  href="node10.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html778"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html772"
+  href="node8.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html780"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html782"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html785"
+  href="node10.html">Real numbers</a>
+<b> Up:</b> <a name="tex2html779"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html773"
+  href="node8.html">Identity declarations</a>
+ &nbsp; <b>  <a name="tex2html781"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html783"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html786"
+  href="node9.html#section00361000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00360000000000000000"></a><a name="intro-chars"></a>
+<br>
+Characters
+</h1>
+<p>All the symbols<a name="235"></a> you can see on a computer, and some you
+cannot see, are known as characters<a name="236"></a>.  The alphabet
+consists of the characters <code>A</code> to <code>Z</code> and <code>a</code> to
+<code>z</code>.  The digits comprise the characters <code>0</code> to <code>9</code>. 
+Every computer recognises a particular set of characters.  The
+character set<a name="237"></a> recognised by <code>a68toc</code>
+is ASCII<a name="238"></a> (which stands for American
+Standard Code for Information Interchange). The mode of a character is
+<tt>CHAR</tt><a name="442"></a> (read &ldquo;car&rdquo; because it is short for
+character).  A character is denoted by placing it between quote
+characters.  Thus the denotation of the lower-case a is <code>"a"</code>. 
+Here are some character denotations<a name="241"></a>:</p>
+
+<pre>
+   "a"  "A"  "3"  ";"  "\"  "'"  """"  " "
+</pre>
+
+<p>Note that quote characters are doubled in their denotations.  The
+third denotation is <code>"3"</code>.  This value has mode <code>CHAR</code>.
+The denotation <code>3</code> has mode <code>INT</code>: the two values are quite
+distinct, and one is not a synonym for the other.  The last
+denotation is that of the space character.</p>
+
+<p>
+Here are some identity declarations for values of mode
+<code>CHAR</code>:</p>
+
+<pre>
+   CHAR a = "A", zed = "z";  CHAR tilde = "~"
+</pre>
+
+<p>Note that the two sets of identity declarations are separated by a
+semicolon, but the declaration for <code>tilde</code> is not followed
+by a semicolon.  This is because the semicolon
+<tt>;</tt><a name="443"></a> is not a terminator; it is an action.
+Identity declarations do not <b>yield</b><a name="249"></a> any value.
+An identity declaration is a <b>phrase</b><a name="251"></a>.  Phrases
+are either identity declarations or <b>units</b>.  When a phrase is
+elaborated, if it is a unit<a name="253"></a>, it will yield a value.
+That is, after elaboration, a value will be available for further use
+if required.  Again, this may not make much sense now, but it will
+become clearer as you learn the language.</p>
+
+<p> Here is a piece of program with identity declarations for an
+<code>INT</code> and a <code>CHAR</code>:<a name="tex2html1"
+href="footnode.html#foot444"><sup><span
+class="arabic">2</span>.<span class="arabic">1</span></sup></a></p>
+
+<pre>
+   INT ninety nine=99 , CHAR x = "X"
+</pre>
+
+<p> The compiler recognises 512 distinct values of mode
+<code>CHAR</code>, but most of them can only occur in denotations. The
+space is declared as <tt>blank</tt><a name="445"></a> in the standard
+prelude<a name="260"></a>.</p>
+
+<hr>
+<h2><a name="section00361000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>1.8<a name="ex-i-viii"></a>
+<dd>Write the denotations for the full-stop, the comma and the
+digit <code>8</code> (not the integer 8).   Ans<a href="node135.html#ans-i-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>1.9<a name="ex-i-ix"></a>
+<dd>Write a suitable identity declaration for the question mark.
+ Ans<a href="node135.html#ans-i-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html784"
+  href="node10.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html778"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html772"
+  href="node8.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html780"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html782"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html785"
+  href="node10.html">Real numbers</a>
+<b> Up:</b> <a name="tex2html779"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html773"
+  href="node8.html">Identity declarations</a>
+ &nbsp; <b>  <a name="tex2html781"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html783"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

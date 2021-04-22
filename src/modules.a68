@@ -1,0 +1,1112 @@
+DECS  modules  CONTEXT VOID  USE
+*L    usefulops, osif,
+      centities, common, coutput, environ, environment, idtable, incid,
+      incinstallation, liblookup, moduletracer, uniquenameserver:
+
+configinfo A68CONFIG "$Id: modules.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.17 
+31:01:95  33.002  DCT   PCPort-1  PROC filter added for FAT files system
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+  This module contains the data structures representing the modules involved
+  in a compilation, including the current module, together with the routines
+  responsible for maintaining them.
+}
+
+MODE	ID		= STRUCT 32 CHAR,
+
+	CHECKINFO	= STRUCT( UNAME l, g ),
+
+	MODINFO		= STRUCT
+			  ( UNAME uname,
+			    XMODINFO xmi,
+			    CHECKINFO checkinfo
+			  ),
+
+	IDLIST		= STRUCT                        { one per XTDEC }
+			  ( ID name,
+			    UNAME uname,
+			    BOOL optimised,		{ ie #define }
+			    BOOL iddec,			{ was an xiddec }
+			    BOOL global proc,		{ a C function }
+			    BOOL gen proc,		{ a generator proc }
+                            BOOL force use,
+			    INT mode,
+			    INT decno,
+                            REF VECTOR [] CHAR definition,
+                            REF VECTOR [] CHAR rhs,
+			    REF IDLIST rest
+			  ),
+
+	USELIST		= STRUCT			{ one per USEd module }
+			  ( ID name,
+			    UNAME uname,
+			    REF IDLIST ids,
+			    REF USELIST rest
+			  ),
+
+	CONTEXTLIST	= STRUCT
+			( ID name,
+			  YM ym,
+			  YS ys,
+			  INT level,
+			  REF IDLIST ids,
+			  REF USELIST uses,
+			  REF CONTEXTLIST rest
+			);
+
+INT	id length	 = max id,
+	uname length	 = max uname,
+	checkinfo length = 2 * (uname length+1);
+
+ID	nullid		 = "                                ",
+	anonymous id	 = "anonymous                       ",
+	std prelude name = "a68_stdprelude_                 ",
+	std prelude id   = "$                               ";
+
+UNAME	nulluname	 = "       ";
+
+CHAR flip = "t", flop = "f";
+
+{ ----------------------------------------------------------- }
+
+PROC debug message = ( INT level, VECTOR [] CHAR m ) VOID:
+{
+ 	for debugging only
+}
+  IF TRACELEVEL "modules" >= level
+  THEN list( "MODULES("+whole(level,0)+"): " + m )
+  FI;
+                                                             
+{ ----------------------------------------------------------- }
+
+INT	current modinfo version = 8;
+STRUCT 8 CHAR modinfo magic = "mod_info";
+VECTOR [] CHAR alien_termination_string = "-----";
+
+BOOL	composition := FALSE;
+	{ set by 'give module details', depending on its 'closure' parameter}
+
+UNION( RVC, REF VECTOR[]CAT ) nilspec = SKIP;
+YSPEC nullspec = ( (nullid,-2,0,0,nilspec), null uname );
+ 
+PROC	give spec = ( ID n, ID f, YM ym )YSPEC:
+{
+	Returns a YSPEC, the xspec field of which has name 'f', and was output
+        by a previouscompilation of module 'n' (identified by 'ym'), unless an
+        error is detected, in which case 'null spec' ('no' = -2) is returned. 
+}
+BEGIN
+	INT	no := 1;
+	FORALL	spec IN specs OF ym
+	WHILE	f OF xs OF spec /= f
+	DO	no +:= 1
+	OD;
+	IF	no > UPB specs OF ym
+	THEN	null spec
+	ELSE	REF YMSPEC spec = (specs OF ym)[no];
+		( xs OF spec, ys OF spec )
+	FI
+END;
+
+PROC  filter = (VECTOR [] CHAR  name) VECTOR [] CHAR:
+   name[: filename truncate] BEFORE " ";
+
+
+CO
+		M O D U L E   I N F O R M A T I O N ( V8 )
+
+The layout of module information is as below.
+Comments in parentheses are not part of it.
+INTs are decimal numbers.
+IDs are 32 characters (may be trailing spaces).
+BOOLs are t or f.
+UNAMEs are 7 characters
+STRINGs are variable length, terminated by newline.
+STRINGNLs are variable length, possibly extended over more than one line,
+  terminated by a line containing nothing but alien_termination_string
+  (the preceding newline is part of the data).
+                                           
+<version number>	( INT, incremented when the layout changes )
+mod_info		( magic string for validation )
+<uname OF ym>           ( UNAME )
+<name OF xmodinfo>	( ID )
+<n OF l OF xmodinfo>	( ID )
+<f OF l OF xmodinfo>	( ID )
+<level OF l OF xmodinfo>( INT )
+<n OF g OF xmodinfo>	( ID )
+<f OF g OF xmodinfo>	( ID )
+<level OF g OF xmodinfo>( INT )
+<type OF xmodinfo>	( INT )            
+<lname OF ym>		( UNAME )
+<gname OF ym>		( UNAME )                
+( --------- spec starts here ------------------ )
+<f OF xs OF ymspec>	( ID )
+<no OF xs OF ymspec>	( INT )
+<nl OF xs OF ymspec>	( INT )
+<ng OF xs OF ymspec>	( INT )        
+1			( INT, union word )
+ubound			( INT )            
+<u OF xs OF ymspec>	( [ubound] CHAR, on one line )
+ys OF ymspec		( UNAME )
+time of last change OF ymspec (INT)
+UPB keptinfo OF ymspec	( INT )
+keptinfo OF ymspec	( UNAME
+                          BOOL-opt
+                          BOOL-iddec
+                          BOOL-gproc
+                          BOOL-genproc
+                          BOOL-forceuse
+                          BOOL-rhs
+                          STRING-definition [STRINGNL-rhs iff RHS]
+                          for each "identifier" in keeplist )
+( --------- spec ends here ------------------ )         
+CO
+
+{
+  LOW LEVEL READ/WRITE PROCS
+}
+
+VECTOR [500] CHAR modinfo_buf;    { used for both reading and writing module information }
+
+PROC read_int = (FILE f, REF INT ri) VOID:
+{ Read a line from modinfo and convert to integer }
+IF
+  INT chars_read;
+  read_line(f,modinfo_buf,chars_read,ignore_msg) /= io_ok OREL
+    NOT (ri VCDECTOINT modinfo_buf[:chars_read])
+THEN
+  terminal error(261 {invalid module keeplist information})
+FI;
+
+PROC read_str = (FILE f, REF VECTOR [] CHAR str) VOID:
+{ Read a line from modinfo }
+IF
+  INT chars_read;
+  read_line(f,modinfo_buf,chars_read,ignore_msg) /= io_ok OREL
+    chars_read /= UPB str
+THEN
+  terminal error(261 {invalid module keeplist information})
+ELSE
+  str := modinfo_buf[:chars_read]
+FI;
+
+
+PROC	unpack spec = (FILE f, REF YMSPEC ymspec, BOOL lib_init) VOID:
+{
+        Unpacks the module information into 'ymspec'. 
+
+        IF lib_init is TRUE, the call is for library lookup initialisation.
+        It will be called again for all modules actually used (implicitly or explictly).
+}
+BEGIN
+
+  REF XSPEC xspec = xs OF ymspec;       
+  REF YS ys = ys OF ymspec;
+
+  INT spectype;
+  INT chars_read;
+
+  read_str(f,f OF xspec);    debug message(1, "  f OF xspec is """ + f OF xspec  + """");
+  read_int(f,no OF xspec);   debug message(1, "  no OF xspec is " + XC no OF xspec );
+  read_int(f,nl OF xspec);   debug message(1, "  nl OF xspec is " + XC nl OF xspec );
+  read_int(f,ng OF xspec);   debug message(1, "  ng OF xspec is " + XC ng OF xspec );
+  read_int(f,spectype);      debug message(1, "  spectype is " + XC spectype );
+
+  CASE  spectype {mode}  IN
+    BEGIN  { REF VECTOR [] CHAR }
+      PROC  hexchar = ( [] CHAR s ) CHAR:
+      BEGIN  [2] INT ir;
+        FORALL c IN s, i IN ir
+        DO  IF  ABS c >= ABS "0"
+             ANDTH  ABS c <= ABS "9"
+             THEN  i := ABS c - ABS "0"
+             ELIF  ABS c >= ABS "a"
+             ANDTH  ABS c <= ABS "f"
+             THEN  i := ABS c - ABS "a" + 10
+             ELSE  terminal error (261 {invalid module keeplist information})
+            FI
+        OD;
+        REPR ( 16*ir[1] + ir[2] )
+      END;
+               
+    INT ubound, cbound;
+
+    read_int(f,ubound);
+      debug message(1, "  ubound  is " + XC ubound );
+    REF VECTOR [] CHAR xs = HEAP VECTOR [ubound] CHAR;
+    u OF xspec := xs;
+    HEAP VECTOR [2*ubound+2] CHAR hex_spec;
+    IF
+      read_line(f,hex_spec,chars_read,ignore_msg) /= io_ok
+    THEN terminal error (261 {invalid module keeplist information})
+    FI;
+      
+    FOR i TO UPB xs
+    DO
+      xs[i] := hexchar( hex_spec[2*i-1:][:2] )
+    OD;
+
+    IF NOT lib_init
+    THEN                       
+      IF  TRACELEVEL "modules" > 5
+      THEN
+        decode spec( (u OF xspec |(REF VECTOR [] CHAR r): r ), debug message )
+      FI;
+  
+      read_str(f,ys);
+  
+      INT i;
+      read_int(f,i);
+      time of last change OF ymspec := LENG i;
+  
+      read_int(f,cbound);
+  
+      keptinfo OF ymspec := HEAP VECTOR [cbound] TRANSKEPTINFO;
+      FORALL keptitem IN keptinfo OF ymspec
+      DO
+        INT chars_read;
+        IF read_line(f,modinfo_buf,chars_read,ignore_msg) /= io_ok
+        THEN
+          terminal error (261 {invalid module keeplist information})
+        FI;
+  
+        INT i;  { place marker in modinfo_buf }
+        REF VECTOR [] CHAR (prefix OF keptitem) := modinfo_buf[1:][:i:=UPB prefix OF keptitem]; 
+        optimised OF keptitem := ( modinfo_buf[i+:=1] = flip );
+        iddec OF keptitem := ( modinfo_buf[i+:=1] = flip );
+        global proc OF keptitem := ( modinfo_buf[i+:=1] = flip );
+        kept genproc OF keptitem := ( modinfo_buf[i+:=1] = flip );
+        force use OF keptitem := ( modinfo_buf[i+:=1] = flip );
+  
+        BOOL rhs present = ( modinfo_buf[i+:=1] = flip );
+        definition OF keptitem := MAKERVC modinfo_buf[i+:=1:chars_read];
+  
+        IF rhs present
+        THEN
+          WHILE
+            IF
+              IOSTATUS read_status = read_line(f,modinfo_buf,chars_read,ignore_msg);
+              read_status = io_ok
+            THEN
+              chars_read +:= 1 { we want the newline }
+            ELIF read_status /= io_no_newline
+            THEN
+              terminal error (261 {invalid module keeplist information})
+            FI;
+            REF VECTOR [] CHAR line = modinfo_buf[:chars_read];
+  
+            ( chars_read /= UPB alien_termination_string + 1 ) OREL
+              (line[:UPB alien_termination_string] /= alien_termination_string)
+          DO
+            REF REF VECTOR [] CHAR (rhs OF keptitem) := MAKERVC (rhs OF keptitem + line)
+          OD
+        FI;
+        { drop last newline }
+        REF REF VECTOR [] CHAR rhs = rhs OF keptitem;
+        rhs := rhs[:UPB rhs -1]
+      OD
+     FI
+   END,
+                            
+  { REF [] CAT }
+    "unpack REF [] CAT" ASSERT FALSE
+        OUT  terminal error (261 {invalid module keeplist information})      
+        ESAC
+END;
+
+
+PROC  null modinfo = (ID name) YMODINFO:
+  ((name,(nullid,nullid,0),(nullid,nullid,0),-2),
+    (nulluname,nulluname,nulluname,NIL));
+
+PROC	unpack modinfo = ( ID name, FILE f, BOOL lib_init) YMODINFO:
+{
+  If 'lib_init' is TRUE, only the RS compiler spec is required (for library initialisation)
+}
+BEGIN
+	IF      INT version; read_int(f,version);
+		version /= current modinfo version
+	OREL
+		( STRUCT 8 CHAR magic; read_str(f,magic);
+		  magic /= modinfo magic )
+	THEN
+                debug message( 1, "   version no is " + XC version);
+		debug message( 1, "   magic is """ + modinfo magic + """");
+
+		close_file(f,ignore_msg);
+		pmessage (262 {^a has invalid module information},
+				name BEFORE " ");
+		null modinfo(name)
+	ELSE
+		debug message( 1, "   version and magic are ok" );
+		debug message( 1, "   version no is " + XC version);
+		debug message( 1, "   magic is """ + modinfo magic + """");
+
+		YMODINFO ymodinfo;
+		REF XMODINFO xmi = xmi OF ymodinfo;
+		REF YM ym = ym OF ymodinfo;
+
+		read_str(f,uname OF ym);
+			debug message( 1, "   uname OF ym is """+uname OF ym+"""");
+		read_str(f,name OF xmi);
+			debug message( 1, "   name OF xmi is """+name OF xmi+"""");
+		read_str(f,n OF l OF xmi);
+			debug message( 1, "   n OF l OF xmi is """ +
+				n OF l OF xmi + """");
+		read_str(f,f OF l OF xmi);
+			debug message( 1, "   f OF l OF xmi is """ +
+				f OF l OF xmi + """");
+		read_int(f,level OF l OF xmi);
+			debug message( 1, "   level OF l OF xmi is " +
+				XC level OF l OF xmi );
+		read_str(f,n OF g OF xmi);
+			debug message( 1, "   n OF g OF xmi is """ +
+				n OF g OF xmi + """");
+		read_str(f,f OF g OF xmi);
+			debug message( 1, "   f OF g OF xmi is """ +
+				f OF g OF xmi + """");
+		read_int(f,level OF g OF xmi);
+			debug message( 1, "   level OF g OF xmi is " +
+				XC level OF g OF xmi );
+		read_int(f,type OF xmi);
+			debug message( 1, "   type OF xmi is " +
+				XC type OF xmi );
+		read_str(f,lname OF ym);
+			debug message( 1, "   lname OF ym is """ +
+				lname OF ym + """");
+		read_str(f,gname OF ym);
+			debug message( 1, "   gname OF ym is """ +
+				gname OF ym + """");
+
+		specs OF ym := HEAP VECTOR [ABS type OF xmi] YMSPEC;      
+
+		FORALL spec IN specs OF ym
+		DO
+			debug message( 1, "about to unpack spec" );
+			unpack spec( f, spec, lib_init )
+		OD;
+	    return:
+		close_file(f,ignore_msg);
+		ymodinfo
+	FI
+END;
+                                        
+
+PROC	get modinfo = (ID name, REF DIRLIST dirlist) YMODINFO:
+{
+Returns a YMODINFO, the XMODINFO field of which is identical to that output
+by some previous compilation of module 'name'.
+If the required module is not found, or if an error is detected in the module,
+then a YMODINFO with illegal 'type' -2 is returned.
+}
+IF  name = std prelude id
+THEN
+  terminal error(804 {only CONTEXT VOID allowed});
+  SKIP
+ELIF
+  VECTOR [] CHAR modinfobasename = filter(name) + ".m";
+  REF VECTOR [] CHAR full_filename;
+  debug message( 1, "get modinfo(" + modinfobasename + ")" );
+  FILE modinfofile = find_and_open_file(modinfobasename, dirlist, full_filename);
+  modinfofile IS nil_file
+THEN
+  nullmodinfo (name)
+ELSE
+  used_modules OF config_info := HEAP MODINFOLIST := ( full_filename, used_modules OF config_info );
+  unpack modinfo(name,modinfofile,FALSE)
+FI;                                                                 
+
+YMODINFO last module details := ((nullid, SKIP, SKIP, -2), SKIP);
+		{for optimising 'closure' in 'give module details'}
+
+PROC	give module details = (ID name, INT name type, BOOL closure) YMODINFO:
+{
+  Returns a YMODINFO, the XMODINFO field of which is identical to that
+  output by some previous compilation of module 'name', or if 'name type'
+  is non-zero, of a library DECS module, the keeplist of which contains
+  'name'.
+  If the required module is not found, or if an error is detected in the
+  module, then a YMODINFO with illegal 'type' -2 is returned.
+  On exit, 'composition' is TRUE if 'closure' is TRUE.
+}
+IF
+  closure
+THEN
+  "'give module details' called for composition module" ASSERT FALSE;
+  SKIP
+ELIF
+  name type = 0
+THEN
+  get modinfo( name, modinfo_dirlist )
+ELIF { lookup 'name' in library modules }
+  ID lib_module = lookup_library(name, name type, unpackmodinfo);
+  lib_module[1] = " "
+THEN
+  null modinfo( name )  { not found in library }
+ELSE
+  get modinfo( lib_module, library_directory )
+FI;
+
+REF CONTEXTLIST contextlist := LOC CONTEXTLIST :=
+	(null id, (null uname, null uname, null uname, NIL),
+		null uname, 0, NIL, NIL, NIL);
+{The initial entry is for USEd modules at level 0 (i.e. CONTEXT VOID DECS)}
+
+REF []REF CONTEXTLIST contexts; 
+	{space generated by 'initialise current module'}
+
+REF REF IDLIST idlist := NIL;
+	{ set by 'add decs module' and 'add context module'
+	  to identify the IDLIST for 'add external id'
+	}
+REF [] TRANSKEPTINFO currentkeptinfo;
+	{ set by 'add decs module' and used by 'add external id'
+	  to find the TRANSKEPTINFO for the current XTDEC
+	}
+REF [] INT kept decnos := NIL;
+	{ set by output of XBUTYPE and used by 'output module information'
+	  to set up keptinfo OF ymspec for current module 
+	}
+
+BOOL	previous version found := FALSE;
+	{ used in 'newidinfo' to propagate uniquenames,
+	  used in 'entryandreturn' to control output of compatiblity warning
+	}
+
+BOOL	rs compatible with previous version := FALSE;
+	{ ie RS compiler keeplist compatibility.
+	  set by 'initalise unames' }
+
+BOOL	trans compatible with previous version := TRUE;
+	{ ie translator keeplist compatibility taking into account
+	  uniquenames and properties.
+	  unset by 'new id info' in identifiers }
+
+BOOL	current module initialised := FALSE;
+	{set TRUE by 'initialise current module'}
+
+MODINFO		current module;  {initialised by 'intialise current module'}
+REF XMODINFO	current modinfo = xmi OF current module;
+REF CHECKINFO	checkinfo = checkinfo OF current module;
+REF [] YMSPEC	specs;	       {initialised by 'initialise current module'}
+
+
+PROC	initialise current module = (XMODINFO xmodinfo) VOID:
+{
+
+Initialises 'current modinfo' using 'xmodinfo', and uses this information to
+initialise 'specs' and 'contexts', before setting 'checkinfo OF current module'.
+
+N.B. 'checkinfo OF current module' and 'contexts' are only valid
+for compilations on exit.
+
+On exit 'current module initialised' is TRUE.
+}
+BEGIN
+	IF	filter(name OF xmodinfo) /= basename source file
+	THEN	warning (337 {module name does not match source file name})
+	FI;
+
+	INT max level = level OF l OF xmodinfo + level OF g OF xmodinfo;
+	"maxlevel > 0 (not context void)" ASSERT maxlevel = 0;
+	current modinfo := xmodinfo;
+	"holes not allowed" ASSERT ABS (type OF xmodinfo) <= 1;
+	specs := HEAP [ABS type OF xmodinfo] YMSPEC;
+	IF	NOT composition
+	THEN
+		contexts := HEAP [0 : max level] REF CONTEXTLIST;
+		WHILE   INT level = level OF contextlist;
+			"level <= max level" ASSERT level <= max level;
+			contexts [level] := contextlist;
+			level /= 0
+		DO
+			contextlist := rest OF contextlist
+		OD;
+		checkinfo OF current module :=
+			( ys OF contexts [max level],
+			  ys OF contexts [level OF g OF xmodinfo]
+			)
+	FI;
+	current module initialised := TRUE
+END;
+
+
+PROC	initialise spec = (XSPEC xspec) VOID:
+{
+	Initialises the appropriate element of 'specs' with 'xspec'.
+}
+BEGIN
+	INT no = (no OF xspec = 0 | 1 | no OF xspec);
+	"no <= UPB specs" ASSERT no <= UPB specs;
+	xs OF specs [no] := xspec
+END;
+
+
+PROC	add decs module = (XTMODULE decs module, INT level) VOID:
+{
+Determines if the context of the specified 'decs module' is accessible in
+the currentcompilation, and, if so, adds an entry to the start of
+the USELIST at the appropriate 'level', and sets 'idlist' to refer to
+the IDLIST of the new entry.
+N.B. 'contexts' is only defined if 'current module initialised' is TRUE.
+}
+BEGIN
+	BOOL context accessible =
+	IF	level = 0
+	THEN	{ VOID context DECS }
+		current module initialised
+		{ TRUE, unless compiler detected error }
+
+	ELIF	NOT current module initialised
+	THEN	FALSE
+
+	ELIF	level > UPB contexts
+	THEN	error (341 {DECS in wrong context});	FALSE
+
+	ELIF	REF CONTEXTLIST context = contexts [level];
+		lname OF ym OF decs module /= ys OF contexts [level]
+		OR	gname OF ym OF decs module /=
+			( gname OF ym OF context = null uname
+			| lname OF ym OF context
+			| gname OF ym OF context
+			)
+	THEN	error (342 {DECS context incompatible}); FALSE
+	ELSE	TRUE  {context accessible}
+	FI;
+
+	IF	context accessible
+	THEN	REF REF USELIST uselist = uses OF contexts [level];
+		uselist := HEAP USELIST :=
+		(name OF decs module, uname OF ym OF decs module, NIL, uselist);
+		idlist := ids OF uselist;
+		current keptinfo := keptinfo OF (specs OF ym OF decs module)[1]
+	ELSE	{set 'idlist' for the following call of 'add external id'}
+		idlist := HEAP REF IDLIST
+	FI
+END;
+
+
+PROC	add context module = (XINTERF context) VOID:
+{
+Adds an entry for the specified 'context' module to the start of 'contextlist', and
+sets 'idlist' to refer to the IDLIST of the new entry.
+}
+BEGIN
+	"'add context module' called" ASSERT FALSE; SKIP
+END;
+
+
+PROC	add external id = (IDDEC id) VOID:
+{
+	Adds an entry for the specified external 'id' to the end of 'idlist'.
+}
+BEGIN
+	REF TRANSKEPTINFO current idinfo = current keptinfo[1];
+
+	REF REF IDLIST (idlist) := HEAP IDLIST :=
+	( ( kept genproc OF current idinfo | anonymous id | name OF id ),
+	  prefix OF current idinfo,
+	  optimised OF current idinfo,
+	  iddec OF current idinfo,
+	  global proc OF current idinfo,
+	  kept genproc OF current idinfo,
+          force use OF current idinfo,
+	  mode OF id,
+	  decno OF id,
+          definition OF current idinfo,
+          rhs OF current idinfo,
+	  NIL
+	);
+     idlist := rest OF idlist;
+     current keptinfo := 
+	( UPB current keptinfo > 1 | current keptinfo [2:] | NIL )
+END;
+
+PROC  initialise unames = VOID:
+{
+        Initialises the 'uname' fields of the current compilation 'current
+        module' and 'specs', with UNAMEs obtained either from a previous version
+        of the module, or uniquely generated, as follows: 
+}
+BEGIN
+
+  PROC  set specs = (YM previous ym) BOOL:
+  {
+     Sets the 'uname' fields and time of last spec change of the current
+     compilation 'specs', and returns
+     a boolean result indicating whether all the 'specs' match those obtained
+     using 'previous ym', and are in the same order.
+
+     Any incompatibilities are reported. 
+  }
+  BEGIN
+    BOOL
+      specs match := TRUE,
+      out of order := FALSE,
+      previous is part comp error := FALSE,
+      previous is compilation error := FALSE;
+
+    FORALL current spec IN specs
+    DO
+      IF
+        YSPEC previous spec =
+          give spec( name OF current modinfo, f OF xs OF current spec, previous ym);
+        no OF xs OF previous spec = -2
+      THEN
+        pmessage( 323{^a keeplist not found in previous version of module},
+          f OF xs OF current spec {4a: BEFORE " "});
+        ys OF current spec := new unique name;
+        time of last change OF current spec := translation time OF config_info;
+        specs match := FALSE
+      ELIF
+        CASE u OF xs OF current spec IN
+        (REF VECTOR [] CHAR keeps):
+          CASE u OF xs OF previous spec IN
+          (REF VECTOR [] CHAR previous keeps):
+            IF  keeplist option
+            THEN
+              IF  UPB keeps > UPB previous keeps
+              THEN  keeps [:UPB previous keeps] = previous keeps
+              ELSE  keeps = previous keeps
+              FI
+            ELSE keeps = previous keeps
+            FI,
+
+          (REF VECTOR [] CAT):
+            NOT (previous is part comp error := TRUE)
+          ESAC,
+
+        (REF VECTOR [] CAT):
+          CASE u OF xs OF previous spec  IN
+          (REF VECTOR [] CAT):
+            IF
+              REF VECTOR [] UNAME previous cnames =
+                cnames OF (specs OF previous ym)[no OF xs OF previous spec];
+              UPB cnames OF current spec /= UPB previous cnames
+            THEN  FALSE
+            ELSE
+              BOOL cnames match := TRUE;
+              FORALL  cname IN cnames OF current spec, previous cname IN previous cnames
+              WHILE  cnames match
+              DO
+                cnames match := (cname = previous cname)
+              OD;
+              cnames match
+             FI,
+
+          (REF VECTOR [] CHAR):
+            NOT (previous is compilation error := TRUE)
+          ESAC
+        ESAC
+      THEN  { keeplists match }
+        out of order := out of order OR (no OF xs OF current spec /= no OF xs OF previous spec);
+        REF YMSPEC previous ymspec = (specs OF previous ym)[1];
+        keptinfo OF current spec := keptinfo OF previous ymspec;
+        ys OF current spec := ys OF previous spec;
+        time of last change OF current spec := time of last change OF previous ymspec
+          { may be overriden later if Ctrans representation of keeplist has changed }
+      ELSE
+        pwarning (324 {^a ^a incompatible with previous version},
+          ( (f OF xs OF current spec) BEFORE " ",( composition | "context" | "keeplist")) );
+        keptinfo OF current spec := NIL;
+        ys OF current spec := new unique name;
+        specs match := FALSE;
+        time of last change OF current spec := translation time OF config_info
+      FI
+    OD;
+
+    IF  previous is part comp error
+    THEN warning (327 {previous version is a partial composition})
+    ELIF previous is compilation error
+    THEN warning (345 {previous version is a compilation module})
+    ELIF out of order
+    THEN warning (328 {keeplist order has changed})
+    FI;
+
+    specs match AND NOT out of order
+  END;
+
+
+     PROC match modules = (YMODINFO previous version) BOOL:
+     {
+     Returns the result of determining whether the 'current module' and 'previous version'
+     match in 'type' and context.  Any incompatibilities are reported.
+     }
+     BEGIN
+	BOOL local contexts match =
+		(l OF checkinfo = lname OF ym OF previous version);
+	BOOL global contexts match =
+		(g OF checkinfo = gname OF ym OF previous version);
+
+	IF	NOT local contexts match
+	THEN    warning (334 {local context does not match previous version})
+	FI;
+
+	IF	NOT global contexts match
+	THEN    warning (335 {global context does not match previous version})
+	FI;
+
+	IF	type OF current modinfo = type OF xmi OF previous version
+	THEN	local contexts match AND global contexts match
+	ELSE	IF	type OF current modinfo = -1  { decs module }
+		THEN	warning (321 {previous version is not a DECS module})
+		ELIF	type OF xmi OF previous version = -1
+		THEN	warning (322 {previous version is a DECS module})
+		ELSE	warning (329 {previous version has a different number of holes})
+		FI;
+        	FALSE
+	FI
+     END;
+
+
+     { initialise unames: }
+
+     debug message( 1, "Previous version:" );
+
+     YMODINFO previous version = get modinfo (name OF current modinfo, modinfo_dirlist);
+
+     IF	type OF xmi OF previous version = -2
+     THEN { no previous version found - assign new unique names: }
+
+	debug message(1, "no previous version found");
+
+	previous version found := FALSE;
+	uname OF current module := new unique name;
+	FORALL spec IN specs
+        DO
+          time of last change OF spec := translation time OF config_info;
+          ys OF spec := new unique name
+        OD
+
+     ELIF BOOL specs match = set specs (ym OF previous version);
+	previous version found := TRUE;
+	BOOL modules match = match modules (previous version);
+	specs match AND modules match
+     THEN
+	rs compatible with previous version := TRUE;
+	uname OF current module := uname OF ym OF previous version
+     ELSE
+	rs compatible with previous version := FALSE;
+	uname OF current module := new unique name
+     FI
+END;
+
+PROC output module information = VOID:
+BEGIN
+
+  PROC output spec = ( YMSPEC ymspec ) VOID:
+  BEGIN
+    XSPEC xspec = xs OF ymspec;
+    YS ys = ys OF ymspec;
+    write modinfo(( f OF xspec, cnewline, XC no OF xspec, cnewline,
+      XC nl OF xspec, cnewline, XC ng OF xspec, cnewline ));
+
+    CASE u OF xspec IN
+    ( REF VECTOR [] CHAR rc ):
+      BEGIN
+        IF  TRACELEVEL "modules" /= 0
+        THEN
+          debug message(1, "Writing spec...");
+          decode spec(rc, debug message)
+        FI;
+          
+        write modinfo(( XC 1, cnewline, XC UPB rc, cnewline ));
+
+        FORALL c IN rc DO write modinfo(hex(LENG BIN ABS c,2)) OD;
+
+        writemodinfo((
+            cnewline,
+            ys, cnewline,
+            lwhole(time of last change OF ymspec,0), cnewline,
+            whole(UPB keptinfo OF ymspec,0), cnewline
+          ));
+
+        FORALL keptitem IN keptinfo OF ymspec
+        DO
+          BOOL rhs present =
+            UPB rhs OF keptitem > 0;
+
+          write modinfo((
+            prefix OF keptitem,
+            (optimised  OF keptitem|flip|flop),
+            (iddec OF keptitem|flip|flop),
+            (globalproc OF keptitem|flip|flop),
+            (kept genproc OF keptitem|flip|flop),
+            (force use OF keptitem|flip|flop),
+            (rhs present|flip|flop),
+            definition OF keptitem,
+            cnewline
+          ));
+
+          IF rhs present
+          THEN
+            write modinfo(( rhs OF keptitem, cnewline, alien_termination_string, cnewline ))
+          FI
+        OD
+      END,
+    ( REF VECTOR [] CAT ):
+      "output REF [] CAT" ASSERT FALSE
+    ESAC      
+  END;
+
+  write modinfo((
+    whole(current modinfo version,0), cnewline,
+    modinfo magic, cnewline,
+    uname OF current module, cnewline,         
+    name   OF current modinfo, cnewline,    
+    n OF l OF current modinfo, cnewline,
+    f OF l OF current modinfo, cnewline,
+    whole(level OF l OF current modinfo,0), cnewline,
+    n OF g OF current modinfo, cnewline,
+    f OF g OF current modinfo, cnewline,
+    whole(level OF g OF current modinfo,0), cnewline,
+    whole(type OF current modinfo,0), cnewline,
+    l OF checkinfo, cnewline,
+    g OF checkinfo, cnewline
+  ));
+
+  "MODULES: only one spec allowed" ASSERT UPB specs = 1;
+
+  IF NOT rs compatible with previous version
+    OREL NOT trans compatible with previous version
+  THEN  { fill in keptinfo for kept identifiers prior to output }
+    { keptinfo is filled in by 'set specs' if compatible }
+
+    REF REF VECTOR [] TRANSKEPTINFO keptinfo = keptinfo OF specs[1];
+    keptinfo := HEAP VECTOR [UPB kept decnos] TRANSKEPTINFO;
+    FORALL item IN keptinfo, decno IN kept decnos
+    DO
+      item := 
+        IF  decno <= max id no
+        THEN
+          REF IDINFO id = ids[decno];
+          ( prefix OF id,
+            flags OF id >= id optimised flag,
+            flags OF id >= id identity flag,
+            flags OF id >= id gproc flag,
+            flags OF id >= id kept genproc flag,
+            flags OF id >= id force use flag,
+            definition OF id,
+            rhs OF id
+          )
+        ELIF decno <= max rd no
+        THEN
+          REF RDINFO rd = rds[decno];
+          ( prefix OF rd,
+            FALSE,
+            FALSE,
+            flags OF rd >= rd global flag,
+            FALSE { not a genproc },
+            FALSE,
+            NIL,
+            NIL
+          )
+        ELIF  decno <= max libid
+        THEN    "kept decno is a library id" ASSERT FALSE; SKIP
+        ELSE  "kept decno is a label" ASSERT FALSE; SKIP
+        FI
+     OD
+  FI;
+
+  { output the spec - should only be one }
+  output spec(specs[1])
+END;
+
+{
+	The following procedures: declare idlist..process context are for
+	obtaining the CONTEXT and USEd decs modules for the current compilation.
+}
+
+PROC declare idlist = ( REF IDLIST idlist) VOID:
+{
+  Declares each of the identifiers in 'id list'.
+}
+BEGIN
+  REF IDLIST id := id list;
+
+  WHILE  REF IDLIST (id) ISNT NIL
+  DO
+    external dec(
+      name OF id,
+      uname OF id,
+      mode OF id,
+      decno OF id,
+      optimised OF id,
+      iddec OF id,
+      global proc OF id,
+      gen proc OF id,
+      force use OF id,
+      definition  OF id,
+      rhs OF id
+    );
+
+    id := rest OF id
+  OD
+END;
+
+PROC process uselist = (REF USELIST uselist) VOID:
+CO
+  For each USEd module:
+    - declares the ids in its keeplist
+    - outputs a declaration and call of the module initialisation function
+CO
+BEGIN
+  INT code stream = CODESTREAM current level,
+      nonlocdec stream = NONLOCDECSTREAM current level;
+
+  REF USELIST use := uselist;
+
+  IF verbose option
+  THEN
+    write c stream ((
+      cnewline, "/* --- DECS initialisation functions --- */", cnewline ),
+      nonlocdec stream )
+  FI;
+
+  WHILE  REF USELIST (use) ISNT NIL
+  DO
+    CFRAGMENT decs init = uname OF use,
+              decs name = (name OF use) BEFORE " ";
+
+    write c stream
+    (( "extern void ", decs init, "(void);",
+       ( verbose option | "   /* " + decs name + " */" | ""),
+                    cnewline
+     ),nonlocdec stream
+    );
+
+    declare idlist (ids OF use);
+
+    write c stream
+    (( decs init, "();",
+       ( verbose option | "   /* USE " + decs name + " */" | ""),
+       cnewline
+     ),code stream
+    );
+
+    use := rest OF use
+  OD;
+
+  IF verbose option
+  THEN
+    write c stream ((
+      "/* --- end of DECS initialisation functions --- */", cnewline ),
+      nonlocdec stream )
+  FI
+END;
+
+PROC declare used ids = VOID:
+CO
+  For each USEd module:
+    - generates extern declaration for each id in its keeplist that is actually used
+CO
+BEGIN
+  INT code stream = CODESTREAM current level;
+
+  REF USELIST uselist = uses OF contexts [0];
+
+  REF USELIST use := uselist;
+
+  { For each USEd module ... }
+  WHILE  REF USELIST (use) ISNT NIL
+  DO
+    CFRAGMENT decs init = uname OF use,
+              decs name = (name OF use) BEFORE " ";
+
+    IF verbose option
+    THEN
+      write c stream (( cnewline, "/* --- Imports from ", decs name, " --- */", cnewline ),
+          imports stream )
+    FI;
+
+    REF IDLIST id := ids OF use;
+    WHILE  REF IDLIST (id) ISNT NIL
+    DO
+      external c dec(decno OF id);
+      id := rest OF id
+    OD;
+
+    IF verbose option
+    THEN
+      write c stream (( "/* --- End of imports from ", decs name, " --- */", cnewline, cnewline ),
+              imports stream )
+    FI;
+
+    use := rest OF use
+  OD
+END;
+
+PROC	process contexts = VOID:
+{
+	Processes the level 0 USELIST.
+}
+BEGIN
+	BOOL decs module = type OF current modinfo = -1;
+	REF USELIST context void uselist = uses OF contexts [0];
+
+	IF	level OF l OF current modinfo /= 0
+	THEN	{non-VOID context}
+		"processing non-VOID context" ASSERT FALSE
+	FI;
+
+	IF	context void uselist ISNT NIL
+	THEN	process uselist( context void uselist )
+	FI
+END;
+
+SKIP            
+
+KEEP                                
+     CONTEXTLIST, IDLIST, MODINFO, USELIST, add context module,
+     add decs module, add external id, process contexts,
+     contexts, current modinfo, composition,
+     declare used ids,
+     current module, give module details, give spec, initialise current module,
+     initialise spec, initialise unames, kept decnos, null id, null uname, 
+     output module information, rs compatible with previous version, specs,
+     stdprelude name {from library},trans compatible with previous version,
+     previous version found
+FINISH
+
+{
+Local Variables:
+eval:(auto-fill-mode 0)
+End:
+}

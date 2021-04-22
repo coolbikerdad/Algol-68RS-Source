@@ -1,0 +1,658 @@
+DECS  basics  CONTEXT VOID  USE   putstrings,  messageproc,  osinterface,
+      testmode:
+
+{ " Id: basics.sta,v 1.1 91/10/14 14:26:04 edcad Exp $" }
+configinfo A68CONFIG "$Id: basics.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1983
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+15:11:83   Procedures for converting integers to and from packed characters
+              for representation in the Intermediate Language.
+17:11:83   Specification changed.
+16:03:84   *** STAR ***
+21:08:84   renamed & new header
+17:07:85   VAX procedures separated into "vaxinterface".  "ilints"
+              incorporated.  Rationalised.
+05:11:85   Updated for Perq FLEX
+14:11:85   Logica string operators added for FLEX
+06:12:85   maxint corrected for Perq - 31 bits not 32
+05:02:86   Added procedure chars to int for command changes I.M.S.
+03:03:86   Procedure "finish" calls new procedure "put_sys_message"
+              instead of "stop" thereby exiting the program by a return
+              from the main program, instead of an exception and clearing
+              R2 bug 013.
+06:03:86   chars to int given error detecting capablility and the
+              ability to handle leading spaces and +/-
+15:10:86   Updated for new os interface  DCT
+20:10:86   Time procedures moved above os interface  DCT
+14:11:86   CR 170  Maximum negative int - minint, largeminint, longminint,
+                      and  PROC shorten and test added.  EVW
+29:09:87   Porting changes integrated.  JER
+02:04:87   "time_str"  added - CR231.  DCT
+07:10:87   CR330.  Enable user interrupts during simulation.  Body of PROC
+              flt_if_interrupted commented out to enable selective enabling of
+              user interrupts.  BJE
+30:11:87   LONG MOD added for flex.  DCT
+07:01:88   Release 3 porting changes: 'maxint' defined in a portable manner ;
+              LONG INT operators and procs deleted for non-FLEX systems  BGH
+11:05:88   CR 596  Modules renamed  JER
+26:07:88   Modifications for use with EPI: routines to convert date and
+              time string to EUT moved from security modules to here. BGH
+12:09:88   CTNAME fields renamed. BGH (EVW)
+13:07:88   IR3056. Display time as local time instead of GMT  JER
+13:10:88   *5 Alien call of sqrt.  EVW
+10:01:89   bytes width and bits width added. BGH
+08:08:89   Kernel interface:  Global IO variables removed.  DCT
+22:11:90   Incorporate 'testmode' to help with regression testing.  DJS
+10:12:90   Move RCH out into vmsinterface and keep through, osinterface and
+              basics.  Reintroduced FLTPROC to KEEP list.   DJS / DCT
+29:01:91   Flex removed.  Extra operators for Ctrans added.  DCT
+29:01:91   ALIEN "set_local_time" removed - times adjusted beneath the
+              OS interface (relates to IR3056 (?) above).  DCT
+08:04:91   PROC 'chars to int' would not read -maxint. R6B26 DJS
+18:02:93   Updated for new portable OSIF - Level 1.  DCT
+28:05:93   get_time now delivers LONG INT.  DCT
+12:08:93   date_proc - year offset 1969 instead of 1970.  No ISTRUCT.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.034 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+{{{  NB it is assumed ELLA is running on an ASCII machine  }}}
+
+
+{{{  MODE ID - "identifier" used in the compiler (now = RVC)  }}}
+
+INT  maxid    = 255,
+     zero     = ABS "0";
+
+MODE  ID      = REF VECTOR [] CHAR,
+      CTNAME  = STRUCT (ID context, import);
+
+OP  MAKEID    = (VECTOR [] CHAR str) ID: (HEAP VECTOR [UPB str] CHAR := str),
+    MAKEID    = (CHAR c) ID: (HEAP VECTOR [1] CHAR := c);
+
+ID  nilid     = NIL;
+ID  nullid    = HEAP VECTOR [0] CHAR;
+
+MODE  RVBO = REF VECTOR [] BOOL,  RVBI = REF VECTOR [] BITS;
+
+PROC  clear = (UNION (RVC, RVI, RVBO, RVBI)  vec) VOID:
+   CASE  vec  IN
+      (RVC   chars)  FORALL c IN chars DO  c:= " "  OD,
+      (RVI   ints )  FORALL i IN ints  DO  i:= 0  OD,
+      (RVBO  bools)  FORALL b IN bools DO  b:= FALSE  OD,
+      (RVBI  bits )  FORALL u IN bits  DO  u:= 16r0  OD
+   ESAC;
+
+
+PROC  uppercase = (RVC  str) VOID:    { ***** NB:  ASCII only  ***** }
+   FORALL c IN str
+   DO  IF c >= "a"  ANDTH  c <= "z" THEN  c:= REPR (ABS c - 32)  FI  OD;
+
+OP  UPPERCASE = (STR  str) RVC:
+BEGIN
+   RVC  ans = MAKERVC  str;
+   uppercase(ans);
+   ans
+END;
+
+PROC  lowercase = (RVC  str) VOID:    { ***** NB:  ASCII only  ***** }
+   FORALL c IN str
+   DO  IF c >= "A"  ANDTH  c <= "Z" THEN  c:= REPR (ABS c + 32)  FI  OD;
+
+OP  LOWERCASE = (STR  str) RVC:
+BEGIN
+   RVC  ans = MAKERVC  str;
+   lowercase(ans);
+   ans
+END;
+
+{ Operators not defined in the Ctrans environment }
+
+OP  MAX = (INT  a, b) INT:  IF a > b THEN  a  ELSE  b  FI,
+    MIN = (INT  a, b) INT:  IF a < b THEN  a  ELSE  b  FI,
+    XOR = (BITS  a, b) BITS:  a AND NOT b OR b AND NOT a;
+
+
+
+{{{  Translation of integers to and from a compact character representation  }}}
+
+INT  bits per char   = 8,
+     chars per int   = 4,
+     max char        = ABS (8r1 SHL bits per char),
+     max int in char = max char - chars per int - 1,
+     int mask        = max char - 1;
+
+PROC chars to int = (VECTOR [] CHAR str, REF BOOL error) INT:
+{
+   This procedure converts the numeric contents of the buffer into an
+   integer value and returns it.  Leading spaces are ignored.
+   One sign character is allowed.  Any non-digit is a terminator.
+   If any characters are discovered after the integer then error is
+   set TRUE, otherwise it is left unchanged.
+}
+BEGIN
+   INT index := 1, ans := 0;
+   BOOL neg := FALSE;
+   WHILE (index <= UPB str) ANDTH (str[index] = " ") DO index PLUSAB 1 OD;
+   IF index <= UPB str
+   THEN
+      IF str[index] = "+" THEN index PLUSAB 1
+      ELIF str[index] = "-" THEN index PLUSAB 1; neg := TRUE
+      FI;
+      WHILE
+         index <= UPB str ANDTH
+         str[index] <= "9" ANDTH
+         str[index] >= "0"
+      DO
+         (ans TIMESAB 10) MINUSAB (ABS str[index] - zero);
+         index PLUSAB 1
+      OD
+   ELSE
+      error := TRUE
+   FI;
+   IF index < UPB str THEN error := TRUE FI;
+   IF neg THEN ans ELSE -ans FI
+END;
+
+PROC  out il int = (PROC (CHAR) VOID  out int char,  INT  int) VOID:
+BEGIN
+   IF (int <= max int in char) ANDTH (int >= 0)
+   THEN  out int char(REPR int)
+   ELSE  VECTOR [chars per int] CHAR  line;
+         INT  l:= chars per int + 1;
+         BITS  i:= BIN int;
+         WHILE  line[l MINUSAB 1]:= REPR ABS (i AND BIN int mask);
+                i:= i SHR bits per char;
+                i /= 8r0  DO  SKIP  OD;
+         out int char(REPR(max char - l));
+         FOR  i  FROM  l  TO  chars per int  DO  out int char(line[i])  OD
+   FI
+END;
+
+
+PROC  in il int = (PROC CHAR  in int char) INT:
+BEGIN
+   INT  int:= ABS in int char;
+   IF int > max int in char
+   THEN  INT  i = int - max int in char;
+         int:= 0;
+         TO  i  DO  int:= ABS (BIN int SHL bits per char) + ABS in int char  OD
+   FI;
+   int
+END;
+
+
+
+
+{{{  Extra "-> VECTOR [] CHAR" procedures - invloving hard failures  }}}
+
+PROC  left justify = (STR  param,  INT  width) STR:
+BEGIN
+   IF UPB param > width
+   THEN  global_msg(system, oneline(("left justify: ", UPB param)))
+   FI;
+   VECTOR [width] CHAR  answer;
+   clear(answer);
+   IF UPB param > 0 THEN  answer[ : UPB param]:= param  FI;
+   answer
+END;
+
+PROC  right justify = (STR  param,  INT  width) STR:
+BEGIN
+   IF UPB param > width
+   THEN  global_msg(system, oneline(("right justify: ", UPB param)))
+   FI;
+   VECTOR [width] CHAR  answer;
+   clear(answer);
+   IF UPB param > 0 THEN  answer[width - UPB param + 1 : ]:= param  FI;
+   answer
+END;
+
+
+
+{{{  Procedures for processing time  }}}
+
+
+
+PROC seconds = INT:  testmode_seconds(SHORTEN get_time);
+
+PROC  days = (INT  seconds) INT:  seconds OVER 86400;
+
+PROC  time_proc = (INT  seconds,  RVC  ans) VOID:
+BEGIN   { parameter must be of length 8 }
+   INT  dsecs = seconds MOD 86400,
+        dmins = dsecs OVER 60,
+        hrs = dmins OVER 60,
+        mins = dmins MOD 60,
+        secs = dsecs MOD 60;
+   ans:= STRUCT 8 CHAR
+      ( REPR (zero + (hrs OVER 10)),  REPR (zero + (hrs MOD 10)),  ":",
+        REPR (zero + (mins OVER 10)),  REPR (zero + (mins MOD 10)), ":",
+        REPR (zero + (secs OVER 10)),  REPR (zero + (secs OVER 10)) )
+END;
+
+PROC  time = (INT  seconds) RVC:
+   ( HEAP VECTOR [8] CHAR  ans;  time_proc(seconds, ans);  ans );
+
+VECTOR [] STR  months = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
+
+PROC  date_proc = (INT  seconds,  RVC  ans) VOID:
+BEGIN  { parameter must be of length 11 }
+   IF seconds < 0 THEN  global_msg(system, "date_str:  Illegal time")  FI;
+   INT  days:= (seconds OVER 86400) + 1,
+        year:= 1970;    { ELLA Universal Time (locally adjusted since 1982) }
+                        { **** EUT now defined as POSIX time - since 1/1/1970 }
+   BOOL  leap:= FALSE;
+   WHILE days > 366
+   DO  IF leap:= year MOD 4 = 0
+       THEN  days MINUSAB 366
+       ELSE  days MINUSAB 365
+       FI;
+       year PLUSAB 1
+   OD;
+   IF NOT leap  ANDTH  (days = 366) THEN  year PLUSAB 1;  days:= 1  FI;
+   leap:= year MOD 4 = 0;
+   INT  month:= 1;
+   STRUCT 12 INT  mnths =
+     ( 31, IF leap THEN 29 ELSE 28 FI, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 );
+   WHILE days > mnths[month]
+   DO  days MINUSAB mnths[month];  month PLUSAB 1  OD;
+   INT  dten = days OVER 10;
+   ans[1]:= IF dten = 0 THEN  " "  ELSE  REPR (zero + dten)  FI;
+   ans[2]:= REPR (zero + (days MOD 10));
+   ans[3]:= ans[7]:= " ";
+   ans[4:6]:= months[month];
+   FOR i FROM 11 BY -1 TO 8
+   DO  ans[i]:= REPR (zero + (year MOD 10));
+       year OVERAB 10
+   OD
+END;
+
+PROC  date = (INT  seconds) RVC:
+   ( HEAP VECTOR [11] CHAR  ans;  date_proc(seconds, ans);  ans );
+
+PROC  date_time = (INT  seconds) RVC:
+BEGIN
+  HEAP VECTOR [21] CHAR  ans;
+  ans[12]:= ans[13]:= " ";
+  date_proc(seconds, ans[: 11]);
+  time_proc(seconds, ans[14:21]);
+  ans
+END;
+
+
+PROC  time_str = RVC:
+BEGIN
+   INT  cpu:= testmode_seconds(get_cpu_time);
+   STRUCT 5 CHAR  fr:= ".00  ";
+   FOR i FROM 3 BY -1 TO 2
+   DO  fr[i]:= REPR (zero + (cpu MOD 10));
+       cpu OVERAB 10
+   OD;
+   STRUCT 10 CHAR  time;
+   time_proc(testmode_seconds(SHORTEN get_time), time[:8]);
+   time[9]:= time[10]:= " ";
+   concat((time, intchars(cpu), fr))
+END;
+
+
+
+{
+  Extracts characters from a string upto either the first
+  occurence of the terminating character, or to the end of the string.
+  The terminating character (if found) and any immediately following
+  terminating characters are removed from the string.
+}
+PROC extract chars =
+( REF RVC input,
+  CHAR terminating char
+) RVC:
+BEGIN
+
+   RVC ans := MAKERVC "";                       { For the answer - default
+                                                  is null string }
+   { Firstly check that input string is not null }
+   IF UPB input > 0
+   THEN
+      { Search for presence of terminating char
+        upto the string end }
+      BOOL found := FALSE;
+      INT i := 1;
+      WHILE i <= UPB input
+         ANDTH NOT found
+      DO
+         IF input[i] = terminating char
+         THEN
+            found := TRUE
+         ELSE
+            i +:= 1
+         FI
+      OD;
+
+      { Store extracted chars if not of zero length }
+      IF i > 1
+      THEN
+         ans := MAKERVC input[ :i-1]
+      FI;
+
+      { Point to text after terminating char(s) }
+      WHILE i <= UPB input
+         ANDTH input[i] = terminating char
+      DO
+         i +:= 1
+      OD;
+
+      { Adjust input string to remove extracted chars
+        and terminating chars }
+      IF i <= UPB input
+      THEN
+         input := MAKERVC input[i: ]
+      ELSE
+         input := MAKERVC ""
+      FI
+   FI;
+
+   ans
+
+END;
+
+{
+  Parses a date and time string of the format "dd Mmm yyyy hh:mm:ss"
+  (eg: 1 Apr 1987 12:30:45), producing six integers representing year,
+  month, day, hour, min, sec.
+
+  NB: Checks the validity of each date component, eg checks that
+      0 < Day < 32, but does not check validity of the date as a whole !
+}
+PROC parse date and time string =
+( STR input,
+  REF INT year,
+          month,
+          day,
+          hour,
+          min,
+          sec
+) BOOL:
+BEGIN
+
+   CHAR date separator  = " ",
+        time separator  = ":",
+        space char      = " ";
+
+   BOOL success := FALSE;                       { Status for return }
+
+   RVC date and time string := LOC VECTOR [UPB input] CHAR
+                            := input;           { Local copy of input }
+
+   { Process day }
+   IF BOOL error := FALSE;
+      day := chars to int(extract chars(date and time string, date separator),
+         error);
+      NOT error
+   ANDTH day > 0 ANDTH day < 32
+   THEN
+      { Day valid. Process month }
+      RVC
+         month chars := extract chars(date and time string, date separator);
+      IF UPB month chars = 3
+      THEN
+         { Correct number of characters. Look for
+           month in table }
+         BOOL found := FALSE;
+         FOR i TO UPB months
+         WHILE NOT found
+         DO
+            IF month chars = months[i]
+            THEN
+               month := i;
+               found := TRUE
+            FI
+         OD;
+         IF found
+         THEN
+            { Month valid. Process year }
+            IF BOOL error := FALSE;
+               year := chars to int(extract chars(date and time string,
+                  space char), error);
+               NOT error
+            THEN
+               { Year valid. Process hours }
+               IF BOOL error := FALSE;
+                  hour := chars to int(extract chars(date and time string,
+                     time separator), error);
+                  NOT error ANDTH hour < 24
+               THEN
+                  { Hour valid. Process minutes }
+                  IF BOOL error := FALSE;
+                     min := chars to int(extract chars(date and time string,
+                        time separator), error);
+                     NOT error ANDTH min < 60
+                  THEN
+                     { Minutes valid. Process seconds }
+                     IF BOOL error := FALSE;
+                        sec := chars to int(extract chars(date and time string,
+                           space char), error);
+                        NOT error ANDTH sec < 60
+                     THEN
+                        { Seconds valid - Whole date valid }
+                        success := TRUE
+                     FI
+                  FI
+               FI
+            FI
+         FI
+      FI
+   FI;
+
+   success
+
+END;
+
+{
+  Converts a date and time string to a value expressed in POSIX Time
+}
+PROC date time to eut =
+( STR string,
+  REF INT seconds,
+  MESSAGEPROC  msg
+) BOOL:
+BEGIN
+   INT seconds in minute = 60,
+       minutes in hour = 60,
+       hours in day = 24,
+       days in non leap year = 365,
+       last non eut year = 1982;        { Ella time started in 1983 }
+
+   INT year, month, day, hour, min, sec;
+
+   PROC case fault = VOID:
+      msg(system, "date_time_to_eut fault, CASE failure");
+
+   { Parse date and time string into seperate
+     integer values }
+   IF parse date and time string(string, year, month, day, hour, min, sec)
+   THEN
+      { String successfully parsed. Convert to EUT }
+      IF year -:= last non eut year; year > 0
+      THEN
+         { Calculate days due to years preceeding current one -
+           adding one day extra for every leap year }
+         INT time := (year -1)* days in non leap year +
+                     (year +1) OVER 4;
+
+         { Add days for all months preceeding current one
+           and days so far this month. Convert to hours }
+         time := (time +
+                  IF (year +2) MOD 4 = 0        { for leap year }
+                  THEN
+                     CASE month
+                     IN 0,31,60,91,121,152,182,213,244,274,305,335
+                     OUT case fault; 0
+                     ESAC
+                  ELSE                          { for non-leap year }
+                     CASE month
+                     IN 0,31,59,90,120,151,181,212,243,273,304,334
+                     OUT case fault; 0
+                     ESAC
+                  FI + day -1) * hours in day;
+
+         { Add hours so far. Convert to minutes }
+         time := (time + hour) * minutes in hour;
+
+         { Add minutes so far. Convert to seconds }
+         time := (time + min) * seconds in minute;
+
+         { Add seconds so far. Store result}
+         seconds := time + sec ;
+         TRUE                                   { Success }
+      ELSE
+         { Date is before start of EUT, therefore invalid }
+         FALSE
+      FI
+   ELSE
+      { Date and time string is invalid }
+      FALSE
+   FI
+
+END;
+
+
+{{{  Extra operators for overflow detection and compatability with 68R  }}}
+
+INT maxint = ABS ( BIN -1 SHR 1 );   { Portable definition of max integer..}
+                                     { .. relies on 2's complement rep. ! }
+INT bits width = BEGIN               { Portable def'n of bits/bytes width }
+                     INT w := 0;     { .. makes several assumptions!!!    }
+                     BITS b := BIN -1;
+                     WHILE b /= 16r0 DO  b := b SHR 1; w +:= 1  OD;
+                     w
+                 END;
+INT bytes width = bits width % bits per char;
+INT  largeint        = maxint % 16;
+
+INT  minint = -maxint -1;   INT largeminint = minint % 16;
+
+PROC add with overflow check = ( INT a, b, REF BOOL overflowed ) INT:
+{ assumes that a and b have same sign }
+IF      ( a > 0 ANDTH a > maxint - b )
+OREL    ( a < 0 ANDTH a < -(maxint + b) - 1)
+THEN
+        overflowed := TRUE;
+        maxint
+ELSE
+        a + b
+FI;
+
+PROC subtract with overflow check = ( INT a, b, REF BOOL overflowed ) INT:
+{ assumes that a and b have opposite sign }
+IF      ( a > 0 ANDTH a > maxint + b )
+OREL    ( a < 0 ANDTH a < b - maxint - 1)
+THEN
+        overflowed := TRUE;
+        maxint
+ELSE
+        a - b
+FI;
+
+PROC multiply with overflow check = ( INT a, b, REF BOOL overflowed ) INT:
+IF
+        IF   a < 0 ANDTH b < 0 THEN a < maxint % b OREL b < maxint % a
+        ELIF a < 0 ANDTH b > 0 THEN a < (-maxint-1) % b OREL b > (-maxint-1) % a
+        ELIF a > 0 ANDTH b < 0 THEN a > (-maxint-1) % b OREL b < (-maxint-1) % a
+        ELIF a > 0 ANDTH b > 0 THEN a > maxint % b OREL b > maxint % a
+        ELSE FALSE
+        FI
+THEN
+        overflowed := TRUE;
+        maxint
+ELSE
+        a * b
+FI;
+
+{ These three procedures are strongly discouraged from being used }
+
+MODE  FLTPROC = PROC (STR) VOID;       { added for simulator }
+PROC  sys fault = (STR  message) VOID:  global_msg(system, message);
+PROC  abort     = (STR  message) VOID:  global_msg(fatal, message);
+
+{ ELLA file "types" }
+
+STR  library_type  = ".ell",
+     simfile_type  = ".elx",
+     history_type  = ".elh",
+     source_type   = ".elt",
+     savefile_type = ".els",
+     ellanet_type  = ".eln",
+     logfile_type  = ".elg",
+     infile_type   = ".eli",
+     outfile_type  = ".elo",
+     codedump_type = ".dmp",
+     assfile_type  = ".ela",
+     download_type = ".eld",
+     ellasysdir_var = "ellasysdir";  { name of environment variable }
+
+
+SKIP
+KEEP  maxid,  ID,  CTNAME,  MAKEID (STR),  MAKEID (CHAR),  nilid,  nullid,
+      clear,  uppercase,  UPPERCASE (STR),  lowercase,  LOWERCASE (STR),
+      MAX (INT, INT),  MIN (INT, INT),  XOR (BITS, BITS),
+      bits per char,  chars per int,  max char,
+      out il int,  in il int,  chars to int,
+      left justify,  right justify,
+      seconds,  days,  time,  date,  date_time,  time_str,
+      maxint,  large int,
+      bits width, bytes width,
+      minint,  large min int,
+      add with overflow check,
+      subtract with overflow check,
+      multiply with overflow check, date time to eut,
+      FLTPROC,  sys fault,  abort,
+
+library_type,  { ELLA database file (.ELL) }
+simfile_type,  { Work file used to define the network for simulation (.ELX) }
+history_type,  { Work file containing a history of simulator output (.ELH) }
+source_type,   { A file containing ELLA source text for compilation (.ELT) }
+savefile_type, { Work file of signal data for reconstructing a sim (.ELS) }
+ellanet_type,  { Work file used to transfer data to an ELLANET back end (.ELN) }
+logfile_type,  { File created by the "log" command (.ELG) }
+infile_type,   { File used to read ELLA commands (.ELI) }
+outfile_type,  { File created by the "out" command (.ELO) }
+codedump_type, { File containing a hexadecimal code dump from the sim (.DMP) }
+assfile_type,  { File used to transfer assembler modes (.ELA) }
+ellasysdir_var  { Envrionment variable (logical name) for ELLA tools directory }
+
+FINISH

@@ -1,0 +1,182 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Changing the mode</title>
+<meta name="description" content="changing the mode">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node24.html">
+<link rel="previous" href="node22.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node24.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1005"
+  href="node24.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html999"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html993"
+  href="node22.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1001"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1003"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1006"
+  href="node24.html">Miscellaneous operators</a>
+<b> Up:</b> <a name="tex2html1000"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html994"
+  href="node22.html">Order of elaboration</a>
+ &nbsp; <b>  <a name="tex2html1002"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1004"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1007"
+  href="node23.html#section00481000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00480000000000000000"></a><a name="form-change"></a>
+<br>
+Changing the mode
+</h1>
+
+<p>We have seen that in a strong context, a value of mode
+<code>INT</code> can be coerced by widening<a name="948"></a> to a
+value of mode <code>REAL</code>. What about the other way round? Is it
+possible to coerce a value of mode <code>REAL</code> to a value of
+mode <code>INT</code>?  Fortunately, it is impossible using coercion.
+The reason behind this is related to the fact that real numbers can
+contain fractional parts.  In replacing an integer by a real number
+there is no essential change in the value, but when a real number is
+changed to an integer, in general the fractional
+part<a name="949"></a> will be lost.  It is undesirable that data
+should be lost without the programmer noticing.</p>
+
+<p>If you want to convert a <code>REAL</code> value to an
+<code>INT</code>, you must use one of the operators
+<tt>ROUND</tt><a name="1073"></a> or
+<tt>ENTIER</tt><a name="1074"></a>. The operator <code>ROUND</code>
+takes a single operand of mode <code>REAL</code> and yields an
+<code>INT</code> whose value is the operand rounded to the nearest
+integer.  Thus <code>ROUND 2.7</code> yields <code>3</code>, and
+<code>ROUND 2.2</code> yields <code>2</code>.  The same rule applies
+with negative numbers, thus <code>ROUND -3.6</code> yields
+<code>-4</code>.  At the half way case, for example, <code>ROUND
+2.5</code>, the value is rounded<a name="954"></a> away from zero if
+the whole number part is odd, and rounded toward zero if it is even
+(zero, in this case, is taken to be an even number). This ensures that
+rounding errors over a large number of cases tend to cancel out.</p>
+
+<p>The operator <code>ENTIER</code> (French for &ldquo;whole&rdquo;)
+takes a <code>REAL</code> operand and likewise yields an
+<code>INT</code> result, but the yield is the largest integer equal to
+or less than the operand. Thus <code>ENTIER 2.2</code> yields
+<code>2</code>, <code>ENTIER -2.2</code> yields <code>-3</code>.</p>
+
+<p>The operator <tt>SIGN</tt><a name="1075"></a> can also be used
+with a <code>REAL</code> operand.  Its yield has mode <code>INT</code>
+with the same values as before, namely: <code>-1</code> if the operand
+is negative, <code>0</code> if it is zero, and <code>+1</code> if it
+is positive. We shall see in subsequent chapters that this property of
+<code>SIGN</code> can be useful.</p>
+
+<hr>
+<h2><a name="section00481000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.9<a name="ex-ii-ix"></a>
+<dd>What is the value and mode of the yield of each of the following
+formul&#230;? Ans<a href="node136.html#ans-ii-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>ROUND(3.0 - 2.5**2)</code>  
+<p>
+<dt>(b)
+<dd><code>ENTIER -4.5 + ROUND -4.5</code>  
+<p>
+<dt>(c)
+<dd><code>SIGN(ROUND 3.6 / 2.0) * 2.0</code>  
+<p>
+</dd>
+</dl>
+<dt>2.10<a name="ex-ii-x"></a>
+<dd>What is the value of the formula
+<pre>
+(ENTIER -2.9 + 3**2)/4.0
+</pre>
+Ans<a href="node136.html#ans-ii-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1005"
+  href="node24.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html999"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html993"
+  href="node22.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1001"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1003"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1006"
+  href="node24.html">Miscellaneous operators</a>
+<b> Up:</b> <a name="tex2html1000"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html994"
+  href="node22.html">Order of elaboration</a>
+ &nbsp; <b>  <a name="tex2html1002"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1004"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

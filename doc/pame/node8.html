@@ -1,0 +1,284 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Identity declarations</title>
+<meta name="description" content="identity declarations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node9.html">
+<link rel="previous" href="node7.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node9.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html769"
+  href="node9.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html763"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html757"
+  href="node7.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html765"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html767"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html770"
+  href="node9.html">Characters</a>
+<b> Up:</b> <a name="tex2html764"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html758"
+  href="node7.html">Integers</a>
+ &nbsp; <b>  <a name="tex2html766"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html768"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html771"
+  href="node8.html#section00351000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00350000000000000000"></a><a name="intro-iddecs"></a>
+<br>
+Identity declarations</h1>
+
+<p>Suppose you want to use the integer whose denotation is</p>
+
+<pre style="text-align:center;">
+   48930767
+</pre>
+
+<p>in various parts of your program. If you had to
+write out the denotation each time you wanted to use it, you would
+find that</p>
+
+<ul>
+<li>you would almost certainly make mistakes in copying the value,
+and</li>
+<li>the meaning of the integer would not be at all clear</li>
+</ul>
+It is imperative, particularly with large programs, to make the
+meaning of the program as clear as possible. Algol&nbsp;68 provides a
+special construct which enables you to declare a synonym for a value
+(in this case, an integer denotation). It is done by means of the
+construct known as an
+<b>identity declaration</b><a name="173"></a> which is
+used widely in the language.  Here is an identity declaration for the
+integer mentioned at the start of this paragraph:</p>
+
+<pre>
+   INT special integer = 48930767
+</pre>
+
+<p>Now, whenever you want to use the integer, you write</p>
+
+<pre>
+   special integer
+</pre>
+
+<p>in your program.</p>
+
+<p>
+An identity declaration consists of four parts:</p>
+
+<pre>
+   &lt;mode indicant&gt; &lt;identifier&gt; = &lt;value&gt;
+</pre>
+
+<p>You have already met the <code>&lt;mode indicant&gt;</code>. An
+<b>identifier</b><a name="181"></a> is a sequence
+of one or more characters which starts with a lower-case letter and
+continues with lower-case letters or digits or underscores. It can be
+broken-up by spaces, newlines or tab characters.  Here are some
+examples of valid identifiers (they are separated by commas to show
+you where they end, but the commas are not part of the
+identifiers):</p>
+
+<pre>
+   i,  algol,  rate 2 pay,  eigen_value_3
+</pre>
+
+<p>The following are wrong:</p>
+
+<pre>
+   2pairs   escape.velocity   XConfigureEvent
+</pre>
+
+<p>The first starts with a digit, the second contains a character which is
+neither a letter nor a digit nor an underscore, and the third contains
+capital letters.</p>
+
+<p>
+An identifier looks like a name, in the ordinary sense of that word,
+but we do not use the term &ldquo;name&rdquo; in this sense because it has a
+special meaning in Algol&nbsp;68 which will be explained in Chapter&nbsp;5. The
+identifier can abut the mode indicant as in</p>
+
+<pre>
+   INTa = 4
+</pre>
+
+<p>but this is unusual. For clarity in your programs, ensure that a
+mode indicant followed by an identifier is separated from the latter
+by a space.</p>
+
+<p>
+The third part is the equals symbol <tt>=</tt><a name="439"></a>. The fourth part (the
+right-hand side of the equals symbol) requires a value. You will see
+later that the value can be any piece of program which yields a
+value<a name="190"></a> of the mode specified by the
+mode indicant<a name="191"></a>. So far, we have only met integers,
+and we can only denote positive integers.</p>
+
+<p>
+There are two ways of declaring identifiers for two integers:</p>
+
+<pre>
+   INT i = 2 ; INT j=3
+</pre>
+
+<p>The semicolon ; is called the
+<b>go-on symbol</b><a name="440"></a> because it means &ldquo;throw
+away the value yielded by the previous phrase<a name="196"></a>, and go on to the
+next phrase&rdquo;.  If this statement seems a little odd, just bear with
+it and all will become clear later.  We can abbreviate the
+declarations as follows:</p>
+
+<pre>
+   INT i=2, j = 3
+</pre>
+
+<p>The comma<a name="199"></a> separates the two declarations, but
+does not mean that the <i>i</i> is declared first, followed by the
+<i>j</i>.  On the contrary, it is up to the compiler to determine
+which declaration<a name="200"></a> is elaborated first.  They could
+even be done in parallel on a parallel processing<a name="201"></a>
+computer.  This is known as collateral elaboration<a name="202"></a>,
+as opposed to <b>sequential</b> elaboration determined by the go-on
+symbol<a name="204"></a> (the semicolon). We shall be meeting
+collateral elaboration again in later chapters.  Elaboration means,
+roughly, execution or &ldquo;working-out&rdquo;.  The compilation
+system translates your Algol&nbsp;68 program into machine
+code<a name="205"></a>.  When the machine code is obeyed by the
+computer, your program is elaborated.  The sequence of
+elaboration<a name="206"></a> is determined by the
+compiler<a name="207"></a> as well as by the structure of your
+program<a name="208"></a>.  Note that spaces are allowed almost
+everywhere in an Algol&nbsp;68 program.</p>
+
+<p> Some values are predefined in what is called the
+<span class="textbf">standard prelude</span><a name="210"></a>. You
+will be learning more about it in succeeding chapters.  One integer
+which is predefined in Algol&nbsp;68 has the identifier <tt>max
+int</tt><a name="441"></a>. Can you guess its value?</p>
+
+<hr>
+<h2><a name="section00351000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>1.5<a name="ex-i-v"></a>
+<dd>What is wrong with the following identifiers? Ans<a href="node135.html#ans-i-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>INT</code>  
+<p>
+<dt>(b)
+<dd><code>int</code>  
+<p>
+<dt>(c)
+<dd><code>thirty-four</code>  
+<p>
+<dt>(d)
+<dd><code>AreaOfSquare</code>
+ 
+<p>
+</dd>
+</dl>
+<dt>1.6<a name="ex-i-vi"></a>
+<dd>What is wrong with the following identity declarations? Ans<a href="node135.html#ans-i-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>INT thirty four &gt; 33</code>  
+<p>
+<dt>(b)
+<dd><code>INT big int = 3 000 000 000</code>  
+<p>
+</dd>
+</dl>
+<dt>1.7<a name="ex-i-vii"></a>
+<dd>Write an identity declaration for the largest integer which the
+Algol&nbsp;68 compiler can handle. Use the identifier
+<br>
+<code>max int</code>.  Ans<a href="node135.html#ans-i-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html769"
+  href="node9.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html763"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html757"
+  href="node7.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html765"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html767"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html770"
+  href="node9.html">Characters</a>
+<b> Up:</b> <a name="tex2html764"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html758"
+  href="node7.html">Integers</a>
+ &nbsp; <b>  <a name="tex2html766"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html768"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

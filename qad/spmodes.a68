@@ -1,0 +1,182 @@
+DECS spmodes CONTEXT VOID:
+
+COMMENT
+   $Log: spmodes.a68,v $
+   Revision 1.1.1.1  2001-05-07 10:16:11  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.3  2000/08/23 16:33:36  sian
+   Ready for Debianising
+
+   Revision 1.2  2000/07/05 14:55:48  sian
+   Ready for release 0.1.0
+
+   Revision 1.1  2000/01/10 05:56:26  sian
+   Installing QAD standard prelude
+
+   This file is part of the QAD standard prelude issued with the
+   Linux port of Ctrans.
+
+   All MODE declarations in the QAD standard prelude are gathered
+   together in this file.
+
+	Copyright (C) 2000 Sian Leitch
+COMMENT
+
+MODE
+   NUMBER   = UNION(LONG INT, INT, SHORT INT, SHORT SHORT INT,
+                    REAL, SHORT REAL),
+   STRING   = FLEX[1:0]CHAR,
+   STR      = VECTOR[0]CHAR,
+   RVC      = REF STR,
+   CSTR     = REF STRUCT 16000000 CHAR,      # char * #
+   CPTR     = REF BITS,                      # void * #
+   CCHARPTR = REF CHAR,                      # A68_CHAR * = char * #
+   CINTPTR  = REF INT,                       # A68_INT * #
+   CCHARPTRPTR = REF STRUCT 16000000 CSTR,   # char ** #
+   GCPARAM  = STRUCT(STR name, INT value),
+   PDESC    = STRUCT(CPTR cp, CSTR env),
+   VDESC    = STRUCT(CCHARPTR data, BITS gc, INT upb),
+   VBDESC   = STRUCT(CPTR data, BITS gc, INT upb),
+   VIDESC   = STRUCT(CINTPTR data, BITS gc, INT upb),
+   BUFFER   = RVC,
+   SYSFILE  = INT,
+   CHARBAG  = STRUCT 8 BITS,
+   FILEBUFFER = STRUCT(BUFFER start,
+                       INT max, valid, pos, #buffer position#
+                       BOOL writeback, flush after put),
+   FILE,
+
+   BOOKTYPE = STRUCT
+   (
+      BOOL bin possible,
+           put possible,
+           get possible,
+           set possible,
+         reidf possible
+   ),
+
+   BOOK = STRUCT
+   (
+      RVC idf, reidf,
+      BOOKTYPE type
+   ),
+
+   SYSPROCS = STRUCT
+   (
+      PROC (REF FILE, INT,INT,INT) INT estab,
+      PROC (REF FILE) INT open,
+      PROC (REF FILE) VOID close,
+      PROC (REF FILE, INT) BOOL set,
+      PROC (REF FILE) INT logical end,
+      PROC (REF FILE, BUFFER) INT put buf, get buf,
+      PROC (REF FILE, INT) RVC ensure buf space,
+      PROC (REF FILE) VOID flush buffer,
+      PROC (REF FILE, CHAR) BOOL put ch, 
+      PROC (REF FILE, REF CHAR) BOOL get ch,
+      PROC (REF FILE, INT) BOOL control
+   ),
+
+   IOPROCS = STRUCT
+   (
+      CHARBAG                     string term,
+      PROC(REF FILE)BOOL          logical file mended,
+      PROC(REF FILE)BOOL          physical file mended,
+      PROC(REF FILE)BOOL          value error mended,
+      PROC(REF FILE,REF CHAR)BOOL char error mended
+   ),
+
+   CHANNEL = STRUCT
+   (
+      SYSPROCS sys,
+      BOOKTYPE type,
+      IOPROCS default io
+   ),
+
+   IOSTATE = STRUCT
+   (
+      BOOL read mood, char mood,
+      BOOL opened, ended, bol,    #beginning of line#
+      INT back ch, last error,
+      FILEBUFFER buffer,
+      INT pos                     #transput position#
+   ),
+
+   FILE = STRUCT
+   (
+      BOOK book,
+      SYSFILE sysfile,
+      SYSPROCS sys,
+      IOPROCS io,
+      IOSTATE state
+   ),
+
+   TERMIOS = STRUCT(BITS c iflag, c oflag, c cflag, c lflag,
+                    SHORT SHORT BITS c line,
+                    STRUCT 32 SHORT SHORT BITS c cc,
+                    BITS c ispeed, c ospeed),
+
+   SIMPLIN  = UNION 
+   (
+      REF CHAR,               REF[]CHAR, REF STRING,
+      REF BOOL,               REF[]BOOL,
+
+      REF LONG BITS,          REF[]LONG BITS,
+      REF BITS,               REF[]BITS,
+      REF SHORT BITS,         REF[]SHORT BITS,
+      REF SHORT SHORT BITS,   REF[]SHORT SHORT BITS,
+
+      REF LONG INT,           REF[]LONG INT,
+      REF INT,                REF[]INT,
+      REF SHORT INT,          REF[]SHORT INT,
+      REF SHORT SHORT INT,    REF[]SHORT SHORT INT,
+
+      REF REAL,               REF[]REAL,
+      REF SHORT REAL,         REF[]SHORT REAL,
+
+      REF COMPL,              REF[]COMPL,
+      REF SHORT COMPL,        REF[]SHORT COMPL,
+      
+      STRAIGHT SIMPLIN
+   ),
+
+   SIMPLOUT = UNION
+   (
+      CHAR,                   []CHAR,
+      BOOL,                   []BOOL,
+
+      LONG BITS,              []LONG BITS,
+      BITS,                   []BITS,
+      SHORT BITS,             []SHORT BITS,
+      SHORT SHORT BITS,       []SHORT SHORT BITS,
+
+      LONG INT,               []LONG INT,
+      INT,                    []INT,
+      SHORT INT,              []SHORT INT,
+      SHORT SHORT INT,        []SHORT SHORT INT,
+
+      REAL,                   []REAL,
+      SHORT REAL,             []SHORT REAL,
+
+		COMPL,                  []COMPL,
+      SHORT COMPL,            []SHORT COMPL,
+
+      STRAIGHT SIMPLOUT
+   );
+
+SKIP
+KEEP
+
+#MODEs#
+NUMBER, STRING,
+STR, RVC,
+CSTR, CPTR, CCHARPTR, CINTPTR, CCHARPTRPTR, GCPARAM,
+PDESC, VDESC, VBDESC, VIDESC,
+
+BUFFER, SYSFILE, CHARBAG, FILEBUFFER,
+BOOKTYPE, BOOK,
+SYSPROCS, IOPROCS, IOSTATE, CHANNEL, FILE,
+
+TERMIOS, SIMPLIN, SIMPLOUT
+
+FINISH

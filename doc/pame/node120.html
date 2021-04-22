@@ -1,0 +1,189 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Program development</title>
+<meta name="description" content="program development">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node125.html">
+<link rel="previous" href="node106.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node121.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2652"
+  href="node121.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2646"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2640"
+  href="node119.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2648"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2650"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2653"
+  href="node121.html">Writing programs</a>
+<b> Up:</b> <a name="tex2html2647"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2641"
+  href="node119.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2649"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2651"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001400000000000000000"></a><a name="chapxii"></a>
+Program development</h1>
+
+<p>Of course, there is more to writing programs than learning a
+programming language. Although you will find many books on
+programming languages, you will not find many on computer
+programming<a name="8360"></a> as such.  That is because it is very much a craft.
+Be aware that this book does not, and cannot, train you to become a
+professional programmer.  Only on-the-job training and experience can
+do that--but after working through this chapter, you will have an
+idea of some of the activities a professional programmer does.</p>
+
+<p>In the computer industry, there is a widespread attitude that
+program maintenance<a name="8361"></a> helps build good programmers.
+There are sound reasons for this. One is that reading other people's
+programs helps you learn how to lay out programs, how to organise the
+source, how to write structured code and how to solve the sort of
+problems that a programmer meets daily. Another reason is that program
+maintenance usually involves either removing errors (usually called
+<b>bugs</b><a name="8363"></a>) or making small changes to the program
+to adapt it to changing requirements. You have to learn how a program
+works before you change it and reading someone else's program means
+that the philosophy of the program (the approach of the program to
+solving a problem) is already there--you do not have to create it.</p>
+
+<p>However, there is no substitute for writing your own programs. The
+first section of this chapter is concerned with how to write your own
+programs, from problem analysis to documentation. The next topic
+discusses how to access operating system procedures.  This introduces
+almost all those aspects of Algol&nbsp;68 which involve direct machine
+access apart from the mode <code>BITS</code> and its associated
+operators which were covered in chapter&nbsp;11.</p>
+
+<p>Next, we turn to the first aspect of program maintenance: how to
+understand a program.  A small utility (<code>lf</code>) is provided
+with the Algol68toC<a name="8364"></a> compilation system
+documentation.  This section looks at <code>lf</code> and analyses its
+functioning.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2654"
+  href="node121.html">Writing programs</a>
+<ul>
+<li><a name="tex2html2655"
+  href="node121.html#section001411000000000000000">Top-down analysis</a>
+<li><a name="tex2html2656"
+  href="node121.html#section001412000000000000000">Program layout</a>
+<li><a name="tex2html2657"
+  href="node121.html#section001413000000000000000">Declarations</a>
+<li><a name="tex2html2658"
+  href="node121.html#section001414000000000000000">Procedures</a>
+<li><a name="tex2html2659"
+  href="node121.html#section001415000000000000000">Monetary values</a>
+<li><a name="tex2html2660"
+  href="node121.html#section001416000000000000000">Optimisation</a>
+<li><a name="tex2html2661"
+  href="node121.html#section001417000000000000000">Testing and debugging</a>
+<li><a name="tex2html2662"
+  href="node121.html#section001418000000000000000">Compilation errors</a>
+<li><a name="tex2html2663"
+  href="node121.html#section001419000000000000000">Arithmetic overflow</a>
+<li><a name="tex2html2664"
+  href="node121.html#section0014110000000000000000">Documentation</a>
+</ul>
+<br>
+<li><a name="tex2html2665"
+  href="node122.html">Non-canonical input</a>
+<li><a name="tex2html2666"
+  href="node123.html">A simple utility</a>
+<ul>
+<li><a name="tex2html2667"
+  href="node123.html#section001431000000000000000">The source code</a>
+<li><a name="tex2html2668"
+  href="node123.html#section001432000000000000000">Routines</a>
+<li><a name="tex2html2669"
+  href="node123.html#section001433000000000000000">Dry-running example</a>
+<li><a name="tex2html2670"
+  href="node123.html#section001434000000000000000"><tt>ALIEN</tt> procedures</a>
+<ul>
+<li><a name="tex2html2671"
+  href="node123.html#section001434100000000000000">The procedure <tt>fstat</tt></a>
+<li><a name="tex2html2672"
+  href="node123.html#section001434200000000000000">The procedure <tt>get cwd</tt></a>
+</ul>
+</ul>
+<br>
+<li><a name="tex2html2673"
+  href="node124.html">Summary</a>
+</ul>
+<!--end of table of child-links-->
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2652"
+  href="node121.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2646"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2640"
+  href="node119.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2648"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2650"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2653"
+  href="node121.html">Writing programs</a>
+<b> Up:</b> <a name="tex2html2647"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2641"
+  href="node119.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2649"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2651"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>United mode declarations</title>
+<meta name="description" content="united mode declarations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node76.html">
+<link rel="previous" href="node74.html">
+<link rel="up" href="node74.html">
+<link rel="next" href="node76.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1902"
+  href="node76.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1896"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1890"
+  href="node74.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1898"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1900"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1903"
+  href="node76.html">United modes in procedures</a>
+<b> Up:</b> <a name="tex2html1897"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1891"
+  href="node74.html">Unions</a>
+ &nbsp; <b>  <a name="tex2html1899"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1901"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1904"
+  href="node75.html#section001011000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001010000000000000000"></a><a name="union-mode"></a>
+United mode declarations</h1>
+
+<p><tt>UNION</tt><a name="5397"></a> is used to create a united mode.
+Here is a declaration for a simple united mode:</p>
+
+<pre>
+   UNION(INT,STRING) u = (random &lt; .5|4|"abc")
+</pre>
+
+<p>The first thing to notice is that, unlike structures, there are no
+field selectors.  This is because a united mode does not consist of
+constituent parts. The second thing to notice is that the above mode
+could well have been written</p>
+
+<pre>
+   UNION(STRING,INT) u = (random &lt; .5|4|"abc")
+</pre>
+
+<p>The order of the modes<a name="5241"></a> in the union is
+irrelevant.<a name="tex2html25"
+href="footnode.html#foot5408"><sup><span
+class="arabic">9</span>.<span class="arabic">1</span></sup></a> What
+is important is the actual modes present in the union. Moreover, a
+constituent mode can be repeated, as in</p>
+
+<pre>
+   UNION(STRING,INT,STRING,INT) u =
+      (random &lt; .5|4|"abc")
+</pre>
+
+<p>This is equivalent to the previous declarations.<a name="tex2html26"
+href="footnode.html#foot5245"><sup><span
+class="arabic">9</span>.<span class="arabic">2</span></sup></a></p>
+
+<p>Like structured modes, united modes are often declared with the
+mode declaration<a name="5246"></a>. Here is a suitable declaration of
+a united mode containing the constituent modes <code>STRING</code> and
+<code>INT</code>:
+
+<pre>
+   MODE STRINT = UNION(STRING,INT)
+</pre>
+
+<p>We could create another mode <code>STRINTR</code> in two ways:</p>
+
+<pre>
+   MODE STRINTR = UNION(STRINT,REAL)
+</pre>
+
+<p>or</p>
+
+<pre>
+   MODE STRINTR = UNION(STRING,INT,REAL)
+</pre>
+
+<p>Using the above declaration for <code>STRINT</code>, we could
+declare <code>u</code> by</p>
+
+<pre>
+   STRINT u = (random &lt; .5|4|"abc")
+</pre>
+
+<p>In this identity declaration, the mode yielded by the right-hand
+side is either <code>INT</code> or <code>STRING</code>, but the mode
+required is <code>UNION(STRING,INT</code>).  The value on the
+right-hand side is coerced to the required mode by
+<b>uniting</b><a name="5256"></a>.</p>
+
+<p> The united mode <code>STRINT</code> is a mode whose values either
+have mode <code>INT</code> or mode <code>STRING</code>.  It was stated
+in chapter&nbsp;1 that the number of values in the set of values
+defined by a mode can be zero.  Any value of a united mode actually
+has a mode which is one of the constituent modes of the union. So
+there are no <b>new</b> values for a united mode.  <code>u</code>
+identifies a value which is either an <code>INT</code> or a
+<code>STRING</code>.  Because <tt>random</tt><a name="5399"></a>
+yields a pseudo-random number, it is not possible to determine when
+the program is compiled (that is, at <b>compile-time</b>) which mode
+the conditional clause yields.  As a result, all we can say is that
+the underlying mode of <code>u</code> is either <code>INT</code> or
+<code>STRING</code>.  We shall see later how to determine that
+underlying mode.<a name="tex2html27"
+href="footnode.html#foot5261"><sup><span
+class="arabic">9</span>.<span class="arabic">3</span></sup></a> <p>
+Because a united mode does not introduce new values, there are no
+denotations for united modes, although denotations may well exist for
+the constituent modes.</p>
+
+<p>Almost any mode can be a constituent of a united mode.  For
+example, here is a united mode containing a procedure mode and
+<code>VOID</code>:</p>
+
+<pre>
+   MODE PROID = UNION(PROC(REAL)REAL,VOID)
+</pre>
+
+<p>and here is a declaration using it:</p>
+
+<pre>
+   PROID pd = EMPTY
+</pre>
+
+<p>The only limitation on united modes is that none of the constituent
+modes may be firmly related<a name="5266"></a> (see the section <a href="node62.html#rout-idops">6.2.1</a>)
+and a united mode cannot appear in its own declaration. The following
+declaration is wrong because a value of one of the constituent modes
+can be deprocedured in a firm context<a name="5268"></a> to yield a
+value of the united mode:</p>
+
+<pre>
+   MODE WRONG = UNION(PROC WRONG,INT)
+</pre>
+
+<p>Names for values with united modes are declared in exactly the
+same way as before. Here is a declaration for such a name using a
+local generator<a name="5271"></a>:</p>
+
+<pre>
+   REF UNION(BOOL,INT) un = LOC UNION(BOOL,INT);
+</pre>
+
+<p>The abbreviated declaration<a name="5274"></a> gives</p>
+
+<pre>
+   UNION(BOOL,INT) un;
+</pre>
+
+<p>Likewise, we could declare a name for the mode
+<code>STRINT</code>:</p>
+
+<pre>
+   STRINT sn;
+</pre>
+
+<p>In other words, objects of united modes can be declared in the same way
+as other objects.</p>
+
+<hr>
+<h2><a name="section001011000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>8.1<a name="ex-viii-i"></a>
+<dd>Write a mode declaration for the united mode <code>BINT</code> whose
+constituent modes are <code>BOOL</code> and <code>INT</code>.
+ Ans<a href="node142.html#ans-viii-i"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>8.2<a name="ex-viii-ii"></a>
+<dd>Write an identity declaration for a value of mode <code>BINT</code>.
+ Ans<a href="node142.html#ans-viii-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>8.3<a name="ex-viii-iii"></a>
+<dd>What is wrong with the mode declaration
+<pre>
+   MODE UB = UNION(REF UB,INT,BOOL)
+</pre>
+Ans<a href="node142.html#ans-viii-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>8.4<a name="ex-viii-iv"></a>
+<dd>Declare a name for a mode united from <code>INT</code>, <code>[]INT</code> and
+<code>[,]INT</code>.  Ans<a href="node142.html#ans-viii-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1902"
+  href="node76.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1896"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1890"
+  href="node74.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1898"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1900"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1903"
+  href="node76.html">United modes in procedures</a>
+<b> Up:</b> <a name="tex2html1897"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1891"
+  href="node74.html">Unions</a>
+ &nbsp; <b>  <a name="tex2html1899"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1901"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

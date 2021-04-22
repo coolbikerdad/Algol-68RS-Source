@@ -1,0 +1,1052 @@
+DECS  adicops  CONTEXT VOID  USE
+*L    usefulops,
+      biops, centities, coutput, environ, environment,
+      evalbase, incoperfn, idtable, incmode, modes, uniquenameserver, values:
+
+configinfo A68CONFIG "$Id: adicops.a68,v 1.2 2002-02-04 09:26:51 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.10 
+05:12:94  33.002  DJS   CmplxNos   COMPLEX operators added. 
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+16:10:99  34.003  SL    Phoenix Engineering SL: A_ELEM macro change
+06:03:00  34.004  SL    Phoenix Engineering SL: REPR cast change
+COMMENT
+
+{ Initialise comment strings }
+CFRAGMENT module name = "ADICOPS - ";
+
+CFRAGMENT
+	qvfault	 = ":illegal version number",
+	qcompl	 = ":mode COMPL is not supported",
+	qmupb	    = module name + "monadic UPB",
+	qmlwb	    = module name + "monadic LWB",
+	qabs	    = module name + "ABS",
+	qround	 = module name + "ROUND",
+	qentier	 = module name + "ENTIER",
+   qsign     = module name + "SIGN",
+   qre       = module name + "RE",
+   qim       = module name + "IM",
+   qarg      = module name + "ARG",
+   qconj     = module name + "CONJ",
+   qi        = module name + "I",
+	qplus  	 = module name + "PLUS",
+   qminus    = module name + "MINUS",
+	qtimes	 = module name + "TIMES",
+	qdiv	    = module name + "DIV",
+	qover	    = module name + "OVER",
+	qmod	    = module name + "MOD",
+	qpower	 = module name + "**",
+	qelem	    = module name + "ELEM",
+	qplusab	 = module name + "PLUSAB",
+	qplusto	 = module name + "PLUSTO",
+	qminusab  = module name + "MINUSAB",
+	qtimesab  = module name + "TIMESAB",
+	qoverab   = module name + "OVERAB",
+	qmodab    = module name + "MODAB",
+	qdivab    = module name + "DIVAB",
+	qis	    = module name + "IS",
+	qisnt	    = module name + "ISNT",
+	qisisnt	 = module name + "IS/ISNT",
+   qcomplex  = " COMPL";
+
+PROC	simple monop = ( BOOL macro, CFRAGMENT oper, REF VALUE op ) CFRAGMENT:
+IF	macro
+THEN	use macro( oper, op )
+ELSE	bracket( oper + bracket cfragment( op ) )
+FI;
+
+PROC	simple dyop = ( BOOL macro, CFRAGMENT oper, REF VALUE left, right
+                      ) CFRAGMENT : 
+IF	macro
+THEN	use macro( oper, (left, right) )
+ELSE	bracket
+	( bracketc fragment( left )+ oper +bracket cfragment( right )
+	)
+FI;
+
+PROC	monadic plus	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE op;  eval1 ( root, op ); op
+END;
+
+PROC	monadic minus	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	 - ( a )
+	#define A_COMPL_MMINUS(t,z) (t.re = -z.re, t.im = -z.im, t)
+}
+BEGIN
+	REF VALUE op;  eval1( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  IF version  = 3
+          THEN  TEMPORARY  temp = new(mode OF root, qminus+qcomplex);
+                use macro("A_COMPL_MMINUS", (temp, qminus+qcomplex YIELD op))
+          ELSE  bracket( "-" + bracket c fragment(op) )
+          FI
+	)
+END;
+
+PROC	monadic upb	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	(a).upb
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+ 	  ( version = 1 OR version = 3			{ vector or straight }
+	  | bracket cfragment( op ) +".upb"
+	  |:version = 2					{ row }
+	  | bracket cfragment( op ) +".dim[0].upb"
+	  | qmupb+qvfault ASSERT FALSE; SKIP
+ 	  )
+	)
+END;    
+
+PROC	monadic lwb	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	(a).lwb
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root, 
+	  info OF op AND fxwarn OR atomic,
+ 	  ( version = 1 OR version = 3			{ vector or straight }
+	  | " 1"
+	  |:version = 2					{ row }
+	  | bracket cfragment( op) + ".dim[0].lwb"
+	  | qmlwb+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	not	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	! ( a )
+	~ ( a )              
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root, 
+	  info OF op AND fxwarn OR atomic,
+	  ( version
+	  | { BOOL }	"!" + bracket c fragment (op),
+	    { LBITS }	"~" + bracket c fragment (op)
+	  | "ADICOPS - NOT"+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	abs	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	#define A_ABS(x)	( x < 0 ? - x : x )
+	#define A_COMPL_ABS(z)	sqrt(z.re*z.re + z.im*z.im)
+
+	( a )
+	(A68_INT)(unsigned char)(a)   /* cast to prevent sign extension */
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	CFRAGMENT body =
+	CASE	version  IN
+	{BOOL}	bracket( GETCFRAGMENT op),	{always bracket this}
+	{CHAR}  "(A68_INT)(unsigned char)" + bracket c fragment (op),
+	{LBITS} cast( mode OF root ) + bracket c fragment( op ),
+	{LINT}  simple monop( TRUE, "A_ABS", qabs+" INT" YIELD op ),
+	{LREAL} simple monop( TRUE, "A_ABS", qabs+" REAL" YIELD op ),
+        {LCOMPL} simple monop( TRUE, "A_COMPL_ABS", qabs+qcomplex YIELD op )
+	ESAC;
+	( mode OF root, info OF op AND fxwarn OR atomic, body )
+END;
+
+PROC	bin	= ( REF VALUE root, INT op number, version )VALUE:
+{       
+	(A68_BITS) ( a )
+}                                                     
+IF
+  version = 3 {BIOP 99}
+THEN
+  biop99( root )
+ELSE
+  REF VALUE op;  eval1 ( root, op );
+  ( mode OF root, 
+    info OF op AND fxwarn OR atomic,	
+    ( version = 1 { LINT }
+    | cast( mode OF op-4 ) + bracket c fragment( op )
+    | "ADICOPS - BIN"+qvfault ASSERT FALSE; SKIP
+    )
+  )
+FI;
+
+PROC	repr	= ( REF VALUE root, INT op number, version ) VALUE:
+{
+	(A68_CHAR) ( a )
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( version = 1 { INT }
+CO Next but one line changed by Phoenix Engineering SL BP63-03-06
+	  | "(A68_CHAR)"+ bracket c fragment(op) CO
+	  | "(A68_SSBITS)"+ bracket c fragment(op)
+	  | "ADICOPS - REPR "+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	lengthen	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE op; eval1 (root, op) ;
+	INT m = mode OF op;
+	"ADICOPS - LENG incorrect mode:" + whole( m,0 )
+	ASSERT ( m /= 13 ANDTH m /= 17 ANDTH m /= 21 ANDTH m /= 25);
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  cast( m+1 ) + bracket c fragment( op )
+	)
+END;
+
+PROC	shorten		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE op; eval1 (root, op) ;
+	INT m = mode OF op;
+	"ADICOPS - SHORT incorrect mode:" + whole( m,0 )
+	ASSERT ( m /= 10 ANDTH m /= 14 ANDTH m /= 18 ANDTH m /= 22 );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  cast( m-1 ) + bracket c fragment( op )
+	)
+END;
+
+PROC	odd	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	( a ) & 1
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( version = 1	{ LINT }
+	  | bracket( bracket c fragment(op) +" & 1" )
+	  | "ADICOPS - ODD "+qvfault ASSERT FALSE;
+	    SKIP
+	  )
+	)
+END;
+
+PROC	sign	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	#define	A_SIGN(a)	( a > 0 ? 1 : a < 0 ? -1 : 0 )
+        A_SIGN (x)
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( version = 1 OR version = 2	{ LINT, LREAL }
+	  | simple monop( TRUE, "A_SIGN", qsign YIELD op )
+	  | "ADICOPS - SIGN "+qvfault ASSERT FALSE;
+	    SKIP
+	  )
+	)
+END;
+
+PROC	round 		= ( REF VALUE root, INT op number, version )VALUE:
+{
+	#define A_ROUND(temp, x, mode)\
+		(modf ((a < 0 ? a - 0.5 : a +0.5),&temp), (mode) temp)
+
+	double temp
+	A_ROUND	(temp, a, mode)
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op ); 
+	INT m = mode OF op;
+	qround+"incorrect mode:"+ whole( m,0 )
+	ASSERT ( m <= 21 AND m >= 18 );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  (	version = 1	{ LREAL }
+	  |	CFRAGMENT temp1 = new unique name ;
+		write c stream
+		(( "double ", temp1, ";",
+		    ( verbose option | "/*"+qround+"*/" | "" ), cnewline
+		 ),LOCDECSTREAM currentlevel
+		);
+		use macro( "A_ROUND", (temp1, qround YIELD op, cast(m-4) ))
+	  |	qround+qvfault ASSERT FALSE;
+		SKIP
+	  )                            
+	)
+END;
+
+PROC	entier		= ( REF VALUE root, INT op number, version )VALUE:
+{
+	#define A_ENTIER(temp1,temp2,a,mode)	
+	( temp1 = modf ( a, temp2 ),
+	  (mode) (a > 0 ? temp2 : temp1 == 0.0 ? temp2 : temp2 -1)
+	)
+
+	double temp1,temp2
+	A_ENTIER (temp1, temp2, a, mode)
+}
+BEGIN
+	REF VALUE op;  eval1 ( root, op );
+	INT m = mode OF op;
+	qentier +" incorrect mode:"+ whole( m,0 )
+	ASSERT ( m <= 21 AND m >= 18 );
+	( mode OF root,
+	  info OF op AND fxwarn OR atomic,
+	  ( version = 1		{ LREAL }
+	  | CFRAGMENT temp1 = new unique name ;
+	    CFRAGMENT temp2 = new unique name ;
+	    write c stream
+	    (( "double ", temp1, ",", temp2, ";",
+	       ( verbose option | "/*"+qentier+"*/" | ""), cnewline
+	     ),LOCDECSTREAM current level
+	    );
+	    use macro( "A_ENTIER", (temp1, temp2, qentier YIELD op, cast(m-4)))
+	  | qentier+qvfault ASSERT FALSE; SKIP
+	  )
+	)                            
+END;
+
+
+PROC  simple moncomp = (CFRAGMENT  mac, REF VALUE root, INT version) VALUE:
+BEGIN
+   REF VALUE  op;   eval1(root, op);
+   ( mode OF root,
+     info OF op AND fxwarn OR atomic,
+     use macro(mac, op)
+   )
+END;
+
+
+PROC  re = (REF VALUE root, INT op number, version) VALUE:
+   { #define  A_COMPL_RE(z) (z).re }
+   simple moncomp("A_COMPL_RE", root, version);
+
+PROC  im = (REF VALUE root, INT op number, version) VALUE:
+   { #define  A_COMPL_IM(z) (z).im }
+   simple moncomp("A_COMPL_IM", root, version);
+
+PROC  arg = (REF VALUE root, INT op number, version) VALUE:
+   {  #define A_COMPL_ARG(z)       ( (z.re == 0.0) ? \
+                   ((z.im == 0.0) ? 0.0 : atan(z.im)) : atan(z.im / z.re) )
+   }
+BEGIN
+   REF VALUE  op;   eval1(root, op);
+   ( mode OF root,
+     info OF op AND fxwarn OR atomic,
+     use macro("A_COMPL_ARG", qarg YIELD op)
+   )
+END;
+
+PROC  conj = (REF VALUE root, INT op number, version) VALUE:
+   { #define A_COMPL_CONJ(t,z) ( t.re = z.re, t.im = - z.im, t ) }
+BEGIN
+   REF VALUE  op;   eval1(root, op);
+   TEMPORARY  temp = new(mode OF op, "CONJ");
+   ( mode OF root,
+     info OF op AND fxwarn OR atomic,
+     use macro("A_COMPL_CONJ", (temp, qconj YIELD op))
+   )
+END;
+
+
+[] PROC ( REF VALUE, INT, INT ) VALUE monadic semantics =
+[] PROC ( REF VALUE, INT, INT ) VALUE
+(	{ 0  +       }  monadic plus,
+	{ 1  -       }  monadic minus,
+	{ 2  UPB     }  monadic upb,
+	{ 3  LWB     }  monadic lwb,
+	{ 4  NOT     }  not,
+	{ 5  ABS     }  abs,
+	{ 6  BIN     }  bin,
+	{ 7  REPR    }  repr,
+	{ 8  LENG    }  lengthen,
+	{ 9  SHORTEN }  shorten,
+	{ 10 ODD     }  odd,
+	{ 11 SIGN    }  sign,
+	{ 12 ROUND   }  round ,
+	{ 13 ENTIER  }  entier,
+	{ 14 RE      }  re,
+	{ 15 IM      }  im,
+	{ 16 ARG     }  arg,
+	{ 17 CONJ    }  conj
+       ) [ AT 0 ];
+
+PROC  monadic sem = ( REF VALUE root, TREEOPER rator ) VALUE:
+IF
+  INT param = ABS (BIN param OF rator AND param mask);
+  param < biop numbers start
+THEN
+  INT op number = param OVER op number divisor,
+      version   = param MOD  op number divisor;
+  monadic semantics[ op number ]( root, op number, version )
+ELSE
+  monadic biop semantics( root, param )
+FI;                                      
+
+
+PROC  complex op = ( VECTOR [] INT  modes,  CFRAGMENT  op,  name,
+                     REF VALUE  left, right, BOOL  lval ) CFRAGMENT:
+BEGIN
+   REF VALUE  l = name+" L op" YIELD left,  r = name+" R op" YIELD right;
+   IF lval THEN info OF l ORAB lvalue FI;  { Pass lvalue attribute to lhs -AB }
+   VECTOR [] UVALUE  params =
+      IF UPB modes = 0   THEN  (l, r)
+      ELIF UPB modes = 1 THEN  (new(modes[1], name), l, r)
+      ELSE  (new(modes[1], name+" 1"), new(modes[2], name+" 2"), l, r)
+      FI;
+   use macro(op, params)
+END;
+
+
+PROC	dyadic plus	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;  eval2( root, left, right );
+	CFRAGMENT body =
+	CASE	version  IN
+	{CHAR}		simple dyop( TRUE, "A_C_PLUS", left, right ),
+	{LINT}		simple dyop( FALSE, "+", left, right ),
+	{LREAL}		simple dyop (FALSE, "+", left, right),
+       	{LCOMPL}	complex op( mode OF root, "A_COMPL_PLUS",
+                                    qplus+qcomplex, left, right, FALSE),
+       	{VEC[]CHAR}	simple dyop (TRUE, "A_VC_PLUS", left, right),
+	{[]CHAR}	simple dyop (TRUE, "A_RC_PLUS", left, right)
+	OUT		qplus+qvfault ASSERT FALSE; SKIP
+	ESAC;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;
+
+PROC	dyadic minus	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; 
+	eval2( root, left, right );
+	( mode OF root, 
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+          IF version = 3
+          THEN  complex op( mode OF root, "A_COMPL_MINUS", qminus+qcomplex,
+                            left, right, FALSE )
+          ELSE  simple dyop( FALSE, "-", left, right )
+          FI
+	)
+END;
+
+PROC	dyadic upb	= ( REF VALUE root, INT op number, version )VALUE:
+{
+	(right).dim[left -1].upb
+}                                  
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	( mode OF root, 
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  bracket cfragment(right) +".dim["+ bracket cfragment(left)+" -1].upb"
+	)
+END;
+
+PROC	dyadic lwb	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  bracket cfragment(right) +".dim[" +bracket cfragment(left)+" -1].lwb"
+	)
+END;
+
+PROC	and		= ( REF VALUE root, INT op number, version ) VALUE:
+BEGIN
+	REF VALUE left, right; 
+	eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version
+	  | {1: bool}  simple dyop( FALSE, "&", left, right ),
+            {2: lbits} cast(mode OF root) + simple dyop(FALSE, "&", left,right)
+	  | "ADICOPS - AND "+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	or		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version
+	  | {1: bool}  simple dyop( FALSE, "|", left, right ),
+            {2: lbits} cast(mode OF root) + simple dyop(FALSE, "|", left,right)
+	  | "ADICOPS - OR "+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	less not less = ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	CFRAGMENT op =
+		( op number -5	   	{see the fixed opers table}
+		| "<", ">" 
+		| "ADICOPS < or >: illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT op macro =
+		( op number -5	{see the fixed opers table}
+		| "LT", "GT" 
+		| "ADICOPS < or >: illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT adic 	= module name + op;
+	REF VALUE left, right;  eval2( root, left, right );
+	CFRAGMENT body =
+	CASE	version  IN
+	{CHAR}		simple dyop( FALSE, op, left, right ),
+	{LINT}		simple dyop( FALSE, op, left, right ),
+	{LREAL} 	simple dyop( FALSE, op, left, right ),
+	{VEC[]CHAR}	simple dyop( TRUE, "A_VC_"+ op macro, left, right ),
+	{[]CHAR}	simple dyop( TRUE, "A_RC_"+ op macro, left, right )
+	OUT		adic +qvfault ASSERT FALSE; SKIP
+	ESAC;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;
+
+
+PROC	less eq	greater eq = ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	CFRAGMENT op symbol =
+		( op number - 7	{see the fixed opers table}  
+		| "<=", ">="                   
+		| "ADICOPS - <= or >= illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT macro =
+		( op number - 7	{see the fixed opers table}
+		| "LE", "GE"
+		| "ADICOPS - <= or >= illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT adic	= module name + op symbol;
+	REF VALUE left, right;  eval2( root, left, right );
+	CFRAGMENT body =
+	CASE	version IN
+	{CHAR}		simple dyop( FALSE, op symbol, left, right),
+	{LBITS}		simple dyop
+			( TRUE,"A_LB_"+macro,adic YIELD left,adic YIELD right),
+	{LINT}		simple dyop( FALSE, op symbol, left, right ),
+	{LREAL}		simple dyop( FALSE, op symbol, left, right ),
+	{VEC[]CHAR}	simple dyop( TRUE, "A_VC_"+macro, left, right ),
+	{[]CHAR}	simple dyop( TRUE, "A_RC_"+macro, left, right )
+	OUT		adic+qvfault ASSERT FALSE;  SKIP
+	ESAC;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;
+
+PROC	eq not eq	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	CFRAGMENT op =
+		( op number - 9		{see the fixed opers table}
+		| "==", "!="
+		| "ADICOPS - = or /= illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT op macro =
+		( op number - 9		{see the fixed opers table}
+		| "EQ", "NE"
+		| "ADICOPS - = or /= illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT adic	= module name + op macro;
+	REF VALUE left, right; 
+	eval2( root, left, right );
+	CFRAGMENT body =
+	IF	version < 6 		{ BOOL, CHAR, LBITS, LINT, LREAL }
+	THEN    simple dyop( FALSE, op, left, right )
+
+	ELIF	version = 6 	{ LCOMPL }
+	THEN    CFRAGMENT  op macro = IF op number = 10 THEN  "A_COMPL_EQ"
+                                                        ELSE  "A_COMPL_NEQ"
+                                      FI;
+                complex op( (), op macro, module name+op+qcomplex,
+                            left, right, FALSE )
+	ELIF	version = 7 	{ VEC[]CHAR }
+	THEN    simple dyop (TRUE, "A_VC_" + op macro, left, right)
+
+	ELIF	version = 8	{ []CHAR }
+	THEN    simple dyop (TRUE, "A_RC_" + op macro, left, right)
+	ELSE    adic+qvfault ASSERT FALSE; SKIP
+	FI;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;
+
+PROC	times	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;  eval2( root, left, right );
+	CFRAGMENT body =
+	CASE	version IN
+	{CHAR}		( ISINT mode OF left
+			| simple dyop( TRUE, "A_C_TIMES", right, left )
+			| simple dyop( TRUE, "A_C_TIMES", left, right )
+	      		),
+	{LINT}		simple dyop( FALSE, "*", left, right ),
+	{LREAL}		simple dyop (FALSE, "*", left, right),
+       	{LCOMPL}	complex op( mode OF root, "A_COMPL_TIMES",
+                                    qtimes+qcomplex, left, right, FALSE ),
+	{VEC[]CHAR}	( ISINT mode OF left
+			| simple dyop( TRUE, "A_VC_TIMES", right, left )
+			| simple dyop( TRUE, "A_VC_TIMES", left, right )
+			),
+	{[]CHAR}	( ISINT mode OF left
+			| simple dyop( TRUE, "A_RC_TIMES", right, left )
+			| simple dyop( TRUE, "A_RC_TIMES", left, right )
+			)
+	OUT		qtimes+qvfault ASSERT FALSE; SKIP
+	ESAC;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;    
+
+PROC	divide	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	CFRAGMENT body =
+	CASE 	version  IN 
+	BEGIN	{ LINT/LINT -> LREAL etc }
+		CFRAGMENT widen = cast( mode OF left+4 );
+		widen + bracket c fragment( left ) + "/" + 
+		widen + bracket c fragment( right)
+ 	END,
+        {LREAL}   simple dyop (FALSE, "/", left, right),
+        {LCOMPL}  complex op( (mode OF root, mode OF root - 4),
+                              "A_COMPL_DIVIDE", qdiv+qcomplex,
+                              left, right, FALSE )
+	OUT       (qdiv+qvfault ASSERT FALSE; SKIP)
+	ESAC;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+    	)
+END;
+
+PROC	over	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version = 1	{ LINT }
+	  | simple dyop( FALSE, "/", left, right )
+	  | qover+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	mod	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval2( root, left, right );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version = 1		{ LINT }
+	  | CFRAGMENT temp = name OF declare c temporary( mode OF left, qmod );
+	    use macro( "A_MOD", (qmod YIELD left, qmod YIELD right, temp))
+	  | qmod+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	power	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	INT m = mode OF left;
+	qpower+" incorrect mode" + whole( m,0 )
+	ASSERT ( m <= 21 AND m >= 14 );
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version = 1	{ LINT }
+	  | use macro
+	    ( "A_LI_POWER", ( qpower YIELD left, qpower YIELD right, cast(m)) )
+	  |:version = 2	{ LREAL }
+	  | use macro
+	    ( "A_LR_POWER", (qpower YIELD left, qpower YIELD right, cast(m)) )
+	  |:version = 3	{ LCOMPL }
+	  | CFRAGMENT  name = qpower+qcomplex;
+            use macro("A_COMPL_POWER", (name YIELD left, name YIELD right))
+	  | qpower+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+
+PROC  cast value = (INT  mode,  REF VALUE  value) CFRAGMENT:
+   cast(mode) + bracket cfragment(value);
+
+PROC  imaginary = (REF VALUE  root,  INT  op number, version) VALUE:
+BEGIN
+   REF VALUE  left, right;
+   eval2(root, left, right);
+   INT  m = mode OF root - 4;  { Compl -> Real cast SL PE61-10-05 }
+   TEMPORARY  temp = new(mode OF root, qi);
+   ( mode OF root,
+     (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+     IF version = 1 { Integer - must cast to real }
+     THEN  use macro( "A_COMPL_I",
+                      (temp, cast value(m, left), cast value(m, right)))
+     ELSE  use macro("A_COMPL_I", (temp, left, right))
+     FI
+   )
+END;
+
+PROC	shift left right = ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	CFRAGMENT op = 
+		( op number - 17	   {see the fixed opers table}
+		| "SHL", "SHR" 
+		| "ADICOPS SHL or SHR: illegal op number" ASSERT FALSE; SKIP
+		);
+	CFRAGMENT adic = module name + op;
+	REF VALUE left, right; 
+	eval2( root, left, right );
+	( mode OF root, 
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  ( version = 1	    	{ LBITS }
+	  | simple dyop( TRUE, "A_"+op , op YIELD left, op YIELD right )
+	  | adic +qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	elem	= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right; eval2( root, left, right );
+	CFRAGMENT body =
+	IF	version = 1		{ LBITS }
+#Next but one line changed by Phoenix Engineering SL BP62-10-16
+   THEN    INT m = mode OF left; #
+	THEN    INT	m = mode OF right;
+		use macro
+		( "A_ELEM",
+		  ( qelem YIELD left, right, cast(m), c sizeof(m) )
+		)
+	ELSE    qelem+qvfault ASSERT FALSE;  SKIP
+	FI;
+	( mode OF root, default info, body )
+END;
+
+{
+	N.B
+	The -ab operators have a special optimisation associated with them.
+	The attribute field is set to voided if the value yielded is not
+	required by the context.
+}
+PROC	ab attribute = ( BOOL no ref, REF VALUE op ) BITS:
+{
+	Returns the appropriate attribute field for the -ab operators.
+	The nonlocal attribute must be passed upward if an id is yielded
+	For a ref result the side effects indication isnt needed
+}
+	( has attribute( op, nonloc )
+	| { has no side effects because the expression containing the side
+	    effect has been emitted
+	  } nonloc OR fxwarn
+	| ( no ref
+	  | effects OR fxwarn
+	  | { GETCFRAGMENT brackets ids completely eg(*(id))
+	      viz. atomic attribute, effects atribute not required as the
+	      expression will have been emitted immediately.
+	    }
+	    atomic OR fxwarn
+	  )
+	);
+
+PROC	simple ab op	=
+{	Produces optimal code for the simple -ab operators
+	ie ones with arithmetic arguments
+}
+(	BOOL    no ref,		{ ref result is not required	}
+		 macro,		{ the following is a macro name }
+	CFRAGMENT oper,		{ text for the c operator/macro	}
+	REF VALUE left, right	{ post evaluation subtrees	}
+)	EXTRA:
+BEGIN
+	REF VALUE lhs = YIELD left;
+	info OF lhs ORAB lvalue; { Pass the lvalue attribute to the lhs }
+	CFRAGMENT body =
+	( macro
+	| use macro( oper, ( lhs, right ) )
+	| bracket cfragment( lhs )+ oper + bracket cfragment( right )
+	);
+	( no ref
+	| body
+	| emit line( (body," ;") ); extra OF lhs
+	)
+END;
+
+
+PROC	plusab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+    	BOOL	opt = has attribute( root, voided );
+	EXTRA	body =
+	CASE	version IN
+	{LINT}  	simple ab op( opt, FALSE, "+=", left, right ),
+	{LREAL}		simple ab op( opt, FALSE, "+=", left, right ),
+	{LCOMPL}   	complex op( (), "A_COMPL_PLUSAB",
+                                    qplusab+qcomplex, left, right, TRUE ),
+	{VEC[]CHAR}	simple ab op( opt, TRUE, "A_VC_PLUSAB", left, right ),
+	{[]CHAR}	simple ab op( opt, TRUE, "A_RC_PLUSAB", left, right )
+	OUT		qplusab+qvfault ASSERT FALSE; SKIP
+	ESAC;
+	( mode OF root, ab attribute( opt, left ), body )
+END;                                       
+
+PROC	plusto		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN                                                     
+	REF VALUE left, right;                               
+	eval_pass_left ( root, left, default info );
+	eval_pass_right( root, right, lvalue );
+    	BOOL	opt = has attribute( root, voided );
+	EXTRA	body =
+	CASE	version  IN
+	{ VEC[]CHAR }
+	BEGIN	qplusto+"v1: mode isnt vec[]char,flex vec[]char"
+		ASSERT	ISFLEXVEC mode OF right AND ISVEC mode OF left;
+		simple ab op( opt, TRUE, "A_VC_TOPLUS", right, left )
+	END,
+	{ []CHAR }
+	BEGIN	qplusto+"v2: mode isnt []char,flex []char"
+		ASSERT ISFLEXROW mode OF right AND ISROW mode OF left;
+	     	simple ab op( opt, TRUE, "A_RC_TOPLUS", right, left )
+	END
+	OUT	qplusto+qvfault ASSERT FALSE; SKIP
+	ESAC;
+	( mode OF root, ab attribute( opt, left ), body )
+END;                                       
+
+PROC	minusab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+    	BOOL	opt = has attribute( root, voided );
+	EXTRA	body =
+	IF 	version = 1 OR version = 2	{ LINT, LREAL }
+	THEN    simple ab op( opt, FALSE, "-=", left, right )
+	ELIF	version = 3 
+	THEN    complex op( (), "A_COMPL_MINUSAB",
+                            qminusab+qcomplex, left, right, TRUE )
+	ELSE    qminusab+qvfault ASSERT FALSE; SKIP
+	FI; 
+	( mode OF root, ab attribute( opt, left ), body )
+END;
+
+PROC	timesab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+    	BOOL	opt = has attribute( root, voided );
+	EXTRA	body =
+	CASE 	version IN
+	{LINT}		simple ab op( opt, FALSE, "*=", left, right ),
+	{LREAL}		simple ab op( opt, FALSE, "*=", left, right ),
+	{LCOMPL}	complex op( DEREF mode OF root, "A_COMPL_TIMESAB",
+                                    qtimesab+qcomplex, left, right, TRUE ),
+	{VEC[]CHAR}	simple ab op( opt, TRUE, "A_VC_TIMESAB", left, right ),
+	{[]CHAR}	simple ab op( opt, TRUE, "A_RC_TIMESAB", left, right )
+	OUT		qtimesab+qvfault ASSERT FALSE; SKIP
+	ESAC; 
+	( mode OF root, ab attribute( opt, left ), body )
+END;
+
+PROC	overab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+    	BOOL	opt = has attribute( root, voided );
+	EXTRA	body =
+	IF	version = 1		{ LINT }
+	THEN    simple ab op( opt, FALSE, "/=", left, right )
+	ELSE    qoverab+qvfault ASSERT FALSE; SKIP
+	FI;
+	( mode OF root, ab attribute( opt, left ), body )
+END;
+
+PROC	modab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+    	BOOL	opt = has attribute( root, voided );
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+	( mode OF root,
+	  ab attribute( opt, left ),
+	  ( version = 1		{ LINT }
+	  | simple ab op( opt, TRUE, "A_MODAB", left, right )
+	  | qmodab+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	divab		= ( REF VALUE root, INT op number, version )VALUE:
+BEGIN
+	REF VALUE left, right;
+	eval_pass_left ( root, left,  lvalue );
+	eval_pass_right( root, right, default info );
+    	BOOL	opt = has attribute( root, voided );
+	
+	( mode OF root,
+	  ab attribute( opt, left ),
+	  ( version = 1	{ LREAL }
+	  | simple ab op( opt, FALSE, "/=", left, right )
+	  |:version = 2	{ LCOMPL }
+	  | complex op( (mode OF right, mode OF right - 4), "A_COMPL_DIVAB",
+                        qtimesab+qcomplex, left, right, TRUE )
+	  | qdivab+qvfault ASSERT FALSE; SKIP
+	  )
+	)
+END;
+
+PROC	is isnt		= ( REF VALUE root, INT op number, version )VALUE:
+{                      
+	a == b	[a,b bracketed if necessary]
+	A_<n>STRUCTCOMP(a,b) n=V,R1..3
+}
+BEGIN
+	CFRAGMENT op  =
+		( op number - 26
+		| "==", "!="
+		| qisisnt+" illegal op number" ASSERT FALSE; SKIP
+		);
+
+     	CFRAGMENT adic = module name + op;
+	REF VALUE left, right; eval2( root, left, right );
+
+	CFRAGMENT body =
+	IF	{ we have a REF (FLEX) (VECTOR) [] CHAR }
+		mode OF left < ref ref mark ANDTH  is array( mode OF left )
+ 	THEN	{ have to compare descriptors, use a struct comp }
+		( op = "!=" | "! " | "" )+
+		simple dyop
+	     	( TRUE,	( is row(mode OF left)|"A_R"|"A_V")+"STRUCTCOMP",
+		 op YIELD left,
+		 op YIELD right
+		)
+	ELSE	simple dyop( FALSE, op, left, right )
+	FI;
+	( mode OF root,
+	  (info OF left AND fxwarn) OR (info OF right AND fxwarn) OR atomic,
+	  body
+	)
+END;                             
+
+
+[] PROC ( REF VALUE, INT, INT ) VALUE dyadic semantics =
+[] PROC ( REF VALUE, INT, INT ) VALUE
+(	{ 0  +       }  dyadic plus,
+	{ 1  -       }  dyadic minus,
+	{ 2  UPB     }  dyadic upb,
+	{ 3  LWB     }  dyadic lwb,
+	{ 4  AND     }  and,
+	{ 5  OR      }  or,      
+	{ 6  <       }  less not less,
+	{ 7  >       }  less not less,
+	{ 8  <=      }  less eq greater eq,
+	{ 9 >=       }  less eq greater eq,
+	{ 10 =       }  eq not eq,
+	{ 11 /=      }  eqnot eq,
+	{ 12 *       }  times,
+	{ 13 /       }  divide,
+	{ 14 OVER    }  over,
+	{ 15 MOD     }  mod,
+	{ 16 ^       }  power,
+	{ 17 I       }  imaginary,
+	{ 18 SHL     }  shift left right,
+	{ 19 SHR     }  shift left right,
+	{ 20 ELEM    }  elem,
+	{ 21 PLUSAB  }  plusab,
+	{ 22 MINUSAB }  minusab,
+	{ 23 TIMESAB }  timesab,
+	{ 24 OVERAB  }  overab,
+	{ 25 MODAB   }  modab,
+	{ 26 DIVAB   }  divab,               
+	{ 27 IS      }  is isnt,
+	{ 28 ISNT    }  is isnt,
+	{ 29 AND     }  and,
+	{ 30 OR      }  or,
+	{ 31 PLUSTO  }  plusto,
+	{ 32 CYCLE   }  (REF VALUE v, INT i, j ) VALUE:
+			( "CYCLE not implemented" ASSERT FALSE; skipvalue)
+) [ AT 0 ];
+
+[] PROC ( REF VALUE, INT, INT ) VALUE dyadic biop semantics =
+
+[] PROC ( REF VALUE, INT, INT ) VALUE
+(
+) [ AT 0 ];
+
+PROC	dyadic sem = ( REF VALUE root, TREEOPER rator ) VALUE:
+BEGIN
+	INT	param = ABS (BIN param OF rator AND param mask);
+	IF	param < biop numbers start
+	THEN	INT op number = param OVER op number divisor,
+		    version   = param MOD  op number divisor;
+		dyadic semantics[ op number ]( root, op number, version )
+	ELSE	INT biop param = param - biop numbers start;
+		INT op number  = biop param OVER biop number divisor,
+		    version    = biop param MOD  biop number divisor;
+		dyadic biop semantics[ op number ]( root, op number, version )
+	FI
+END 
+
+KEEP
+	dyadic sem, monadic sem
+FINISH                 
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}

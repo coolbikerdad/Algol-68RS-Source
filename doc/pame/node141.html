@@ -1,0 +1,310 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 7</title>
+<meta name="description" content="chapter 7">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node142.html">
+<link rel="previous" href="node140.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node142.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3119"
+  href="node142.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3113"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3107"
+  href="node140.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3115"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3117"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3120"
+  href="node142.html">Chapter 8</a>
+<b> Up:</b> <a name="tex2html3114"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3108"
+  href="node140.html">Chapter 6</a>
+ &nbsp; <b>  <a name="tex2html3116"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3118"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001670000000000000000"></a><a name="app-vii"></a>
+<br>
+Chapter 7
+</h1><dl>
+<dt><strong><a href="node66.html#ex-vii-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-i"></a>7.1</strong></dt>
+<dd><code>STRUCT(INT i,j,k) s1 = (1,2,3)</code>
+</dd>
+<dt><strong><a href="node66.html#ex-vii-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-ii"></a>7.2</strong></dt>
+<dd><code>STRUCT(INT i,REAL r,BOOL b)s2</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node67.html#ex-vii-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-iii"></a>7.3</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF STRUCT(CHAR a,INT b)</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF CHAR</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REF CHAR</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>INT</code>, provided that a
+procedure had been assigned to <code>p OF st</code>.
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd><code>INT</code>
+</dd>
+<dt><strong>(f)</strong></dt>
+<dd><code>REF STRUCT(CHAR a,INT b)</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node67.html#ex-vii-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-iv"></a>7.4</strong></dt>
+<dd> <pre>
+   PROC p1=(STRUCT(CHAR a,INT b)s)INT:
+      ABS a OF s * b OF s
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node68.html#ex-vii-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-v"></a>7.5</strong></dt>
+<dd> <pre>
+   MODE EX_7_3_1=STRUCT(REAL r,
+                        PROC(REAL)REAL p)
+</pre>
+</dd>
+<dt><strong><a href="node68.html#ex-vii-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-vi"></a>7.6</strong></dt>
+<dd> <pre>
+   MODE EX_7_3_2=
+      STRUCT(EX_7_3_1 e,
+             PROC(EX_7_3_1)VOID p,
+             CHAR c)
+</pre>
+</dd>
+<dt><strong><a href="node68.html#ex-vii-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-vii"></a>7.7</strong></dt>
+<dd>One of the <code>BMODE</code> and <code>AMODE</code>
+structures is insufficiently shielded. You will get an error for
+<code>BMODE</code> saying it is not a legal mode and another error for the
+declaration of a <code>REF AMODE</code> saying that the mode <code>AMODE</code>
+has not been declared.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node69.html#ex-vii-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-viii"></a>7.8</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>(2.0,3.0)</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>-12.0</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>Write a short program to get
+<pre>
+   3.6055512754639891
+</pre>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>0.982 793 723 247 329 1</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node69.html#ex-vii-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-ix"></a>7.9</strong></dt>
+<dd>The value denoted by <code>(12.0,-10.0)</code>.
+</dd>
+<dt><strong><a href="node69.html#ex-vii-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-x"></a>7.10</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF REAL</code>, a name.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REAL  -3.0</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REAL  3.0</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>REAL  3.0</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node70.html#ex-vii-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xi"></a>7.11</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF[]STRING</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF REAL</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REF REAL</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>REF[]REAL</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node70.html#ex-vii-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xii"></a>7.12</strong></dt>
+<dd><code>[1:3]</code>.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node71.html#ex-vii-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xiii"></a>7.13</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF CHAR</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF[]STRING</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REF STRING</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>REF[]REAL</code>
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd><code>REF[]REAL</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node73.html#ex-vii-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xiv"></a>7.14</strong></dt>
+<dd> <pre>
+   MODE TEAM=STRUCT([11]STRING name,
+                    STRING team,
+                    INT played, won, drawn,
+                        for, against)
+</pre>
+</dd>
+<dt><strong><a href="node73.html#ex-vii-xv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xv"></a>7.15</strong></dt>
+<dd>Slicing binds more tightly than selecting, so the
+selection must be enclosed in parentheses (see section
+<a href="node98.html#gram-paren">10.6</a> for the full explanation).
+</dd>
+<dt><strong><a href="node73.html#ex-vii-xvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xvi"></a>7.16</strong></dt>
+<dd>The slicing takes place before the selection
+so no parentheses are needed.
+</dd>
+<dt><strong><a href="node73.html#ex-vii-xvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vii-xvii"></a>7.17</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF PROC S2</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF PROC(S1)S2</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>REF[]CHAR</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3119"
+  href="node142.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3113"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3107"
+  href="node140.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3115"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3117"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3120"
+  href="node142.html">Chapter 8</a>
+<b> Up:</b> <a name="tex2html3114"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3108"
+  href="node140.html">Chapter 6</a>
+ &nbsp; <b>  <a name="tex2html3116"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3118"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

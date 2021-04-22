@@ -1,0 +1,306 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Field selection</title>
+<meta name="description" content="field selection">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node68.html">
+<link rel="previous" href="node66.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node68.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1778"
+  href="node68.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1772"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1766"
+  href="node66.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1774"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1776"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1779"
+  href="node68.html">Mode declarations</a>
+<b> Up:</b> <a name="tex2html1773"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1767"
+  href="node66.html">Structure denotations</a>
+ &nbsp; <b>  <a name="tex2html1775"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1777"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1780"
+  href="node67.html#section00921000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00920000000000000000"></a><a name="struc-field"></a>
+Field selection</h1> 
+
+<p>The<a name="4640"></a> field-selectors of a structure
+mode<a name="4641"></a> are used to &ldquo;extract&rdquo; the
+individual fields of a structure.  For example, given this declaration
+for the structure&nbsp;<code>s</code>:</p>
+
+<pre>
+   STRUCT(INT i,CHAR c) s = (2,"e")
+</pre>
+
+<p>we can select the first field of <code>s</code> using the
+<span  class="textbf">selection</span><a name="4645"></a></p>
+
+<pre>
+   i OF s
+</pre>
+
+<p>The mode of the selection is <code>INT</code> and its value is
+<code>2</code>.  Note that the construct
+<tt>OF</tt><a name="4978"></a> is not an operator. The second field of
+<code>s</code> can be selected using the selection</p>
+
+<pre>
+   c OF s
+</pre>
+
+<p>whose mode is <code>CHAR</code> with value <code>"e"</code>. The
+field-selectors cannot be used on their own: they can only be used in
+a selection.</p>
+
+<p>A selection can be used as an operand. Consider the formula</p>
+
+<pre>
+   i OF s * ABS c OF s
+</pre>
+
+<p>In the structure <code>method</code>, declared in the previous section, the
+procedure in the structure can be selected by</p>
+
+<pre>
+   p OF method
+</pre>
+
+<p>which has the mode <code>PROC(REAL)REAL</code>. For a reason which will be
+clarified in chapter&nbsp;10, if you want to call this procedure, you must
+enclose the selection in parentheses<a name="4656"></a>:</p>
+
+<pre>
+   (p OF method)(0.5)
+</pre>
+
+<p>Remembering that the context of the actual-parameters of a
+procedure is strong, you could also write<a name="4659"></a></p>
+
+<pre>
+   (p OF method)(int OF method)
+</pre>
+
+<p>where <code>int OF method</code> would be widened to a real number
+and the whole expression would yield a value of mode
+<code>REAL</code>.</p>
+
+<p>The two fields of the structure <code>double</code> (also declared in the
+previous section), can be selected by writing</p>
+
+<pre>
+   c OF double
+   s OF double
+</pre>
+
+<p>and their modes are <code>CHAR</code> and <code>STRUCT(INT
+i,j)</code> respectively. Now the fields of the inner structure
+<code>s</code> of <code>double</code> can be selected by writing</p>
+
+<pre>
+   i OF s OF double
+   j OF s OF double
+</pre>
+
+<p>and both selections have mode <code>INT</code>.</p>
+
+<p>Now consider the structure name <code>sn</code> declared by</p>
+
+<pre>
+   STRUCT(INT i,CHAR s) sn;
+</pre>
+
+<p>The mode of <code>sn</code> is</p>
+
+<pre>
+   REF STRUCT(INT i,CHAR s)
+</pre>
+
+<p>This means that the mode of the selection</p>
+
+<pre>
+   i OF sn
+</pre>
+
+<p>is not <code>INT</code>, but <code>REF INT</code>, and the mode of
+the selection</p>
+
+<pre>
+   c OF sn
+</pre>
+
+<p>is <code>REF CHAR</code>. That is, the modes of the fields of a
+structure name are all preceded by <tt>REF</tt><a name="4979"></a>
+(they are all names).  This is particularly important for recursively
+defined structures (see chapter&nbsp;11). Thus, instead of assigning a
+complete structure using a structure-display<a name="4676"></a>, you
+can assign values to individual fields. That is, the assignment</p>
+
+<pre>
+   sn:=(3,"f")
+</pre>
+
+<p>is equivalent to the assignments</p>
+
+<pre>
+   i OF sn := 3;
+   c OF sn := "f"
+</pre>
+
+<p>except that the assignments to the individual fields are separated
+by the go-on symbol (the semicolon <tt>;</tt><a name="4980"></a>) and
+the two units in the structure-display are separated by a comma and so
+are elaborated collaterally<a name="4683"></a>.</p>
+
+<p>Given the declaration and initial assignment</p>
+
+<pre>
+   STRUCT(CHAR c,STRUCT(INT i,j)s)dn:=double
+</pre>
+
+<p>the selection</p>
+
+<pre>
+   s OF dn
+</pre>
+
+<p>has the mode <code>REF STRUCT(INT i,j)</code>, and so you could
+assign directly to&nbsp;it:</p>
+
+<pre>
+   s OF dn:=(-1,-2)
+</pre>
+
+<p>as well as to one of its fields:</p>
+
+<pre>
+   j OF s OF dn:=0
+</pre>
+<p>
+
+<hr>
+<h2><a name="section00921000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.3<a name="ex-vii-iii"></a>
+<dd>Given the declarations
+<pre>
+   STRUCT(STRUCT(CHAR a,INT b)c,
+          PROC(STRUCT(CHAR a,INT b))INT p,
+          INT d)st;
+   STRUCT(CHAR a,INT b)sta
+</pre>
+
+what is the mode of Ans<a href="node141.html#ans-vii-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>c OF st</code>  
+<p>
+<dt>(b)
+<dd><code>a OF c OF st</code>  
+<p>
+<dt>(c)
+<dd><code>a OF sta</code>  
+<p>
+<dt>(d)
+<dd><code>(p OF st)(sta)</code>  
+<p>
+<dt>(e)
+<dd><code>b OF c OF st * b OF sta</code>  
+<p>
+<dt>(f)
+<dd><code>sta:=c OF st</code>  
+<p>
+</dd>
+</dl>
+<dt>7.4<a name="ex-vii-iv"></a>
+<dd>Declare a procedure which could be assigned to the selection
+<code>p OF st</code> in the last question.  Ans<a href="node141.html#ans-vii-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1778"
+  href="node68.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1772"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1766"
+  href="node66.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1774"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1776"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1779"
+  href="node68.html">Mode declarations</a>
+<b> Up:</b> <a name="tex2html1773"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1767"
+  href="node66.html">Structure denotations</a>
+ &nbsp; <b>  <a name="tex2html1775"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1777"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

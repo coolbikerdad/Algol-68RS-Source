@@ -1,0 +1,92 @@
+Hi Sian,
+
+
+>The only changes I have made are:-
+>  (1) Correction of the bug in the translator which prevented use of
+>      COMPL.
+
+Here are the changes I made for MODE COMPL in March 1995 - perhaps we
+can compare notes?  (file AMACROS.H in the "include" directory)
+
+469,470c469,470
+< #define A_COMPL_MMINUS(t,z)     (t.Re = -(z).Re, t.Im = -(z).Im, t)
+< #define A_COMPL_ABS(z)          sqrt((z).Re*(z).Re + (z).Im*(z).Im)
+---
+> #define A_COMPL_MMINUS(t,z)     (t.Re = -z.Re, t.Im = -z.Im, t)
+> #define A_COMPL_ABS(z)          sqrt(z.Re*z.Re + z.Im*z.Im)
+474,485c474,486
+< #define A_COMPL_ARG(z)          atan2((z).Im, (z).Re)
+< #define A_COMPL_CONJ(t,z)       (t.Re = (z).Re, t.Im = -(z).Im, t)
+< 
+< #define A_COMPL_PLUS(t,x,y)     (t.Re = (x).Re + (y).Re, t.Im = (x).Im
++ (y).Im, t)
+< #define A_COMPL_MINUS(t,x,y)    (t.Re = (x).Re - (y).Re, t.Im = (x).Im
+- (y).Im, t)
+< #define A_COMPL_EQ(x,y)         ((x).Re == (y).Re && (x).Im == (y).Im)
+< #define A_COMPL_NEQ(x,y)        ((x).Re != (y).Re || (x).Im != (y).Im)
+< #define A_COMPL_TIMES(t,x,y)    ( t.Re = (x).Re * (y).Re - (x).Im * (y).Im,\
+<                                   t.Im = (x).Re * (y).Im + (x).Im *
+(y).Re, t )
+< #define A_COMPL_DIVIDE(t,u,x,y) ( u = (y).Re * (y).Re + (y).Im *
+(y).Im, \
+<                             t.Re = ((x).Re * (y).Re + (x).Im * (y).Im)
+/ u, \
+<                             t.Im = ((x).Im * (y).Re - (x).Re * (y).Im)
+/ u, t )
+---
+> #define A_COMPL_ARG(z)          ( (z.Re == 0.0) ? \
+>    ((z.Im > 0.0) ? HALFPI : (z.Im < 0.0) ? -HALFPI : 0.0) : atan(z.Im
+/ z.Re) )
+> #define A_COMPL_CONJ(t,z)       (t.Re = z.Re, t.Im = -z.Im, t)
+> 
+> #define A_COMPL_PLUS(t,x,y)     (t.Re = x.Re + y.Re, t.Im = x.Im +
+y.Im, t)
+> #define A_COMPL_MINUS(t,x,y)    (t.Re = x.Re - y.Re, t.Im = x.Im -
+y.Im, t)
+> #define A_COMPL_EQ(x,y)         (x.Re == y.Re && x.Im == y.Im)
+> #define A_COMPL_NEQ(x,y)        (x.Re != y.Re || x.Im != y.Im)
+> #define A_COMPL_TIMES(t,x,y)    ( t.Re = x.Re * y.Re - x.Im * y.Im, \
+>                                   t.Im = x.Re * y.Im + x.Im * y.Re, t
+)
+> #define A_COMPL_DIVIDE(t,u,x,y) ( u = y.Re * y.Re + y.Im * y.Im, \
+>                                   t.Re = (x.Re * y.Re + x.Im * y.Im) /
+u, \
+>                                   t.Im = (x.Im * y.Re - x.Re * y.Im) /
+u, t )
+487,490c488,491
+< #define A_COMPL_PLUSAB(x,y)     ((x).Re += (y).Re, (x).Im += (y).Im,
+(x))
+< #define A_COMPL_MINUSAB(x,y)    ((x).Re -= (y).Re, (x).Im -= (y).Im,
+(x))
+< #define A_COMPL_TIMESAB(t,x,y)  ((x) = A_COMPL_TIMES(t,x,y))
+< #define A_COMPL_DIVAB(t,u,x,y)  ((x) = A_COMPL_DIVIDE(t,u,x,y))
+---
+> #define A_COMPL_PLUSAB(x,y)     (x.Re += y.Re, x.Im += y.Im, x)
+> #define A_COMPL_MINUSAB(x,y)    (x.Re -= y.Re, x.Im -= y.Im, x)
+> #define A_COMPL_TIMESAB(t,x,y)  (x = A_COMPL_TIMES(t,x,y))
+> #define A_COMPL_DIVAB(t,u,x,y)  (x = A_COMPL_DIVIDE(t,u,x,y))
+
+
+>  (2) Correction of the bug in `mm' which means it now looks for `.a68'
+>      files first instead of `.sta' files. Incidentally, what are
+>      `.sta' files?
+
+.sta files were ALGOL68 source files which included some simple
+configuration management - "star edit".  I introduced them when we moved
+ELLA from George 3 (ICL 1906) to VAX VMS (and later to RSRE FLEX and
+UNIX).
+
+If a source line started with "*<digit>" and <digit> was contained in a
+list supplied to the compiler then that line would be kept (less
+*<digit>) otherwise it would be removed.  (%<digit> worked the other way
+round).
+
+We used it to cope with different operating system interfaces (APIs) and
+dialects of ALGOL68 (the ICL machine ran ALGOL68R not RS) to avoid
+having duplicate files.
+
+Regards,
+-- 
+Dave Taylour
+
+

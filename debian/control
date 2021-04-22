@@ -1,0 +1,31 @@
+Source: algol68toc
+Section: devel
+Priority: optional
+Maintainer: Sian Mountbatten <poenikatu@fastmail.co.uk>
+Build-Depends: debhelper (>= 8.0.0),libc6-dev (>=2.13-24)
+Standards-Version: 3.9.2
+Homepage: http://www.poenikatu.co.uk/
+
+Package: algol68toc
+Architecture: any
+Depends: gcc (>=8.3.0), ${shlibs:Depends}, ${misc:Depends}
+Section: devel
+Priority: optional
+Description: Algol 68 development system
+ Everything you need to start developing programs with the
+ general-purpose high-level programming language Algol 68. The
+ package includes the following:-
+ .
+ a68toc     -- Algol 68 to C translator
+ ca         -- compilation shell script
+ pame       -- Programming Algol 68 Made Easy
+               600-odd page book teaching Algol 68 from scratch
+ resetseed  -- reset nameseed file
+ System documentation in GNU info format
+ Compiler documentation in TeX DVI format
+ Various example Algol 68 program sources.
+ .
+ The language was originally developed under the auspices of the
+ International Federation for Information Processing (IFIP). You may
+ not be able to read the defining document, but the language is easy
+ to learn and is very flexible.

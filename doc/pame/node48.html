@@ -1,0 +1,292 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Names</title>
+<meta name="description" content="names">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node60.html">
+<link rel="previous" href="node40.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node49.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1403"
+  href="node49.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1397"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1391"
+  href="node47.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1399"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1401"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1404"
+  href="node49.html">Assignment</a>
+<b> Up:</b> <a name="tex2html1398"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html1392"
+  href="node47.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html1400"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1402"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00700000000000000000"></a><a name="chapv"></a>
+Names</h1>
+
+<p>Previous chapters dealt with values that have always been known
+when the program was written.  If a program is to be able to react to
+its environment, it must be able to convert external values into
+internal values and then manipulate them.  Analogous to
+<code>print</code>, the conversion can be done by
+<tt>read</tt><a name="3192"></a> which constructs internal values from
+external character sequences. In order to manipulate such converted
+values, we need some way of referring to them. Algol&nbsp;68 can
+generate values which can refer to other values.  This kind of value
+is called a <b>name</b><a name="2693"></a>. Although a name has a
+value, it is quite different from the value referred to. The
+difference is rather like your name: your name refers to you, but is
+quite distinct from you.</p>
+
+<p>For example, suppose <code>read</code> is presented with the
+character sequence &ldquo;<code>123G</code>&rdquo; and is expecting an
+integer. <code>read</code> will convert the digits into the number
+&ldquo;one hundred and twenty-three&rdquo;, held in a special internal
+form called &ldquo;2's-complement binary&rdquo;<a name="2694"></a>.
+To manipulate that value, a name must be generated to refer to it.
+The mode of a name is called a &ldquo;reference mode&rdquo;.</p>
+
+<p>A name which can refer to a value of mode <code>INT</code> is said
+to have the mode <code>REF INT</code>. Likewise, we can create names
+with modes</p>
+
+<pre>
+   REF BOOL    REF[]CHAR    REF[,]REAL
+</pre>
+
+<p>As you can see, <code>REF</code> can precede any mode.  It can also include
+a mode already containing <code>REF</code>.  Thus it is possible to
+construct modes such as</p>
+
+<pre>
+   REF REF INT
+   REF[]REF REAL
+   REF[]REF[]CHAR
+   REF REF REF BOOL
+</pre>
+
+<p>but we shall defer discussion of these latter modes to
+chapter&nbsp;11.</p>
+
+<p>Names are created using <b>generators</b><a name="2700"></a>.
+There are two kinds of generator: local<a name="2701"></a> and
+global<a name="2702"></a>.  The extent to which a name is valid is
+called its <b>scope</b><a name="2704"></a>.  The scope of a local
+name<a name="2705"></a> is restricted to the smallest enclosing clause
+which contains declarations.  The scope of a global name extends to
+the whole program.  In general, values have scope, identifiers have
+range<a name="2706"></a>. We shall meet global generators in
+chapters&nbsp;6 and&nbsp;11.</p>
+
+<p>The phrase <code>LOC INT</code> generates a name of mode <code>REF
+INT</code> which can refer to a value of mode
+<code>INT</code>.<a name="tex2html12"
+href="footnode.html#foot2707"><sup><span
+class="arabic">6</span>.<span class="arabic">1</span></sup></a> The
+<tt>LOC</tt><a name="3193"></a> stands for local. It is quite
+reasonable to write the phrase</p>
+
+<pre>
+   read(LOC INT)
+</pre>
+
+<p>Unfortunately, the created name is an anonymous name in the sense
+that it has no identifier so that once the <code>read</code> has
+completed, the name disappears. We need some way of linking an
+identifier with the generated name so that we can access the name
+after <code>read</code> has finished. This is done with an identity
+declaration. Here is an identity declaration<a name="3194"></a> with a
+local generator<a name="3195"></a>:</p>
+
+<pre>
+   REF INT a = LOC INT
+</pre>
+
+<p>The value identified by <code>a</code> has the mode <code>REF
+INT</code> because the phrase <code>LOC INT</code> generates a name of
+mode <code>REF INT</code>. Thus it is a name, and it can refer to a
+value (as yet undefined) of mode <code>INT</code> (the value referred
+to always has a mode of one less <code>REF</code>). So now, we can
+write</p>
+
+<pre>
+   read(a)
+</pre>
+
+<p>After that phrase has been elaborated, <code>a</code> identifies a
+name which now refers to an integer.</p>
+
+<p>Names can also be declared using a predeclared name on the
+right-hand side of the identity declaration. Here is another identity
+declaration using <code>a</code>:</p>
+
+<pre>
+   REF INT b = a
+</pre>
+
+<p>In this declaration, <code>b</code> has the mode <code>REF
+INT</code> so it identifies a name. <code>a</code> also has the mode
+<code>REF INT</code> and therefore also identifies a name. The
+identity declaration makes <code>b</code> identify the same name as
+<code>a</code>. This means that if the name identified by
+<code>a</code> refers to a value, then the name identified by
+<code>b</code> (the same name) will always refer to the same
+value.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1405"
+  href="node49.html">Assignment</a>
+<ul>
+<li><a name="tex2html1406"
+  href="node49.html#section00711000000000000000">Copying values</a>
+<li><a name="tex2html1407"
+  href="node49.html#section00712000000000000000">Assigning operators</a>
+<li><a name="tex2html1408"
+  href="node49.html#section00713000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1409"
+  href="node50.html">Assignments in formul&#230;</a>
+<ul>
+<li><a name="tex2html1410"
+  href="node50.html#section00721000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1411"
+  href="node51.html">Multiple names</a>
+<li><a name="tex2html1412"
+  href="node52.html">Assigning to multiple names</a>
+<ul>
+<li><a name="tex2html1413"
+  href="node52.html#section00741000000000000000">Individual assignment</a>
+<li><a name="tex2html1414"
+  href="node52.html#section00742000000000000000">Collective assignment</a>
+<li><a name="tex2html1415"
+  href="node52.html#section00743000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1416"
+  href="node53.html">Flexible names</a>
+<ul>
+<li><a name="tex2html1417"
+  href="node53.html#section00751000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1418"
+  href="node54.html">The mode <tt>STRING</tt></a>
+<ul>
+<li><a name="tex2html1419"
+  href="node54.html#section00761000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1420"
+  href="node55.html">Reference modes in transput</a>
+<ul>
+<li><a name="tex2html1421"
+  href="node55.html#section00771000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1422"
+  href="node56.html">Dynamic names</a>
+<ul>
+<li><a name="tex2html1423"
+  href="node56.html#section00781000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1424"
+  href="node57.html">Loops revisited</a>
+<ul>
+<li><a name="tex2html1425"
+  href="node57.html#section00791000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1426"
+  href="node58.html">Abbreviated declarations</a>
+<ul>
+<li><a name="tex2html1427"
+  href="node58.html#section007101000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1428"
+  href="node59.html">Summary</a>
+<ul>
+<li><a name="tex2html1429"
+  href="node59.html#section007111000000000000000">Exercises</a>
+</ul></ul>
+<!--end of table of child-links-->
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1403"
+  href="node49.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1397"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1391"
+  href="node47.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1399"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1401"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1404"
+  href="node49.html">Assignment</a>
+<b> Up:</b> <a name="tex2html1398"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html1392"
+  href="node47.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html1400"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1402"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

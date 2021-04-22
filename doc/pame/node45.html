@@ -1,0 +1,460 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Conditional clauses</title>
+<meta name="description" content="conditional clauses">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node46.html">
+<link rel="previous" href="node44.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node46.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1359"
+  href="node46.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1353"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1347"
+  href="node44.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1355"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1357"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1360"
+  href="node46.html">Multiple choice</a>
+<b> Up:</b> <a name="tex2html1354"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1348"
+  href="node44.html">Compound Boolean formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html1356"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1358"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1361"
+  href="node45.html#section00651000000000000000">Pseudo-operators</a>
+<li><a name="tex2html1362"
+  href="node45.html#section00652000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00650000000000000000"></a><a name="choice-cond"></a>
+Conditional clauses</h1>
+
+<p>Now we can discuss clauses which choose between alternatives. We have
+met the enclosed clause<a name="2233"></a> consisting of at least
+one phrase<a name="2234"></a> enclosed by <tt>BEGIN</tt><a name="2460"></a> and <tt>END</tt><a name="2461"></a> (or
+parentheses<a name="2239"></a>) in the structure of an Algol&nbsp;68 program, and also
+in the <code>DO</code>&nbsp;<span class="math">...</span>&nbsp;<code>OD</code> loop of a <code>FOR</code> or
+<code>FORALL</code> clause.  The part of the enclosed clause inside the
+parentheses (or <code>BEGIN</code> and <code>END</code>) is called a
+<b>serial clause</b><a name="2241"></a> because,
+historically, sequential elaboration used to be called &ldquo;serial
+elaboration&rdquo;.  The value of the serial clause is the value of the
+last phrase which must be a unit.</p>
+
+<p>There are two kinds of clause which enable programs to modify
+their behaviour. They are called <b>choice clauses</b>.  The
+<b>conditional clause</b><a name="2244"></a> allows a program to
+elaborate code depending on the value of a boolean serial
+clause<a name="2245"></a>, called a <code>BOOL</code> <b>enquiry
+clause</b><a name="2247"></a>. Here is a simple example:</p>
+
+<pre>
+   IF   salary &lt; 5000
+   THEN 0
+   ELSE (salary-allowances)*rate
+   FI
+</pre>
+
+<p>The enquiry clause consists of the formula</p>
+
+<pre>
+   salary &lt; 5000
+</pre>
+
+<p>which yields a value of mode <code>BOOL</code>. Two serial clauses,
+both containing a single unit can be elaborated. If the value yielded
+by <code>salary</code> is less than <code>5000</code>, the value
+<code>0</code> is yielded.  Otherwise, the program calculates the tax.
+That is, if the <code>BOOL</code> enquiry clause yields
+<code>TRUE</code>, the serial clause following
+<tt>THEN</tt><a name="2462"></a> is elaborated, otherwise the serial
+clause following <tt>ELSE</tt><a name="2463"></a> is elaborated. The
+<tt>FI</tt><a name="2464"></a> following the <code>ELSE</code> serial
+clause must be there.</p>
+
+<p>The enquiry clause and the serial clauses may consist of single
+units or possibly declarations and formul&#230; and loops. However,
+the last phrase in an enquiry clause must be a unit yielding
+<code>BOOL</code>. The range<a name="2259"></a> of any identifiers
+declared in the enquiry clause extends to the serial clauses as well.
+The range of any identifiers declared in either serial clause is
+limited to that serial clause.  For example, assuming that
+<code>a</code> and <code>i</code> are predeclared, we could write:</p>
+
+<pre>
+   IF   INT ai = a[i];  ai &lt; 0
+   THEN print((ai," is negative",newline))
+   ELSE print((ai," is non-negative",newline))
+   FI
+</pre>
+
+<p>The conditional clause can be written wherever a unit is permitted,
+so the previous example could also be written</p>
+
+<pre>
+   INT ai = a[i];
+   print((ai,IF   ai &lt; 0
+             THEN "is negative"
+             ELSE "is non-negative"
+             FI,newline))
+</pre>
+
+<p>The value of each of the serial clauses following <code>THEN</code>
+and <code>ELSE</code> in this case is <code>[]CHAR</code>. Here is an
+example with a conditional clause<a name="2264"></a> inside a
+loop:</p>
+
+<pre>
+   FOR i TO 100
+   DO
+      IF i MOD 10 = 0
+      THEN print((i,newline))
+      ELSE print((i,blank))
+      FI
+   OD
+</pre>
+
+<p>The <code>ELSE</code> part of a conditional clause can be omitted.
+Thus the above example could also be written</p>
+
+<pre>
+   FOR i TO 100
+   DO
+      print((i,blank));
+      IF i MOD 10 = 0 THEN print(newline) FI
+   OD
+</pre>
+
+<p>The whole conditional clause can appear as a formula or as an
+operand<a name="2269"></a>.  The short form of the clause is often
+used for this: <code>IF</code> and <code>FI</code> are replaced by
+<tt>(</tt><a name="2465"></a> and <tt>)</tt><a name="2466"></a>
+respectively, and <code>THEN</code> and <code>ELSE</code> are both
+replaced by the vertical bar
+<tt>|</tt><a name="2275"></a><a name="tex2html9"
+href="footnode.html#foot2467"><sup><span
+class="arabic">5</span>.<span class="arabic">1</span></sup></a>. For
+example, here is an identity declaration which assumes a previous
+declaration for <code>x</code>:</p>
+
+<pre>
+   REAL xx = (x &lt; 3.0|x**2|x**3)
+</pre>
+
+<p>If the <code>ELSE</code> part is missing then its serial clause is
+regarded as containing the single unit
+<tt>SKIP</tt><a name="2468"></a>.  In this case, <code>SKIP</code>
+will yield an undefined value of the mode yielded by the
+<code>THEN</code> serial clause.  This is an example of
+<b>balancing</b><a name="2282"></a> (explained in chapter&nbsp;10).
+This is particularly important if a conditional clause is used as an
+operand.<a name="tex2html10"
+href="footnode.html#foot2488"><sup><span
+class="arabic">5</span>.<span class="arabic">2</span></sup></a></p>
+
+<p>Since the right-hand side of an identity declaration is in a
+strong context<a name="2286"></a>, widening<a name="2287"></a> is
+allowed. Thus, in</p>
+
+<pre>
+   REAL x = (i &lt; j|3|4)
+</pre>
+
+<p>whichever value the conditional clause yielded would be widened to
+a value of mode <code>REAL</code>.</p>
+
+<p>Since the enquiry clause<a name="2290"></a> is a serial clause, it
+can have any number of phrases before the <code>THEN</code>. For
+example:</p>
+
+<pre>
+   IF []CHAR line =
+      "a growing gleam glowing green";
+      INT sz = UPB line - LWB line + 1;
+      sz &gt; 35
+   THEN
+      ...
+</pre>
+
+<p>Conditional clauses can be nested<a name="2293"></a></p>
+
+<pre>
+   IF a &lt; 4.1
+   THEN
+      IF b &gt;= 35
+      THEN print("yes")
+      ELSE print("no")
+      FI
+   ELSE
+      IF c &lt;= 20
+      THEN print("perhaps")
+      ELSE print("maybe")
+      FI
+   FI
+</pre>
+
+<p>The <tt>ELSE IF</tt><a name="2470"></a> in the above clause could
+be replaced by <tt>ELIF</tt><a name="2471"></a>, and the final
+<code>FI FI</code> with a single <code>FI</code>, giving:</p>
+
+<pre>
+   IF a &lt; 4.1
+   THEN
+      IF b &gt;= 35
+      THEN print("yes")
+      ELSE print("no")
+      FI
+   ELIF c &lt;= 20
+   THEN print("perhaps")
+   ELSE print("maybe")
+   FI
+</pre>
+
+<p>Here is another contracted example:</p>
+
+<pre>
+   INT p = IF   c = "a" THEN 1
+           ELIF c = "h" THEN 2
+           ELIF c = "q" THEN 3
+           ELSE 4
+           FI
+</pre>
+
+<p>The range<a name="2304"></a> of any identifier declared in an
+enquiry clause<a name="2305"></a> extends to any serial clause beyond
+its declaration but within the overall conditional clause. Consider
+this conditional clause:</p>
+
+<pre>
+   IF   INT p1 = ABS(c="a");  p1=1
+   THEN  p1+2
+   ELIF INT p2 = p1-ABS(c="h");  p2 = -1
+   THEN INT i1 = p1+p2;  i1+p1
+   ELSE INT i2 = p1+2*p2;  i2-p2
+   FI
+</pre>
+
+<p>The range of <code>p1</code> extends to the enclosing
+<code>FI</code>; likewise the range of <code>p2</code>. The ranges of
+<code>i1</code> and <code>i2</code> are confined to their serial
+clauses.</p>
+
+<p>In the abbreviated form, <tt>|:</tt><a name="2472"></a> can be
+used instead of <code>ELIF</code>.  For example, the above identity
+declaration for <code>p</code> could be written</p>
+
+<pre>
+   INT p = (c="a"|1|:c="h"|2|:c="q"|3|4)
+</pre>
+
+<p>In both identity declarations, the opening parenthesis is an
+abbreviated symbol for <code>IF</code>.</p>
+
+<p>Sometimes it is useful to include a conditional clause in the
+<code>IF</code> part of a conditional clause. In other words, a
+<code>BOOL</code> enquiry clause can be a conditional clause yielding
+a value of mode <code>BOOL</code>. Here is an example with
+<code>a</code> and <code>b</code> predeclared with mode
+<code>BOOL</code>:</p>
+
+<pre>
+   IF IF a
+      THEN NOT b
+      ELSE b
+      FI
+   THEN print("First possibility")
+   ELSE print("Second possibility")
+   FI
+</pre>
+<p>
+
+<h2><a name="section00651000000000000000"></a><a name="choice-pseud"></a>
+Pseudo-operators</h2>
+
+<p>As was mentioned in chapter 2, both the operands of an operator are
+elaborated before the operator is elaborated. The <code>a68toc</code>
+compiler implements the <b>pseudo-operator</b><a name="2318"></a>
+<code>ANDTH</code> which although it looks like an operator, has its
+right-hand operand elaborated only if its left-hand operand yields
+<code>TRUE</code>. Compare <code>ANDTH</code> (which is read
+&ldquo;and then&rdquo;) with the operator
+<tt>AND</tt><a name="2473"></a>.  The priority of <code>ANDTH</code>
+is&nbsp;1. The phrase <code>IF p ANDTH q THEN ... FI</code> is
+equivalent to</p>
+
+<pre>
+   IF IF NOT p
+      THEN FALSE
+      ELIF q
+      THEN TRUE
+      ELSE FALSE
+      FI
+   THEN ...
+   FI
+</pre>
+<p>
+<p>You should be chary of using <code>ANDTH</code> in a compound boolean
+expression<a name="2323"></a>. For example, given the condition</p>
+
+<pre>
+      UPB s &gt; LWB s
+         ANDTH
+      s[UPB s]="-"
+         AND
+   (CHAR c=s[UPB s-1];
+    c&gt;="a" &amp; c&lt;="z")
+</pre>
+
+<p>the intention of the compound condition is to determine whether a
+terminating hyphen is preceded by a lower-case letter.  Clearly,
+testing for a character which precedes the hyphen can only be
+elaborated if there are at least two characters in <code>s</code>.
+The first boolean formula (the left operand of <code>ANDTH</code>)
+ensures that the second formula (the right operand of
+<code>ANDTH</code>) is only elaborated if <code>s</code> identifies at
+least two characters.  Unfortunately, because the priority of
+<code>AND</code> is greater than the priority of <code>ANDTH</code>
+and because both operands of an operator must be elaborated before the
+operator is elaborated, the right-hand operand of <code>AND</code>
+will be elaborated whatever the value of the left operand of
+<code>ANDTH</code>.  In order to achieve the above aim, the compound
+condition should be written</p>
+
+<pre>
+   UPB s &gt; LWB s
+       ANDTH
+  (s[UPB s]="-"
+      AND
+   (CHAR c=s[UPB s-1];
+    c&gt;="a" &amp; c&lt;="z"))
+</pre>
+
+<p>Note the additional parentheses which ensure that the boolean formula
+containing <code>AND</code> is treated <i>as a whole</i> as the right-hand
+operand of the pseudo-operator <code>ANDTH</code>.
+
+<p>There is another pseudo-operator <tt>OREL</tt><a name="2474"></a>
+(read &ldquo;or else&rdquo;) which is similar to the operator
+<tt>OR</tt><a name="2475"></a> except that its right-hand operand is
+only elaborated if its left-hand operand yields <code>FALSE</code>.
+Like <code>ANDTH</code>, the priority of <code>OREL</code> is&nbsp;1.
+The remarks given above about the use of <code>ANDTH</code> in
+compound boolean formul&#230; apply equally to <code>OREL</code>.</p>
+
+<p>Neither <code>ANDTH</code> nor <code>OREL</code> are part of Algol
+68.</p>
+
+<hr>
+<h2><a name="section00652000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>4.5<a name="ex-iv-v"></a>
+<dd>Write a conditional clause which tests whether a <code>REAL</code>
+value is less than <span class="math"><img
+ width="15" height="18" align="bottom" border="0"
+ src="img5.png"
+ alt="$ \pi$"></span>, and prints "Yes" if it is and "No"
+otherwise.  Ans<a href="node138.html#ans-iv-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.6<a name="ex-iv-vi"></a>
+<dd>Write a conditional clause inside a loop clause to display the
+first 96 multiples of 3 (including&nbsp;3) in lines of 16. Use the
+operator <tt>MOD</tt><a name="2476"></a> for the test.  Ans<a href="node138.html#ans-iv-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.7<a name="ex-iv-vii"></a>
+<dd>Replace the operator <code>OREL</code> in the following program with
+a suitable conditional clause:
+<pre>
+   PROGRAM p CONTEXT VOID
+   USE standard
+   IF INT a=3, b=5, c=4;
+      a &gt; b OREL b &gt; c
+   THEN print("Ok")
+   ELSE print("Wrong")
+   FI
+   FINISH
+</pre>
+Ans<a href="node138.html#ans-iv-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1359"
+  href="node46.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1353"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1347"
+  href="node44.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1355"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1357"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1360"
+  href="node46.html">Multiple choice</a>
+<b> Up:</b> <a name="tex2html1354"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1348"
+  href="node44.html">Compound Boolean formul&#230;</a>
+ &nbsp; <b>  <a name="tex2html1356"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1358"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

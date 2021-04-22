@@ -1,0 +1,630 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Operators</title>
+<meta name="description" content="operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node63.html">
+<link rel="previous" href="node61.html">
+<link rel="up" href="node60.html">
+<link rel="next" href="node63.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1676"
+  href="node63.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1670"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1664"
+  href="node61.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1672"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1674"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1677"
+  href="node63.html">Procedures</a>
+<b> Up:</b> <a name="tex2html1671"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1665"
+  href="node61.html">Routines</a>
+ &nbsp; <b>  <a name="tex2html1673"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1675"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1678"
+  href="node62.html#section00821000000000000000">Identification of operators</a>
+<li><a name="tex2html1679"
+  href="node62.html#section00822000000000000000">Exercises</a>
+<li><a name="tex2html1680"
+  href="node62.html#section00823000000000000000">Operator usage</a>
+<li><a name="tex2html1681"
+  href="node62.html#section00824000000000000000">Exercises</a>
+<li><a name="tex2html1682"
+  href="node62.html#section00825000000000000000">Dyadic operators</a>
+<li><a name="tex2html1683"
+  href="node62.html#section00826000000000000000">Operator symbols</a>
+<li><a name="tex2html1684"
+  href="node62.html#section00827000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00820000000000000000"></a><a name="rout-ops"></a>
+Operators</h1>
+
+<p>In the preamble to this chapter, it was mentioned that routines
+consist of two kinds: procedures and operators. See
+section&nbsp;<a href="node63.html#rout-procs">6.3</a> for details of
+procedures.</p>
+
+<p> An operator has a mode<a name="3753"></a> and a
+value<a name="3754"></a> (its routine denotation<a name="3755"></a>)
+and, if dyadic, a priority<a name="3756"></a>.  The parameters to
+routines which are defined as operators are called
+operands<a name="3757"></a>. Monadic operators, while not having a
+priority, behave as though they had a priority greater than any dyadic
+operator<a name="3758"></a> and take one operand and
+yield<a name="3759"></a> a value of some mode.</p>
+
+<p>Here is an identity declaration of the monadic
+operator<a name="3760"></a> <code>B</code>:</p>
+
+<pre>
+   OP(INT)INT B = (INT a)INT: a
+</pre>
+
+<p>There are several points to note.</p>
+
+<ol>
+<li>The mode of the operator is <code>OP(INT)INT</code>. That is,
+it takes a single operand of mode <code>INT</code> and yields a value of
+mode <code>INT</code>.</li>
+<li>The symbol<a name="3764"></a> for the operator looks
+like a mode indicant<a name="3765"></a>.  It isn't a mode
+indicant, but obeys the same rules (starts with an uppercase letter
+and possibly continues with uppercase letters or digits or underscores, and no
+spaces are allowed inside the symbol).</li>
+<li>The right-hand side of the identity
+declaration<a name="3766"></a> is a routine
+denotation.  A special identity declaration is used for operators:
+instead of the mode of the operator, the mode constructor <tt>OP</tt><a name="4199"></a>
+is used followed by the operator symbol. The abbreviated declaration
+of the operator <code>B</code> is</p>
+
+<pre>
+        OP B = (INT a)INT: a
+</pre>
+</li>
+</ol>
+
+<p>Chapter 2 described how operators are used in formul&#230;. A
+possible formula using <code>B</code> could be</p>
+
+<pre>
+   B 2
+</pre>
+
+<p>which would yield <code>2</code>.<a name="tex2html21"
+href="footnode.html#foot4220"><sup><span
+class="arabic">7</span>.<span class="arabic">2</span></sup></a></p>
+
+<h2><a name="section00821000000000000000"></a><a name="rout-idops"></a>
+Identification of operators</h2>
+
+<p>This section is more difficult than preceding sections and could be
+omitted on a first reading. You are unlikely to fall afoul of what is
+described here unless you are declaring many new operators.</p>
+
+<p>One of the most useful properties of operators is that there can
+be more than one declaration of the same operator symbol using an
+operand having a different mode. This is called &ldquo;operator
+overloading&rdquo;<a name="3781"></a>.  How does the compiler know
+which version of the operator to use?  Before answering this question,
+consider the following program fragment:</p>
+
+<pre>
+    1 BEGIN
+    2    OP D = (INT a)INT:   a+2;
+    3    OP D = (REAL a)REAL: a+2.0;
+    4    REAL x:=1.5, a:=-2.0; INT i:=4;
+    5
+    6    x:=IF  OP D = (REF REAL a)REF REAL:
+    7                      a+:=2.0;
+    8           ENTIER(D a:=x) &gt; i
+    9       THEN D i
+   10       ELSE D x
+   11       FI;
+   12
+   13    OP D = (REF REAL a)REF REAL:  a+:=3.0;
+   14    x:=D a
+   15 END
+</pre>
+
+<p>The numbers on the left-hand side are not part of the program. As
+you can see, there are four declarations of <code>D</code>: one with
+an <code>INT</code> operand, one with a <code>REAL</code> operand and
+two with a <code>REF REAL</code> operand. If you try compiling this
+you will get the error</p>
+
+<pre>
+        ERROR (146) more than one version of D
+</pre>
+
+<p>for the last declaration. There are two points to be made here.</p>
+
+<ol>
+<li>Outwith the conditional clause<a name="3787"></a>,
+there are three declarations of <code>D</code>: on lines 2, 3 and 13. Now,
+an operator is used in a formula and the context of the operand of an
+operator is firm. Of the coercions we have met so far, only one,
+namely dereferencing<a name="3788"></a>, is allowed in
+a firm context<a name="3789"></a>.  If you look at the assignment
+on line&nbsp;14, you can see that the mode of the operand of <code>D</code> is
+<code>REF REAL</code> (from the declaration of <code>a</code> on line&nbsp;4).  Now a
+value of mode <code>REF REAL</code> is firmly coercible<a name="3790"></a> to <code>REAL</code>
+(by dereferencing).  So there are two declarations of <code>D</code> which
+could be used: the declaration on line&nbsp;3 and the declaration on
+line&nbsp;13 (the range<a name="3791"></a> of the declaration on line&nbsp;6 is confined to
+the conditional clause).  According to the rules for the
+identification of operators (see below), the compiler would not be
+able to distinguish between the two declarations.  Hence the error
+message.</li>
+<li>Why did the identical declaration of <code>D</code> on line&nbsp;6 not
+cause a similar error message? Answer: because the declaration on
+line&nbsp;6 is at the start of a new range: the enclosed clause starting
+on line&nbsp;6 and extending to the <code>FI</code> on line&nbsp;11.  Since that is a
+new range, any operator declarations with a mode which is
+<b>firmly related</b><a name="3793"></a> to the mode of an operator declared in an outer
+range makes the declaration in the outer range inaccessible. Thus,
+the assignment on line&nbsp;8 will use the version of <code>D</code> declared on
+line&nbsp;6, the <code>D</code> on line&nbsp;9 identifies the <code>D</code> declared on
+line&nbsp;2, and the <code>D</code> on line&nbsp;10 again uses the <code>D</code> declared
+on line&nbsp;6.</li>
+</ol>
+
+<p>Thus, in determining which operator to use, the compiler firstly
+finds a declaration whose mode can be obtained from the operands in
+question using any of the coercions allowed in a firm context
+(chapter&nbsp;10 will state all the coercions allowed). Secondly, it
+will use the declaration in the smallest range enclosing the
+formula.</p>
+
+<p>The declaration of an object is known as its <b>defining
+occurrence</b><a name="3796"></a>. Where the object is used is called
+its <b>applied occurrence</b><a name="3798"></a>.  In practice, it is
+rare to find like operator declarations in nested ranges.</p>
+
+<hr>
+<h2><a name="section00822000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.10<a name="ex-vi-x"></a>
+<dd>This and the following exercise use the following program
+fragment:
+<pre>
+    1 IF
+    2    OP T = (INT a)INT:  a*a;
+    3    OP T = (CHAR a)INT: ABS a * ABS a;
+    4    INT p:=3, q:=4; CHAR c:=REPR 3;
+    5    T p &lt; T c
+    6 THEN
+    7    OP T = (REF INT a)REF INT: a*:=a;
+    8    IF T 4 &lt; T q
+    9    THEN "Yes"
+   10    ELSE T REPR 2
+   11    FI
+   12 ELSE T c &gt; T q
+   13 FI
+</pre>
+
+There are 3 defining occurrences of the operator <code>T</code> on lines 2,
+3 and&nbsp;7. There are 7 applied occurrences of the operator (on lines 5,
+8, 10 and&nbsp;12). Which defining occurrence is used for each applied
+occurrence?  Ans<a href="node140.html#ans-vi-x"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.11<a name="ex-vi-xi"></a>
+<dd>What is the mode and value yielded by Ans<a href="node140.html#ans-vi-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>T q</code> on line 8  
+<p>
+<dt>(b)
+<dd><code>T q</code> on line 12  
+<p>
+<dt>(c)
+<dd><code>T c</code> on line 12  
+<p>
+<dt>(d)
+<dd><code>T REPR 2</code> on line 10  
+<p>
+</dd>
+</dl>
+<dt>6.12<a name="ex-vi-xii"></a>
+<dd>What is wrong with these two declarations occurring in the same
+range:
+<pre>
+   OP TT = ([]INT a)[]INT:
+           FOR i FROM LWB a TO UPB a
+           DO print(a[i]*3) OD;
+   OP TT = (REF[]INT a)[]INT:
+           FOR i FROM LWB a TO UPB a
+           DO print(a[i]*3) OD
+</pre>
+Ans<a href="node140.html#ans-vi-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00823000000000000000"></a><a name="rout-opuse"></a>
+Operator usage</h2>
+
+<p>Before we go on to dyadic operators, there is one more point to
+consider. Given the operator declaration</p>
+
+<pre>
+   OP PLUS2 = (REAL a)REAL:  a+2.0
+</pre>
+
+<p>what is the mechanism by which the formal parameter gets its value?
+Firstly, we must remember that a particular version of the operator is
+chosen on the basis of firmly relatedness<a name="3823"></a>. In
+other words, only coercions allowed in a
+firm context<a name="3824"></a> can determine which declaration
+of the operator to use.  Secondly, in elaborating the formula</p>
+
+<pre>
+   PLUS2 x
+</pre>
+
+<p>where <code>x</code> has the mode <code>REF REAL</code>, the
+compiler elaborates the identity declaration</p>
+
+<pre>
+   REAL a = x
+</pre>
+
+<p>where <code>REAL a</code> is the formal
+parameter<a name="3829"></a>.  Since the context of the right-hand
+side of an identity declaration is strong, any of the strong coercions
+would normally be allowed (all coercions, including dereferencing).
+However, because the version of the operator was chosen on the basis
+of firmly relatedness, the coercions available in a strong context
+which are not available in a firm context (that is, widening and
+rowing) are not available in the context of an operand.  If an operand
+of mode <code>INT</code> is supplied to an operator requiring a
+<code>REAL</code>, the compiler will flag an error: widening would not
+occur. This is the only exception to the rule that the right-hand side
+of an identity declaration is a strong context<a name="3830"></a>.</p>
+
+<p>It was pointed out in
+section&nbsp;<a href="node61.html#rout-yname">6.1.5</a> that a routine
+can yield a name.  An operator does not usually yield a name because
+subsequent use of the name usually involves dereferencing and using
+the value the name refers to.  However, here is an operator
+declaration which yields a name of a multiple which is used in a
+subsequent phrase:</p>
+
+<pre>
+   OP NAME = (INT a)REF[]INT:
+               (HEAP[2]INT x:=(a,a);  x);
+   REF[]INT a = NAME 3
+</pre>
+
+<p>After the elaboration of the identity declaration, the name could be
+accessed wherever necessary.</p>
+
+<hr>
+<h2><a name="section00824000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.13<a name="ex-vi-xiii"></a>
+<dd>Given the declarations
+<pre>
+   OP M3 = (INT i)INT:  i-3;
+   OP M3 = ([]INT i)[]INT:
+           FORALL n IN i DO n-3 OD;
+   INT i:=1,[3]INT j:=(1,2,3)
+</pre>
+
+which operator declarations would be used for the following
+formul&#230; Ans<a href="node140.html#ans-vi-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>M3 i</code>  
+<p>
+<dt>(b)
+<dd><code>M3 j[2]</code>  
+<p>
+<dt>(c)
+<dd><code>M3 j</code>  
+<p>
+<dt>(d)
+<dd><code>M3 j[:2]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00825000000000000000"></a><a name="rout-dyad"></a>
+Dyadic operators</h2>
+
+<p>The only differences between monadic and dyadic<a name="3851"></a>
+operators are that the latter have a priority<a name="3852"></a> and
+take two operands. Therefore the routine denotation used for a dyadic
+operator has two formal parameters. The priority of a dyadic operator
+is declared using the indicant <tt>PRIO</tt><a name="4201"></a>:</p>
+
+<pre>
+   PRIO HMEAN = 7; PRIO WHMEAN = 6
+</pre>
+
+<p>The declaration of the priority of the operator uses an integer
+denotation in the range 1 to 9 on the right-hand side.</p>
+
+<p>Consecutive priority declarations<a name="3857"></a> do not need
+to repeat the <code>PRIO</code>, but can be abbreviated in the usual
+way.  The priority declaration relates to the operator
+symbol<a name="3858"></a>.  Hence the same operator cannot have two
+different priorities in the same range, but there is no reason why an
+operator cannot have different priorities in different ranges.  A
+priority declaration does not count as a declaration when determining
+the scope<a name="3859"></a> of a local name.</p>
+
+<p>If an existing operator symbol is used in a new declaration, the
+priority of the new operator must be the same as the old if it is in
+the same range, so the priority declaration should be omitted.</p>
+
+<p>The identification<a name="3860"></a> of dyadic operators proceeds
+exactly as for monadic operators except that the most recently
+declared priority in the same range is used to determine the order of
+elaboration<a name="3861"></a> of operators in a formula.  Again, two
+operators using the same symbol cannot be declared in the same range
+if they have firmly related<a name="3862"></a> modes (see
+section&nbsp;<a href="#rout-idops">6.2.1</a>).</p>
+
+<p>These declarations apply to the remainder of this section:</p>
+
+<pre>
+   PRIO HMEAN = 7, WHMEAN = 6;
+   OP HMEAN  = (REAL a,b)REAL:
+                  2.0/(1.0/a+1.0/b);
+   OP WHMEAN = (REAL a,b)REAL:
+                  2.0/(1.0/a+2.0/b)
+</pre>
+
+<p>If <code>HMEAN</code> appears in the formula</p>
+
+<pre>
+   x HMEAN y
+</pre>
+
+<p>where <code>x</code> and <code>y</code> both have mode <code>REF
+REAL</code>, the compiler constructs the identity
+declarations<a name="3868"></a></p>
+
+<pre>
+   REAL a = x, REAL b = y
+</pre>
+
+<p>Notice that the two identity declarations are elaborated
+collaterally<a name="3871"></a> (due to the comma separating them),
+which could be important (see below).  If <code>x</code> refers to
+<code>2.5</code> and <code>y</code> refers to <code>3.5</code>, the
+formula will yield</p>
+
+<pre>
+   2.0/(1.0/2.5 + 1.0/3.5)
+</pre>
+
+<p>which is <span class="math">2.91<img
+ width="13" height="22" align="bottom" border="0"
+ src="img11.png"
+ alt="$ \dot{6}$"></span>. Likewise, the formula</p>
+
+<pre>
+   x WHMEAN y
+</pre>
+
+<p>would yield <!-- math
+ $2\cdot058\,823\,529\,411\,76$
+ -->
+2&sdot;058&nbsp;823&nbsp;529&nbsp;411&nbsp;76. Now consider the
+formula</p>
+
+<pre>
+   (x+:=1.0) WHMEAN (x+:=1.0)
+</pre>
+
+<p>which causes the value referred to by <code>x</code> to be incremented twice
+as a side-effect<a name="3878"></a>. The resulting identity
+declarations are</p>
+
+<pre>
+   REAL a = (x+:=1.0), REAL b = (x+:=1.0)
+</pre>
+
+<p>The definition of Algol 68 says that the operands of a dyadic operator
+should be elaborated collaterally, so the order of elaboration is
+unknown. Suppose <code>x</code> refers to <code>1.0</code> before the
+formula is elaborated. There are three cases:</p>
+
+<ol>
+<li>The identity declaration for <code>a</code> is elaborated first,
+giving <code>a=2.0</code> and <code>b=3.0</code>. The formula will yield
+1&sdot;714&nbsp;285&nbsp;714.
+</li>
+<li>The identity declaration for <code>b</code> is elaborated first,
+giving <code>b=2.0</code> and <code>a=3.0</code>. The formula will yield <span class="math">1.5</span>.
+</li>
+<li>The identity declarations are elaborated in parallel. In this
+case, the result could be indeterminate<a name="3882"></a>.
+</li>
+</ol>
+
+<p>If you compile a program using a68toc with the declaration for
+<code>WHMEAN</code> and try to compute the formula given above, you
+get the result <code>+1.5000000000000000</code> which suggests that
+case&nbsp;2 holds.</p>
+
+<p>If <code>x</code> refers to <code>1.0</code>, then the formula
+<pre>
+   1.0/(x+:=1.0) + 1.0/(x+:=1.0)
+</pre>
+
+<p>yields <code>+.83333333333333339e +0</code> which is correct
+provided that the two operands are elaborated sequentially. The moral
+of all this is: avoid side-effects like the plague.</p>
+
+<p>What happens if the identifier of an actual
+parameter<a name="3886"></a> is the same as the
+identifier<a name="3887"></a> of the formal
+parameter<a name="3888"></a>? There is no clash.  Consider the
+identity declaration</p>
+
+<pre>
+   INT a = a
+</pre>
+
+<p>where the <code>a</code> on the left-hand side is the formal
+parameter for a routine denotation, and the <code>a</code> on the
+right-hand side is an actual parameter declared in some surrounding
+range. The formal parameter occurs at the start of a new range. Within
+that range, the identifier <code>a</code> in the outer range becomes
+inaccessible, but at the moment that the identity declaration is being
+elaborated, the formal parameter is made to identify the value of the
+actual parameter which, of course, is not an identifier. So go ahead
+and use identical identifiers for formal parameters and actual
+parameters.</p>
+
+<h2><a name="section00826000000000000000"></a><a name="rout-opsym"></a>
+Operator symbols</h2>
+
+<p>Most<a name="3894"></a> of the operators described in chapters 2 to
+5 used symbols rather than upper-case letters.  You may use any
+combination of the <code>&lt;=&gt;*/:</code> symbols (and any number
+of them) except <code>:=</code>, <code>:=:</code> and
+<code>:/=:</code> (the latter two are described in chapter&nbsp;11).
+Any of the symbols <code>+-?&amp;%</code> can only start a compound
+symbol. Of course, they can stand on their own for an operator. In
+chapter&nbsp;11, you will find the <code>&lt;&lt;</code> and
+<code>&gt;&gt;</code> operators described as well as more declarations
+for existing operators.  Here are some declarations of operators using
+the above rules:</p>
+
+<pre>
+   OP *** = (INT a)INT: a*a*a;
+   OP %&lt; = (CHAR c)CHAR: (c&lt;" "|" "|c);
+   OP -:: = (CHAR c)INT: (ABS c-ABS"0")
+</pre>
+
+<p>We have now covered everything about operators in the language.</p>
+
+<hr>
+<h2><a name="section00827000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.14<a name="ex-vi-xiv"></a>
+<dd>Why are side-effects undesirable?  Ans<a href="node140.html#ans-vi-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.15<a name="ex-vi-xv"></a>
+<dd><dt>6.16<a name="ex-vi-xvi"></a>
+<dd><dt>6.17<a name="ex-vi-xvii"></a>
+<dd>What is wrong with these operator symbols: Ans<a href="node140.html#ans-vi-xvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>M*</code>  
+<p>
+<dt>(b)
+<dd><code>%+/</code>  
+<p>
+<dt>(c)
+<dd><code>:=:</code>  
+<p>
+</dd>
+</dl>
+<dt>6.18<a name="ex-vi-xviii"></a>
+<dd>Declare an operator using the symbol <code>PP</code> which will add
+<code>1</code> to the value its <code>REF INT</code> operand refers to, and which
+will yield the name of its parameter.
+ Ans<a href="node140.html#ans-vi-xviii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1676"
+  href="node63.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1670"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1664"
+  href="node61.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1672"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1674"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1677"
+  href="node63.html">Procedures</a>
+<b> Up:</b> <a name="tex2html1671"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1665"
+  href="node61.html">Routines</a>
+ &nbsp; <b>  <a name="tex2html1673"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1675"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

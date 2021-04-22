@@ -1,0 +1,151 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Boolean operators</title>
+<meta name="description" content="boolean operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node43.html">
+<link rel="previous" href="node41.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node43.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1315"
+  href="node43.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1309"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1303"
+  href="node41.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1311"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1313"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1316"
+  href="node43.html">Relational operators</a>
+<b> Up:</b> <a name="tex2html1310"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1304"
+  href="node41.html">Boolean values</a>
+ &nbsp; <b>  <a name="tex2html1312"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1314"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00620000000000000000"></a><a name="choice-bops"></a>
+Boolean operators</h1>
+
+<p>The simplest operator which has an operand of mode
+<code>BOOL</code> is <tt>NOT</tt><a name="2446"></a>. If its operand
+is <code>TRUE</code>, it yields <code>FALSE</code>.  Conversely, if
+its operand is <code>FALSE</code>, it yields <code>TRUE</code>.  The
+operator <tt>ODD</tt><a name="2447"></a> yields <code>TRUE</code> if
+its operand is an odd integer and <code>FALSE</code> if it is even.
+The operators can be combined, so</p>
+
+<pre>
+   NOT ODD 2
+</pre>
+
+<p>yields <code>TRUE</code>.</p>
+
+<p><tt>ABS</tt><a name="2448"></a> converts its operand of mode
+<code>BOOL</code> and yields an integer: <code>ABS TRUE</code> yields
+<code>1</code>, <code>ABS FALSE</code> yields <code>0</code>.</p>
+
+<p>Boolean dyadic operators<a name="2106"></a> come in two kinds:
+those that take operands of mode <code>BOOL</code>, yielding
+<code>TRUE</code> or <code>FALSE</code>, and those that operate on
+operands of other modes.</p>
+
+<p>Two dyadic operators are declared in the standard
+prelude<a name="2107"></a> which take operands of mode
+<code>BOOL</code>. The operator <tt>AND</tt><a name="2449"></a>
+(alternative representation <code>&amp;</code>) yields
+<code>TRUE</code> if, and only if, both its operands yield
+<code>TRUE</code>, so that</p>
+
+<pre>
+   t AND f
+</pre>
+
+<p>yields <code>FALSE</code> (<code>t</code> and <code>f</code> were
+declared earlier).  Both the operands are elaborated before the
+operator (but see the section later on pseudo-operators).  The
+priority<a name="2112"></a> of <code>AND</code> is&nbsp;3.</p>
+
+<p> The operator <tt>OR</tt><a name="2450"></a> yields
+<code>TRUE</code> if at least one of its operands yields
+<code>TRUE</code>. Thus</p>
+
+<pre>
+   t OR f
+</pre>
+
+<p>yields <code>TRUE</code>. It has no alternative representation.
+Again, both operands are elaborated before the operator. The priority
+of <code>OR</code> is&nbsp;2.</p>
+
+<p> You will learn in chapter&nbsp;6 how to define new operators if
+you need them.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1315"
+  href="node43.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1309"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1303"
+  href="node41.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1311"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1313"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1316"
+  href="node43.html">Relational operators</a>
+<b> Up:</b> <a name="tex2html1310"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1304"
+  href="node41.html">Boolean values</a>
+ &nbsp; <b>  <a name="tex2html1312"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1314"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

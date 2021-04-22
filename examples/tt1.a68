@@ -1,0 +1,309 @@
+PROGRAM tt1 CONTEXT VOID
+USE standard
+BEGIN
+
+COMMENT
+   $Log: tt1.a68,v $
+   Revision 1.1.1.1  2001-05-07 10:16:10  sian
+   Import of Ctrans v1.0.4
+
+   Revision 1.1  2000/01/15 11:11:14  sian
+   Deleted all the .m files and added the example programs to examples directory.
+
+   Revision 1.1  2000/01/10 05:56:28  sian
+   Installing QAD standard prelude
+
+   Tests `whole', `fixed' and `float' with INTs and REALs. Requires
+   data produced by `tt1data'.
+
+   Copyright (c) 1999 Phoenix Engineering
+   GNU GPL Version 2 or any later version applies.
+COMMENT
+
+INT ok;
+
+PROC by = (INT n)INT: n;
+
+PROC p ok = VOID: (print((ok+2|" Failed",""," Ok")); ok:=0);
+
+PROC test = (INT n)VOID:
+((n>1|p ok);
+   print((newline,"Test ",whole(n,0)));
+   ok:=1
+); #test#
+
+FILE cmd;
+STRING infn;
+
+IF open(cmd,"",arg channel)/=0
+THEN put(stand error,("Cannot open the command line",newline)); exit(1)
+ELSE
+   on logical file end(cmd,
+                       (REF FILE f)BOOL:
+                       (
+                          put(stand error,("No data file given",newline));
+                        exit(2);  FALSE));
+   get(cmd,(skip terminators, LOC STRING,skip terminators,infn))
+FI;
+
+PROC result = (STRING exp, obs)VOID:
+IF obs/=exp
+THEN print((newline,"Expected=[",exp,"]",
+            newline,"Observed=[",obs,"]"));
+   ok:=-1
+FI;
+
+print(("Testing whole",newline,
+       "-------------",newline));
+
+[]INT
+   whole test = ( 0,  99,  999,  9999,  99999,
+                 -9, -99, -999, -9999, -99999);
+
+test(1);
+[]STRING test 1 expected = (
+   "   0", "  99", " 999", "9999", "****",
+   "  -9", " -99", "-999", "****", "****");
+   
+FOR i FROM LWB whole test TO UPB whole test
+DO   result(test 1 expected[i],whole(whole test[i],-4)) OD;
+
+test(2);
+[]STRING test 2 expected = (
+   "  +0", " +99", "+999", "****", "****",
+   "  -9", " -99", "-999", "****", "****");
+
+FOR i FROM LWB whole test TO UPB whole test
+DO result(test 2 expected[i],(whole(whole test[i],+4))) OD;
+
+test(3);
+[]STRING test 3 expected = (
+    "0",  "99",  "999",  "9999",  "99999",
+   "-9", "-99", "-999", "-9999", "-99999");
+
+FOR i FROM LWB whole test TO UPB whole test
+DO result(test 3 expected[i],(whole(whole test[i],0))) OD;
+
+test(4);
+result("2",whole(2.3,0));
+
+test(5);
+result("3",whole(2.7,0));
+
+test(6);
+result("9",(whole(9,-1)));
+
+test(7);
+TO 1000
+DO
+   INT n=random int(100)-50;
+   result("*",whole(n,+1))
+OD;
+
+p ok;
+print((newline,
+       "Testing fixed",newline,
+       "-------------",newline));
+
+REAL e=exp(1.0);
+
+[]REAL
+   fxt = ( e/10,  e,  e*10,  e*100,  e*1000,  e*10**4,
+          -e/10, -e, -e*10, -e*100, -e*1000, -e*10**4,
+           10**6, -10**5);
+
+test(8);
+[]STRING test 8 expected = (
+   " 0.272", " 2.718", "27.183", "271.83", "2718.3", " 27183",
+   "-0.272", "-2.718", "-27.18", "-271.8", " -2718", "-27183",
+   "******", "******");
+
+FOR i FROM LWB fxt TO UPB fxt
+DO   result(test 8 expected[i],fixed(fxt[i],-6,3)) OD;
+
+test(9);
+[]STRING test 9 expected = (
+   "+0.272", "+2.718", "+27.18", "+271.8", " +2718", "+27183",
+   "-0.272", "-2.718", "-27.18", "-271.8", " -2718", "-27183",
+   "******", "******");
+
+FOR i FROM LWB fxt TO UPB fxt
+DO   result(test 9 expected[i],fixed(fxt[i],+6,3)) OD;
+
+test(10);
+result(".272",fixed(fxt[1],-4,3));
+
+test(11);
+[]STRING test 11 expected = ("+.272", "-.272" );
+
+FOR i BY by(6) TO 7
+DO result(test 11 expected[(i=1|1|2)],fixed(fxt[i],+5,3)) OD;
+
+test(12);
+[]STRING test 12 expected = (
+    ".272",  "2.718",  "27.183",  "271.828", "", "",
+   "-.272", "-2.718", "-27.183", "-271.828");
+
+FOR i BY by(6) TO 7
+DO
+   FOR j FROM 0 TO 3
+   DO
+      result(test 12 expected[i+j],fixed(fxt[i+j],0,3))
+   OD
+OD;
+
+test(13);
+FOR n TO 10
+DO
+   TO 10
+   DO
+      INT v=random int(100);
+      result(whole(v,n),fixed(v,n,0))
+   OD
+OD;
+
+[]INT fxt 2 = (0,  99,  999,
+              -9, -99, -999);
+
+test(14);
+[]STRING test 14 expected = (
+   " 0.000", "99.000", "999.00",
+   "-9.000", "-99.00", "-999.0");
+
+FOR i FROM LWB fxt 2 TO UPB fxt 2
+DO   result(test 14 expected[i],fixed(fxt 2[i],-6,3)) OD;
+
+test(15);
+TO 1000
+DO
+   REAL r=random*10*(random<.5|-1|1);
+   result("******",fixed(r,-6,6))
+OD;
+
+test(16);
+TO 1000
+DO
+   REAL r=random*10*(random<.5|-1|1);
+   result("******",fixed(r,+6,5))
+OD;
+test(17);
+TO 1000
+DO
+   REAL r=random*10*(random<.5|-1|1);
+   result("******",fixed(r,-6,-5))
+OD;
+
+[]REAL ft1 = (e/10, -e, e*10.0**11, e*10.0**111);
+
+p ok;
+print((newline,
+       "Testing float",newline,
+       "-------------",newline));
+
+test(18);
+[]STRING test 18 expected = (
+   "+2.718e-1", "-2.718e+0", "+2.72e+11", "+2.7e+111");
+
+FOR i FROM LWB ft1 TO UPB ft1
+DO   result(test 18 expected[i], float(ft1[i],+9,3,+2)) OD;
+
+test(19);
+[]STRING test 19 expected = (
+   " 2.718e-1", "-2.718e 0", " 2.718e11", " 2.72e111");
+
+FOR i FROM LWB ft1 TO UPB ft1
+DO   result(test 19 expected[i],float(ft1[i],-9,3,-2)) OD;
+
+[]REAL ft2 = (e/10, -e);
+
+test(20);
+[]STRING test 20 expected = ("+.2718e+0", "-.2718e+1");
+
+FOR i FROM LWB ft2 TO UPB ft2
+DO   result(test 20 expected[i],float(ft2[i],+9,4,+2)) OD;
+
+test(21);
+[]STRING test 21 expected = ("+27183e-5", "-27183e-4");
+
+FOR i FROM LWB ft2 TO UPB ft2
+DO   result(test 21 expected[i],float(ft2[i],+9,0,+2)) OD;
+
+test(22);
+result(" +0.00e+0",float(0.0, +9, 2, +2));
+
+test(23);
+FILE inf;
+[4000] REAL rand;
+IF open(inf,infn,stand in channel)=0
+THEN
+   on logical file end(inf,
+                       (REF FILE f)BOOL:
+                       (
+                        put(stand error,("Unexpected end of ",idf(f),newline));
+                        close(f);
+                        exit(3); TRUE
+                       ));
+   get bin(inf,rand);
+   close(inf)
+ELSE put(stand error,("Cannot open file ",infn,newline)); exit(4)
+FI;
+
+INT r:=0;
+
+TO 1000
+DO
+   REAL x=rand[r+:=1]*1000*(rand[r+:=1]<.5|-1|1);
+   INT m=ENTIER(rand[r+:=1]*10+2);
+   INT n=ENTIER(rand[r+:=1]*m);
+   []CHAR s1=float(x, m, n, 0);
+   []CHAR s2=(n/=0|float(x,m,n-1,-1)|float(x,m,n,-1));
+
+   IF s1/=s2
+   THEN
+      print(("float(",float(x,26,18,3),",",whole(m,-2),",",
+             whole(n,-2),",",whole(0,-2),")=>[",s1,"]",newline,
+             "float(",float(x,26,18,3),",",whole(m,-2),",",
+             whole((n/=0|n-1|n),-2),",",whole(-1,-2),")=>[",s2,"]",newline));
+      ok:=-1
+   FI
+OD;
+
+test(24);
+TO 1000
+DO
+   REAL x=random*10**6*(random<.5|-1|1);
+   INT m=ENTIER(random*10+2);
+   INT n=ENTIER(random*m);
+   []CHAR s1=float(x, 0, m, n);  result(UPB s1*errorchar,s1)
+OD;
+
+test(25);
+TO 1000
+DO
+   REAL x=random*10**6*(random<.5|-1|1);
+   INT m=ENTIER(random*10+2);
+   INT n=ENTIER(random*m);
+   []CHAR s2=float(x,+7, 3,+2);  result(UPB s2*errorchar,s2)
+OD;
+
+test(26);
+TO 1000
+DO
+   REAL x=random*10**6*(random<.5|-1|1);
+   INT m=ENTIER(random*10+2);
+   INT n=ENTIER(random*m);
+   []CHAR s3=float(x, 4, 0,+2);  result(UPB s3*errorchar,s3)
+OD;
+
+test(27);
+TO 1000
+DO
+   REAL x=random*10**6*(random<.5|-1|1);
+   INT m=ENTIER(random*10+2);
+   INT n=ENTIER(random*m);
+   []CHAR s4=float(x, 9,-3, 2);  result(UPB s4*errorchar,s4)
+OD;
+p ok; newline(stand out)
+
+END
+FINISH

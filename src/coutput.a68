@@ -1,0 +1,530 @@
+DECS  coutput  CONTEXT VOID  USE
+*L    usefulops, messageproc, osif,
+      centities, environ, environment, moduletracer:
+
+configinfo A68CONFIG "$Id: coutput.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.13 
+31:01:95  33.002  DCT   PCPort-1  bug in #line, "-n" inverted
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE
+  MODULENAME = VECTOR [0] CHAR,
+  MODINFOFRAGMENT = VECTOR [0] CHAR,
+  CEDIT	= INT, { stream no }
+  COUTPUTMODE =
+    UNION ( { for write c stream }
+      CHAR, 
+      CFRAGMENT, 
+      CEDIT, 
+      CNEWLINE ),
+  MOUTPUTMODE =
+    UNION ( { for write modinfo }
+      CHAR,
+      MODINFOFRAGMENT,
+      CNEWLINE );
+
+{ ----- error handling and tidying up----- }
+
+PROC VOID purge output files;
+
+PROC	coutput error = ( INT message, []VECTOR []CHAR parameters ) VOID:
+{                   
+Acts as a filter for calls on terminal error procedures in environment.
+Cleans up first by closing or deleting stream temporary files (depending
+on whether 'keep c streams' is set), and deleting output files.
+}
+BEGIN
+  purge output files;
+  pterminal error( message, parameters )
+END;
+
+{ ----- module initialisation ----- }
+
+REF MODULENAME module name; {initialised by 'init coutput', used to name output files}
+
+BOOL initialised := FALSE;
+
+PROC init coutput = (MODULENAME modname) VOID:
+BEGIN
+  "already initialised" ASSERT NOT initialised;
+  initialised := TRUE;
+  module name := HEAP VECTOR[ UPB modname ]CHAR := modname
+END;                             
+
+{ ----- writing module information ----- }
+
+BOOL modinfo open := FALSE;
+FILE modinfo;
+
+PROC write modinfo = (VECTOR [] MOUTPUTMODE params) VOID:
+BEGIN
+  IF NOT modinfo open
+  THEN
+    IF
+      modinfo := open_file(module name + ".m",write_access,ignore_msg);
+      modinfo IS nil_file
+    THEN
+      coutput error( 700, module name+".m")
+    FI;
+    modinfo open := TRUE
+  FI;
+
+  FORALL p IN params
+  DO
+    IF
+      write_buffer(
+        modinfo,
+        CASE p IN
+          (CHAR c): c,
+          (MODINFOFRAGMENT mf): mf,
+          (CNEWLINE): newline_char
+        OUT
+          coutput error( 715, "" ) ; ""
+        ESAC,
+        ignore_msg
+      ) = io_error
+    THEN
+      pterminal error( 750 {output file full}, modulename + ".m" )
+    FI
+  OD
+END;
+
+{ ----- General C stream handling ----- }
+
+MODE
+  { a stream may be a set of chunks of memory ... }
+  CHUNK = STRUCT( REF VECTOR [] CHAR data, REF CHUNK next),
+  MEMSTREAM =
+    STRUCT(
+      REF CHUNK first_chunk,   { head of linked list of memory chunks }
+      REF CHUNK current_chunk, { currently used chunk (always last chunk when writing) }
+      INT pos,                 { index in 'data OF current_chunk' of first unprocessed CHAR }
+      INT status
+    ),
+
+  { ... or a file ...}
+  FILESTREAM = STRUCT(FILE file, INT status),
+
+  { ... or not initialised yet (VOID) }
+  CSTREAM = UNION(REF FILESTREAM,REF MEMSTREAM,VOID);
+
+{ FILESTREAM and MEMSTREAM status values }
+INT
+  open for reading = 1,
+  open for writing = 2,
+  not open = 3;
+
+{ initial stream area (copes with 5 levels of lexical nesting) }
+
+STRUCT 21 CSTREAM initial cstreams;
+REF [] CSTREAM cstreams := initial cstreams[@0];
+FORALL stream IN cstreams DO stream := EMPTY OD;
+
+CHAR cedit id = REPR 26;
+
+PROC stream file name = (INT streamno) VECTOR [] CHAR:
+  ( tempfile option | "/tmp/" | "" ) + modulename + "." + whole(streamno,0);
+
+INT chunksize = 5000;   { size of memory chunks -- may be PROC (INT streamno) INT in the future }
+
+{ ----- writing to C streams ----- }
+
+PROC write file stream = (COUTPUTMODE item, CSTREAM stream) VOID:
+CASE
+  MESSAGEPROC msg = (MSGNO msgno, VECSTR params) VOID:
+    ( MESSAGE mess = translate_msg(msgno,params);
+      coutput error( 714,  text OF mess)
+    );
+  stream
+IN
+  (REF FILESTREAM f):
+    CASE item IN
+      (CEDIT ce): 
+         write_buffer(file OF f,cedit id + ITOCS ce,msg),
+      (CHAR c): 
+         write_buffer(file OF f,c,msg),
+      (CFRAGMENT cf):
+         write_buffer(file OF f,cf,msg),
+      (CNEWLINE):
+        ( write_buffer(file OF f,newline_char,msg);
+          IF line option
+          THEN
+            write_buffer(file OF f,"#line ",msg);
+            write_buffer(file OF f,whole((line number = 0 | 1 | line number),0),msg);
+            write_buffer(file OF f," """,msg);
+            write_buffer(file OF f,basename sourcefile,msg);
+            write_buffer(file OF f,source file suffix,msg);
+            write_buffer(file OF f,"""",msg);
+            write_buffer(file OF f,newline_char,msg)
+         FI
+        )
+    OUT
+      "invalid COUTPUTMODE" ASSERT FALSE
+    ESAC
+OUT
+  "not a FILESTREAM" ASSERT FALSE
+ESAC;
+
+PROC write_mem = (REF MEMSTREAM ms, VECTOR [] CHAR buf) VOID:
+{
+  copy the contents of 'buf' to ms
+}
+  IF
+    REF INT pos = pos OF ms;
+    REF VECTOR [] CHAR usable_data = (data OF current_chunk OF ms)[pos:];
+    INT
+      upb_usable_data = UPB usable_data,
+      upb_buf = UPB buf;
+    upb_buf <= upb_usable_data
+  THEN
+    { enough space in current chunk }
+    usable_data[:upb_buf] := buf;
+    pos +:= upb_buf
+  ELSE
+    { not enough space, so copy what fits ... }
+    usable_data := buf[:upb_usable_data];
+
+    { ... allocate another chunk, and make it the current one ... }
+    next OF current_chunk OF ms := HEAP CHUNK := (HEAP VECTOR [chunksize] CHAR, NIL);
+    current_chunk OF ms := next OF current_chunk OF ms;
+    pos := 1;
+
+    { ... and write the remainder to the new chunk}
+    write_mem(ms, buf[upb_usable_data+1:])     
+  FI;
+
+PROC write mem stream = (COUTPUTMODE item, CSTREAM stream) VOID:
+CASE
+  MESSAGEPROC msg = (MSGNO msgno, VECSTR params) VOID:
+    ( MESSAGE mess = translate_msg(msgno,params);
+      coutput error( 714,  text OF mess)
+    );
+  stream
+IN
+  (REF MEMSTREAM ms):
+    CASE item IN
+      (CEDIT ce): 
+         write_mem(ms,cedit id + ITOCS ce),
+      (CHAR c): 
+         write_mem(ms,c),
+      (CFRAGMENT cf):
+         write_mem(ms,cf),
+      (CNEWLINE):
+        ( write_mem(ms,newline_char);
+          IF line option
+          THEN
+            write_mem(ms,"#line ");
+            write_mem(ms,whole((line number = 0 | 1 | line number),0));
+            write_mem(ms," """);
+            write_mem(ms,basename sourcefile);
+            write_mem(ms,source file suffix);
+            write_mem(ms,"""");
+            write_mem(ms,newline_char)
+          FI
+        )
+    OUT
+      "invalid COUTPUTMODE" ASSERT FALSE
+    ESAC
+OUT
+  "not a MEMSTREAM" ASSERT FALSE
+ESAC;
+
+PROC check stream writable = (INT streamno) PROC (COUTPUTMODE,CSTREAM) VOID:
+{
+  checks that the specified stream can be used, and readies it if necessary;
+  returns the appropriate PROC for writing to the stream
+}
+IF
+  INT old upb = UPB cstreams;
+  streamno > old upb
+THEN
+  { need to extend the current set of cstreams ... }
+  INT new upb := old upb;
+  WHILE new upb < streamno DO new upb +:= 5 * streams_per_level OD;
+  HEAP [0:new upb] CSTREAM new cstreams;
+  new cstreams[:old upb] := cstreams;
+  FORALL s IN new cstreams[old upb + 1:] DO s := EMPTY OD;
+  cstreams := new cstreams;
+
+  { ... and try again }
+  check stream writable(streamno)
+ELSE
+  CASE
+   REF CSTREAM s = cstreams[streamno];
+   s
+  IN
+    (REF FILESTREAM fs):
+      ( "FILESTREAM not writable" ASSERT status OF fs = open for writing;
+         write file stream
+      ),
+    (REF MEMSTREAM ms):
+      ( "MEMSTREAM not writable" ASSERT status OF ms = open for writing;
+         write mem stream
+      ),
+    (VOID):
+      CASE
+        cstream_policy
+      IN
+        { 1: file_cstreams }
+          IF
+            FILE f = open_file(stream file name(streamno), write_access, ignore_msg);
+            f IS nil_file
+          THEN
+            pterminal error(702,stream file name(streamno));
+            SKIP
+          ELSE
+            s := HEAP FILESTREAM := (f,open for writing);
+            write file stream
+          FI,
+        { 2: memory_cstreams }
+          (
+            HEAP VECTOR [chunksize] CHAR data;
+            HEAP CHUNK initial chunk := (data,NIL);
+            s := HEAP MEMSTREAM := (initial chunk,initial chunk,1,open for writing);
+            write mem stream
+          )
+      OUT
+        "bad cstream policy" ASSERT FALSE; SKIP
+      ESAC
+  OUT
+    "corrupt stream" ASSERT FALSE; SKIP
+  ESAC
+FI;
+
+{ write data to streams }
+PROC write c stream = (VECTOR [] COUTPUTMODE params, INT streamno ) VOID:
+IF NOT check option
+THEN
+  PROC (COUTPUTMODE,CSTREAM) VOID output data = check stream writable(streamno);
+  FORALL p IN params
+  DO
+    output data(p,cstreams[streamno])
+  OD
+FI;
+
+{ ----- writing C file by collating C streams ----- }
+ 
+PROC close coutput = VOID:
+{
+  Closes modinfo file.
+  C streams are closed for writing and
+  reading commences at stream 0, and continues as indicated by cedits
+  encountered.  Streams are opened for reading the first time they are
+  selected.  When the current stream is exhausted, this is considered the
+  end of streams.  All stream files are then deleted, or simply closed
+  if a debugging option is set.
+}
+IF
+  { close modinfo file }
+  IF modinfo ISNT nil_file THEN close_file(modinfo,ignore_msg) FI;
+
+  NOT check option
+THEN
+  { create the output C file }
+  FILE cfile = open_file(( tempfile option | "/tmp/" | "" ) + modulename + ".c",write_access,ignore_msg);
+  IF cfile IS nil_file THEN coutput error(703,modulename + ".c") FI;
+
+  { close streams }
+  FORALL s IN cstreams
+  DO
+    CASE s IN
+      (REF FILESTREAM fs):
+        ( close_file(file OF fs,ignore_msg); status OF fs := not open ),
+      (REF MEMSTREAM ms):
+        ( { last chunk is not filled => adjust descriptor to size used }
+          REF REF VECTOR [] CHAR (data OF current_chunk OF ms) :=
+            (data OF current_chunk OF ms)[:pos OF ms -1]; 
+          status OF ms := not open
+        )
+    OUT
+      SKIP
+    ESAC
+  OD;
+
+  REF FILESTREAM current file stream;
+  REF MEMSTREAM current mem stream;
+  
+  PROC file stream char =  CHAR:
+  {
+    get next character from selected file stream;
+  }
+  BEGIN
+    CHAR c; INT chars read;
+    read_buffer(file OF current file stream,c,chars read,ignore_msg);
+    IF chars read /= 1 THEN GOTO end of streams FI;
+    c
+  END;
+
+  PROC mem stream char =  CHAR:
+  {
+    get next character from selected mem stream;
+  }
+  IF
+    REF CHUNK current_chunk = current_chunk OF current mem stream;
+    REF VECTOR [] CHAR current_data = data OF current_chunk;
+    REF INT pos = pos OF current mem stream;
+    pos <= UPB current_data
+  THEN
+    { get from current chunk }
+    CHAR c = current_data[pos];
+    pos +:= 1;
+    c
+  ELIF
+    next OF current_chunk IS REF CHUNK (NIL)
+  THEN
+    { no more chunks => end of stream }
+    GOTO end of streams
+  ELSE
+    { make next chunk current ... }
+    REF REF CHUNK(current_chunk OF current mem stream) := next OF current_chunk;
+    pos := 1;
+    mem stream char
+  FI;
+
+  PROC CHAR stream char;  { either 'file stream char' or 'mem stream char' }
+
+  PROC select stream = (INT streamno) VOID:
+  {
+    makes streamno the current stream;
+  }
+  CASE
+    cstreams[streamno]
+  IN
+    (REF FILESTREAM fs):
+      CASE
+        status OF fs
+      IN
+        {open for reading}
+          ( REF REF FILESTREAM(current file stream) := fs; stream char := file stream char ),
+        {open for writing}
+          "attempt to read on stream open for writing" ASSERT FALSE,
+        {not open}
+          IF
+            FILE f = open_file(stream file name(streamno),read_access,ignore_msg);
+            f IS nil_file
+          THEN
+            coutput error(704,whole(streamno,0))
+          ELSE
+            fs := (f,open for reading);
+            REF REF FILESTREAM(current file stream) := fs;
+            stream char := file stream char
+          FI
+      OUT
+        "invalid stream status" ASSERT FALSE
+      ESAC,
+    (REF MEMSTREAM ms):
+      CASE
+        status OF ms
+      IN
+        {open for reading}
+          ( REF REF MEMSTREAM(current mem stream) := ms; stream char := mem stream char ),
+        {open for writing}
+          "attempt to read on stream open for writing" ASSERT FALSE,
+        {not open}
+          (
+            REF CHUNK first_chunk = first_chunk OF ms;
+            ms := (first_chunk,first_chunk,1,open for reading);
+            REF REF MEMSTREAM(current mem stream) := ms;
+            stream char := mem stream char
+          )
+      OUT
+        "invalid stream status" ASSERT FALSE
+      ESAC,
+    (VOID):
+      "attempt to read unwritten stream" ASSERT FALSE
+  OUT
+    "corrupt stream" ASSERT FALSE
+  ESAC;
+
+  MESSAGEPROC cfile_msg = (MSGNO msgno, VECSTR params) VOID:
+    ( MESSAGE mess = translate_msg(msgno,params);
+      coutput error( 709,  (basename sourcefile,text OF mess))
+    );
+
+  { starting with stream 0 ... }
+  select stream(0);
+
+  { ... read the streams, observing CEDITs for switching }
+  DO
+    IF
+      CHAR c = stream char;
+      c = cedit id
+    THEN
+      STRUCT 4 CHAR stream;
+      FORALL i IN stream DO i := stream char OD;
+      select stream(STRINGVALUE stream)
+    ELSE
+      write_buffer(cfile,c,cfile_msg)
+    FI
+  OD;
+
+end of streams:
+  close_file(cfile,ignore_msg);
+  purge output files
+FI;
+
+purge output files := VOID:
+  FOR i FROM LWB cstreams TO UPB cstreams
+  DO
+    CASE
+      CSTREAM s = cstreams[i]; s
+    IN
+      (REF FILESTREAM f):
+        ( close_file(file OF f,ignore_msg);
+          ( TRACELEVEL "coutput" < 5 | delete_file(stream file name(i), ignore_msg) )
+        )
+    OUT
+      SKIP
+    ESAC
+  OD;
+
+SKIP
+
+KEEP
+    init coutput,
+    close coutput,
+    write modinfo, 
+    write c stream,
+    purge output files
+FINISH
+                                            
+{
+Local Variables:
+eval: (auto-fill-mode 0)
+End:
+}

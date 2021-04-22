@@ -1,0 +1,92 @@
+.\"
+.\"     Title: resetseed
+.\"    Author: Sian Mountbatten <poenikatu@fastmail.co.uk>
+.\" Generator: The author
+.\"      Date: 13\ \&Sept\ \&2012
+.\"    Manual: Algol 68
+.\"    Source: algol68toc 1.14
+.\"  Language: English
+.\"
+.Dd 13th Sept 2012
+.Os "Debian GNU/Linux" 7.0
+.Dt RESETSEED 1
+.
+.
+.Sh NAME
+.
+.Nm resetseed
+.Nd reset/set the seedfile for
+.Xr a68toc 1
+.
+.
+.Sh SYNOPSIS
+.
+.Nm
+.Op Fl h | Fl \-help
+.Op Fl f | Ar "7 upper-case letters"
+.
+.Sh DESCRIPTION
+.
+.Nm
+resets or sets the seedfile for
+.Xr a68toc 1
+If the
+.Fl f
+option is given,
+.Nm
+presumes that the
+.Pa rctr
+file exists and simply copies it to
+.Pa nameseed .
+If seven uppercase letters are given as argument, then the file
+.Pa rctr
+is created and copied to
+.Pa nameseed .
+.
+.
+.Sh OPTIONS
+.
+.
+The following options are available:-
+.Bl -tag -width Ds
+.
+.
+.It Fl f
+Copy the file
+.Pa rctr
+to the file
+.Pa nameseed
+.
+.
+.It Fl h | Fl \-help
+Display a short help message
+.
+.
+.It Ar "Seven uppercase letters"
+The letters are written without a newline to the file
+.Pa rctr
+and the latter is copied to the file
+.Pa nameseed .
+.El
+.
+.Sh FILES
+.
+None.
+.
+.
+.Sh ENVIRONMENT
+.
+None.
+.
+h SEE ALSO
+.Xr a68toc 1
+.
+.
+.Sh COPYRIGHT
+Copyright (C) 2012 Sian Mountbatten and available under the GNU
+Public Licence version 2 or any later version.
+.
+.
+.Sh AUTHOR
+Sian Mountbatten
+

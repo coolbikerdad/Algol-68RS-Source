@@ -1,0 +1,191 @@
+DECS  variables  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface:
+
+{ " Id: $" }
+configinfo A68CONFIG "$Id: variables.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:06:93  Created to pull together definitions of ELLA variables -
+             allow for the possibility of storing them in the library.  DCT
+12:08:93  sort OF var was rather mixed up.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.002 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+MODE  VAR,
+      VAR = STRUCT ( RVC  name,  default,  value,  INT  sort,
+                     PROC ( VAR { variable after assignment },
+                            BOOL    { whether changed },
+                            MESSAGEPROC ) VOID  set ),
+      VARS = STRUCT (VAR  var,  REF VARS  rest);
+
+INT  env_var = 1,  str_var = 2,  bool_var = 3;
+
+STR  unknown_var = "notknown",  true_var = "ON",  false_var = "OFF";
+
+REF VARS  nilvars = NIL;
+REF VARS  varslist:= nilvars;
+
+
+PROC  add_var = ( STR  name,  default,  INT  sort,
+                  PROC (VAR, BOOL, MESSAGEPROC) VOID  set
+                ) VOID:
+BEGIN
+   varslist:= HEAP VARS:=
+      (( MAKERVC name, MAKERVC default, MAKERVC
+             IF sort = env_var THEN  get_env_var(default)  ELSE  default  FI,
+         sort, set ), varslist);
+   { supress any log information at initialisation - would be better to
+     use a messageproc parameter }
+   PROC  msg = (MSGNO  no,  VECSTR  params) VOID:
+      IF error_msg(no) THEN  global_msg(no, params)  FI;
+   set(var OF varslist, FALSE { not changed }, msg)
+END;
+
+
+PROC  null_set_var = (VAR  var,  BOOL  changed,  MESSAGEPROC  msg) VOID:
+   SKIP;
+
+PROC  default_set_var = (VAR  var,  BOOL  changed,  MESSAGEPROC  msg) VOID:
+   IF changed
+   THEN  msg(log, concat(( "Variable ", name OF var,
+                           " remains """, value OF var, """" )))
+   ELSE  msg(log, concat(( "Variable ", name OF var, " has been "
+                           "changed to """, value OF var, """" )))
+   FI;
+
+
+PROC  get_var = (STR  name) STR:
+BEGIN
+   BOOL  not_found:= TRUE;
+   RVC  ans:= STRTORVC unknown_var;
+   REF VARS  vars:= varslist;
+   WHILE (vars ISNT nilvars)  ANDTH  not_found
+   DO  REF VAR  var = var OF vars;
+       IF name = name OF var
+       THEN  not_found:= FALSE;
+             ans:= IF sort OF var = env_var  ANDTH  value OF var = unknown_var
+                   THEN  MAKERVC get_env_var(default OF var)
+                   ELSE  value OF var
+                   FI
+       FI;
+       vars:= rest OF vars
+   OD;
+   ans
+END;
+
+
+PROC  var_unset = (STR  name) BOOL:  { variable is not known or undefined }
+BEGIN
+   STR  var = get_var(name);
+   UPB var = 0  OREL  var = unknown_var
+END;
+
+
+PROC  test = (STR  a,  VECSTR  b) BOOL:
+BEGIN
+   VECTOR [UPB a] CHAR  c:= a;
+   FORALL ch IN c
+   DO  IF ch >= "A"  ANDTH  ch <= "Z" THEN  ch:= REPR (ABS ch + 32)  FI  OD;
+   BOOL  equal:= FALSE;
+   FORALL d IN b WHILE NOT equal DO  equal:= d = c  OD;
+   equal
+END;
+
+PROC  set_var = (STR  name,  value,  MESSAGEPROC  msg) VOID:
+BEGIN
+   BOOL  not_found:= TRUE;
+   REF VARS  vars:= varslist;
+   WHILE (vars ISNT nilvars)  ANDTH  not_found
+   DO  REF VAR  var = var OF vars;
+       IF name = name OF var
+       THEN  not_found:= FALSE;
+             RVC  new =
+                IF sort OF var = bool_var
+                THEN  IF test(value, ("on", "true", "t"))
+                      THEN  STRTORVC true_var
+                      ELIF test(value, ("off", "false", "f"))
+                      THEN  STRTORVC false_var
+                      ELIF UPB value = 0
+                      THEN  IF value OF var = true_var
+                            THEN  STRTORVC false_var
+                            ELSE  STRTORVC true_var
+                            FI
+                      ELSE  msg( user, concat(( "variable ", name, " can "
+                                                "only be set to ON or OFF" )) );
+                            nullstr
+                      FI
+                ELSE  MAKERVC value
+                FI;
+             BOOL  changed = new = value OF var;
+             value OF var:= new;
+             (set OF var)(var, changed, msg);
+             value OF var:= new
+       FI;
+       vars:= rest OF vars
+   OD;
+   IF not_found
+   THEN  msg(user, concat(("variable """, name, """ is not known")))
+   FI
+END;
+
+
+PROC  show_var = (STR  var,  MESSAGEPROC  msg) VOID:
+   IF UPB var > 0
+   THEN  STR  value = get_var(var);
+         IF value = unknown_var
+         THEN  msg(user, concat(("""", var, """ is not an ELLA variable")))
+         ELIF  UPB value = 0
+         THEN  put(screen, ("Variable ", var, " is undefined", newline))
+         ELSE  put(screen, ( "Variable ", var, " is set to """, value, """",
+                              newline ))
+         FI
+   ELSE  REF VARS  vars:= varslist;
+         WHILE vars ISNT nilvars
+         DO  show_var(name OF var OF vars, msg);
+             vars:= rest OF vars
+         OD
+   FI;
+
+
+PROC  restore_vars = (RVC  buffer) VOID:  SKIP; { read buffer from the library }
+
+PROC  remember_vars = RVC:  nullstr       { Used to save ELLA vars }
+
+
+KEEP  VAR,  env_var,  str_var,  bool_var,  unknown_var,  true_var,
+      false_var,  add_var,  null_set_var,  default_set_var,  get_var,
+      var_unset,  set_var,  show_var,  restore_vars,  remember_vars
+FINISH

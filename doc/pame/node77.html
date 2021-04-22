@@ -1,0 +1,258 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Conformity clauses</title>
+<meta name="description" content="conformity clauses">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node78.html">
+<link rel="previous" href="node76.html">
+<link rel="up" href="node74.html">
+<link rel="next" href="node78.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1932"
+  href="node78.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1926"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1920"
+  href="node76.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1928"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1930"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1933"
+  href="node78.html">Summary</a>
+<b> Up:</b> <a name="tex2html1927"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1921"
+  href="node76.html">United modes in procedures</a>
+ &nbsp; <b>  <a name="tex2html1929"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1931"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1934"
+  href="node77.html#section001031000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001030000000000000000"></a><a name="union-conf"></a>
+Conformity clauses</h1>
+
+<p>In the last section, we discussed the consequences of the
+uniting<a name="5339"></a> coercion; that is, how values of various
+modes can be united to values of united modes.  This raises the
+question of how a value of a united mode can be extracted since its
+constituent mode<a name="5340"></a> cannot be determined at
+compile-time.  There is no de-uniting coercion in Algol&nbsp;68.  The
+constituent mode or the value, or both, can be determined using a
+variant of the case clause discussed in chapter&nbsp;4 (see
+section&nbsp;<a href="node46.html#choice-case">4.6</a>). It is called
+a <b>conformity clause</b><a name="5343"></a>. For our discussion, we
+shall use the declaration of <code>u</code> in
+section&nbsp;<a href="node75.html#union-mode">8.1</a> (<code>u</code>
+has mode <code>STRINT</code>).</p>
+
+<p>The constituent mode of <code>u</code> can be determined by the
+following:</p>
+
+<pre>
+   CASE u IN
+      (INT):    print("u is an integer")
+      ,
+      (STRING): print("u is a string")
+   ESAC
+</pre>
+
+<p>If the constituent mode of <code>u</code> is <code>INT</code>, the
+first case will be selected. Notice that the mode
+selector<a name="5347"></a> is enclosed in parentheses and followed by
+a colon.  Otherwise, the conformity clause is just like the case
+clause (in fact, it is sometimes called a conformity case
+clause<a name="5348"></a>).  This particular example could also have
+been written</p>
+
+<pre>
+   CASE u
+   IN
+      (STRING): print("u is a string")
+   OUT
+      print("u is an integer")
+   ESAC
+</pre>
+
+<p>This is the only circumstance when a <code>CASE</code> clause can
+have one choice. Usually, however, we want to extract the value. A
+slight modification is required:</p>
+
+<pre>
+   CASE u IN
+      (INT i):
+         print(("u identifies the value",i))
+      ,
+      (STRING s):
+         print(("u identifies the value ",s))
+   ESAC
+</pre>
+
+<p>In this example, the mode selector and
+identifier<a name="5353"></a> act as the left-hand side of an identity
+declaration<a name="5405"></a>.  The identifier can be used in the
+following unit<a name="5355"></a> (or enclosed
+clause<a name="5356"></a>).</p>
+
+<p>The two kinds of conformity clause can be mixed. For example, here
+is one way of using the procedure <code>ucis</code>:</p>
+
+<pre>
+   CASE ucis(c,s) IN
+      (VOID):
+         print("The character was not found"),
+      (INT p):
+         print(("The position was",p))
+   ESAC
+</pre>
+
+<p>We mentioned in the last section that operators with united-mode
+operands can be declared. Here is one such:</p>
+
+<pre>
+   MODE IC = UNION(INT,CHAR);
+   OP * = (IC a,b)IC:
+   CASE a IN
+      (INT ai):
+         (b|(INT bi): ai*bi,
+            (CHAR bc): ai*bc),
+      (CHAR ac):
+         (b|(INT bi): ac*bi,
+            (CHAR bc): ABS ac*ABS bc)
+   ESAC
+</pre>
+
+<p>In each of the four cases, the resulting product is united to the mode
+<code>IC</code>.</p>
+
+<p>You can have more than one mode in a particular case. For
+example:</p>
+
+<pre>
+   MODE ICS = UNION(INT,CHAR,STRING);
+   OP * = (ICS a,INT b)ICS:
+   CASE a
+   IN
+      (UNION(STRING,CHAR) ic):
+         (ic|(CHAR c): c*b,(STRING s): s*b),
+      (INT n): n*b
+   ESAC
+</pre>
+
+<p>Note that conformity clauses do not usually have an <code>OUT</code> clause
+because the only way of extracting a value is by using the
+<code>(MODE id):</code> construction. However, they do have their uses. See
+the standard prelude for more examples of conformity clauses.</p>
+
+<p>Although <tt>read</tt><a name="5406"></a> and
+<tt>print</tt><a name="5407"></a> use united modes in their call, you
+cannot read a value of a united mode or print a value of a united mode
+(remember that united modes do not introduce new values). You have to
+read a value of a constituent mode<a name="5367"></a> and then unite
+it, or extract the value of a constituent mode and print it.</p>
+
+<hr>
+<h2><a name="section001031000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>8.7<a name="ex-viii-vii"></a>
+<dd>The modes
+<pre>
+   MODE IRC = UNION(INT,REAL,COMPL),
+        MIRC= UNION([]INT,[]REAL,[]COMPL)
+</pre>
+
+are used in this and the following exercises.
+Write a procedure which takes a single parameter of mode <code>MIRC</code>
+and which yields the sum of all the elements of its parameter as a
+value with mode <code>IRC</code>.
+ Ans<a href="node142.html#ans-viii-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>8.8<a name="ex-viii-viii"></a>
+<dd>Write the body of the operator <code>*</code> whose header is
+declared as
+<pre>
+   OP * = (IRC a,b)IRC:
+</pre>
+
+Use nested conformity clauses. Remember that there are 9 separate
+cases.  Ans<a href="node142.html#ans-viii-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1932"
+  href="node78.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1926"
+  href="node74.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1920"
+  href="node76.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1928"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1930"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1933"
+  href="node78.html">Summary</a>
+<b> Up:</b> <a name="tex2html1927"
+  href="node74.html">Unions</a>
+<b> Previous:</b> <a name="tex2html1921"
+  href="node76.html">United modes in procedures</a>
+ &nbsp; <b>  <a name="tex2html1929"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1931"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

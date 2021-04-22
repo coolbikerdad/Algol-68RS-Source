@@ -1,0 +1,148 @@
+DECS  unionaids  CONTEXT VOID  USE  environment, modes, values:
+
+configinfo A68CONFIG "$Id: unionaids.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1992
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.0 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+COMMENT
+	Note that a mode can occur twice in a union, as implemented by RSRE.
+	We have adopted the convention of using the first occurance to give
+	the run time mode number position.
+	This makes diagnostics, debugging and mixed language programming easier.
+	It also allows easier implementation of conformities, espacially if we
+	later use ELIF type jump chains for thier implementation.
+COMMENT
+
+MODE	UNIONMODES = REF VECTOR [] INT;
+
+PROC	find occurances = ( INT mode, UNIONMODES u ) []INT:
+{
+	Delivers a row of all the indecies in 'u' of 'mode'.
+}
+BEGIN
+	[ UPB u ] INT indicies;
+	INT	number indicies := 0;
+	FOR	i TO UPB u
+	DO
+		IF	mode = u[ i ]
+		THEN	indicies[ number indicies +:= 1 ] := i
+		FI
+	OD;
+	indicies[ :number indicies ]
+END;
+
+PROC	find mode = ( INT find, in mode ) INT:
+BEGIN
+	[]INT	a = constituents( in mode );
+	INT	pos := 1; { position in union }
+	FOR i	TO UPB a WHILE a[i] /= find DO pos +:= 1 OD;	
+	"UNIONAIDS - find mode: mode not present" ASSERT pos <= UPB a;
+	pos
+END;
+
+PROC	find ints = ( UNIONMODES a, b ) INT:
+COMMENT
+        If a is a substring of b, the index in b of the start of a is returned,
+        otherwise zero is returned.
+        Only delivers index if all in 'a' correspond to thier first occurance in 'b',
+        so uniting is correct if a mode is twice in a union.
+COMMENT
+BEGIN
+	INT	length a = UPB a, length b = UPB b;
+	INT	find := 0;
+	FOR	i TO length b - length a + 1
+	WHILE
+	        BOOL equal := FALSE;
+	        FOR	j TO length a
+	        WHILE
+			equal := find occurances( a[ j ], b )
+					[ 1 { first occurance } ] = i + j - 1
+	        DO	SKIP
+	        OD;
+	        IF	equal
+		THEN	find := i; FALSE
+		ELSE	TRUE
+		FI
+	DO	SKIP
+	OD;
+	find
+END;
+
+PROC	union to union table = ( UNIONMODES from, to ) REF VECTOR[]CHAR {table}:
+{
+	Delivers a table, which when indexed by a index of from, gives
+	index in 'to' of the contents from 'from'.
+	Where there isnt a corresponding entry, the table gives 0.
+	The table has no zero element giving 0, corresponding with
+	the unset mode. The zeroth element must be supplied when the table
+	is output.
+
+	i.e. for i to upb from
+	from[ i ] = (to[ table[ i ] ] if table[ i ] nonzero)
+
+}
+BEGIN
+	INT	from length = UPB from, to length = UPB to;
+	HEAP VECTOR[ from length ] CHAR table;
+	FOR	i FROM 1 TO from length
+	DO	table[ i ] := REPR 0
+	OD;
+	FOR	from i TO from length
+	DO
+		INT	from mode = from[ from i ];
+		FOR	to i TO to length
+		WHILE
+			INT	to mode = to[ to i ];
+			IF	from mode = to mode
+			THEN	"too many modes in union for table change"
+				ASSERT to i < 256 ;
+				table[ from i ] := REPR to i;
+				FALSE
+			ELSE	TRUE
+			FI
+		DO	SKIP
+		OD
+	OD;
+	table
+END;
+
+SKIP
+
+KEEP	UNIONMODES, find ints, find occurances,	union to union table,
+	find mode
+FINISH

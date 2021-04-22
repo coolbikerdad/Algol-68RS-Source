@@ -1,0 +1,124 @@
+DECS  testmode  CONTEXT VOID  USE  strops, messageproc,  options,  osinterface:
+
+{ " Id: testmode.sta,v 1.1 91/10/14 14:31:53 edcad Exp $" }
+configinfo A68CONFIG "$Id: testmode.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1990
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+12:09:90  Started.  DCT
+21:11:90  Demo sections removed, modified furthur to help in running
+             tests.  DJS
+22:02:93  Updated for new portable OSIF.  DCT
+30:06:93  nogarbage added to disable gc diagnostics.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.004 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+   {{ This Module is designed to help support regression testing for ELLA. }}
+
+VECSTR  testmode_options =
+( "Suppress input file suspension after an error",
+  "Suppress the output of library version numbers",
+  "Suppress the output of dates and times",
+  "Suppress file version numbers",
+  "Suppress garbage collector diagnostics"
+);
+
+
+OPTIONS  testmode_noerror     = (OPTIONS  o;  options OF o:= 16r1;  o),
+         testmode_noversions  = (OPTIONS  o;  options OF o:= 16r2;  o),
+         testmode_nodates     = (OPTIONS  o;  options OF o:= 16r4;  o),
+         testmode_nofilenames = (OPTIONS  o;  options OF o:= 16r8;  o),
+         testmode_nogarbage   = (OPTIONS  o;  options OF o:= 16r10; o);
+
+BOOL testmode_on  = TRUE,
+     testmode_off = FALSE;
+
+{ NB:  It is assumed that a filename is never directly modified. }
+
+RVC  dummy_filename := (STR  fn = "*file*";  HEAP VECTOR [UPB fn] CHAR:= fn);
+
+OPTIONS  testmode := null_options;
+BOOL stop_on_input_error := TRUE,
+     show_version_numbers := TRUE,
+     show_dates := TRUE,
+     show_file_names := TRUE;
+
+PROC set_testmode = (UNION( BOOL, OPTIONS, STR ) mode ) VOID:
+BEGIN
+    CASE mode IN
+    (BOOL state )
+       IF state
+       THEN  testmode := testmode_noerror + testmode_noversions +
+                         testmode_nodates + testmode_nofilenames +
+                         testmode_nogarbage
+       ELSE  testmode := null_options
+       FI,
+    (OPTIONS opt ) testmode := opt,
+    (STR topts )
+       global_msg( system, "Options supplied by text not implemented" )
+    ESAC;
+    stop_on_input_error := NOT( testmode INCLUDES testmode_noerror );
+    show_version_numbers :=  NOT( testmode INCLUDES testmode_noversions );
+    show_dates :=  NOT( testmode INCLUDES testmode_nodates );
+    show_file_names :=  NOT( testmode INCLUDES testmode_nofilenames );
+    IF testmode INCLUDES testmode_nogarbage THEN  set_gc_diagnostics(16r0)  FI;
+    SKIP
+END;
+
+PROC continue_on_error = BOOL: NOT stop_on_input_error;
+
+PROC version_str = (INT verno )STR:
+    IF show_version_numbers THEN intchars( verno ) ELSE "*VN*" FI;
+
+PROC testmode_seconds = (INT s )INT: IF show_dates THEN s ELSE 0 FI;
+
+PROC  testmode_file_name = (FILE  file) STR:
+   IF show_file_names
+   THEN  file_name(file)
+   ELSE  dummy_filename
+   FI;
+
+PROC  testmode_fname = (STR  fname) STR:
+   IF show_file_names
+   THEN  fname
+   ELSE  dummy_filename
+   FI
+
+
+KEEP  testmode_options,  testmode_noerror,  testmode_noversions,
+      testmode_nodates,  testmode_nofilenames,  testmode_nogarbage,  testmode,
+      testmode_on,  testmode_off,  set_testmode, continue_on_error,
+      version_str, testmode_file_name, testmode_seconds,  testmode_fname
+FINISH

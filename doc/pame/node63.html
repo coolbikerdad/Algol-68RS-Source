@@ -1,0 +1,957 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Procedures</title>
+<meta name="description" content="procedures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node64.html">
+<link rel="previous" href="node62.html">
+<link rel="up" href="node60.html">
+<link rel="next" href="node64.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1697"
+  href="node64.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1691"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1685"
+  href="node62.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1693"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1695"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1698"
+  href="node64.html">Summary</a>
+<b> Up:</b> <a name="tex2html1692"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1686"
+  href="node62.html">Operators</a>
+ &nbsp; <b>  <a name="tex2html1694"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1696"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1699"
+  href="node63.html#section00831000000000000000">Parameterless procedures</a>
+<li><a name="tex2html1700"
+  href="node63.html#section00832000000000000000">Exercises</a>
+<li><a name="tex2html1701"
+  href="node63.html#section00833000000000000000">Procedures with parameters</a>
+<li><a name="tex2html1702"
+  href="node63.html#section00834000000000000000">Exercises</a>
+<li><a name="tex2html1703"
+  href="node63.html#section00835000000000000000">Procedures as parameters</a>
+<li><a name="tex2html1704"
+  href="node63.html#section00836000000000000000">Exercises</a>
+<li><a name="tex2html1705"
+  href="node63.html#section00837000000000000000">Recursion</a>
+<li><a name="tex2html1706"
+  href="node63.html#section00838000000000000000">Exercises</a>
+<li><a name="tex2html1707"
+  href="node63.html#section00839000000000000000">Standard procedures</a>
+<li><a name="tex2html1708"
+  href="node63.html#section008310000000000000000">Other features of procedures</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00830000000000000000"></a><a name="rout-procs"></a>
+Procedures</h1>
+
+<p>The second way of using routines is to declare them as
+procedures<a name="3917"></a>. We have seen that an operator can be
+declared and used, have a mode and a value (its routine denotation),
+but apart from having an operator symbol, it cannot be identified with
+an identifier in the way that a name or a denotation of a
+<code>CHAR</code> value can.  Procedures are quite different.</p>
+
+<p>Firstly, here are some general remarks on the way procedures differ
+from operators.  The mode<a name="3918"></a> of a procedure always
+starts with the mode constructor <tt>PROC</tt><a name="4202"></a>.  A
+procedure can have any number of parameters, including none.  Two
+procedures having the same identifier cannot be declared in the same
+range (so &ldquo;overloading<a name="3921"></a>&rdquo; is not
+allowed).  When a procedure is used, its parameters, if any, are in a
+strong context. This means that rowing and widening are available.</p>
+
+<p>Procedures are declared using the mode constructor
+<code>PROC</code>. Here is a procedure which creates a range of
+characters:</p>
+
+<pre>
+   PROC(CHAR,CHAR)[]CHAR range =
+      (CHAR a,b)[]CHAR:
+      BEGIN
+         CHAR aa,bb;
+
+         (a&lt;=b|aa:=a; bb:=b|aa:=b; bb:=a);
+
+         [ABS aa:ABS bb]CHAR r;
+
+         FOR i
+         FROM LWB r TO UPB r
+         DO
+            r[i]:=REPR i
+         OD;
+         r
+      END
+</pre>
+
+<p>This procedure identity declaration resembles the declaration for a
+multiple: much of the mode is repeated on the right-hand side and the
+formal-declarer<a name="3924"></a> on the left-hand side has no
+identifiers for the modes of the parameters.  Notice that the modes of
+the parameters must be repeated in the formal-declarer, but that the
+mode of the procedure on the right-hand side can contain the usual
+abbreviation.  Here is the abbreviated header:</p>
+
+<pre>
+   PROC range = (CHAR a,b)[]CHAR:
+</pre>
+
+<p>The formal-declarer is important for creating synonyms:</p>
+
+<pre>
+  PROC(REAL)REAL sine = sin
+</pre>
+
+<p>Two or more procedure declarations can be separated by commas,
+even if the procedures have different modes. Consider, for
+example:</p>
+
+<pre>
+   PROC pa = (INT i)INT:  i*i,
+        pb = (INT i)CHAR: REPR(i*i),
+        pc = (INT i)REAL: (i=0|0|1/i)
+</pre>
+<p>
+
+<h2><a name="section00831000000000000000"></a><a name="rout-npprocs"></a>
+Parameterless procedures</h2>
+
+<p>Procedures can have no parameters. Suppose the following names have
+been declared:</p>
+
+<pre>
+   INT i,j
+</pre>
+
+<p>Here is a procedure with mode <code>PROC INT</code> which yields an
+<code>INT</code>:</p>
+
+<pre>
+   PROC INT p1 = INT: i:=3+j
+</pre>
+
+<p>A procedure can be invoked or called<a name="3938"></a> by writing
+its identifier.  For example, the procedure <code>p1</code> would be called
+by</p>
+
+<pre>
+   p1
+</pre>
+
+<p>or</p>
+
+<pre>
+   INT a = p1
+</pre>
+
+<p>The right-hand side of this identity declaration requires a value of
+mode <code>INT</code>, but it has been given a unit of mode
+<code>PROC INT</code>.  This is converted into a value of mode <code>INT</code>
+by the coercion known as <b>deproceduring</b>. This
+coercion<a name="3944"></a> is available in every context
+(even soft<a name="3945"></a>).</p>
+
+<p>Have you realised that <code>print</code> must be the identifier
+of a procedure? Well done! However, we cannot talk about its
+parameters yet because we don't know enough about the language.</p>
+
+<p>Here is another procedure which yields a name of mode <code>REF
+INT</code>.  The mode of the procedure is <code>PROC REF
+INT</code>:</p>
+
+<pre>
+   PROC p2 = REF INT: IF i &lt; 0 THEN i ELSE j FI
+</pre>
+
+<p>and assumes that the names identified by <code>i</code> and
+<code>j</code> had already been declared. Here is an identity
+declaration which uses <code>p2</code>:</p>
+
+<pre>
+   REF INT i or j = p2
+</pre>
+
+<p>Because <code>p2</code> yields a name, it can be used on the
+left-hand side of an assignment:</p>
+
+<pre>
+   p2:=4
+</pre>
+
+<p>Here, <code>4</code> will be assigned to <code>i</code> or
+<code>j</code> depending on the value <code>i</code> refers to. The
+left-hand side of an assignment has a soft context<a name="3952"></a>
+in which only the deproceduring coercion is allowed.</p>
+
+<p> In procedures <code>p1</code> and <code>p2</code>, the identifier
+<code>i</code> had been declared globally to the procedures.
+Assignment to such an identifier is, as already stated, a
+side-effect<a name="3953"></a>.  Here is another procedure of mode
+<code>PROC INT</code> which uses a global identifier, but does not
+assign to it:</p>
+
+<pre>
+   PROC p3 = REAL:
+   (
+      [i]REAL a;  read((a,newline));
+      REAL sum:=0.0;
+
+      FOR i FROM LWB a TO UPB a
+      DO
+         sum+:=a[i]
+      OD;
+
+      sum
+   )
+</pre>
+
+<p>and here is a call of <code>p3</code>:</p>
+
+<pre>
+   print(p3)
+</pre>
+
+<p>In the identity declaration</p>
+
+<pre>
+   REAL r = p2
+</pre>
+
+<p><code>p2</code> is deprocedured to yield a name of mode <code>REF INT</code>,
+dereferenced to yield an <code>INT</code>, and then widened to yield a
+<code>REAL</code>.  All these coercions are available in a strong
+context<a name="3960"></a> (the right-hand side of an identity
+declaration).</p>
+
+<p>The call of a procedure can appear in a formula without
+parentheses.  Here is an example:</p>
+
+<pre>
+   p2:=p1 * ROUND p3
+</pre>
+
+<p>If we call the procedure <code>p1</code>, declared above, its value
+does not have to be used.  For example, in</p>
+
+<pre>
+   p1;
+</pre>
+
+<p>the value yielded by <code>p1</code> has been
+voided<a name="3965"></a> by the following semicolon after the
+procedure had been called.</p>
+
+<p>In the section on routines, we introduced the mode
+<tt>VOID</tt><a name="4203"></a>. Here is a procedure yielding
+<code>VOID</code>:</p>
+
+<pre>
+   PROC p4 = VOID:  print(p3)
+</pre>
+
+<p>and a possible use:</p>
+
+<pre>
+   ; p4;
+</pre>
+
+<p>where the semicolons show that the call stands on its own.</p>
+
+<p>When a parameterless procedure<a name="3972"></a> yields a
+multiple, the call of that procedure can be sliced<a name="3973"></a>
+to get an individual element.  For example, suppose we declare</p>
+
+<pre>
+   PROC p5 = [,]REAL:
+   (
+      [i,j]REAL a;
+      read((a,newline));
+      a
+   )
+</pre>
+
+<p>where <code>i</code> and <code>j</code> were declared above, and
+then call <code>p5</code> in the formula</p>
+
+<pre>
+   REAL x = p5[i-3,j] * 2
+</pre>
+
+<p>When <code>p5</code> is called, it yields a two-dimensional
+multiple of mode <code>[,]REAL</code> which is then sliced using the
+two subscripts<a name="3978"></a> (assuming that <code>i-3</code> is
+within the bounds of the first dimension) to yield a value of mode
+<code>REAL</code>, which is then used in the formula.</p>
+
+<p>Procedure <code>p2</code>, declared above, yielded a name declared
+globally to the procedure. As explained in the sections on routines, a
+procedure cannot yield a locally-generated name. However, if the name
+is generated using <tt>HEAP</tt><a name="4204"></a>, then the name can
+be yielded as in <tt>p6</tt>:<a name="3982"></a></p>
+
+<pre>
+   PROC p6 = REF INT: (HEAP INT i:=3;  i)
+</pre>
+
+<p>Here is a call of <code>p6</code> where the yielded name is
+captured with an identity declaration:</p>
+
+<pre>
+   REF INT global int = p6
+</pre>
+
+<p>Then <code>print(global int)</code> will display
+<code>3</code>.</p>
+
+<p>The yield of a procedure can be another procedure. Consider this
+program fragment:</p>
+
+<pre>
+   PROC q2 = INT: max int % 2,
+        q3 = INT: max int % 3,
+        q4 = INT: max int % 4,
+        q5 = INT: max int % 5;
+
+   INT i;  read((i,newline));
+
+   PROC q = PROC INT:
+      CASE i+1 IN q2,q3,q4 OUT q5 ESAC
+</pre>
+
+<p>Procedure <code>q</code> will yield one of the predeclared procedures
+depending on the value of <code>i</code>. Here, the yielded procedure will
+not be deprocedured because the mode required is a procedure.</p>
+
+<p>One parameterless procedure is provided in the standard
+prelude<a name="3989"></a>.  Its identifier is
+<tt>random</tt><a name="4205"></a>, and when called returns the next
+pseudo-random real number of a series. If called a large number of
+times, the numbers yielded are uniformly distributed in the range
+[0,1].</p>
+
+<hr>
+<h2><a name="section00832000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.19<a name="ex-vi-xix"></a>
+<dd>Write a procedure which assigns a value to a name declared
+globally to the procedure.  Ans<a href="node140.html#ans-vi-xix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.20<a name="ex-vi-xx"></a>
+<dd>Write a procedure which reads an integer from the keyboard, then
+declares a dynamic name of a multiple of one dimension, and reads that
+number of integers from the keyboard. Now compute the sum of all the
+integers, and yield its value as the yield of the procedure.
+ Ans<a href="node140.html#ans-vi-xx"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.21<a name="ex-vi-xxi"></a>
+<dd>Write a procedure which yields the name of a two dimensional
+multiple containing characters read from the keyboard. The mode of
+the multiple should be <code>REF[,]CHAR</code>.  Ans<a href="node140.html#ans-vi-xxi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00833000000000000000"></a><a name="rout-parprocs"></a>
+Procedures with parameters</h2>
+
+<p>Parameters<a name="4006"></a> of procedures can have any mode
+(including procedures).  Unlike operators, procedures can have any
+number of parameters.  The parameters are written as a
+parameter<a name="4007"></a> <b>list</b> which consists of one
+parameter, or two or more separated by commas.</p>
+
+<p>Here is a procedure with a single parameter:</p>
+
+<pre>
+   PROC(INT)CHAR p7 = (INT i)CHAR: REPR(i&gt;0|i|0)
+</pre>
+
+<p>This is a full identity declaration for <code>p7</code>. It can be
+abbreviated to</p>
+
+<pre>
+   PROC p7 = (INT i)CHAR: REPR(i&gt;0|i|0)
+</pre>
+
+<p>The mode of <code>p7</code> is <code>PROC(INT)CHAR</code>. That is,
+<code>p7</code> is a procedure with a single integer parameter and
+yielding a character.  Here is a call<a name="4013"></a> of
+<code>p7</code>:</p>
+
+<pre>
+   CHAR c = p7(-3)
+</pre>
+
+<p>Note that the single parameter is written between
+parentheses<a name="4016"></a>. Since the context of an actual
+parameter<a name="4017"></a> of a procedure is strong, a name of mode
+<code>REF INT</code> could be used:</p>
+
+<pre>
+   CHAR c = p7(i)
+</pre>
+
+<p>or</p>
+
+<pre>
+   CHAR c = p7(ai[j])
+</pre>
+
+<p>where <code>ai</code> has mode <code>REF[]INT</code> and
+<code>j</code> has mode <code>INT</code> or <code>REF INT</code> or
+<code>PROC INT</code> (or even <code>PROC REF INT</code>).</p>
+
+<p>Here is a procedure which takes three parameters:</p>
+
+<pre>
+   PROC char in string =
+      (CHAR c,REF INT p,STRING s)BOOL:
+   (
+      BOOL found:= FALSE;
+      FOR k FROM LWB s TO UPB s
+      WHILE NOT found
+      DO
+         (c = s[k] | i:=k; found:= TRUE)
+      OD;
+      found
+   )
+</pre>
+
+<p><a name="rout-chinstr"></a>The procedure (which is in the standard
+prelude) tests whether a character is in a string, and if it is,
+returns its position in the parameter <code>p</code>. The procedure
+yields <code>TRUE</code> if the character is in the string, and
+<code>FALSE</code> if not. Here is a possible call of the
+procedure:</p>
+
+<pre>
+   IF INT p;  char in string(char,p,"abcde")
+   THEN ...
+</pre>
+
+<p>where <code>char</code> was declared in an outer range. Notice that
+the <code>REF INT</code> parameter of <code>char in string</code> is
+not assigned a new value if the character is not found in the
+string.</p>
+
+<p>When calling a procedure, the call must supply the same number of
+actual parameters, and in the same order, as there are formal
+parameters<a name="4027"></a> in the procedure declaration.</p>
+
+<p>If a multiple is one of the formal parameters, a
+row-display<a name="4028"></a> can be supplied as an actual parameter
+(remember that a row-display can only occur in a strong
+context<a name="4029"></a>).  In this case, the row-display counts as
+a single parameter, but the number of elements in the row-display can
+differ in successive calls since the bounds of the multiple can be
+determined by the procedure using the bounds interrogation operators.
+Here is an example:</p>
+
+<pre>
+   PROC pb = ([]INT m)INT:
+   (INT sum:=0;
+    FOR i FROM LWB m TO UPB m DO sum+:= m[i] OD;
+    sum)
+</pre>
+
+<p>and here are some calls of <code>pb</code>:</p>
+
+<pre>
+   pb((1,2,3))   pb((2,3,5,7,11,13))
+</pre>
+
+<p>Again, procedures with parameters can assign to, or use, globally
+declared names and other values, but it is better to include the name
+in the header of the procedure. Here is a procedure which reads data
+into a globally declared multiple using that multiple as a
+parameter<a name="4206"></a>:</p>
+
+<pre>
+   PROC rm = (REF[]REAL a)VOID:
+      read((a,newline))
+</pre>
+
+<p>It could now be called by</p>
+
+<pre>
+   rm(multiple)
+</pre>
+
+<p>where <code>multiple</code> had been previously declared as having
+mode <code>REF[]REAL</code>.</p>
+
+<p>As described in
+section&nbsp;<a href="node61.html#rout-namepar">6.1.3</a>, a flexible
+name<a name="4040"></a> can be used as an actual parameter provided
+that the formal parameter has also been declared as being flexible.
+For example, here is a procedure which takes a single parameter of
+mode <code>REF STRING</code> and which yields an
+<tt>INT</tt><a name="4207"></a>:</p>
+
+<pre>
+   PROC read line = (REF STRING s)INT:
+   (
+      read((s,newline));
+      UPB s #LWB is 1#
+   )
+</pre>
+
+<p><code>read line</code> reads the next line of characters from the keyboard,
+assigns it to its parameter, which is a flexible name, and yields the
+length of the line.</p>
+
+<hr>
+<h2><a name="section00834000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.22<a name="ex-vi-xxii"></a>
+<dd>Write a procedure which takes a <code>REF REAL</code> parameter,
+divides the value it refers to by <span class="math"><img
+ width="15" height="18" align="bottom" border="0"
+ src="img5.png"
+ alt="$ \pi$"></span>, multiplies it by&nbsp;180,
+assigns the final value to its parameter, and yields the parameter
+(that is, its name).  Ans<a href="node140.html#ans-vi-xxii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.23<a name="ex-vi-xxiii"></a>
+<dd>Write a procedure which takes two parameters: the first should
+have mode <code>STRING</code> and the second mode <code>INT</code>. Display the
+string on the screen the number of times given by the integer. If the
+integer is negative, display a newline first and then use the
+absolute value (use the operator <code>ABS</code>) of the integer. Yield
+the mode <code>VOID</code>.  Ans<a href="node140.html#ans-vi-xxiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.24<a name="ex-vi-xxiv"></a>
+<dd>Write a procedure, identified as <code>num in multiple</code>, which
+does for an integer what <code>char in string</code> does for a character.
+ Ans<a href="node140.html#ans-vi-xxiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00835000000000000000"></a><a name="rout-procpar"></a>
+Procedures as parameters</h2>
+
+<p>Here is a procedure which takes a procedure as a parameter:</p>
+
+<pre>
+   PROC sum = (INT n,PROC(INT)REAL p)REAL:
+   (
+      REAL s:=0;
+      FOR i TO n DO s+:=p(i) OD;
+      s
+   )
+</pre>
+
+<p>Notice that the mode of the procedure
+parameter<a name="4061"></a> is a formal mode<a name="4062"></a> so no
+identifier is required for its <code>INT</code> parameter in the header of
+the procedure <code>sum</code>. In the loop clause, the procedure is called
+with an actual parameter.</p>
+
+<p>When a parameter must be a procedure, there are two ways in which
+it can be supplied. Firstly, a predeclared procedure
+identifier<a name="4063"></a> can be supplied, as in</p>
+
+<pre>
+   PROC pa = (INT a)REAL: 1/a;
+   sum(34,pa)
+</pre>
+
+<p>Secondly, a routine denotation<a name="4066"></a> can be
+supplied:</p>
+
+<pre>
+   sum(34,(INT a)REAL: 1/a)
+</pre>
+
+<p>A routine denotation is a unit<a name="4069"></a>.  In this case,
+the routine denotation has the mode <code>PROC(INT)REAL</code>, so it
+can be used in the call of <code>sum</code>.  Notice also that,
+because the routine denotation is an actual parameter, its header
+includes the identifier <code>a</code>.  In fact, routine denotations
+can be used wherever a procedure is required, so long as the
+denotation has the required mode.  The routine denotation given in the
+call is on the right-hand side of the implied identity declaration of
+the elaboration of the parameter.  It is an example of an
+<b>anonymous</b><a name="4071"></a> routine denotation.</p>
+
+<hr>
+<h2><a name="section00836000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.25<a name="ex-vi-xxv"></a>
+<dd>Given the declaration of <code>sum</code> in the text, what is
+the value of: Ans<a href="node140.html#ans-vi-xxv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>sum(4,(INT a)REAL: a)</code>  
+<p>
+<dt>(b)
+<dd><code>sum(2,(INT b)REAL: 1/(5*b))</code>  
+<p>
+<dt>(c)
+<dd><code>sum(0,pa)</code> (<code>pa</code> is declared in the text)  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+
+<hr>
+
+<h2><a name="section00837000000000000000"></a><a name="rout-rec"></a>
+Recursion</h2>
+
+<p>One of the fun aspects of using procedures is that a procedure can
+call itself. This is known as <b>recursion</b><a name="4087"></a>. For
+example, here is a simplistic way of calculating a factorial:</p>
+
+<pre>
+   PROC factorial = (INT n)INT:
+      (n=1|1|n*factorial(n-1))
+</pre>
+
+<p>Try it with the call
+<pre>
+   factorial(7)
+</pre>
+
+<p>Here is another recursively defined procedure which displays an
+integer on the screen in minimum space:<p>
+
+<pre>
+   PROC ai = (INT i)VOID:
+   IF   i &lt; 0  THEN print("-");  ai(ABS i)
+   ELIF i &lt; 10 THEN print(REPR(i+ABS"0"))
+   ELSE ai(i%10);  ai(i MOD 10)
+   FI
+</pre>
+
+<p>In each of these two cases, the procedure includes a test which
+chooses between a recursive call<a name="4094"></a> and phrases which
+do not result in a recursive call. This is necessary because,
+otherwise, the procedure would never complete. Neither of these
+procedures uses a locally declared value. Here is one which does:</p>
+
+<pre>
+   PROC new fact = (INT i)INT:
+   IF INT n:=i-1;   n = 1
+   THEN 2
+   ELSE i*new fact(n)
+   FI
+</pre>
+
+<p>The example is somewhat artificial, but illustrates the point. If
+<code>new fact</code> is called by, for example, <code>new
+fact(3)</code>, then in the first call, <code>n</code> will have the
+value <code>2</code>, and <code>new fact</code> will be called again
+with the parameter equal to <code>2</code>.  In the second call,
+<code>n</code> will be <code>1</code>, but this <code>n</code> this
+time round will be a new <code>n</code>, with the first <code>n</code>
+inaccessible (it being declared in an enclosing
+range<a name="4097"></a>).  <code>new fact</code> will yield
+<code>2</code>, and this value will be used in the formula on
+line&nbsp;4 of the procedure.  The first call to <code>new fact</code>
+will then exit with the value&nbsp;<code>6</code>.</p>
+
+<p>Apart from being fun, recursive procedures can be an efficient way
+of programming a particular problem. Chapter&nbsp;11 deals with,
+amongst other topics, recursive modes, and there, recursive
+programming comes into its own.</p>
+
+<p>A different form of recursion, known as <b>mutual
+recursion</b><a name="4099"></a>, is exemplified by two procedures
+which call each other. You have to ensure there is no circularity. The
+principal difficulty of how to use a procedure before it has been
+declared is overcome by first declaring a procedure name and then
+assigning a routine denotation to the procedure name after the other
+procedure has been declared. Here is a simple
+example:<a name="tex2html22"
+href="footnode.html#foot4208"><sup><span
+class="arabic">7</span>.<span class="arabic">3</span></sup></a></p>
+
+<pre>
+   PROC(INT)INT pb;
+   PROC pa = (INT i)INT: (i&gt;0|pb(i-1)|i);
+   pb:=(INT i)INT: (i&lt;0|pa(i+1)|i);
+</pre>
+
+<p>Then <code>pa(4)</code> would yield <code>3</code> and
+<code>pa(-4)</code> would yield <code>-4</code>. Similarly,
+<code>pb(4)</code> would yield <code>4</code> and <code>pb(-4)</code>
+would yield <code>-3</code>. Notice that the right-hand side of the
+assignment is an anonymous routine denotation.</p>
+
+<hr>
+<h2><a name="section00838000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>6.26<a name="ex-vi-xxvi"></a>
+<dd>Write a recursive procedure to reverse the order of letters in a
+value of mode <code>[]CHAR</code>. It should yield a value also of mode
+<code>[]CHAR</code>.  Ans<a href="node140.html#ans-vi-xxvi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>6.27<a name="ex-vi-xxvii"></a>
+<dd>Write two mutually recursive procedures which take an
+integer parameter and which yield an <code>INT</code>. The first should call
+the second if the parameter is odd, and the second should call the
+first if the parameter is even. The alternative option should yield the
+square of the parameter for the first procedure and the cube of the
+parameter for the second procedure. Use <code>square</code> and <code>cube</code>
+as the procedure identifiers.  Ans<a href="node140.html#ans-vi-xxvii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+
+<h2><a name="section00839000000000000000"></a><a name="rout-stan"></a>
+Standard procedures</h2>
+
+<p>The standard prelude<a name="4115"></a> contains the declarations
+of more than 60 procedures, most of them concerned with transput (see
+chapter 9).  A number of procedures, all having the mode</p>
+
+<pre>
+   PROC(REAL)REAL
+</pre>
+
+<p>are declared in the standard prelude and yield the values of common
+mathematical functions. These are <tt>sqrt</tt><a name="4209"></a>,
+<tt>exp</tt><a name="4210"></a>, <tt>ln</tt><a name="4211"></a>,
+<tt>cos</tt><a name="4212"></a>, <tt>sin</tt><a name="4213"></a>,
+<tt>tan</tt><a name="4214"></a>, <tt>arctan</tt><a name="4215"></a>,
+<tt>arcsin</tt><a name="4216"></a> and
+<tt>arccos</tt><a name="4217"></a>.  Naturally, you must be careful to
+ensure that the actual parameter for <code>sqrt</code> is
+non-negative, and that the actual parameter for <code>ln</code> is
+greater than zero.  The procedures <code>cos</code>, <code>sin</code>
+and <code>tan</code> expect their <code>REAL</code> parameter to be in
+radians.</p>
+
+<p>New procedures using these predeclared procedures can be
+declared:</p>
+
+<pre>
+   PROC sinh =
+      (REAL x)REAL: (exp(x) + exp(-x))/2
+</pre>
+
+<p>A variety of pseudo-random numbers can be produced using
+<code>random int</code>. The mode of the procedure <tt>random
+int</tt><a name="4218"></a> is</p>
+
+<pre>
+   PROC(INT)INT
+</pre>
+
+<p>and yields a pseudo-random integer greater than or equal to one,
+and less than or equal to its integer parameter.  For example, here is
+a procedure which will compute the percentage of each possible die
+throw in <span class="math">10&nbsp;000</span> such throws:</p>
+
+<pre>
+   PROC percentage = []REAL:
+   (
+      PROC throw = INT: random int(6);
+
+      [6]REAL result:=(0,0,0,0,0,0);
+
+      TO 10 000 DO result[throw]+:=1 OD;
+
+      FOR i FROM LWB result TO UPB result
+      DO result[i] /:= 10 000 OD;
+
+      result
+   )
+</pre>
+
+<p>Notice that <code>percentage</code> has another procedure
+(<code>throw</code>) declared within it. There is no limit to such
+nesting<a name="4144"></a>.</p>
+
+<h2><a name="section008310000000000000000"></a><a name="rout-other"></a>
+Other features of procedures</h2>
+
+<p>Since a procedure is a value, it is possible to declare values whose
+modes include a procedure mode. For example, here is a
+multiple of procedures<a name="4148"></a>:</p>
+
+<pre>
+   []PROC(REAL)REAL pr = (sin,cos,tan)
+</pre>
+
+<p>and here is a possible call:</p>
+
+<pre>
+   pr[2](2)
+</pre>
+
+<p>which yields -0&sdot;416&nbsp;146&nbsp;836&nbsp;5. We could also
+declare a procedure which could be called with the expression</p>
+
+<pre>
+   pr(2)[2]
+</pre>
+
+<p>but this is left as an exercise.</p>
+
+<p>Similarly, names of procedures can be declared and can be quite
+useful.  Instead of declaring</p>
+
+<pre>
+   PROC pc = (INT i)PROC(REAL)REAL: pr[i]
+</pre>
+
+<p>using <code>pr</code> declared above, with a possible call of
+<code>pc(2)</code> we could write</p>
+
+<pre>
+   PROC(REAL)REAL pn:=pr[i]
+</pre>
+
+<p>and then use <code>pn</code> instead of <code>pc</code>. The advantage of this
+would be that <code>pr</code> would be subscripted only once instead of
+whenever <code>pc</code> is elaborated. Furthermore, another procedure
+could be assigned to <code>pn</code> and the procedure it refers to again
+called.  Using <code>pn</code> would usually involve
+dereferencing<a name="4159"></a>.</p>
+
+<p>There are scoping problems involved with procedure
+names<a name="4160"></a>. Although the scope of a denotation is
+global, procedure denotations may include an identifier whose range is
+not global. For this reason, the scope of a procedure denotation is
+limited to the smallest enclosing clause containing a declaration of
+an identifier or mode or operator indicant which is used in the
+procedure denotation.</p>
+
+<p>For example, in this program fragment</p>
+
+<pre>
+   PROC REAL pp;  REAL y;
+   BEGIN
+      REAL x:=3.0;
+      PROC p = REAL:  x:=4.0;
+      print(p);
+      pp:=p; CO wrong CO
+      print(x)
+   END;
+   print(("pp=",pp)) #wrong#
+</pre>
+
+<p>the assignment in line&nbsp;6 is wrong because the scope of the right-hand
+side is less than the scope of the left-hand side. Unfortunately, the
+a68toc<a name="4163"></a> compiler does not perform scope
+checking and so will not flag the incorrect assignment.</p>
+
+<p>There are times when <tt>SKIP</tt><a name="4219"></a> is useful in
+a procedure declaration:</p>
+
+<pre>
+   PROC p = REAL:
+   IF x&lt;0
+   THEN print("Negative parameter"); stop; SKIP
+   ELSE sqrt(x)
+   FI
+</pre>
+
+<p>The yield of the procedure is <code>REAL</code>, so each part of
+the conditional clause<a name="4168"></a> must yield a value of mode
+<code>REAL</code>.  The construct <code>stop</code> yields
+<code>VOID</code>, and even in a strong context<a name="4169"></a>,
+<code>VOID</code> cannot be coerced to <code>REAL</code>.  However,
+<code>SKIP</code> will yield an undefined value of any required mode.
+In this case, <code>SKIP</code> yields a value of mode
+<code>REAL</code>, but the value is never used, because the program is
+terminated just before.</p>
+
+<p>Grouping your program into procedures helps to keep the logic
+simple at each level.  Nesting procedures makes sense when the nested
+procedures<a name="4170"></a> are used only within the outer
+procedures.  This topic is covered in greater depth in
+chapter&nbsp;12.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1697"
+  href="node64.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1691"
+  href="node60.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1685"
+  href="node62.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1693"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1695"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1698"
+  href="node64.html">Summary</a>
+<b> Up:</b> <a name="tex2html1692"
+  href="node60.html">Routines</a>
+<b> Previous:</b> <a name="tex2html1686"
+  href="node62.html">Operators</a>
+ &nbsp; <b>  <a name="tex2html1694"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1696"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

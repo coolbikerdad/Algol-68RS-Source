@@ -1,0 +1,153 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>External values</title>
+<meta name="description" content="external values">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node14.html">
+<link rel="previous" href="node12.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node14.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html844"
+  href="node14.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html838"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html832"
+  href="node12.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html840"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html842"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html845"
+  href="node14.html">Summary</a>
+<b> Up:</b> <a name="tex2html839"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html833"
+  href="node12.html">Comments</a>
+ &nbsp; <b>  <a name="tex2html841"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html843"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section003100000000000000000"></a><a name="intro-ext"></a>
+<br>
+External values
+</h1>
+
+<p>Values denoted or manipulated by a program are called
+<b>internal</b><a name="388"></a> values.  Values which
+exist outside a program and which are data used by a program or data
+produced by a program (or both) are known as
+<b>external</b><a name="390"></a> values.
+
+<p> In the previous sections we have been learning how plain values
+are denoted in Algol&nbsp;68 programs. This internal display of
+values<a name="391"></a> is not necessarily the same as that used for
+external values. If you copy the following program into a file and
+compile and run it you will get</p>
+
+<pre>
+ +10A +.15000000000000000e+1
+</pre>
+
+<p>output on your screen.</p>
+
+<pre>
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+      print(10);  print("A");  print(1.5)
+   END
+   FINISH
+</pre>
+
+<p>Notice that although the denotation<a name="394"></a> for the first
+letter of the alphabet is surrounded by quote characters, when it is
+displayed on your screen, the quote characters are omitted.  The rules
+for numbers are as follows: if a number is not the first value in the
+line it is preceded by a space.  Integers are always printed in the
+space required by <tt>max int</tt><a name="456"></a> plus one position
+for the sign. Both positive and negative integers have a sign.  A real
+number is always printed using the print positions required by <tt>max
+real</tt><a name="457"></a>, plus a sign for the number. The exponent
+is also preceded by a sign.  If you want extra spaces, you have to
+insert them.</p>
+
+<p>
+Try the following program:</p>
+
+<pre>
+   PROGRAM print2 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(10); print(blank); print("A");
+      print(0.015); print(0.15); print(1.5);
+      print(15.0); print(150.0); print(1500.0);
+      print(15e15)
+   END
+   FINISH
+</pre>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html844"
+  href="node14.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html838"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html832"
+  href="node12.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html840"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html842"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html845"
+  href="node14.html">Summary</a>
+<b> Up:</b> <a name="tex2html839"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html833"
+  href="node12.html">Comments</a>
+ &nbsp; <b>  <a name="tex2html841"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html843"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

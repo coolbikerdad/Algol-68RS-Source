@@ -1,0 +1,1825 @@
+DECS  algolrms CONTEXT VOID:
+
+{ " Id: algolrms.sta,v 1.1 91/10/14 14:25:20 edcad Exp $" }
+configinfo A68CONFIG "$Id: algolrms.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1986
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+03:03:86  JCW  Algol 68 RMS interface version 4
+16:09:86  nam block length corrected (96 instead of 60)  DCT
+20:10:86  MODE STATUS = BITS (not INT) introduced  DCT
+05:11:86  Option to allow ALGOL68 garbage collector to manage blocks
+08:04:87  Wave 2 QA changes: renamed BODGE to XTTORVC
+                  changed xabpro_len from 88 to 40          JER N035.65.1
+11:07:90  Remove dependence on standard ALGOL transput (fault).  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  26.006 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+PROC ( BITS   { condition value }
+     ) VOID   { generates a signal and stops execution of programme }
+   lib_stop          = ALIEN "LIB$STOP";
+
+
+PROC ( VECTOR [] CHAR   { message string }
+     ) BITS             { put line to SYS$OUTPUT (channel assigned internally) }
+   lib_put_output    = ALIEN "LIB$PUT_OUTPUT";
+
+
+
+   PROC (VECTOR [] CHAR) VOID  algolrms_fault:= (VECTOR [] CHAR  msg) VOID:
+   ( lib_put_output(msg);  lib_stop(16r4) );
+
+   MODE  STATUS = BITS;
+
+   OP (INT)REF INT DIRECT =  BIOP 99;
+
+   MODE UIC = STRUCT (SHORT INT mbm, grp);
+
+   BOOL saveblocks:= TRUE,
+        savexabs:= TRUE,
+        savebuffers:= FALSE,
+        checkbuffers:= FALSE,
+        freechained:= FALSE,
+        algolsave:= FALSE;
+
+
+   BITS algolrms_inquire = 16r1;
+   BITS algolrms_nosaveblocks = 16r2;
+   BITS algolrms_nosavexabs = 16r4;
+   BITS algolrms_savebuffers = 16r8;
+   BITS algolrms_checkbuffers = 16r10;
+   BITS algolrms_nofreechained = 16r20;
+   BITS algolrms_algolsave = 16r40;
+
+   BITS algolrms_mode:= IF algolsave
+                        THEN  algolrms_algolsave
+                        ELSE  IF saveblocks THEN 16r0
+                                      ELSE algolrms_nosaveblocks FI   OR
+                              IF savexabs THEN 16r0
+                                      ELSE algolrms_nosavexabs FI     OR
+                              IF savebuffers THEN algolrms_savebuffers
+                                      ELSE 16r0 FI                    OR
+                              IF checkbuffers THEN algolrms_checkbuffers
+                                      ELSE 16r0 FI                    OR
+                              IF freechained THEN 16r0
+                                      ELSE algolrms_nofreechained FI
+                        FI;
+
+   PROC  algolrms_current_mode = BITS:  algolrms_mode;
+
+   MODE XAB,
+        NAM,
+        XABTRM,
+        REFANYXAB,
+        FAB = STRUCT (SHORT SHORT INT bid,              { Fields of FAB in alphabetical order are :-                    }
+                      SHORT SHORT INT bln,              {   INT alq,  allocation quantity                               }
+                      SHORT INT ifi,                    { * SHORT SHORT INT bid,  FAB block identifier                  }
+                      BITS fop,                         {   SHORT SHORT INT bks,  bucket size                           }
+                      INT sts,                          { * SHORT SHORT INT bln,  FAB block length                      }
+                      INT stv,                          {   SHORT INT bls,  block size                                  }
+                      INT alq,                          {   INT ctx,  user context                                      }
+                      SHORT INT deq,                    {   SHORT INT deq,  extension quantity                          }
+                      SHORT SHORT BITS fac,             { * INT dev,  device characteristics                            }
+                      SHORT SHORT BITS shr,             {   REF CHAR dna,  default spec address                         }
+                      INT ctx,                          {   SHORT SHORT INT dns,  default spec size                     }
+                      SHORT SHORT INT rtv,              {   SHORT SHORT BITS fac,  file access                          }
+                      SHORT SHORT INT org,              {   REF CHAR fna,  file spec address                            }
+                      SHORT SHORT BITS rat,             {   SHORT SHORT INT fns,  file spec size                        }
+                      SHORT SHORT INT rfm,              {   BITS fop,  file-processing options                          }
+                      INT jnl,                          {   SHORT SHORT INT fsz,  fixed control area size               }
+                      REF XAB xab,                      {   SHORT INT gbc,  global buffer count                         }
+                      REF NAM nam,                      { * SHORT INT ifi,  internal file identifier                    }
+                      REF CHAR fna,                     {   INT mrn,  maximum record number                             }
+                      REF CHAR dna,                     {   SHORT INT mrs,  maximum record size                         }
+                      SHORT SHORT INT fns,              {   REF NAM nam,  name block address                            }
+                      SHORT SHORT INT dns,              {   SHORT SHORT INT org,  file organization                     }
+                      SHORT INT mrs,                    {   SHORT SHORT BITS rat,  record attributes                    }
+                      INT mrn,                          {   SHORT SHORT INT rfm,  record format                         }
+                      SHORT INT bls,                    {   SHORT SHORT INT rtv,  retrieval window size                 }
+                      SHORT SHORT INT bks,              { * INT sdc,  secondary device characteristics                  }
+                      SHORT SHORT INT fsz,              {   SHORT SHORT BITS shr,  file sharing                         }
+                      INT dev,                          { * INT sts,  completion status code                            }
+                      INT sdc,                          { * INT stv,  status values                                     }
+                      SHORT INT gbc,                    {   REF XAB xab,  extended attribute block address              }
+                      SHORT SHORT INT dsbmsk,           {                                                               }
+{FAB+4b -> FAB+50 blank}                                { * = set by RMS or makefab, do not alter                       }
+                      SHORT SHORT INT dummy,
+                      INT dummy1,
+                      REF VECTOR [] CHAR default_name,  { These two fields are used internally to ALGOLRMS and should   }
+                                         file_name,     {   not be altered                                              }
+                      BITS  falgs,                      { Reserved for use with assynchronous calls                     }
+                      REFANYXAB  xab_list               { Used internally to force the ALGOL68 garbage collector to     }
+                     ),                                 {   protect any appended XAB blocks                          }
+
+        RAB = STRUCT (SHORT SHORT INT bid,              { Fields of RAB in alphabetical order are :-                    }
+                      SHORT SHORT INT bln,              { * SHORT SHORT INT bid,  RAB block identifier                  }
+                      SHORT INT isi,                    {   INT bkt,  bucket code                                       }
+                      BITS rop,                         { * SHORT SHORT INT bln, RAB block length                       }
+                      INT sts,                          {   INT ctx,  user context                                      }
+                      INT stv,                          {   REF FAB fab,  file access block address                     }
+                      SHORT INT rfa_0,                  { * SHORT INT isi,  internal stream identifier                  }
+                                rfa_1,                  {   REF CHAR kbf,  key buffer address                           }
+                                rfa_2,                  {   SHORT SHORT INT krf,  key of reference                      }
+                      SHORT INT dummy,                  {   SHORT SHORT INT ksz,  key size                              }
+                      INT ctx,                          {   SHORT SHORT INT mbc,  multiblock count                      }
+                      SHORT INT dummy1,                 {   SHORT SHORT INT mbf,  multibuffer count                     }
+                      SHORT SHORT INT rac,              {   for pbf,  prompt buffer address,  use kbf                   }
+                      SHORT SHORT INT tmo,              {   for psz,  prompt buffer size,  use ksz                      }
+                      SHORT INT usz,                    {   SHORT SHORT INT rac,  record access mode                    }
+                      SHORT INT rsz,                    {   REF CHAR rbf,  record buffer address                        }
+                      REF CHAR ubf,                     {   SHORT INT rfa_0,                                            }
+                      REF CHAR rbf,                     {             rfa_1,                                            }
+                      INT rhb,                          {             rfa_2,  record's file address                     }
+                      REF CHAR kbf,                     {   INT rhb,  record header buffer                              }
+                      SHORT SHORT INT ksz,              {   BITS rop,  record-processing options                        }
+                      SHORT SHORT INT krf,              {   SHORT INT rsz,  record size                                 }
+                      SHORT SHORT INT mbf,              { * INT sts,  completion status code                            }
+                      SHORT SHORT INT mbc,              { * INT stv,  status value                                      }
+                      INT bkt,                          {   SHORT SHORT INT tmo,  timeout period                        }
+                      REF FAB fab,                      {   REF CHAR ubf,  user record area address                     }
+                      REF XABTRM xab,                   {   SHORT INT usz,  user record area size                       }
+                                                        {   REF XABTRM xab, terminal xab address                        }
+                                                        {                                                               }
+                                                        { * = set by RMS or makerab, do not alter                       }
+                      REF VECTOR [] CHAR record_buffer,
+                                         user_buffer,
+                                         prompt_buffer,
+                      BITS  falgs,                       { Reserved for use with assynchronous calls                     }
+                      INT lkid                           { Lock ident. Reserved for use with locks }
+                      ),
+
+        XABALL = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT SHORT BITS aop,
+                         SHORT SHORT INT aln,
+                         SHORT INT vol,
+                         INT loc,
+                         INT alq,
+                         SHORT INT deq,
+                         SHORT SHORT INT bkz,
+                         SHORT SHORT INT aid,
+                         SHORT INT rfi_0,
+                                   rfi_1,
+                                   rfi_2,
+                         SHORT INT dummy1,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABDAT = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT INT rvn,
+                         SHORT INT dummy1,
+                         LONG INT rdt,
+                         LONG INT cdt,
+                         LONG INT edt,
+                         LONG INT bdt,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABFHC = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT SHORT INT rfo,
+                         SHORT SHORT BITS atr,
+                         SHORT INT lrl,
+                         INT hbk,
+                         INT ebk,
+                         SHORT INT ffb,
+                         SHORT SHORT INT bkz,
+                         SHORT SHORT INT hsz,
+                         SHORT INT mrz,
+                         SHORT INT dxq,
+                         SHORT INT gbc,
+                         SHORT INT dummy1,
+                         SHORT INT dummy2_0,
+                                   dummy2_1,
+                                   dummy2_2,
+                         SHORT INT verlimit,
+                         INT sbn,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABKEY = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT SHORT INT ian,
+                         SHORT SHORT INT lan,
+                         SHORT SHORT INT dan,
+                         SHORT SHORT INT lvl,
+                         SHORT SHORT INT ibs,
+                         SHORT SHORT INT dbs,
+                         INT rvb,
+                         SHORT SHORT BITS flg,
+                         SHORT SHORT INT dtp,
+                         SHORT SHORT INT nsg,
+                         SHORT SHORT INT nul,
+                         SHORT SHORT INT tks,
+                         SHORT SHORT INT ref,
+                         SHORT INT mrl,
+                         SHORT INT ifl,
+                         SHORT INT dfl,
+                         SHORT INT pos0,
+                                   pos1,
+                                   pos2,
+                                   pos3,
+                                   pos4,
+                                   pos5,
+                                   pos6,
+                                   pos7,
+                         SHORT SHORT INT siz0,
+                                         siz1,
+                                         siz2,
+                                         siz3,
+                                         siz4,
+                                         siz5,
+                                         siz6,
+                                         siz7,
+                         SHORT INT dummy1,
+                         INT knm,
+                         INT dvb,
+                         LONG INT dummy2,
+                         SHORT SHORT INT prolog,
+                         SHORT SHORT INT dummy3,
+                         SHORT INT dummy4,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABPRO = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT BITS pro,
+                         CHAR mtacc,
+                         SHORT SHORT BITS prot_opt,
+                         UIC uic,
+                         LONG BITS prot_mode,
+                         REF CHAR aclbuf,
+                         SHORT INT aclsiz,
+                         SHORT INT acllen,
+                         INT aclctx,
+                         INT aclsts,
+                         REF VECTOR [] CHAR acl_buffer,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABRDT = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT INT rvn,
+                         SHORT INT dummy1,
+                         LONG INT rdt,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        XABSUM = STRUCT (SHORT SHORT INT cod,
+                         SHORT SHORT INT bln,
+                         SHORT INT dummy,
+                         REF XAB nxt,
+                         SHORT SHORT INT noa,
+                         SHORT SHORT INT nok,
+                         SHORT INT pvn,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+         XABTRM = STRUCT(SHORT SHORT INT cod,           { This is a peculiar XAB, since it isn't a constituent of mode  }
+                         SHORT SHORT INT bln,           { XAB. Instead, it is hooked onto a RAB to specify terminal I/O }
+                         SHORT INT dummy,               { attributes.                                                   }
+                         REF XABTRM nxt,
+                         REF CHAR itmlst,
+                         SHORT INT itmlst_len,
+                         STRUCT 22 CHAR dummy1,
+                         REF VECTOR [] CHAR itemlist_buffer,
+                         REFANYXAB  xab_list  { to force garbage collecor to protect any other appended XABs }
+                        ),
+
+        REFANYXAB = UNION ( VOID, REF XABALL, REF XABDAT, REF XABFHC, REF XABKEY,
+                            REF XABPRO, REF XABRDT, REF XABSUM, REF XABTRM ),
+
+        NAM = STRUCT (SHORT SHORT INT bid,              { Fields of NAM in alphabetical order are :-                    }
+                      SHORT SHORT INT bln,              { * SHORT SHORT INT bid,  NAM block identifier                  }
+                      SHORT SHORT INT rss,              { * SHORT SHORT INT bln,  NAM block length                      }
+                      SHORT SHORT INT rsl,              { * REF CHAR dev,  device string address                        }
+                      REF CHAR rsa,                     { * SHORT SHORT INT dev_length,  device string length           }
+                      SHORT INT dummy,                  { * SHORT INT did0,                                             }
+                      SHORT SHORT INT ess,              { *           did1,                                             }
+                      SHORT SHORT INT esl,              { *           did2,  directory identification                   }
+                      REF CHAR esa,                     { * REF CHAR dir,  directory string address                     }
+                      REF NAM rlf,                      { * SHORT SHORT INT dir_length,  directory string length        }
+                      STRUCT 16 CHAR dvi,               { * STRUCT 16 CHAR dvi,  device identification                  }
+                      SHORT INT fid0,                   {   REF CHAR esa,  expanded string area address                 }
+                                fid1,                   { * SHORT SHORT INT esl,  expanded string length                }
+                                fid2,                   {   SHORT SHORT INT ess,  expanded string area size             }
+                      SHORT INT did0,                   { * SHORT INT fid0,                                             }
+                                did1,                   { *           fid1,                                             }
+                                did2,                   { *           fid2,  file identification                        }
+                      INT wcc,                          { * BITS fnb,  file name status bits                            }
+                      BITS fnb,                         { * REF CHAR name,  file name string address                    }
+                      SHORT SHORT INT node_length,      { * SHORT SHORT INT name_length,  file name string length       }
+                      SHORT SHORT INT dev_length,       { * REF CHAR node,  node name string address                    }
+                      SHORT SHORT INT dir_length,       { * SHORT SHORT INT node_length,  node name string length       }
+                      SHORT SHORT INT name_length,      {   REF NAM rlf,  related file NAM block address                }
+                      SHORT SHORT INT type_length,      {   REF CHAR rsa,  resultant string area address                }
+                      SHORT SHORT INT ver_length,       { * SHORT SHORT INT rsl,  resultant string length               }
+                      SHORT INT dummy1,                 {   SHORT SHORT INT rss,  resultant string area size            }
+                      REF CHAR node,                    { * REF CHAR type,  file type string address                    }
+                      REF CHAR dev,                     { * SHORT SHORT INT type_length,  file type string length       }
+                      REF CHAR dir,                     { * REF CHAR ver,  file version string address                  }
+                      REF CHAR name,                    { * SHORT SHORT INT ver_length,  file version string length     }
+                      REF CHAR type,                    { * INT wcc,  wildcard context                                  }
+                      REF CHAR ver,                     {                                                               }
+                      LONG INT dummy2,                  { * = set by RMS or makenam, do not alter                       }
+                      REF VECTOR [] CHAR expanded_buffer,
+                                         resultant_buffer),
+
+        XAB = STRUCT (SHORT SHORT INT cod,
+                      SHORT SHORT INT bln);
+                   {No objects of mode XAB will ever be created}
+
+   MODE BUFDESC = STRUCT ( SHORT INT length, type,
+                           REF CHAR address);
+
+   MODE REFBLOCK = UNION (REF FAB,
+                          REF RAB,
+                          REF XAB,
+                          REF NAM,
+                          REF XABALL,
+                          REF XABPRO,
+                          REF XABKEY,
+                          REF XABSUM,
+                          REF XABFHC,
+                          REF XABDAT,
+                          REF XABRDT,
+                          REF XABTRM,
+                          REF VECTOR [] CHAR,
+                          REF XTYPE);
+
+   MODE REFBLOCKCHAIN = STRUCT (REFBLOCK rb,
+                                BOOL freed,
+                                REF REFBLOCKCHAIN rrbc);
+
+   REF REFBLOCKCHAIN nilrefblock = NIL;
+
+   REF REFBLOCKCHAIN refblockchain := nilrefblock;
+
+{ Diagnostic procedure for debugging garbage collector
+  If it is included, the module must be compiled at default context,
+  since it uses Algol 68 transput
+
+
+   PROC print list = VOID:
+   BEGIN
+      OP ( REF FAB ) INT ADDRESS = BIOP 99;
+      OP ( REF RAB ) INT ADDRESS = BIOP 99;
+      OP ( REF XAB ) INT ADDRESS = BIOP 99;
+      OP ( REF NAM ) INT ADDRESS = BIOP 99;
+      OP ( REF XABALL ) INT ADDRESS = BIOP 99;
+      OP ( REF XABPRO ) INT ADDRESS = BIOP 99;
+      OP ( REF XABKEY ) INT ADDRESS = BIOP 99;
+      OP ( REF XABSUM ) INT ADDRESS = BIOP 99;
+      OP ( REF XABFHC ) INT ADDRESS = BIOP 99;
+      OP ( REF XABDAT ) INT ADDRESS = BIOP 99;
+      OP ( REF XABRDT ) INT ADDRESS = BIOP 99;
+      OP ( REF XABTRM ) INT ADDRESS = BIOP 99;
+      OP ( REF REF VECTOR [] CHAR ) INT ADDRESS = BIOP 99;
+      OP ( REF REF XTYPE ) INT ADDRESS = BIOP 99;
+      REF REF REFBLOCKCHAIN rbp:= refblockchain;
+      WHILE rbp ISNT nilrefblock DO
+         CASE rb OF rbp IN
+         ( REF FAB b) : print(("FAB ", whole(ADDRESS b,0))),
+         ( REF RAB b) : print(("RAB ", whole(ADDRESS b,0))),
+         ( REF XAB b) : print(("XAB ", whole(ADDRESS b,0))),
+         ( REF NAM b) : print(("NAM ", whole(ADDRESS b,0))),
+         ( REF XABALL b) : print(("XABALL ", whole(ADDRESS b,0))),
+         ( REF XABPRO b) : print(("XABPRO ", whole(ADDRESS b,0))),
+         ( REF XABKEY b) : print(("XABKEY ", whole(ADDRESS b,0))),
+         ( REF XABSUM b) : print(("XABSUM ", whole(ADDRESS b,0))),
+         ( REF XABFHC b) : print(("XABFHC ", whole(ADDRESS b,0))),
+         ( REF XABDAT b) : print(("XABDAT ", whole(ADDRESS b,0))),
+         ( REF XABRDT b) : print(("XABRDT ", whole(ADDRESS b,0))),
+         ( REF XABTRM b) : print(("XABTRM ", whole(ADDRESS b,0))),
+         ( REF VECTOR [] CHAR b) : (REF VECTOR [] CHAR c:= b;
+                           print(("RVC ", whole(ADDRESS c,0)))
+                                   ),
+         ( REF XTYPE b ) : (REF XTYPE c:= b;
+                           print(("XTYPE ", whole(ADDRESS c,0)))
+                           )
+         OUT print("Illegal mode")
+         ESAC;
+         print((IF freed OF rbp THEN " Deleted" ELSE "" FI,newline));
+         rbp:= rrbc OF rbp
+      OD
+   END;
+
+End of diagnostic procedure}
+
+{Some block length and code identifiers}
+
+   SHORT SHORT INT xabpro_cod = SHORT SHORT 19;
+   SHORT SHORT INT xabpro_len_v3 = SHORT SHORT 16;
+   SHORT SHORT INT xabpro_len = SHORT SHORT 40;
+   SHORT SHORT INT xaball_cod = SHORT SHORT 20;
+   SHORT SHORT INT xaball_len = SHORT SHORT 32;
+   SHORT SHORT INT xabdat_cod = SHORT SHORT 18;
+   SHORT SHORT INT xabdat_len = SHORT SHORT 44;
+   SHORT SHORT INT xabfhc_cod = SHORT SHORT 29;
+   SHORT SHORT INT xabfhc_len = SHORT SHORT 44;
+   SHORT SHORT INT xabkey_cod = SHORT SHORT 21;
+   SHORT SHORT INT xabkey_len = SHORT SHORT 76;
+   SHORT SHORT INT xabsum_cod = SHORT SHORT 22;
+   SHORT SHORT INT xabsum_len = SHORT SHORT 12;
+   SHORT SHORT INT xabrdt_cod = SHORT SHORT 30;
+   SHORT SHORT INT xabrdt_len = SHORT SHORT 20;
+   SHORT SHORT INT xabtrm_cod = SHORT SHORT 31;
+   SHORT SHORT INT xabtrm_len = SHORT SHORT 36;
+
+{Some coercion BIOPs}
+
+   OP (REF XABALL) REF XAB XABGEN = BIOP 99;
+   OP (REF XABKEY) REF XAB XABGEN = BIOP 99;
+   OP (REF XABFHC) REF XAB XABGEN = BIOP 99;
+   OP (REF XABDAT) REF XAB XABGEN = BIOP 99;
+   OP (REF XABPRO) REF XAB XABGEN = BIOP 99;
+   OP (REF XABRDT) REF XAB XABGEN = BIOP 99;
+   OP (REF XABSUM) REF XAB XABGEN = BIOP 99;
+
+   OP (REF XAB) REF XABALL XABALLGEN = BIOP 99;
+   OP (REF XAB) REF XABKEY XABKEYGEN = BIOP 99;
+   OP (REF XAB) REF XABFHC XABFHCGEN = BIOP 99;
+   OP (REF XAB) REF XABDAT XABDATGEN = BIOP 99;
+   OP (REF XAB) REF XABPRO XABPROGEN = BIOP 99;
+   OP (REF XAB) REF XABRDT XABRDTGEN = BIOP 99;
+   OP (REF XAB) REF XABSUM XABSUMGEN = BIOP 99;
+
+   OP (INT) REF RAB REFRABGEN = BIOP 99;
+   OP (INT) REF XAB REFXABGEN = BIOP 99;
+   OP (INT) REF NAM REFNAMGEN = BIOP 99;
+
+   REF VECTOR [] CHAR no buffer = NIL;
+   REF XABALL no xab = NIL;
+   REF XAB no xabunion = NIL;
+   REF XABALL no xaball = NIL;
+   REF XABSUM no xabsum = NIL;
+   REF XABRDT no xabrdt = NIL;
+   REF XABPRO no xabpro = NIL;
+   REF XABDAT no xabdat = NIL;
+   REF XABFHC no xabfhc = NIL;
+   REF XABKEY no xabkey = NIL;
+   REF XABTRM no xabtrm = NIL;
+   REF RAB no rab = NIL;
+   REF NAM no nam = NIL;
+   REF FAB no fab = NIL;
+
+{Some coercion procedures}
+
+   PROC xaball = (REF XAB xab) REF XABALL:
+   IF cod OF xab = xaball_cod AND bln OF xab = xaball_len
+   THEN XABALLGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABALL");
+        no xaball
+   FI;
+
+   PROC xabdat = (REF XAB xab) REF XABDAT:
+   IF cod OF xab = xabdat_cod AND bln OF xab = xabdat_len
+   THEN XABDATGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABDAT");
+        no xabdat
+   FI;
+
+   PROC xabkey = (REF XAB xab) REF XABKEY:
+   IF cod OF xab = xabkey_cod AND bln OF xab = xabkey_len
+   THEN XABKEYGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABKEY");
+        no xabkey
+   FI;
+
+   PROC xabfhc = (REF XAB xab) REF XABFHC:
+   IF cod OF xab = xabfhc_cod AND bln OF xab = xabfhc_len
+   THEN XABFHCGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABFHC");
+        no xabfhc
+   FI;
+
+   PROC xabsum = (REF XAB xab) REF XABSUM:
+   IF cod OF xab = xabsum_cod AND bln OF xab = xabsum_len
+   THEN XABSUMGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABSUM");
+        no xabsum
+   FI;
+
+   PROC xabpro = (REF XAB xab) REF XABPRO:
+   IF cod OF xab = xabpro_cod AND
+   (bln OF xab = xabpro_len OR bln OF xab = xabpro_len_v3)
+   THEN XABPROGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABPRO");
+        no xabpro
+   FI;
+
+   PROC xabrdt = (REF XAB xab) REF XABRDT:
+   IF cod OF xab = xabrdt_cod AND bln OF xab = xabrdt_len
+   THEN XABRDTGEN xab
+   ELSE algolrms_fault("Illegal run-time coercion to XABRDT");
+        no xabrdt
+   FI;
+
+   PROC set_algolrms = (BITS options)BITS:
+   BEGIN
+      BITS current options = algolrms_mode;
+      IF (options AND algolrms_inquire) /= algolrms_inquire
+      THEN algolrms_mode:= options AND NOT algolrms_inquire;
+           saveblocks:=
+              (options AND algolrms_nosaveblocks) /= algolrms_nosaveblocks;
+           savexabs:=
+              (options AND algolrms_nosavexabs) /= algolrms_nosavexabs;
+           savebuffers:=
+              (options AND algolrms_savebuffers) = algolrms_savebuffers;
+           checkbuffers:=
+              (options AND algolrms_checkbuffers) = algolrms_checkbuffers;
+           freechained:=
+              (options AND algolrms_nofreechained) /= algolrms_nofreechained;
+           algolsave:=
+              (options AND algolrms_algolsave) = algolrms_algolsave
+      FI;
+      current options
+   END;
+
+
+   PROC keep reference = (REFBLOCK newrefblock) VOID:
+      refblockchain := HEAP REFBLOCKCHAIN := (newrefblock,FALSE,refblockchain);
+
+
+   PROC mark_rms_chain = (REFBLOCK rb) VOID:
+   BEGIN
+      REF REF REFBLOCKCHAIN rbp := refblockchain;
+      WHILE (rbp ISNT nilrefblock) ANDTH
+      NOT CASE rb IN
+         (REF FAB f) : CASE rb OF rbp IN (REF FAB f1) :
+                          IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                             freed OF rbp:= TRUE;
+                             IF (f ISNT no fab) ANDTH freechained
+                             THEN IF xab OF f ISNT no xabunion THEN
+                                     mark_rms_chain(xab OF f)
+                                  FI;
+                                  IF nam OF f ISNT no nam THEN
+                                     mark_rms_chain(nam OF f)
+                                  FI;
+                                  IF default_name OF f ISNT no buffer THEN
+                                     mark_rms_chain(default_name OF f)
+                                  FI;
+                                  IF file_name OF f ISNT no buffer THEN
+                                     mark_rms_chain(file_name OF f)
+                                  FI
+                             FI;
+                             TRUE
+                          ELSE FALSE
+                          FI
+                       OUT FALSE ESAC,
+         (REF RAB f) : CASE rb OF rbp IN (REF RAB f1) :
+                          IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                             freed OF rbp:= TRUE;
+                             IF (f ISNT no rab) ANDTH freechained
+                             THEN IF xab OF f ISNT no xabtrm THEN
+                                     mark_rms_chain(xab OF f)
+                                  FI;
+                                  IF record_buffer OF f ISNT no buffer THEN
+                                     mark_rms_chain(record_buffer OF f)
+                                  FI;
+                                  IF user_buffer OF f ISNT no buffer THEN
+                                     mark_rms_chain(user_buffer OF f)
+                                  FI;
+                                  IF prompt_buffer OF f ISNT no buffer THEN
+                                     mark_rms_chain(prompt_buffer OF f)
+                                  FI
+                             FI;
+                             TRUE
+                          ELSE FALSE
+                          FI
+                       OUT FALSE ESAC,
+         (REF NAM f) : CASE rb OF rbp IN (REF NAM f1) :
+                          IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                             freed OF rbp:= TRUE;
+                             IF (f ISNT no nam) ANDTH freechained
+                             THEN
+                                  IF rlf OF f ISNT no nam THEN
+                                     mark_rms_chain(rlf OF f)
+                                  FI;
+                                  IF resultant_buffer OF f ISNT no buffer THEN
+                                     mark_rms_chain(resultant_buffer OF f)
+                                  FI;
+                                  IF expanded_buffer OF f ISNT no buffer THEN
+                                     mark_rms_chain(expanded_buffer OF f)
+                                  FI
+                             FI;
+                             TRUE
+                          ELSE FALSE
+                          FI
+                       OUT FALSE ESAC,
+         (REF XABALL f) : CASE rb OF rbp IN (REF XABALL f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xaball) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABPRO f) : CASE rb OF rbp IN (REF XABPRO f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabpro) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI;
+                                   IF acl_buffer OF f ISNT no buffer THEN
+                                      mark_rms_chain(acl_buffer OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABKEY f) : CASE rb OF rbp IN (REF XABKEY f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabkey) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABSUM f) : CASE rb OF rbp IN (REF XABSUM f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabsum) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABFHC f) : CASE rb OF rbp IN (REF XABFHC f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabfhc) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABDAT f) : CASE rb OF rbp IN (REF XABDAT f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabdat) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABRDT f) : CASE rb OF rbp IN (REF XABRDT f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabrdt) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XABTRM f) : CASE rb OF rbp IN (REF XABTRM f1) :
+                             IF (f1 IS f) ANDTH NOT freed OF rbp THEN
+                                freed OF rbp:= TRUE;
+                                IF (f ISNT no xabtrm) ANDTH freechained THEN
+                                   IF nxt OF f ISNT no xabtrm THEN
+                                      mark_rms_chain(nxt OF f)
+                                   FI;
+                                   IF itemlist_buffer OF f ISNT no buffer THEN
+                                      mark_rms_chain(itemlist_buffer OF f)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+                          OUT FALSE ESAC,
+         (REF XAB f) :
+            IF NOT freed OF rbp THEN
+            IF cod OF f = xaball_cod THEN
+               CASE rb OF rbp IN (REF XABALL f1) :
+                             IF (f1 IS xaball (f)) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xaball) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabpro_cod THEN
+               CASE rb OF rbp IN (REF XABPRO f1) :
+                             IF f1 IS xabpro (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabpro) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI;
+                                   IF acl_buffer OF f1 ISNT no buffer THEN
+                                      mark_rms_chain(acl_buffer OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabkey_cod THEN
+               CASE rb OF rbp IN (REF XABKEY f1) :
+                             IF f1 IS xabkey (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabkey) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabsum_cod THEN
+               CASE rb OF rbp IN (REF XABSUM f1) :
+                             IF f1 IS xabsum (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabsum) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabfhc_cod THEN
+               CASE rb OF rbp IN (REF XABFHC f1) :
+                             IF f1 IS xabfhc (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabfhc) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabdat_cod THEN
+               CASE rb OF rbp IN (REF XABDAT f1) :
+                             IF f1 IS xabdat (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabdat) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELIF cod OF f = xabrdt_cod THEN
+               CASE rb OF rbp IN (REF XABRDT f1) :
+                             IF f1 IS xabrdt (f) THEN
+                                freed OF rbp:= TRUE;
+                                IF (f1 ISNT no xabrdt) ANDTH freechained THEN
+                                   IF nxt OF f1 ISNT no xabunion THEN
+                                      mark_rms_chain(nxt OF f1)
+                                   FI
+                                FI;
+                                TRUE
+                             ELSE FALSE
+                             FI
+               OUT FALSE ESAC
+            ELSE FALSE FI
+            ELSE FALSE FI,
+         (REF VECTOR [] CHAR f) : CASE rb OF rbp IN (REF VECTOR [] CHAR f1) :
+                                        IF (f1 IS f) ANDTH NOT freed OF rbp
+                                        THEN freed OF rbp:= TRUE ELSE FALSE
+                                        FI
+                                  OUT FALSE ESAC
+      OUT FALSE ESAC
+      DO rbp := rrbc OF rbp OD
+   END;
+
+   PROC free_rms_block = (REFBLOCK rb) BOOL:
+   BEGIN
+      BOOL freed:= FALSE;
+      mark_rms_chain(rb);
+      REF REF REFBLOCKCHAIN rbp:= refblockchain;
+      WHILE rbp ISNT nilrefblock DO
+         IF freed OF rbp THEN REF REF REFBLOCKCHAIN (rbp) := rrbc OF rbp;
+            freed:= TRUE
+         ELSE rbp:= rrbc OF rbp
+         FI
+      OD;
+      freed
+   END;
+
+   OP (XTYPE)REF VECTOR [] CHAR XTTORVC = BIOP 99;
+
+   PROC add_xabtrm = (REF XABTRM xabtrm, REF RAB rab) VOID: xab OF rab:= xabtrm;
+
+   PROC add_defaultname_buffer = (XTYPE buffer, REF FAB fab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      dna OF fab:= buffer_desc[1];
+      dns OF fab:= SHORTEN SHORTEN UPB buffer_desc;
+      IF savebuffers THEN default_name OF fab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_filename_buffer = (XTYPE buffer, REF FAB fab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      fna OF fab:= buffer_desc[1];
+      fns OF fab:= SHORTEN SHORTEN UPB buffer_desc;
+      IF savebuffers THEN file_name OF fab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+
+   PROC add_prompt_buffer = (XTYPE buffer, REF RAB rab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      kbf OF rab:= buffer_desc[1];
+      ksz OF rab:= SHORTEN SHORTEN UPB buffer_desc;
+      IF savebuffers THEN prompt_buffer OF rab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_record_buffer = (XTYPE buffer, REF RAB rab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      rbf OF rab:= buffer_desc[1];
+      rsz OF rab:= SHORTEN UPB buffer_desc;
+      IF savebuffers THEN record_buffer OF rab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_user_buffer = (REF XTYPE buffer, REF RAB rab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      ubf OF rab:= buffer_desc[1];
+      usz OF rab:= SHORTEN UPB buffer_desc;
+      IF savebuffers THEN user_buffer OF rab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_expanded_buffer = (REF XTYPE buffer, REF NAM nam) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      esa OF nam:= buffer_desc[1];
+      ess OF nam:= SHORTEN SHORTEN UPB buffer_desc;
+      IF savebuffers THEN expanded_buffer OF nam:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_resultant_buffer = (REF XTYPE buffer, REF NAM nam) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      rsa OF nam:= buffer_desc[1];
+      rss OF nam:= SHORTEN SHORTEN UPB buffer_desc;
+      IF savebuffers THEN resultant_buffer OF nam:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_acl_buffer = (REF XTYPE buffer, REF XABPRO xab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      aclbuf OF xab:= buffer_desc[1];
+      aclsiz OF xab:= SHORTEN UPB buffer_desc;
+      IF savebuffers THEN acl_buffer OF xab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+   PROC add_itemlist_buffer = (REF XTYPE buffer, REF XABTRM xab) VOID:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      itmlst OF xab:= buffer_desc[1];
+      itmlst_len OF xab:= SHORTEN UPB buffer_desc;
+      IF savebuffers THEN itemlist_buffer OF xab:= buffer_desc;
+                          keep reference(buffer_desc)
+      FI
+   END;
+
+
+
+{ RMS constants }
+   SHORT SHORT INT nam_bln = SHORT SHORT 96;
+   SHORT SHORT INT nam_bid = SHORT SHORT 2;
+
+{ Bit values to test FNB (file name status) field of NAM block }
+   BITS nam_cncl_dev = 16r1000;
+   BITS nam_dir_lvls = 16re00000;
+   BITS nam_exp_dev = 16r80;
+   BITS nam_exp_dir = 16r40;
+   BITS nam_exp_name = 16r4;
+   BITS nam_exp_type = 16r2;
+   BITS nam_exp_ver = 16r1;
+   BITS nam_grp_mbr = 16r80000;
+   BITS nam_highver = 16r8000;
+   BITS nam_lowver = 16r4000;
+   BITS nam_node = 16r20000;
+   BITS nam_ppf = 16r10000;
+   BITS nam_quoted = 16r40000;
+   BITS nam_root_dir = 16r2000;
+   BITS nam_wildcard = 16r100;
+   BITS nam_wild_dir = 16r100000;
+   BITS nam_wild_grp = 16r1000000;
+   BITS nam_wild_mbr = 16r2000000;
+   BITS nam_wild_name = 16r20;
+   BITS nam_wild_sfd1 = 16r2000000;
+   BITS nam_wild_sfd2 = 16r4000000;
+   BITS nam_wild_sfd3 = 16r8000000;
+   BITS nam_wild_sfd4 = 16r10000000;
+   BITS nam_wild_sfd5 = 16r20000000;
+   BITS nam_wild_sfd6 = 16r40000000;
+   BITS nam_wild_sfd7 = 16r80000000;
+   BITS nam_wild_type = 16r10;
+   BITS nam_wild_ufd = 16r1000000;
+   BITS nam_wild_ver = 16r8;
+
+{ Alternative names for above }
+   BITS fnb_cncl_dev = 16r1000;
+   BITS fnb_dir_lvls = 16re00000;
+   BITS fnb_exp_dev = 16r80;
+   BITS fnb_exp_dir = 16r40;
+   BITS fnb_exp_name = 16r4;
+   BITS fnb_exp_type = 16r2;
+   BITS fnb_exp_ver = 16r1;
+   BITS fnb_grp_mbr = 16r80000;
+   BITS fnb_highver = 16r8000;
+   BITS fnb_lowver = 16r4000;
+   BITS fnb_node = 16r20000;
+   BITS fnb_ppf = 16r10000;
+   BITS fnb_quoted = 16r40000;
+   BITS fnb_root_dir = 16r2000;
+   BITS fnb_wildcard = 16r100;
+   BITS fnb_wild_dir = 16r100000;
+   BITS fnb_wild_grp = 16r1000000;
+   BITS fnb_wild_mbr = 16r2000000;
+   BITS fnb_wild_name = 16r20;
+   BITS fnb_wild_sfd1 = 16r2000000;
+   BITS fnb_wild_sfd2 = 16r4000000;
+   BITS fnb_wild_sfd3 = 16r8000000;
+   BITS fnb_wild_sfd4 = 16r10000000;
+   BITS fnb_wild_sfd5 = 16r20000000;
+   BITS fnb_wild_sfd6 = 16r40000000;
+   BITS fnb_wild_sfd7 = 16r80000000;
+   BITS fnb_wild_type = 16r10;
+   BITS fnb_wild_ufd = 16r1000000;
+   BITS fnb_wild_ver = 16r8;
+
+{ XAB values }
+
+   SHORT SHORT INT xab_cyl = SHORT SHORT 1;
+   SHORT SHORT INT aln_cyl = SHORT SHORT 1;
+   SHORT SHORT INT xab_lbn = SHORT SHORT 2;
+   SHORT SHORT INT aln_lbn = SHORT SHORT 2;
+   SHORT SHORT INT xab_vbn = SHORT SHORT 3;
+   SHORT SHORT INT aln_vbn = SHORT SHORT 3;
+   SHORT SHORT INT xab_rfi = SHORT SHORT 4;
+   SHORT SHORT INT aln_rfi = SHORT SHORT 4;
+   SHORT SHORT BITS xab_cbt = SHORT SHORT 16r20;
+   SHORT SHORT BITS aop_cbt = SHORT SHORT 16r20;
+   SHORT SHORT BITS xab_ctg = SHORT SHORT 16r80;
+   SHORT SHORT BITS aop_ctg = SHORT SHORT 16r80;
+   SHORT SHORT BITS xab_hrd = SHORT SHORT 16r1;
+   SHORT SHORT BITS aop_hrd = SHORT SHORT 16r1;
+   SHORT SHORT BITS xab_onc = SHORT SHORT 16r2;
+   SHORT SHORT BITS aop_onc = SHORT SHORT 16r2;
+   SHORT INT xab_bn2 = SHORT 2;
+   SHORT INT dtp_bn2 = SHORT 2;
+   SHORT INT xab_bn4 = SHORT 4;
+   SHORT INT dtp_bn4 = SHORT 4;
+   SHORT INT xab_in2 = SHORT 1;
+   SHORT INT dtp_in2 = SHORT 1;
+   SHORT INT xab_in4 = SHORT 3;
+   SHORT INT dtp_in4 = SHORT 3;
+   SHORT INT xab_pac = SHORT 5;
+   SHORT INT dtp_pac = SHORT 5;
+   SHORT INT xab_stg = SHORT 0;
+   SHORT INT dtp_stg = SHORT 0;
+   SHORT SHORT BITS xab_chg = SHORT SHORT 16r2;
+   SHORT SHORT BITS flg_chg = SHORT SHORT 16r2;
+   SHORT SHORT BITS xab_dat_ncmpr = SHORT SHORT 16r80;
+   SHORT SHORT BITS flg_dat_ncmpr = SHORT SHORT 16r80;
+   SHORT SHORT BITS xab_dup = SHORT SHORT 16r1;
+   SHORT SHORT BITS flg_dup = SHORT SHORT 16r1;
+   SHORT SHORT BITS xab_idx_ncmpr = SHORT SHORT 16r8;
+   SHORT SHORT BITS flg_idx_ncmpr = SHORT SHORT 16r8;
+   SHORT SHORT BITS xab_key_ncmpr = SHORT SHORT 16r40;
+   SHORT SHORT BITS flg_key_ncmpr = SHORT SHORT 16r40;
+   SHORT SHORT BITS xab_nul = SHORT SHORT 16r4;
+   SHORT SHORT BITS flg_nul = SHORT SHORT 16r4;
+   SHORT BITS xab_system_noread = SHORT 16r1;
+   SHORT BITS xab_system_nowrite = SHORT 16r2;
+   SHORT BITS xab_system_noexe = SHORT 16r4;
+   SHORT BITS xab_system_nodel = SHORT 16r8;
+   SHORT BITS xab_owner_noread = SHORT 16r10;
+   SHORT BITS xab_owner_nowrite = SHORT 16r20;
+   SHORT BITS xab_owner_noexe = SHORT 16r40;
+   SHORT BITS xab_owner_nodel = SHORT 16r80;
+   SHORT BITS xab_group_noread = SHORT 16r100;
+   SHORT BITS xab_group_nowrite = SHORT 16r200;
+   SHORT BITS xab_group_noexe = SHORT 16r400;
+   SHORT BITS xab_group_nodel = SHORT 16r800;
+   SHORT BITS xab_world_noread = SHORT 16r1000;
+   SHORT BITS xab_world_nowrite = SHORT 16r2000;
+   SHORT BITS xab_world_noexe = SHORT 16r4000;
+   SHORT BITS xab_world_nodel = SHORT 16r8000;
+   SHORT BITS pro_system_noread = SHORT 16r1;
+   SHORT BITS pro_system_nowrite = SHORT 16r2;
+   SHORT BITS pro_system_noexe = SHORT 16r4;
+   SHORT BITS pro_system_nodel = SHORT 16r8;
+   SHORT BITS pro_owner_noread = SHORT 16r10;
+   SHORT BITS pro_owner_nowrite = SHORT 16r20;
+   SHORT BITS pro_owner_noexe = SHORT 16r40;
+   SHORT BITS pro_owner_nodel = SHORT 16r80;
+   SHORT BITS pro_group_noread = SHORT 16r100;
+   SHORT BITS pro_group_nowrite = SHORT 16r200;
+   SHORT BITS pro_group_noexe = SHORT 16r400;
+   SHORT BITS pro_group_nodel = SHORT 16r800;
+   SHORT BITS pro_world_noread = SHORT 16r1000;
+   SHORT BITS pro_world_nowrite = SHORT 16r2000;
+   SHORT BITS pro_world_noexe = SHORT 16r4000;
+   SHORT BITS pro_world_nodel = SHORT 16r8000;
+   SHORT SHORT BITS xab_propagate = SHORT SHORT 16r1;
+   SHORT SHORT BITS prot_opt_propagate = SHORT SHORT 16r1;
+
+{ Values for RAC (record access mode) field of RAB block }
+   SHORT SHORT INT rab_key = SHORT SHORT 1;
+   SHORT SHORT INT rac_key = SHORT SHORT 1;
+   SHORT SHORT INT rab_rfa = SHORT SHORT 2;
+   SHORT SHORT INT rac_rfa = SHORT SHORT 2;
+   SHORT SHORT INT rab_seq = SHORT SHORT 0;
+   SHORT SHORT INT rac_seq = SHORT SHORT 0;
+
+{ What are these RAB items? }
+   SHORT SHORT INT rab_stm = SHORT SHORT 3;
+   BITS rab_hsh = 16r80;
+   BITS rab_mas = 16r20;
+   BITS rab_ppf_ind = 16r4000;
+   BITS rab_ppf_rat = 16r3fc0;
+
+{ Bit values for ROP (record-processing options) field of RAB block (use OR to combine these values) }
+   BITS rab_asy = 16r1;
+   BITS rop_asy = 16r1;
+   BITS rab_bio = 16r800;
+   BITS rop_bio = 16r800;
+   BITS rab_cco = 16r80000000;
+   BITS rop_cco = 16r80000000;
+   BITS rab_cvt = 16r4000000;
+   BITS rop_cvt = 16r4000000;
+   BITS rab_eof = 16r100;
+   BITS rop_eof = 16r100;
+   BITS rab_fdl = 16r40;
+   BITS rop_fdl = 16r40;
+   BITS rab_kge = 16r200000;
+   BITS rop_kge = 16r200000;
+   BITS rab_kgt = 16r400000;
+   BITS rop_kgt = 16r400000;
+   BITS rab_lim = 16r4000;
+   BITS rop_lim = 16r4000;
+   BITS rab_loa = 16r2000;
+   BITS rop_loa = 16r2000;
+   BITS rab_loc = 16r10000;
+   BITS rop_loc = 16r10000;
+   BITS rab_nlk = 16r100000;
+   BITS rop_nlk = 16r100000;
+   BITS rab_nxr = 16r800000;
+   BITS rop_nxr = 16r800000;
+   BITS rab_pmt = 16r40000000;
+   BITS rop_pmt = 16r40000000;
+   BITS rab_pta = 16r20000000;
+   BITS rop_pta = 16r20000000;
+   BITS rab_rah = 16r200;
+   BITS rop_rah = 16r200;
+   BITS rab_rea = 16r4;
+   BITS rop_rea = 16r4;
+   BITS rab_rlk = 16r80000;
+   BITS rop_rlk = 16r80000;
+   BITS rab_rne = 16r1000000;
+   BITS rop_rne = 16r1000000;
+   BITS rab_rnf = 16r8000000;
+   BITS rop_rnf = 16r8000000;
+   BITS rab_rrl = 16r8;
+   BITS rop_rrl = 16r8;
+   BITS rab_tmo = 16r2000000;
+   BITS rop_tmo = 16r2000000;
+   BITS rab_tpt = 16r2;
+   BITS rop_tpt = 16r2;
+   BITS rab_uif = 16r10;
+   BITS rop_uif = 16r10;
+   BITS rab_ulk = 16r40000;
+   BITS rop_ulk = 16r40000;
+   BITS rab_wat = 16r20000;
+   BITS rop_wat = 16r20000;
+   BITS rab_wbh = 16r400;
+   BITS rop_wbh = 16r400;
+
+{ Values for ORG (file organization) field of FAB block }
+   SHORT SHORT INT org_rel = SHORT SHORT 16;
+   SHORT SHORT INT fab_rel = SHORT SHORT 16;
+   SHORT SHORT INT org_seq = SHORT SHORT 0;
+   SHORT SHORT INT fab_seq = SHORT SHORT 0;
+   SHORT SHORT INT org_idx = SHORT SHORT 32;
+   SHORT SHORT INT fab_idx = SHORT SHORT 32;
+
+{ Bit values for FAC (file access) field of FAB (use OR to combine these values) }
+   SHORT SHORT BITS fac_put = BIN SHORT SHORT 1;
+   SHORT SHORT BITS fab_put = BIN SHORT SHORT 1;
+   SHORT SHORT BITS fac_get = BIN SHORT SHORT 2;
+   SHORT SHORT BITS fab_get = BIN SHORT SHORT 2;
+   SHORT SHORT BITS fac_del = BIN SHORT SHORT 4;
+   SHORT SHORT BITS fab_del = BIN SHORT SHORT 4;
+   SHORT SHORT BITS fac_upd = BIN SHORT SHORT 3;
+   SHORT SHORT BITS fab_upd = BIN SHORT SHORT 3;
+   SHORT SHORT BITS fac_trn = BIN SHORT SHORT 16;
+   SHORT SHORT BITS fab_trn = BIN SHORT SHORT 16;
+   SHORT SHORT BITS fac_bio = BIN SHORT SHORT 32;
+   SHORT SHORT BITS fab_bio = BIN SHORT SHORT 32;
+   SHORT SHORT BITS fac_bro = BIN SHORT SHORT 64;
+   SHORT SHORT BITS fab_bro = BIN SHORT SHORT 64;
+
+{ Bit values for FOP (file-processing options) field of FAB block (use OR to combine these values) }
+   BITS fop_cbt = 16r200000;
+   BITS fop_cif = 16r2000000;
+   BITS fop_ctg = 16r100000;
+   BITS fop_dfw = 16r20;
+   BITS fop_dlt = 16r8000;
+   BITS fop_mxv = 16r2;
+   BITS fop_nam = 16r1000000;
+   BITS fop_nef = 16r400;
+   BITS fop_nfs = 16r10000;
+   BITS fop_ofp = 16r20000000;
+   BITS fop_pos = 16r100;
+   BITS fop_rck = 16r800000;
+   BITS fop_rwc = 16r800;
+   BITS fop_rwo = 16r80;
+   BITS fop_scf = 16r4000;
+   BITS fop_spl = 16r2000;
+   BITS fop_sqo = 16r40;
+   BITS fop_sup = 16r4;
+   BITS fop_tef = 16r10000000;
+   BITS fop_tmd = BIN 16;
+   BITS fop_tmp = BIN 8;
+   BITS fop_ufo = 16r20000;
+   BITS fop_wck = 16r200;
+
+{ Alternative names for above }
+   BITS fab_cbt = 16r200000;
+   BITS fab_cif = 16r2000000;
+   BITS fab_ctg = 16r100000;
+   BITS fab_dfw = 16r20;
+   BITS fab_dlt = 16r8000;
+   BITS fab_mxv = 16r2;
+   BITS fab_nam = 16r1000000;
+   BITS fab_nef = 16r400;
+   BITS fab_nfs = 16r10000;
+   BITS fab_ofp = 16r20000000;
+   BITS fab_pos = 16r100;
+   BITS fab_rck = 16r800000;
+   BITS fab_rwc = 16r800;
+   BITS fab_rwo = 16r80;
+   BITS fab_scf = 16r4000;
+   BITS fab_spl = 16r2000;
+   BITS fab_sqo = 16r40;
+   BITS fab_sup = 16r4;
+   BITS fab_tef = 16r10000000;
+   BITS fab_tmd = BIN 16;
+   BITS fab_tmp = BIN 8;
+   BITS fab_ufo = 16r20000;
+   BITS fab_wck = 16r200;
+
+{ Values for RAT (record attributes) field of FAB block (use OR to combine rat_blk with one of the other options) }
+   SHORT SHORT BITS rat_blk = BIN SHORT SHORT 8;
+   SHORT SHORT BITS fab_blk = BIN SHORT SHORT 8;
+   SHORT SHORT BITS rat_ftn = BIN SHORT SHORT 1;
+   SHORT SHORT BITS fab_ftn = BIN SHORT SHORT 1;
+   SHORT SHORT BITS rat_cr = BIN SHORT SHORT 2;
+   SHORT SHORT BITS fab_cr = BIN SHORT SHORT 2;
+   SHORT SHORT BITS rat_prn = BIN SHORT SHORT 4;
+   SHORT SHORT BITS fab_prn = BIN SHORT SHORT 4;
+
+{ Values for RFM (record format) field of FAB block }
+   SHORT SHORT INT rfm_fix = SHORT SHORT 1;
+   SHORT SHORT INT rfm_stm = SHORT SHORT 4;
+   SHORT SHORT INT rfm_stmcr = SHORT SHORT 6;
+   SHORT SHORT INT rfm_stmlf = SHORT SHORT 5;
+   SHORT SHORT INT rfm_udf = SHORT SHORT 0;
+   SHORT SHORT INT rfm_var = SHORT SHORT 2;
+   SHORT SHORT INT rfm_vfc = SHORT SHORT 3;
+   SHORT SHORT INT fab_fix = SHORT SHORT 1;
+   SHORT SHORT INT fab_stm = SHORT SHORT 4;
+   SHORT SHORT INT fab_stmcr = SHORT SHORT 6;
+   SHORT SHORT INT fab_stmlf = SHORT SHORT 5;
+   SHORT SHORT INT fab_udf = SHORT SHORT 0;
+   SHORT SHORT INT fab_var = SHORT SHORT 2;
+   SHORT SHORT INT fab_vfc = SHORT SHORT 3;
+
+{ Bit values for SHR (file sharing) field of FAB block (use OR to combine these values) }
+   SHORT SHORT BITS shr_mse = BIN SHORT SHORT 16;
+   SHORT SHORT BITS shr_upi = BIN SHORT SHORT 64;
+   SHORT SHORT BITS fab_mse = BIN SHORT SHORT 16;
+   SHORT SHORT BITS fab_upi = BIN SHORT SHORT 64;
+   SHORT SHORT BITS shr_put = BIN SHORT SHORT 1;
+   SHORT SHORT BITS shr_get = BIN SHORT SHORT 2;
+   SHORT SHORT BITS shr_del = BIN SHORT SHORT 4;
+   SHORT SHORT BITS shr_upd = BIN SHORT SHORT 3;
+   SHORT SHORT BITS shr_nil = BIN SHORT SHORT 32;
+   SHORT SHORT BITS fab_nil = BIN SHORT SHORT 32;
+
+{ RMS constants }
+   SHORT SHORT INT fab_bid = SHORT SHORT 3;
+   SHORT SHORT INT rab_bid = SHORT SHORT 1;
+   SHORT SHORT INT fab_bln = SHORT SHORT 80;
+   SHORT SHORT INT rab_bln = SHORT SHORT 68;
+
+
+   PROC make fab = (REFANYXAB xab, REF NAM nam) REF FAB:
+   BEGIN
+      REF FAB f = HEAP FAB;
+      bid OF f := fab_bid;
+      bln OF f := fab_bln;
+      ifi OF f := SHORT 0;
+      alq OF f := 0;
+      bks OF f := SHORT SHORT 0;
+      bls OF f := SHORT 0;
+      ctx OF f := 0;
+      deq OF f := SHORT 0;
+      dna OF f := NIL;
+      dns OF f := SHORT SHORT 0;
+      fac OF f := BIN SHORT SHORT 0;
+      fna OF f := NIL;
+      fns OF f := SHORT SHORT 0;
+      fop OF f := BIN 0;
+      fsz OF f := SHORT SHORT 0;
+      gbc OF f := SHORT 0;
+      mrn OF f := 0;
+      mrs OF f := SHORT 0;
+      nam OF f := nam;
+      org OF f := SHORT SHORT 0;
+      rat OF f := BIN SHORT SHORT 0;
+      rfm OF f := SHORT SHORT 0;
+      rtv OF f := SHORT SHORT 0;
+      shr OF f := BIN SHORT SHORT 0;
+      xab OF f :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      default_name OF f:= no buffer;
+      file_name OF f:= no buffer;
+      xab_list OF f:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF saveblocks THEN  keep reference(f)  FI;
+      f
+   END;
+
+
+   PROC make rab = (REF FAB fab) REF RAB:
+   BEGIN
+      REF RAB r = HEAP RAB;
+      bid OF r := rab_bid;
+      bln OF r := rab_bln;
+      rop OF r := BIN 0;
+      sts OF r := 0;
+      stv OF r := 0;
+      rfa_0 OF r := SHORT 0;
+      rfa_1 OF r := SHORT 0;
+      rfa_2 OF r := SHORT 0;
+      ctx OF r := 0;
+      rac OF r := rac_seq;
+      tmo OF r := SHORT SHORT 0;
+      usz OF r := SHORT 0;
+      rsz OF r := SHORT 0;
+      ubf OF r := NIL;
+      rbf OF r := NIL;
+      rhb OF r := 0;
+      kbf OF r := NIL;
+      ksz OF r := SHORT SHORT 0;
+      krf OF r := SHORT SHORT 0;
+      mbf OF r := SHORT SHORT 0;
+      mbc OF r := SHORT SHORT 0;
+      bkt OF r := 0;
+      fab OF r := fab;
+      isi OF r := SHORT 0;
+      xab OF r:= NIL;
+      record_buffer OF r:= no buffer;
+      user_buffer OF r:= no buffer;
+      prompt_buffer OF r:= no buffer;
+      IF saveblocks THEN keep reference(r)
+      FI;
+      r
+   END;
+
+
+   PROC make xaball = (REFANYXAB xab) REF XABALL:
+   BEGIN
+      REF XABALL xaball = HEAP XABALL;
+      cod OF xaball := xaball_cod;
+      bln OF xaball := xaball_len;
+      aid OF xaball := SHORT SHORT 0;
+      aln OF xaball := SHORT SHORT 0;
+      alq OF xaball := 0;
+      aop OF xaball := BIN SHORT SHORT 0;
+      bkz OF xaball := SHORT SHORT 0;
+      deq OF xaball := SHORT 0;
+      loc OF xaball := 0;
+      nxt OF xaball :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      vol OF xaball := SHORT 0;
+      xab_list OF xaball:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xaball)  FI;
+      xaball
+   END;
+
+   PROC make nam = (REF NAM paranam) REF NAM:
+   BEGIN
+      REF NAM nam = HEAP NAM;
+      bid OF nam := nam_bid;
+      bln OF nam := nam_bln;
+      dev_length OF nam := SHORT SHORT 0;
+      dev OF nam := NIL;
+      did0 OF nam := SHORT 0;
+      did1 OF nam := SHORT 0;
+      did2 OF nam := SHORT 0;
+      dir_length OF nam := SHORT SHORT 0;
+      dir OF nam := NIL;
+      FORALL c IN dvi OF nam DO  c:= " "  OD;
+      esa OF nam := NIL;
+      esl OF nam := SHORT SHORT 0;
+      ess OF nam := SHORT SHORT 0;
+      fid0 OF nam := SHORT 0;
+      fid1 OF nam := SHORT 0;
+      fid2 OF nam := SHORT 0;
+      fnb OF nam := BIN 0;
+      name_length OF nam := SHORT SHORT 0;
+      name OF nam := NIL;
+      node_length OF nam := SHORT SHORT 0;
+      node OF nam := NIL;
+      rlf OF nam := paranam;
+      rsa OF nam := NIL;
+      rsl OF nam := SHORT SHORT 0;
+      rss OF nam := SHORT SHORT 0;
+      type_length OF nam := SHORT SHORT 0;
+      type OF nam := NIL;
+      ver_length OF nam := SHORT SHORT 0;
+      ver OF nam := NIL;
+      wcc OF nam := 0;
+      IF saveblocks THEN keep reference (nam)
+      FI;
+      nam
+   END;
+
+   PROC make xabdat = (REFANYXAB xab) REF XABDAT:
+   BEGIN
+      REF XABDAT xabdat = HEAP XABDAT;
+      cod OF xabdat := xabdat_cod;
+      bln OF xabdat := xabdat_len;
+      bdt OF xabdat := LONG 0;
+      cdt OF xabdat := LONG 0;
+      edt OF xabdat := LONG 0;
+      nxt OF xabdat :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      rdt OF xabdat := LONG 0;
+      rvn OF xabdat := SHORT 0;
+      xab_list OF xabdat:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabdat)  FI;
+      xabdat
+   END;
+
+   PROC make xabfhc = (REFANYXAB xab) REF XABFHC:
+   BEGIN
+      REF XABFHC xabfhc = HEAP XABFHC;
+      cod OF xabfhc := xabfhc_cod;
+      bln OF xabfhc := xabfhc_len;
+      atr OF xabfhc := BIN SHORT SHORT 0;
+      bkz OF xabfhc := SHORT SHORT 0;
+      dxq OF xabfhc := SHORT 0;
+      ebk OF xabfhc := 0;
+      ffb OF xabfhc := SHORT 0;
+      gbc OF xabfhc := SHORT 0;
+      hbk OF xabfhc := 0;
+      hsz OF xabfhc := SHORT SHORT 0;
+      lrl OF xabfhc := SHORT 0;
+      mrz OF xabfhc := SHORT 0;
+      nxt OF xabfhc :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      rfo OF xabfhc := SHORT SHORT 0;
+      sbn OF xabfhc := 0;
+      verlimit OF xabfhc := SHORT 0;
+      xab_list OF xabfhc:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabfhc)  FI;
+      xabfhc
+   END;
+
+   PROC make xabkey = (REFANYXAB xab) REF XABKEY:
+   BEGIN
+      REF XABKEY xabkey = HEAP XABKEY;
+      cod OF xabkey := xabkey_cod;
+      bln OF xabkey := xabkey_len;
+      dan OF xabkey := SHORT SHORT 0;
+      dbs OF xabkey := SHORT SHORT 0;
+      dfl OF xabkey := SHORT 0;
+      dtp OF xabkey := SHORT SHORT 0;
+      dvb OF xabkey := 0;
+      flg OF xabkey := BIN SHORT SHORT 0;
+      ian OF xabkey := SHORT SHORT 0;
+      ibs OF xabkey := SHORT SHORT 0;
+      ifl OF xabkey := SHORT 0;
+      knm OF xabkey := 0;
+      lan OF xabkey := SHORT SHORT 0;
+      lvl OF xabkey := SHORT SHORT 0;
+      mrl OF xabkey := SHORT 0;
+      nsg OF xabkey := SHORT SHORT 0;
+      nul OF xabkey := SHORT SHORT 0;
+      nxt OF xabkey :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      pos0 OF xabkey := SHORT 0;
+      pos1 OF xabkey := SHORT 0;
+      pos2 OF xabkey := SHORT 0;
+      pos3 OF xabkey := SHORT 0;
+      pos4 OF xabkey := SHORT 0;
+      pos5 OF xabkey := SHORT 0;
+      pos6 OF xabkey := SHORT 0;
+      pos7 OF xabkey := SHORT 0;
+      prolog OF xabkey := SHORT SHORT 0;
+      ref OF xabkey := SHORT SHORT 0;
+      rvb OF xabkey := 0;
+      siz0 OF xabkey := SHORT SHORT 0;
+      siz1 OF xabkey := SHORT SHORT 0;
+      siz2 OF xabkey := SHORT SHORT 0;
+      siz3 OF xabkey := SHORT SHORT 0;
+      siz4 OF xabkey := SHORT SHORT 0;
+      siz5 OF xabkey := SHORT SHORT 0;
+      siz6 OF xabkey := SHORT SHORT 0;
+      siz7 OF xabkey := SHORT SHORT 0;
+      tks OF xabkey := SHORT SHORT 0;
+      xab_list OF xabkey:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabkey)  FI;
+      xabkey
+   END;
+
+   PROC make xabpro = (REFANYXAB xab) REF XABPRO:
+   BEGIN
+      REF XABPRO xabpro = HEAP XABPRO;
+      cod OF xabpro := xabpro_cod;
+      bln OF xabpro := xabpro_len;
+      mtacc OF xabpro := blank;
+      nxt OF xabpro :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      pro OF xabpro := SHORT 16rffff;
+      uic OF xabpro := (SHORT 0, SHORT 0);
+      prot_opt OF xabpro:= SHORT SHORT 2r0;
+      prot_mode OF xabpro:= LONG 2r0;
+      aclbuf OF xabpro:= NIL;
+      aclsiz OF xabpro:= SHORT 0;
+      acllen OF xabpro:= SHORT 0;
+      aclctx OF xabpro:= 0;
+      aclsts OF xabpro:= 0;
+      acl_buffer OF xabpro:= no buffer;
+      xab_list OF xabpro:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabpro)  FI;
+      xabpro
+   END;
+
+   PROC make xabrdt = (REFANYXAB xab) REF XABRDT:
+   BEGIN
+      REF XABRDT xabrdt = HEAP XABRDT;
+      cod OF xabrdt := xabrdt_cod;
+      bln OF xabrdt := xabrdt_len;
+      nxt OF xabrdt :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      rdt OF xabrdt := LONG 0;
+      rvn OF xabrdt := SHORT 0;
+      xab_list OF xabrdt:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabrdt)  FI;
+      xabrdt
+   END;
+
+   PROC make xabsum = (REFANYXAB xab) REF XABSUM:
+   BEGIN
+      REF XABSUM xabsum = HEAP XABSUM;
+      cod OF xabsum := xabsum_cod;
+      bln OF xabsum := xabsum_len;
+      noa OF xabsum := SHORT SHORT 0;
+      nok OF xabsum := SHORT SHORT 0;
+      nxt OF xabsum :=
+         CASE xab IN
+            (REF XABALL xaball) : (XABGEN xaball),
+            (REF XABPRO xabpro) : (XABGEN xabpro),
+            (REF XABKEY xabkey) : (XABGEN xabkey),
+            (REF XABSUM xabsum) : (XABGEN xabsum),
+            (REF XABFHC xabfhc) : (XABGEN xabfhc),
+            (REF XABDAT xabdat) : (XABGEN xabdat),
+            (REF XABRDT xabrdt) : (XABGEN xabrdt)
+         OUT REFXABGEN 0
+         ESAC;
+      pvn OF xabsum := SHORT 0;
+      xab_list OF xabsum:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF savexabs THEN  keep reference (xabsum)  FI;
+      xabsum
+   END;
+
+   PROC make xabtrm = (REF XABTRM xab) REF XABTRM:
+   BEGIN
+      REF XABTRM xabtrm = HEAP XABTRM;
+      cod OF xabtrm:= xabtrm_cod;
+      bln OF xabtrm:= xabtrm_len;
+      dummy OF xabtrm:= SHORT 0;
+      nxt OF xabtrm:= xab;
+      itmlst OF xabtrm:= NIL;
+      itmlst_len OF xabtrm:= SHORT 0;
+      itemlist_buffer OF xabtrm:= no buffer;
+      xab_list OF xabtrm:= IF algolsave THEN  xab  ELSE  EMPTY  FI;
+      IF saveblocks THEN  keep reference (xabtrm)  FI;
+      xabtrm
+   END;
+
+   PROC (REF FAB) STATUS rms_open = ALIEN "SYS$OPEN";
+   PROC (REF FAB) STATUS rms_create = ALIEN "SYS$CREATE";
+   PROC (REF FAB) STATUS rms_close = ALIEN "SYS$CLOSE";
+   PROC (REF FAB) STATUS rms_parse = ALIEN "SYS$PARSE";
+   PROC (REF FAB) STATUS rms_search = ALIEN "SYS$SEARCH";
+   PROC (REF FAB) STATUS rms_display = ALIEN "SYS$DISPLAY";
+   PROC (REF FAB) STATUS rms_enter = ALIEN "SYS$ENTER";
+   PROC (REF FAB) STATUS rms_erase = ALIEN "SYS$ERASE";
+   PROC (REF FAB) STATUS rms_extend = ALIEN "SYS$EXTEND";
+   PROC (REF FAB) STATUS rms_remove = ALIEN "SYS$REMOVE";
+   PROC (REF FAB, INT, INT, REF FAB) STATUS real_rms_rename = ALIEN "SYS$RENAME";
+   PROC (REF RAB) STATUS rms_connect = ALIEN "SYS$CONNECT";
+   PROC (REF RAB) STATUS rms_disconnect = ALIEN "SYS$DISCONNECT";
+   PROC (REF RAB) STATUS rms_find = ALIEN "SYS$FIND";
+   PROC (REF RAB) STATUS rms_get = ALIEN "SYS$GET";
+   PROC (REF RAB) STATUS rms_put = ALIEN "SYS$PUT";
+   PROC (REF RAB) STATUS rms_delete = ALIEN "SYS$DELETE";
+   PROC (REF RAB) STATUS rms_truncate = ALIEN "SYS$TRUNCATE";
+   PROC (REF RAB) STATUS rms_update = ALIEN "SYS$UPDATE";
+   PROC (REF RAB) STATUS rms_flush = ALIEN "SYS$FLUSH";
+   PROC (REF RAB) STATUS rms_nxtvol = ALIEN "SYS$NXTVOL";
+   PROC (REF RAB) STATUS rms_rewind = ALIEN "SYS$REWIND";
+   PROC (REF RAB) STATUS rms_free = ALIEN "SYS$FREE";
+   PROC (REF RAB) STATUS rms_release = ALIEN "SYS$RELEASE";
+   PROC (REF RAB) STATUS rms_wait = ALIEN "SYS$WAIT";
+   PROC (REF RAB) STATUS rms_read = ALIEN "SYS$READ";
+   PROC (REF RAB) STATUS rms_space = ALIEN "SYS$SPACE";
+   PROC (REF RAB) STATUS rms_write = ALIEN "SYS$WRITE";
+   PROC (REF CHAR, INT) STATUS real_rms_rundwn = ALIEN "SYS$RMSRUNDWN";
+   PROC (REF VECTOR [] CHAR, REF SHORT INT, REF VECTOR [] CHAR) STATUS rms_setddir
+                               = ALIEN "SYS$SETDDIR";
+   PROC (REF SHORT BITS, REF SHORT BITS) STATUS rms_setdfprot
+                               = ALIEN "SYS$SETDFPROT";
+
+
+   PROC rms_rundwn = (REF XTYPE buffer, INT code) STATUS:
+   BEGIN
+      REF VECTOR [] CHAR buffer_desc = XTTORVC buffer;
+      IF UPB buffer_desc < 22 THEN
+         algolrms_fault("Buffer supplied to RMSRUNDWN must be at least 22 bytes long")
+      FI;
+      real_rms_rundwn(buffer_desc[1], code)
+   END;
+
+
+
+   PROC rms_rename = (REF FAB from, to) STATUS:
+      real_rms_rename (from, DIRECT 0, DIRECT 0, to);
+
+
+
+SKIP
+
+KEEP
+   FAB,         aln_cyl,       fac_bio,           make nam,          rab_asy,           rms_close,         xab_bn2,
+   NAM,         aln_lbn,       fac_bro,           make xaball,       rab_bid,           rms_connect,       xab_bn4,
+   RAB,         aln_rfi,       fac_del,           make xabdat,       rab_bio,           rms_create,        xab_cbt,
+   UIC,         aln_vbn,       fac_get,           make xabfhc,       rab_bln,           rms_delete,        xab_chg,
+   XABALL,      aop_cbt,       fac_put,           make xabkey,       rab_cco,           rms_disconnect,    xab_ctg,
+   XABDAT,      aop_ctg,       fac_trn,           make xabpro,       rab_cvt,           rms_display,       xab_cyl,
+   XABFHC,      aop_hrd,       fac_upd,           make xabrdt,       rab_eof,           rms_enter,         xab_dat_ncmpr,
+   XABKEY,      aop_onc,       flg_chg,           make xabsum,       rab_fdl,           rms_erase,         xab_dup,
+   XABPRO,      dtp_bn2,       flg_dat_ncmpr,     makefab,           rab_hsh,           rms_extend,        xab_hrd,
+   XABRDT,      dtp_bn4,       flg_dup,           makerab,           rab_key,           rms_find,          xab_idx_ncmpr,
+   XABSUM,      dtp_in2,       flg_idx_ncmpr,     nam_cncl_dev,      rab_kge,           rms_flush,         xab_in2,
+                dtp_in4,       flg_key_ncmpr,     nam_dir_lvls,      rab_kgt,           rms_free,          xab_in4,
+                dtp_pac,       flg_nul,           nam_exp_dev,       rab_lim,           rms_get,           xab_key_ncmpr,
+                dtp_stg,       fnb_cncl_dev,      nam_exp_dir,       rab_loa,           rms_nxtvol,        xab_lbn,
+                fab_bid,       fnb_dir_lvls,      nam_exp_name,      rab_loc,           rms_open,          xab_nul,
+                fab_bio,       fnb_exp_dev,       nam_exp_type,      rab_mas,           rms_parse,         xab_onc,
+                fab_blk,       fnb_exp_dir,       nam_exp_ver,       rab_nlk,           rms_put,           xab_pac,
+                fab_bln,       fnb_exp_name,      nam_grp_mbr,       rab_nxr,           rms_read,          xab_rfi,
+                fab_bro,       fnb_exp_type,      nam_highver,       rab_pmt,           rms_release,       xab_stg,
+                fab_cbt,       fnb_exp_ver,       nam_lowver,        rab_ppf_ind,       rms_remove,        xab_vbn,
+                fab_cif,       fnb_grp_mbr,       nam_node,          rab_ppf_rat,       rms_rename,        xaball,
+                fab_cr ,       fnb_highver,       nam_ppf,           rab_pta,           rms_rewind,        xaball_cod,
+                fab_ctg,       fnb_lowver,        nam_quoted,        rab_rah,           rms_search,        xaball_len,
+                fab_del,       fnb_node,          nam_root_dir,      rab_rea,           rms_space,         xabdat,
+                fab_dfw,       fnb_ppf,           nam_wild_dir,      rab_rfa,           rms_truncate,      xabdat_cod,
+                fab_dlt,       fnb_quoted,        nam_wild_grp,      rab_rlk,           rms_update,        xabdat_len,
+                fab_fix,       fnb_root_dir,      nam_wild_mbr,      rab_rne,           rms_wait,          xabfhc,
+                fab_ftn,       fnb_wild_dir,      nam_wild_name,     rab_rnf,           rms_write,         xabfhc_cod,
+                                                                                        rms_rundwn,
+                                                                                        rms_setddir,
+                                                                                        rms_setdfprot,
+                fab_get,       fnb_wild_grp,      nam_wild_sfd1,     rab_rrl,           rop_asy,           xabfhc_len,
+                fab_idx,       fnb_wild_mbr,      nam_wild_sfd2,     rab_seq,           rop_bio,           xabkey,
+                fab_mse,       fnb_wild_name,     nam_wild_sfd3,     rab_stm,           rop_cco,           xabkey_cod,
+                fab_mxv,       fnb_wild_sfd1,     nam_wild_sfd4,     rab_tmo,           rop_cvt,           xabkey_len,
+                fab_nam,       fnb_wild_sfd2,     nam_wild_sfd5,     rab_tpt,           rop_eof,           xabpro,
+                fab_nef,       fnb_wild_sfd3,     nam_wild_sfd6,     rab_uif,           rop_fdl,           xabpro_cod,
+                fab_nfs,       fnb_wild_sfd4,     nam_wild_sfd7,     rab_ulk,           rop_kge,           xabpro_len,
+                                                                                                           xabpro_len_v3,
+                fab_nil,       fnb_wild_sfd5,     nam_wild_type,     rab_wat,           rop_kgt,           xabrdt,
+                fab_ofp,       fnb_wild_sfd6,     nam_wild_ufd,      rab_wbh,           rop_lim,           xabrdt_cod,
+                fab_pos,       fnb_wild_sfd7,     nam_wild_ver,      rac_key,           rop_loa,           xabrdt_len,
+                fab_prn,       fnb_wild_type,     nam_wildcard,      rac_rfa,           rop_loc,           xabsum,
+                fab_put,       fnb_wild_ufd,      no fab,            rac_seq,           rop_nlk,           xabsum_cod,
+                fab_rck,       fnb_wild_ver,      no nam,            rat_blk,           rop_nxr,           xabsum_len,
+                fab_rel,       fnb_wildcard,      no xab,            rat_cr ,           rop_pmt,           xabtrm_cod,
+                fab_rwc,       fop_cbt,           org_idx,           rat_ftn,           rop_pta,           xabtrm_len,
+                fab_rwo,       fop_cif,           org_rel,           rat_prn,           rop_rah,
+                fab_scf,       fop_ctg,           org_seq,           real_rms_rename,   rop_rea,
+                fab_seq,       fop_dfw,           no xabtrm,         rfm_fix,           rop_rlk,
+                                                  no xaball,
+                                                  no xabsum,
+                                                  no xabrdt,
+                                                  no xabpro,
+                                                  no xabdat,
+                                                  no xabfhc,
+                                                  no xabkey,
+                fab_spl,       fop_dlt,                              rfm_stm,           rop_rne,
+                                                                     rfm_stmcr,
+                                                                     rfm_stmlf,
+                fab_sqo,       fop_mxv,                              rfm_udf,           rop_rnf,
+                fab_stm,       fop_nam,                              rfm_var,           rop_rrl,
+                fab_sup,       fop_nef,                              rfm_vfc,           rop_tmo,
+                fab_tef,       fop_nfs,                                                 rop_tpt,
+                fab_tmd,       fop_ofp,                                                 rop_uif,
+                fab_tmp,       fop_pos,                                                 rop_ulk,
+                fab_trn,       fop_rck,                                                 rop_wat,
+                fab_udf,       fop_rwc,                                                 rop_wbh,
+                fab_ufo,       fop_rwo,                                                 shr_del,
+                fab_upd,       fop_scf,                                                 shr_get,
+                fab_upi,       fop_spl,                                                 shr_mse,
+                fab_var,       fop_sqo,                                                 shr_nil,
+                fab_vfc,       fop_sup,                                                 shr_put,
+                fab_wck,       fop_tef,                                                 shr_upd,
+                               fop_tmd,                                                 shr_upi,
+                               fop_tmp,
+                               fop_ufo,
+                               fop_wck,
+                               free_rms_block,
+                               keep reference,
+
+add_xabtrm,  add_prompt_buffer,  add_record_buffer,  add_user_buffer,
+add_expanded_buffer,  add_resultant_buffer,  add_acl_buffer,
+add_itemlist_buffer, add_defaultname_buffer, add_filename_buffer,
+
+algolrms_inquire, algolrms_nosaveblocks, algolrms_nosavexabs, algolrms_savebuffers, algolrms_checkbuffers,
+algolrms_nofreechained, algolrms_algolsave, algolrms_current_mode, set_algolrms, algolrms_fault,
+
+xab_system_noread, xab_system_nowrite, xab_system_noexe, xab_system_nodel,
+xab_owner_noread, xab_owner_nowrite, xab_owner_noexe, xab_owner_nodel,
+xab_group_noread, xab_group_nowrite, xab_group_noexe, xab_group_nodel,
+xab_world_noread, xab_world_nowrite, xab_world_noexe, xab_world_nodel,
+
+pro_system_noread, pro_system_nowrite, pro_system_noexe, pro_system_nodel,
+pro_owner_noread, pro_owner_nowrite, pro_owner_noexe, pro_owner_nodel,
+pro_group_noread, pro_group_nowrite, pro_group_noexe, pro_group_nodel,
+pro_world_noread, pro_world_nowrite, pro_world_noexe, pro_world_nodel,
+
+xab_propagate, prot_opt_propagate
+
+{,print list}
+
+FINISH

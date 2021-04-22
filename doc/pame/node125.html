@@ -1,0 +1,338 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Standard Prelude</title>
+<meta name="description" content="standard prelude">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node134.html">
+<link rel="previous" href="node120.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node126.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2756"
+  href="node126.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2750"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2744"
+  href="node124.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2752"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2754"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2757"
+  href="node126.html">Standard modes</a>
+<b> Up:</b> <a name="tex2html2751"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2745"
+  href="node124.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2753"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2755"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001500000000000000000"></a><a name="chapxiii"></a>
+Standard Prelude</h1>
+
+<p>The function of this chapter is to describe all the facilities in
+the standard prelude supplied with the Linux port of the
+a68toc<a name="8872"></a> compiler. The standard prelude contains both
+implicit declarations (facilities provided by the compiler) and
+explicit declarations (those defined in, and made available by, the
+QAD standard prelude<a name="tex2html47"
+href="footnode.html#foot8873"><sup><span
+class="arabic">14</span>.<span class="arabic">1</span></sup></a>).
+They are classified and dealt with as follows:-</p>
+
+<ol>
+<li><b>Standard modes</b> <br>
+These are the modes defined by the Algol 68 Revised Report, which
+defines the language, plus modes required by the transput.
+</li>
+<li><b>Environment enquiries</b> <br>
+Some of these are defined in the Revised Report.
+</li>
+<li><b>Standard operators</b> <br>
+There are a large number of these, all defined in the Revised Report
+and classified by the modes of their operands. They are preceded by a
+subsection giving their priorities.
+</li>
+<li><b>Other operators</b> <br>
+Some operators are provided which are not in the Revised Report. They
+are described in this section. However, operators peculiar to the
+a68toc implementation are described in the section on a68toc
+extensions.
+</li>
+<li><b>Standard procedures</b> <br>
+Only those procedures not used in transput and process control are
+defined here. They all appear in the Revised Report.
+</li>
+<li><b>Other procedures</b> <br>
+Procedures which appear neither in the Revised Report nor in any other
+section appear here.
+</li>
+<li><b><tt>ALIEN</tt> declarations</b>
+This section includes all the <tt>ALIEN</tt><a name="10772"></a> declarations made
+available by the standard prelude.
+</li>
+<li><b>a68toc extensions</b>
+<br>
+All the extensions to the language are described in this section
+including modes, constructs, operators and procedures.
+</li>
+<li><b>Process control</b> <br>
+These declarations provide control over the working of the
+floating-point unit, integer overflow and signal handling. They include
+declarations for controlling the Algol&nbsp;68 garbage collector.
+</li>
+<li><b>Transput</b> <br>
+This very large section provides specifications for all the transput
+declarations available in the Standard Prelude, but omits those
+operators and procedures which are intended for internal use only.
+</li>
+</ol>
+
+<p>See the bibliography for details of the Revised
+Report<a name="8888"></a>.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2758"
+  href="node126.html">Standard modes</a>
+<li><a name="tex2html2759"
+  href="node127.html">Environment enquiries</a>
+<ul>
+<li><a name="tex2html2760"
+  href="node127.html#section001521000000000000000">Arithmetic enquiries</a>
+<ul>
+<li><a name="tex2html2761"
+  href="node127.html#section001521100000000000000">Enquiries about precisions</a>
+<li><a name="tex2html2762"
+  href="node127.html#section001521200000000000000">Enquiries about ranges</a>
+<li><a name="tex2html2763"
+  href="node127.html#section001521300000000000000">Internal sizes of modes</a>
+<li><a name="tex2html2764"
+  href="node127.html#section001521400000000000000">Sizes used in binary transput</a>
+<li><a name="tex2html2765"
+  href="node127.html#section001521500000000000000">Particular arithmetic values</a>
+</ul>
+<li><a name="tex2html2766"
+  href="node127.html#section001522000000000000000">Character set enquiries</a>
+</ul>
+<br>
+<li><a name="tex2html2767"
+  href="node128.html">Standard operators</a>
+<ul>
+<li><a name="tex2html2768"
+  href="node128.html#section001531000000000000000">Method of description</a>
+<li><a name="tex2html2769"
+  href="node128.html#section001532000000000000000">Standard priorities</a>
+<li><a name="tex2html2770"
+  href="node128.html#section001533000000000000000">Operators with row operands</a>
+<li><a name="tex2html2771"
+  href="node128.html#section001534000000000000000">Operators with <tt>BOOL</tt> operands</a>
+<li><a name="tex2html2772"
+  href="node128.html#section001535000000000000000">Operators with <tt>INT</tt> operands</a>
+<ul>
+<li><a name="tex2html2773"
+  href="node128.html#section001535100000000000000">Monadic operators</a>
+<li><a name="tex2html2774"
+  href="node128.html#section001535200000000000000">Dyadic operators</a>
+</ul>
+<li><a name="tex2html2775"
+  href="node128.html#section001536000000000000000">Operators with <tt>REAL</tt> operands</a>
+<ul>
+<li><a name="tex2html2776"
+  href="node128.html#section001536100000000000000">Monadic operators</a>
+<li><a name="tex2html2777"
+  href="node128.html#section001536200000000000000">Dyadic operators</a>
+</ul>
+<li><a name="tex2html2778"
+  href="node128.html#section001537000000000000000">Operators with <tt>COMPL</tt> operands</a>
+<ul>
+<li><a name="tex2html2779"
+  href="node128.html#section001537100000000000000">Monadic operators</a>
+<li><a name="tex2html2780"
+  href="node128.html#section001537200000000000000">Dyadic operators</a>
+</ul>
+<li><a name="tex2html2781"
+  href="node128.html#section001538000000000000000">Operators with mixed operands</a>
+<li><a name="tex2html2782"
+  href="node128.html#section001539000000000000000">Operators with <tt>BITS</tt> operands</a>
+<ul>
+<li><a name="tex2html2783"
+  href="node128.html#section001539100000000000000">Monadic operators</a>
+<li><a name="tex2html2784"
+  href="node128.html#section001539200000000000000">Dyadic operators</a>
+</ul>
+<li><a name="tex2html2785"
+  href="node128.html#section0015310000000000000000">Operators with <tt>CHAR</tt> operands</a>
+<li><a name="tex2html2786"
+  href="node128.html#section0015311000000000000000">Operators with <tt>STRING</tt> operands</a>
+<li><a name="tex2html2787"
+  href="node128.html#section0015312000000000000000">Assigning operators</a>
+<li><a name="tex2html2788"
+  href="node128.html#section0015313000000000000000">Other operators</a>
+</ul>
+<br>
+<li><a name="tex2html2789"
+  href="node129.html">Standard procedures</a>
+<ul>
+<li><a name="tex2html2790"
+  href="node129.html#section001541000000000000000">Mathematical procedures</a>
+<li><a name="tex2html2791"
+  href="node129.html#section001542000000000000000">Other procedures</a>
+<li><a name="tex2html2792"
+  href="node129.html#section001543000000000000000"><tt>ALIEN</tt> declarations</a>
+<li><a name="tex2html2793"
+  href="node129.html#section001544000000000000000"><tt>ALIEN</tt> routines</a>
+<ul>
+<li><a name="tex2html2794"
+  href="node129.html#section001544100000000000000">Routines conforming to Ansi C</a>
+<li><a name="tex2html2795"
+  href="node129.html#section001544200000000000000">Routines conforming to BSD4.4</a>
+<li><a name="tex2html2796"
+  href="node129.html#section001544300000000000000">Routines conforming to an ISO standard</a>
+<li><a name="tex2html2797"
+  href="node129.html#section001544400000000000000">Routines peculiar to Linux</a>
+<li><a name="tex2html2798"
+  href="node129.html#section001544500000000000000">Routines conforming to POSIX</a>
+<li><a name="tex2html2799"
+  href="node129.html#section001544600000000000000">Local routines</a>
+</ul>
+</ul>
+<br>
+<li><a name="tex2html2800"
+  href="node130.html">a68toc extensions</a>
+<ul>
+<li><a name="tex2html2801"
+  href="node130.html#section001551000000000000000">Modes peculiar to a68toc</a>
+<li><a name="tex2html2802"
+  href="node130.html#section001552000000000000000">a68toc constructs</a>
+<li><a name="tex2html2803"
+  href="node130.html#section001553000000000000000">Operators</a>
+<ul>
+<li><a name="tex2html2804"
+  href="node130.html#section001553100000000000000">Operators using <tt>BIOP 99</tt></a>
+<li><a name="tex2html2805"
+  href="node130.html#section001553200000000000000">Other operators</a>
+</ul>
+</ul>
+<br>
+<li><a name="tex2html2806"
+  href="node131.html">Control routines</a>
+<ul>
+<li><a name="tex2html2807"
+  href="node131.html#section001561000000000000000">Floating-point unit control</a>
+<li><a name="tex2html2808"
+  href="node131.html#section001562000000000000000">Terminating a process</a>
+<li><a name="tex2html2809"
+  href="node131.html#section001563000000000000000">Garbage-collector control</a>
+</ul>
+<br>
+<li><a name="tex2html2810"
+  href="node132.html">Transput</a>
+<ul>
+<li><a name="tex2html2811"
+  href="node132.html#section001571000000000000000">Transput modes</a>
+<li><a name="tex2html2812"
+  href="node132.html#section001572000000000000000">Standard channels</a>
+<li><a name="tex2html2813"
+  href="node132.html#section001573000000000000000">Standard files</a>
+<li><a name="tex2html2814"
+  href="node132.html#section001574000000000000000">Opening files</a>
+<li><a name="tex2html2815"
+  href="node132.html#section001575000000000000000">Closing files</a>
+<li><a name="tex2html2816"
+  href="node132.html#section001576000000000000000">Transput routines</a>
+<ul>
+<li><a name="tex2html2817"
+  href="node132.html#section001576100000000000000">Straightening</a>
+<li><a name="tex2html2818"
+  href="node132.html#section001576200000000000000">Formatless transput</a>
+<li><a name="tex2html2819"
+  href="node132.html#section001576300000000000000">Binary transput</a>
+<li><a name="tex2html2820"
+  href="node132.html#section001576400000000000000">Other procedures</a>
+</ul>
+<li><a name="tex2html2821"
+  href="node132.html#section001577000000000000000">Interrogating files</a>
+<li><a name="tex2html2822"
+  href="node132.html#section001578000000000000000">File properties</a>
+<li><a name="tex2html2823"
+  href="node132.html#section001579000000000000000">Event routines</a>
+<li><a name="tex2html2824"
+  href="node132.html#section0015710000000000000000">Conversion routines</a>
+<li><a name="tex2html2825"
+  href="node132.html#section0015711000000000000000">Layout routines</a>
+</ul>
+<br>
+<li><a name="tex2html2826"
+  href="node133.html">Summary</a>
+</ul>
+<!--end of table of child-links-->
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2756"
+  href="node126.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2750"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2744"
+  href="node124.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2752"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2754"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2757"
+  href="node126.html">Standard modes</a>
+<b> Up:</b> <a name="tex2html2751"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html2745"
+  href="node124.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html2753"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2755"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

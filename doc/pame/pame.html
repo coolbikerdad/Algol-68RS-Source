@@ -1,0 +1,1147 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+<!--converted with latex2html 2008 (1.71)
+original version by: nikos drakos, cblu, university of leeds
+* revised and updated by: marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+  <title>pame</title>
+  <meta name="description" content="pame">
+  <meta name="keywords" content="pame">
+  <meta name="resource-type" content="document">
+  <meta name="distribution" content="global">
+  <meta http-equiv="content-style-type" content="text/css">
+  <link rel="stylesheet" href="pame.css">
+  <link rel="next" href="node1.html">
+</head>
+
+<body>
+
+<div class="navigation">
+<!--navigation panel-->
+<a name="tex2html53" href="node1.html"><img width="37" height="24"
+align="bottom" border="0" alt="next" src="next.png"></a> <img width="26"
+height="24" align="bottom" border="0" alt="up" src="up_g.png"> <img width="63"
+height="24" align="bottom" border="0" alt="previous" src="prev_g.png"> <a
+name="tex2html49" href="node1.html"><img width="65" height="24" align="bottom"
+border="0" alt="contents" src="contents.png"></a> <a name="tex2html51"
+href="node147.html"><img width="43" height="24" align="bottom" border="0"
+alt="index" src="index.png"></a> <br>
+<b>Next:</b> <a name="tex2html54" href="node1.html">Contents</a> &nbsp; <b><a
+name="tex2html50" href="node1.html">Contents</a></b> &nbsp; <b><a
+name="tex2html52" href="node147.html">Index</a></b> <br>
+<br>
+</div>
+<!--end of navigation panel-->
+
+<div align="center">
+<big class="xhuge">Programming Algol 68 <br>
+Made Easy </big></div>
+
+<div align="center">
+<big class="xlarge">Sian Mountbatten </big></div>
+
+<div align="center">
+<i>Ph&oelig;nix Engineering</i> </div>
+
+<p></p>
+
+<p>T<sub>E</sub>X is a trademark of the American Mathematical Society. </p>
+Copyright &copy; Sian Mountbatten, 1995, 1997, 2000, 2001, 2012. 
+
+<p>This document is subject to the provisions of the GNU General Public Licence
+verstion 2, or at your option, any later version. </p>
+
+<p></p>
+
+<h2><a name="section00001000000000000000">Publishing history</a> </h2>
+<ul>
+  <li>First edition published by Oxford &amp; Cambridge Compilers Ltd in 1995.
+  </li>
+  <li>Second (revised) edition published by Oxford &amp; Cambridge Compilers
+    Ltd in 1997. </li>
+  <li>Third edition published by Ph&oelig;nix Engineering in 2000. </li>
+  <li>Revised by Ph&oelig;nix Engineering in 2001, 2002, 2012. </li>
+</ul>
+Prepared in Scotland. 
+
+<div align="right">
+<span class="textsf">T</span>o <br>
+</div>
+
+<p><br>
+</p>
+
+<div align="right">
+<big class="xlarge">Aad van Wijngaarden <br>
+</big></div>
+
+<p><br>
+</p>
+
+<div align="right">
+Father of Algol 68 </div>
+<a name="toc"></a> <br>
+
+<hr>
+<!--table of chapter-links-->
+<h2><a name="chapter_links">Short Contents</a></h2>
+
+<ul class="childlinks">
+  <li><a name="tex2html58" href="node3.html">Introduction</a></li>
+  <li><a name="tex2html78" href="node15.html">Formul&aelig;</a></li>
+  <li><a name="tex2html97" href="node28.html">Repetition</a></li>
+  <li><a name="tex2html120" href="node40.html">Choice</a></li>
+  <li><a name="tex2html134" href="node48.html">Names</a></li>
+  <li><a name="tex2html160" href="node60.html">Routines</a></li>
+  <li><a name="tex2html192" href="node65.html">Structures</a></li>
+  <li><a name="tex2html208" href="node74.html">Unions</a></li>
+  <li><a name="tex2html217" href="node79.html">Transput</a></li>
+  <li><a name="tex2html244" href="node92.html">Units</a></li>
+  <li><a name="tex2html274" href="node106.html">Advanced constructs</a></li>
+  <li><a name="tex2html301" href="node120.html">Program development</a></li>
+  <li><a name="tex2html322" href="node125.html">Standard Prelude</a></li>
+</ul>
+
+<hr>
+<!--table of child-links-->
+<h2><a name="child_links">Detailed Contents</a></h2>
+
+<ul class="childlinks">
+  <li><a name="tex2html56" href="node1.html">Contents</a> </li>
+  <li><a name="tex2html57" href="node2.html">Preface</a> </li>
+  <li><a name="tex2html58" href="node3.html">Introduction</a> 
+    <ul>
+      <li><a name="tex2html59" href="node4.html">What you will need</a> </li>
+      <li><a name="tex2html60" href="node5.html">Terminology</a> </li>
+      <li><a name="tex2html61" href="node6.html">Values and modes</a> 
+        <ul>
+          <li><a name="tex2html62"
+            href="node6.html#section00331000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html63" href="node7.html">Integers</a> 
+        <ul>
+          <li><a name="tex2html64"
+            href="node7.html#section00341000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html65" href="node8.html">Identity declarations</a> 
+        <ul>
+          <li><a name="tex2html66"
+            href="node8.html#section00351000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html67" href="node9.html">Characters</a> 
+        <ul>
+          <li><a name="tex2html68"
+            href="node9.html#section00361000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html69" href="node10.html">Real numbers</a> 
+        <ul>
+          <li><a name="tex2html70"
+            href="node10.html#section00371000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html71" href="node11.html">Program structure</a> 
+        <ul>
+          <li><a name="tex2html72"
+            href="node11.html#section00381000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html73" href="node12.html">Comments</a> 
+        <ul>
+          <li><a name="tex2html74"
+            href="node12.html#section00391000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html75" href="node13.html">External values</a> </li>
+      <li><a name="tex2html76" href="node14.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html77"
+            href="node14.html#section003111000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html78" href="node15.html">Formul&aelig;</a> 
+    <ul>
+      <li><a name="tex2html79" href="node16.html">Monadic operators</a> </li>
+      <li><a name="tex2html80" href="node17.html">Dyadic operators</a> 
+        <ul>
+          <li><a name="tex2html81"
+            href="node17.html#section00421000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html82" href="node18.html">Multiplication</a> 
+        <ul>
+          <li><a name="tex2html83"
+            href="node18.html#section00431000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html84" href="node19.html">Division</a> 
+        <ul>
+          <li><a name="tex2html85"
+            href="node19.html#section00441000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html86" href="node20.html">Exponentiation</a> 
+        <ul>
+          <li><a name="tex2html87"
+            href="node20.html#section00451000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html88" href="node21.html">Mixed arithmetic</a> </li>
+      <li><a name="tex2html89" href="node22.html">Order of elaboration</a> </li>
+      <li><a name="tex2html90" href="node23.html">Changing the mode</a> 
+        <ul>
+          <li><a name="tex2html91"
+            href="node23.html#section00481000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html92" href="node24.html">Miscellaneous operators</a>
+      </li>
+      <li><a name="tex2html93" href="node25.html">Operators using
+        <tt>CHAR</tt></a> </li>
+      <li><a name="tex2html94" href="node26.html"><tt>print</tt> revisited</a>
+      </li>
+      <li><a name="tex2html95" href="node27.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html96"
+            href="node27.html#section004121000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html97" href="node28.html">Repetition</a> 
+    <ul>
+      <li><a name="tex2html98" href="node29.html">Multiples</a> 
+        <ul>
+          <li><a name="tex2html99"
+            href="node29.html#section00511000000000000000">Row-displays</a>
+          </li>
+          <li><a name="tex2html100"
+            href="node29.html#section00512000000000000000">Dimensions</a> </li>
+          <li><a name="tex2html101"
+            href="node29.html#section00513000000000000000">Subscripts and
+            bounds</a> </li>
+          <li><a name="tex2html102"
+            href="node29.html#section00514000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html103" href="node30.html">Slicing</a> 
+        <ul>
+          <li><a name="tex2html104"
+            href="node30.html#section00521000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html105" href="node31.html">Trimming</a> 
+        <ul>
+          <li><a name="tex2html106"
+            href="node31.html#section00531000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html107" href="node32.html">Printing multiples</a> 
+        <ul>
+          <li><a name="tex2html108"
+            href="node32.html#section00541000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html109" href="node33.html">Operators with multiples</a> 
+        <ul>
+          <li><a name="tex2html110"
+            href="node33.html#section00551000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html111" href="node34.html">Ranges</a> </li>
+      <li><a name="tex2html112" href="node35.html">Program repetition</a> 
+        <ul>
+          <li><a name="tex2html113"
+            href="node35.html#section00571000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html114" href="node36.html">Nested loops</a> 
+        <ul>
+          <li><a name="tex2html115"
+            href="node36.html#section00581000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html116" href="node37.html">Program structure</a> </li>
+      <li><a name="tex2html117" href="node38.html">The <tt>FORALL</tt> loop</a>
+      </li>
+      <li><a name="tex2html118" href="node39.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html119"
+            href="node39.html#section005111000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html120" href="node40.html">Choice</a>
+    <ul>
+      <li><a name="tex2html121" href="node41.html">Boolean values</a> </li>
+      <li><a name="tex2html122" href="node42.html">Boolean operators</a> </li>
+      <li><a name="tex2html123" href="node43.html">Relational operators</a> 
+        <ul>
+          <li><a name="tex2html124"
+            href="node43.html#section00631000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html125" href="node44.html">Compound Boolean
+        formul&aelig;</a> 
+        <ul>
+          <li><a name="tex2html126"
+            href="node44.html#section00641000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html127" href="node45.html">Conditional clauses</a> 
+        <ul>
+          <li><a name="tex2html128"
+            href="node45.html#section00651000000000000000">Pseudo-operators</a>
+          </li>
+          <li><a name="tex2html129"
+            href="node45.html#section00652000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html130" href="node46.html">Multiple choice</a> 
+        <ul>
+          <li><a name="tex2html131"
+            href="node46.html#section00661000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html132" href="node47.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html133"
+            href="node47.html#section00671000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html134" href="node48.html">Names</a> 
+    <ul>
+      <li><a name="tex2html135" href="node49.html">Assignment</a> 
+        <ul>
+          <li><a name="tex2html136"
+            href="node49.html#section00711000000000000000">Copying values</a>
+          </li>
+          <li><a name="tex2html137"
+            href="node49.html#section00712000000000000000">Assigning
+            operators</a> </li>
+          <li><a name="tex2html138"
+            href="node49.html#section00713000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html139" href="node50.html">Assignments in
+        formul&aelig;</a> 
+        <ul>
+          <li><a name="tex2html140"
+            href="node50.html#section00721000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html141" href="node51.html">Multiple names</a> </li>
+      <li><a name="tex2html142" href="node52.html">Assigning to multiple
+        names</a> 
+        <ul>
+          <li><a name="tex2html143"
+            href="node52.html#section00741000000000000000">Individual
+            assignment</a> </li>
+          <li><a name="tex2html144"
+            href="node52.html#section00742000000000000000">Collective
+            assignment</a> </li>
+          <li><a name="tex2html145"
+            href="node52.html#section00743000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html146" href="node53.html">Flexible names</a> 
+        <ul>
+          <li><a name="tex2html147"
+            href="node53.html#section00751000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html148" href="node54.html">The mode <tt>STRING</tt></a> 
+        <ul>
+          <li><a name="tex2html149"
+            href="node54.html#section00761000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html150" href="node55.html">Reference modes in
+        transput</a> 
+        <ul>
+          <li><a name="tex2html151"
+            href="node55.html#section00771000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html152" href="node56.html">Dynamic names</a> 
+        <ul>
+          <li><a name="tex2html153"
+            href="node56.html#section00781000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html154" href="node57.html">Loops revisited</a> 
+        <ul>
+          <li><a name="tex2html155"
+            href="node57.html#section00791000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html156" href="node58.html">Abbreviated declarations</a> 
+        <ul>
+          <li><a name="tex2html157"
+            href="node58.html#section007101000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html158" href="node59.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html159"
+            href="node59.html#section007111000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html160" href="node60.html">Routines</a> 
+    <ul>
+      <li><a name="tex2html161" href="node61.html">Routines</a> 
+        <ul>
+          <li><a name="tex2html162"
+            href="node61.html#section00811000000000000000">Exercises</a> </li>
+          <li><a name="tex2html163"
+            href="node61.html#section00812000000000000000">Routine modes</a>
+          </li>
+          <li><a name="tex2html164"
+            href="node61.html#section00813000000000000000">Multiples as
+            parameters</a> </li>
+          <li><a name="tex2html165"
+            href="node61.html#section00814000000000000000">Names as
+            parameters</a> </li>
+          <li><a name="tex2html166"
+            href="node61.html#section00815000000000000000">The mode
+            <tt>VOID</tt></a> </li>
+          <li><a name="tex2html167"
+            href="node61.html#section00816000000000000000">Routines yielding
+            names</a> </li>
+          <li><a name="tex2html168"
+            href="node61.html#section00817000000000000000">Exercises</a> </li>
+          <li><a name="tex2html169"
+            href="node61.html#section00818000000000000000">Parameterless
+            routines</a> </li>
+          <li><a name="tex2html170"
+            href="node61.html#section00819000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html171" href="node62.html">Operators</a> 
+        <ul>
+          <li><a name="tex2html172"
+            href="node62.html#section00821000000000000000">Identification of
+            operators</a> </li>
+          <li><a name="tex2html173"
+            href="node62.html#section00822000000000000000">Exercises</a> </li>
+          <li><a name="tex2html174"
+            href="node62.html#section00823000000000000000">Operator usage</a>
+          </li>
+          <li><a name="tex2html175"
+            href="node62.html#section00824000000000000000">Exercises</a> </li>
+          <li><a name="tex2html176"
+            href="node62.html#section00825000000000000000">Dyadic operators</a>
+          </li>
+          <li><a name="tex2html177"
+            href="node62.html#section00826000000000000000">Operator symbols</a>
+          </li>
+          <li><a name="tex2html178"
+            href="node62.html#section00827000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html179" href="node63.html">Procedures</a> 
+        <ul>
+          <li><a name="tex2html180"
+            href="node63.html#section00831000000000000000">Parameterless
+            procedures</a> </li>
+          <li><a name="tex2html181"
+            href="node63.html#section00832000000000000000">Exercises</a> </li>
+          <li><a name="tex2html182"
+            href="node63.html#section00833000000000000000">Procedures with
+            parameters</a> </li>
+          <li><a name="tex2html183"
+            href="node63.html#section00834000000000000000">Exercises</a> </li>
+          <li><a name="tex2html184"
+            href="node63.html#section00835000000000000000">Procedures as
+            parameters</a> </li>
+          <li><a name="tex2html185"
+            href="node63.html#section00836000000000000000">Exercises</a> </li>
+          <li><a name="tex2html186"
+            href="node63.html#section00837000000000000000">Recursion</a> </li>
+          <li><a name="tex2html187"
+            href="node63.html#section00838000000000000000">Exercises</a> </li>
+          <li><a name="tex2html188"
+            href="node63.html#section00839000000000000000">Standard
+            procedures</a> </li>
+          <li><a name="tex2html189"
+            href="node63.html#section008310000000000000000">Other features of
+            procedures</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html190" href="node64.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html191"
+            href="node64.html#section00841000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html192" href="node65.html">Structures</a> 
+    <ul>
+      <li><a name="tex2html193" href="node66.html">Structure denotations</a> 
+        <ul>
+          <li><a name="tex2html194"
+            href="node66.html#section00911000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html195" href="node67.html">Field selection</a> 
+        <ul>
+          <li><a name="tex2html196"
+            href="node67.html#section00921000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html197" href="node68.html">Mode declarations</a> 
+        <ul>
+          <li><a name="tex2html198"
+            href="node68.html#section00931000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html199" href="node69.html">Complex numbers</a> 
+        <ul>
+          <li><a name="tex2html200"
+            href="node69.html#section00941000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html201" href="node70.html">Multiples in structures</a> 
+        <ul>
+          <li><a name="tex2html202"
+            href="node70.html#section00951000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html203" href="node71.html">Rows of structures</a> 
+        <ul>
+          <li><a name="tex2html204"
+            href="node71.html#section00961000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html205" href="node72.html">Transput of structures</a>
+      </li>
+      <li><a name="tex2html206" href="node73.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html207"
+            href="node73.html#section00981000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html208" href="node74.html">Unions</a>
+    <ul>
+      <li><a name="tex2html209" href="node75.html">United mode declarations</a> 
+        <ul>
+          <li><a name="tex2html210"
+            href="node75.html#section001011000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html211" href="node76.html">United modes in
+        procedures</a> 
+        <ul>
+          <li><a name="tex2html212"
+            href="node76.html#section001021000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html213" href="node77.html">Conformity clauses</a> 
+        <ul>
+          <li><a name="tex2html214"
+            href="node77.html#section001031000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html215" href="node78.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html216"
+            href="node78.html#section001041000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html217" href="node79.html">Transput</a>
+    <ul>
+      <li><a name="tex2html218" href="node80.html">Books, channels and
+        files</a> </li>
+      <li><a name="tex2html219" href="node81.html">Reading books</a> 
+        <ul>
+          <li><a name="tex2html220"
+            href="node81.html#section001121000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html221" href="node82.html">Writing to books</a> 
+        <ul>
+          <li><a name="tex2html222"
+            href="node82.html#section001131000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html223" href="node83.html">String terminators</a> 
+        <ul>
+          <li><a name="tex2html224"
+            href="node83.html#section001141000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html225" href="node84.html">Events</a> 
+        <ul>
+          <li><a name="tex2html226"
+            href="node84.html#section001151000000000000000">Logical file
+            end</a> </li>
+          <li><a name="tex2html227"
+            href="node84.html#section001152000000000000000">Physical file
+            end</a> </li>
+          <li><a name="tex2html228"
+            href="node84.html#section001153000000000000000">Value error</a>
+          </li>
+          <li><a name="tex2html229"
+            href="node84.html#section001154000000000000000">Char error</a> </li>
+          <li><a name="tex2html230"
+            href="node84.html#section001155000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html231" href="node85.html">The command line</a> 
+        <ul>
+          <li><a name="tex2html232"
+            href="node85.html#section001161000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html233" href="node86.html">Environment strings</a> 
+        <ul>
+          <li><a name="tex2html234"
+            href="node86.html#section001171000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html235" href="node87.html">Writing reports</a> 
+        <ul>
+          <li><a name="tex2html236"
+            href="node87.html#section001181000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html237" href="node88.html">Binary books</a> 
+        <ul>
+          <li><a name="tex2html238"
+            href="node88.html#section001191000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html239" href="node89.html">Internal books</a> </li>
+      <li><a name="tex2html240" href="node90.html">Other transput
+        procedures</a> 
+        <ul>
+          <li><a name="tex2html241"
+            href="node90.html#section0011111000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html242" href="node91.html">Summary</a> 
+        <ul>
+          <li><a name="tex2html243"
+            href="node91.html#section0011121000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html244" href="node92.html">Units</a> 
+    <ul>
+      <li><a name="tex2html245" href="node93.html">Phrases</a> </li>
+      <li><a name="tex2html246" href="node94.html">Contexts</a> </li>
+      <li><a name="tex2html247" href="node95.html">Coercions</a> 
+        <ul>
+          <li><a name="tex2html248"
+            href="node95.html#section001231000000000000000">Deproceduring</a>
+          </li>
+          <li><a name="tex2html249"
+            href="node95.html#section001232000000000000000">Dereferencing</a>
+          </li>
+          <li><a name="tex2html250"
+            href="node95.html#section001233000000000000000">Weakly-dereferencing</a>
+          </li>
+          <li><a name="tex2html251"
+            href="node95.html#section001234000000000000000">Uniting</a> </li>
+          <li><a name="tex2html252"
+            href="node95.html#section001235000000000000000">Widening</a> </li>
+          <li><a name="tex2html253"
+            href="node95.html#section001236000000000000000">Rowing</a> </li>
+          <li><a name="tex2html254"
+            href="node95.html#section001237000000000000000">Voiding</a> </li>
+          <li><a name="tex2html255"
+            href="node95.html#section001238000000000000000">Legal coercions</a>
+          </li>
+          <li><a name="tex2html256"
+            href="node95.html#section001239000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html257" href="node96.html">Enclosed clauses</a> 
+        <ul>
+          <li><a name="tex2html258"
+            href="node96.html#section001241000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html259" href="node97.html">Primaries</a> 
+        <ul>
+          <li><a name="tex2html260"
+            href="node97.html#section001251000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html261" href="node98.html">Secondaries</a> 
+        <ul>
+          <li><a name="tex2html262"
+            href="node98.html#section001261000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html263" href="node99.html">Tertiaries</a> </li>
+      <li><a name="tex2html264" href="node100.html">Quaternaries</a> 
+        <ul>
+          <li><a name="tex2html265"
+            href="node100.html#section001281000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html266" href="node101.html">Balancing</a> 
+        <ul>
+          <li><a name="tex2html267"
+            href="node101.html#section001291000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html268" href="node102.html">Well-formed modes</a> 
+        <ul>
+          <li><a name="tex2html269"
+            href="node102.html#section0012101000000000000000">Determination of
+            well-formedness</a> </li>
+          <li><a name="tex2html270"
+            href="node102.html#section0012102000000000000000">Exercises</a>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html271" href="node103.html">Flexible names</a> </li>
+      <li><a name="tex2html272" href="node104.html">Orthogonality</a> </li>
+      <li><a name="tex2html273" href="node105.html">Summary</a> </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html274" href="node106.html">Advanced constructs</a>
+    <ul>
+      <li><a name="tex2html275" href="node107.html">Bits, bytes and words</a> 
+        <ul>
+          <li><a name="tex2html276"
+            href="node107.html#section001311000000000000000">Radix
+            arithmetic</a> </li>
+          <li><a name="tex2html277"
+            href="node107.html#section001312000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html278" href="node108.html">The mode <tt>BITS</tt></a> 
+        <ul>
+          <li><a name="tex2html279"
+            href="node108.html#section001321000000000000000">Monadic operators
+            for <tt>BITS</tt></a> </li>
+          <li><a name="tex2html280"
+            href="node108.html#section001322000000000000000">Dyadic operators
+            for <tt>BITS</tt></a> </li>
+          <li><a name="tex2html281"
+            href="node108.html#section001323000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html282" href="node109.html">Overlapping slices</a> 
+        <ul>
+          <li><a name="tex2html283"
+            href="node109.html#section001331000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html284" href="node110.html">Completers</a> </li>
+      <li><a name="tex2html285" href="node111.html">References to names</a> 
+        <ul>
+          <li><a name="tex2html286"
+            href="node111.html#section001351000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html287" href="node112.html">Identity relations</a> 
+        <ul>
+          <li><a name="tex2html288"
+            href="node112.html#section001361000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html289" href="node113.html">The value <tt>NIL</tt></a> 
+        <ul>
+          <li><a name="tex2html290"
+            href="node113.html#section001371000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html291" href="node114.html">Queues</a> 
+        <ul>
+          <li><a name="tex2html292"
+            href="node114.html#section001381000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html293" href="node115.html">The procedure <tt>add
+        fan</tt></a> 
+        <ul>
+          <li><a name="tex2html294"
+            href="node115.html#section001391000000000000000">Exercises</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html295" href="node116.html">More queue procedures</a> 
+        <ul>
+          <li><a name="tex2html296"
+            href="node116.html#section0013101000000000000000">Exercises</a>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html297" href="node117.html">Trees</a> 
+        <ul>
+          <li><a name="tex2html298"
+            href="node117.html#section0013111000000000000000">Exercises</a>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html299" href="node118.html">Parallel programming</a>
+      </li>
+      <li><a name="tex2html300" href="node119.html">Summary</a> </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html301" href="node120.html">Program development</a>
+    <ul>
+      <li><a name="tex2html302" href="node121.html">Writing programs</a> 
+        <ul>
+          <li><a name="tex2html303"
+            href="node121.html#section001411000000000000000">Top-down
+            analysis</a> </li>
+          <li><a name="tex2html304"
+            href="node121.html#section001412000000000000000">Program layout</a>
+          </li>
+          <li><a name="tex2html305"
+            href="node121.html#section001413000000000000000">Declarations</a>
+          </li>
+          <li><a name="tex2html306"
+            href="node121.html#section001414000000000000000">Procedures</a>
+          </li>
+          <li><a name="tex2html307"
+            href="node121.html#section001415000000000000000">Monetary
+            values</a> </li>
+          <li><a name="tex2html308"
+            href="node121.html#section001416000000000000000">Optimisation</a>
+          </li>
+          <li><a name="tex2html309"
+            href="node121.html#section001417000000000000000">Testing and
+            debugging</a> </li>
+          <li><a name="tex2html310"
+            href="node121.html#section001418000000000000000">Compilation
+            errors</a> </li>
+          <li><a name="tex2html311"
+            href="node121.html#section001419000000000000000">Arithmetic
+            overflow</a> </li>
+          <li><a name="tex2html312"
+            href="node121.html#section0014110000000000000000">Documentation</a>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html313" href="node122.html">Non-canonical input</a>
+      </li>
+      <li><a name="tex2html314" href="node123.html">A simple utility</a> 
+        <ul>
+          <li><a name="tex2html315"
+            href="node123.html#section001431000000000000000">The source
+            code</a> </li>
+          <li><a name="tex2html316"
+            href="node123.html#section001432000000000000000">Routines</a> </li>
+          <li><a name="tex2html317"
+            href="node123.html#section001433000000000000000">Dry-running
+            example</a> </li>
+          <li><a name="tex2html318"
+            href="node123.html#section001434000000000000000"><tt>ALIEN</tt>
+            procedures</a> 
+            <ul>
+              <li><a name="tex2html319"
+                href="node123.html#section001434100000000000000">The procedure
+                <tt>fstat</tt></a> </li>
+              <li><a name="tex2html320"
+                href="node123.html#section001434200000000000000">The procedure
+                <tt>get cwd</tt></a> </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html321" href="node124.html">Summary</a> </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html322" href="node125.html">Standard Prelude</a> 
+    <ul>
+      <li><a name="tex2html323" href="node126.html">Standard modes</a> </li>
+      <li><a name="tex2html324" href="node127.html">Environment enquiries</a> 
+        <ul>
+          <li><a name="tex2html325"
+            href="node127.html#section001521000000000000000">Arithmetic
+            enquiries</a> 
+            <ul>
+              <li><a name="tex2html326"
+                href="node127.html#section001521100000000000000">Enquiries
+                about precisions</a> </li>
+              <li><a name="tex2html327"
+                href="node127.html#section001521200000000000000">Enquiries
+                about ranges</a> </li>
+              <li><a name="tex2html328"
+                href="node127.html#section001521300000000000000">Internal sizes
+                of modes</a> </li>
+              <li><a name="tex2html329"
+                href="node127.html#section001521400000000000000">Sizes used in
+                binary transput</a> </li>
+              <li><a name="tex2html330"
+                href="node127.html#section001521500000000000000">Particular
+                arithmetic values</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html331"
+            href="node127.html#section001522000000000000000">Character set
+            enquiries</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html332" href="node128.html">Standard operators</a> 
+        <ul>
+          <li><a name="tex2html333"
+            href="node128.html#section001531000000000000000">Method of
+            description</a> </li>
+          <li><a name="tex2html334"
+            href="node128.html#section001532000000000000000">Standard
+            priorities</a> </li>
+          <li><a name="tex2html335"
+            href="node128.html#section001533000000000000000">Operators with row
+            operands</a> </li>
+          <li><a name="tex2html336"
+            href="node128.html#section001534000000000000000">Operators with
+            <tt>BOOL</tt> operands</a> </li>
+          <li><a name="tex2html337"
+            href="node128.html#section001535000000000000000">Operators with
+            <tt>INT</tt> operands</a> 
+            <ul>
+              <li><a name="tex2html338"
+                href="node128.html#section001535100000000000000">Monadic
+                operators</a> </li>
+              <li><a name="tex2html339"
+                href="node128.html#section001535200000000000000">Dyadic
+                operators</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html340"
+            href="node128.html#section001536000000000000000">Operators with
+            <tt>REAL</tt> operands</a> 
+            <ul>
+              <li><a name="tex2html341"
+                href="node128.html#section001536100000000000000">Monadic
+                operators</a> </li>
+              <li><a name="tex2html342"
+                href="node128.html#section001536200000000000000">Dyadic
+                operators</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html343"
+            href="node128.html#section001537000000000000000">Operators with
+            <tt>COMPL</tt> operands</a> 
+            <ul>
+              <li><a name="tex2html344"
+                href="node128.html#section001537100000000000000">Monadic
+                operators</a> </li>
+              <li><a name="tex2html345"
+                href="node128.html#section001537200000000000000">Dyadic
+                operators</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html346"
+            href="node128.html#section001538000000000000000">Operators with
+            mixed operands</a> </li>
+          <li><a name="tex2html347"
+            href="node128.html#section001539000000000000000">Operators with
+            <tt>BITS</tt> operands</a> 
+            <ul>
+              <li><a name="tex2html348"
+                href="node128.html#section001539100000000000000">Monadic
+                operators</a> </li>
+              <li><a name="tex2html349"
+                href="node128.html#section001539200000000000000">Dyadic
+                operators</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html350"
+            href="node128.html#section0015310000000000000000">Operators with
+            <tt>CHAR</tt> operands</a> </li>
+          <li><a name="tex2html351"
+            href="node128.html#section0015311000000000000000">Operators with
+            <tt>STRING</tt> operands</a> </li>
+          <li><a name="tex2html352"
+            href="node128.html#section0015312000000000000000">Assigning
+            operators</a> </li>
+          <li><a name="tex2html353"
+            href="node128.html#section0015313000000000000000">Other
+            operators</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html354" href="node129.html">Standard procedures</a> 
+        <ul>
+          <li><a name="tex2html355"
+            href="node129.html#section001541000000000000000">Mathematical
+            procedures</a> </li>
+          <li><a name="tex2html356"
+            href="node129.html#section001542000000000000000">Other
+            procedures</a> </li>
+          <li><a name="tex2html357"
+            href="node129.html#section001543000000000000000"><tt>ALIEN</tt>
+            declarations</a> </li>
+          <li><a name="tex2html358"
+            href="node129.html#section001544000000000000000"><tt>ALIEN</tt>
+            routines</a> 
+            <ul>
+              <li><a name="tex2html359"
+                href="node129.html#section001544100000000000000">Routines
+                conforming to Ansi C</a> </li>
+              <li><a name="tex2html360"
+                href="node129.html#section001544200000000000000">Routines
+                conforming to BSD4.4</a> </li>
+              <li><a name="tex2html361"
+                href="node129.html#section001544300000000000000">Routines
+                conforming to an ISO standard</a> </li>
+              <li><a name="tex2html362"
+                href="node129.html#section001544400000000000000">Routines
+                peculiar to Linux</a> </li>
+              <li><a name="tex2html363"
+                href="node129.html#section001544500000000000000">Routines
+                conforming to POSIX</a> </li>
+              <li><a name="tex2html364"
+                href="node129.html#section001544600000000000000">Local
+                routines</a> </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html365" href="node130.html">a68toc extensions</a> 
+        <ul>
+          <li><a name="tex2html366"
+            href="node130.html#section001551000000000000000">Modes peculiar to
+            a68toc</a> </li>
+          <li><a name="tex2html367"
+            href="node130.html#section001552000000000000000">a68toc
+            constructs</a> </li>
+          <li><a name="tex2html368"
+            href="node130.html#section001553000000000000000">Operators</a> 
+            <ul>
+              <li><a name="tex2html369"
+                href="node130.html#section001553100000000000000">Operators
+                using <tt>BIOP 99</tt></a> </li>
+              <li><a name="tex2html370"
+                href="node130.html#section001553200000000000000">Other
+                operators</a> </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a name="tex2html371" href="node131.html">Control routines</a> 
+        <ul>
+          <li><a name="tex2html372"
+            href="node131.html#section001561000000000000000">Floating-point
+            unit control</a> </li>
+          <li><a name="tex2html373"
+            href="node131.html#section001562000000000000000">Terminating a
+            process</a> </li>
+          <li><a name="tex2html374"
+            href="node131.html#section001563000000000000000">Garbage-collector
+            control</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html375" href="node132.html">Transput</a> 
+        <ul>
+          <li><a name="tex2html376"
+            href="node132.html#section001571000000000000000">Transput modes</a>
+          </li>
+          <li><a name="tex2html377"
+            href="node132.html#section001572000000000000000">Standard
+            channels</a> </li>
+          <li><a name="tex2html378"
+            href="node132.html#section001573000000000000000">Standard files</a>
+          </li>
+          <li><a name="tex2html379"
+            href="node132.html#section001574000000000000000">Opening files</a>
+          </li>
+          <li><a name="tex2html380"
+            href="node132.html#section001575000000000000000">Closing files</a>
+          </li>
+          <li><a name="tex2html381"
+            href="node132.html#section001576000000000000000">Transput
+            routines</a> 
+            <ul>
+              <li><a name="tex2html382"
+                href="node132.html#section001576100000000000000">Straightening</a>
+              </li>
+              <li><a name="tex2html383"
+                href="node132.html#section001576200000000000000">Formatless
+                transput</a> </li>
+              <li><a name="tex2html384"
+                href="node132.html#section001576300000000000000">Binary
+                transput</a> </li>
+              <li><a name="tex2html385"
+                href="node132.html#section001576400000000000000">Other
+                procedures</a> </li>
+            </ul>
+          </li>
+          <li><a name="tex2html386"
+            href="node132.html#section001577000000000000000">Interrogating
+            files</a> </li>
+          <li><a name="tex2html387"
+            href="node132.html#section001578000000000000000">File
+            properties</a> </li>
+          <li><a name="tex2html388"
+            href="node132.html#section001579000000000000000">Event routines</a>
+          </li>
+          <li><a name="tex2html389"
+            href="node132.html#section0015710000000000000000">Conversion
+            routines</a> </li>
+          <li><a name="tex2html390"
+            href="node132.html#section0015711000000000000000">Layout
+            routines</a> </li>
+        </ul>
+      </li>
+      <li><a name="tex2html391" href="node133.html">Summary</a> </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html392" href="node134.html">Answers</a> 
+    <ul>
+      <li><a name="tex2html393" href="node135.html">Chapter 1</a> </li>
+      <li><a name="tex2html394" href="node136.html">Chapter 2</a> </li>
+      <li><a name="tex2html395" href="node137.html">Chapter 3</a> </li>
+      <li><a name="tex2html396" href="node138.html">Chapter 4</a> </li>
+      <li><a name="tex2html397" href="node139.html">Chapter 5</a> </li>
+      <li><a name="tex2html398" href="node140.html">Chapter 6</a> </li>
+      <li><a name="tex2html399" href="node141.html">Chapter 7</a> </li>
+      <li><a name="tex2html400" href="node142.html">Chapter 8</a> </li>
+      <li><a name="tex2html401" href="node143.html">Chapter 9</a> </li>
+      <li><a name="tex2html402" href="node144.html">Chapter 10</a> </li>
+      <li><a name="tex2html403" href="node145.html">Chapter 11</a> </li>
+    </ul>
+    <br>
+  </li>
+  <li><a name="tex2html404" href="node146.html">Bibliography</a> </li>
+  <li><a name="tex2html405" href="node147.html">Index</a> </li>
+  <li><a name="tex2html406" href="node148.html">About this document ...</a>
+  </li>
+</ul>
+<!--end of table of child-links-->
+<br>
+
+<hr>
+<address>
+  Sian Mountbatten 2012-01-19 
+</address>
+</body>
+</html>

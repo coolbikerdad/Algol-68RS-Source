@@ -1,0 +1,169 @@
+DECS  numberstr  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: numberstr.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1994
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+05:12:94  33.001  ELLA   CmplxNos   Created to handle real number output for
+                                    'putstrings'. 
+21:03:95  33.002  DJS   Release   NULL terminate strings passed to sprintf.
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+COMMENT
+   16:03:94  Convert numbers to strings (sprintf) - cf AAP's usefulops.  DCT
+
+   Standard ALGOL68 RS conversion procedures from numbers to strings.  DCT
+
+   This library is implemented using the standard C library routine "sprintf".
+   There are a number of departures from the ALGOL68 standard:
+
+   - the width "n" is taken to be a minimum, not a maximum - where other
+     paramters conflict with n, the string is extended as necessary.
+
+   - the exponent format "e" is ignored.  sprintf generates e+dd for the
+     exponent.
+
+   - sprintf generates normalised floating point conversions - ie with ABS
+     mantissa in the range 0.0 <= mantissa < 1.0.  ALGOL68 expects the
+     number of places before the decimal point to depend on the combination
+     of n, d and e.
+
+   whole (x, n)  convert x to an integer (ROUND if real) and generate a decimal
+                 character string representation.
+     if n > 0:  generate sign, output at least n characters (more if needed),
+                right justify with spaces to the left
+     if n = 0:  generate the minimum sized string to hold representation of x
+     if n < 0:  generate -ve sign only (no space if +ve), output at least -n
+                characters as above for +ve n.
+
+   fixed (x, n, d)  convert x to a real (double) and generate a fixed point
+                    decimal character representation
+     n:  as whole
+     d:  number of decimal places
+
+   float (x, n, d, e)  convert x to real (double) and generate a floating point
+                       decimal character representation followed by "e" and a
+                       further three characters for a signed exponent (or
+                       greater if double requires range in the exponent).
+     n:  as whole except that the +ve sign is replaced by a " " if n is -ve.
+     d:  as fixed
+     e:  ignored (ALGOL68 expects e to format the exponent as n would do for
+                  whole).
+COMMENT
+
+
+MODE  STR = VECTOR [0] CHAR,  RVC = REF STR,
+      NUMB = UNION (SHORT INT, INT, LONG INT, REAL);
+
+PROC (STR) INT  leng = ALIEN "STRLEN"
+   "#include <string.h>"
+   "#define STRLEN(s) A_int_INT(strlen(A_VC_charptr(s)))";
+
+
+PROC (RVC, STR, INT, LONG INT) INT  sprintfw = ALIEN "SPRINTFW"
+   "#include <stdio.h>"
+   "#define SPRINTFW(s,f,p1,p2) \"
+   "   A_int_INT(sprintf( A_VC_charptr(s), A_VC_charptr(f), \"
+   "                      A_INT_int(p1), A_LINT_long(p2) ))";
+
+PROC (RVC, STR, INT, INT, REAL) INT  sprintff = ALIEN "SPRINTFF"
+   "#include <stdio.h>"
+   "#define SPRINTFF(s,f,p1,p2,p3) \"
+   "   A_int_INT(sprintf( A_VC_charptr(s), A_VC_charptr(f), \"
+   "                      A_INT_int(p1), A_INT_int(p2), (double)(p3) ))";
+
+
+PROC  whole = (NUMB  number, INT  width) RVC:
+BEGIN
+   LONG INT  value = CASE number IN
+                        (SHORT INT s)  LENG LENG s,
+                        (INT  i)       LENG i,
+                        (LONG INT  l)  l,
+                        (REAL  r)      LENG ROUND r
+                     ESAC;
+   STRUCT 100 CHAR  stackbuff;
+   RVC  buffer = stackbuff;
+   IF width = 0    THEN sprintfw(buffer, "%*lld"2r"0", 1, value)
+   ELIF width < 0  THEN sprintfw(buffer, "%*lld"2r"0", -width, value)
+                   ELSE sprintfw(buffer, "%+*lld"2r"0", width, value)
+   FI;
+   INT l = leng(buffer);
+   HEAP VECTOR [l] CHAR:= buffer[:l]
+END;
+
+
+PROC  fixed = (NUMB  number,  INT  width,  digits) RVC:
+BEGIN
+   REAL  value = CASE number IN
+                    (SHORT INT s)  REAL (LENG s),
+                    (INT  i)       REAL (i),
+                    (LONG INT  l)  SHORTEN LONG REAL (l),
+                    (REAL  r)      r
+                     ESAC;
+   STRUCT 100 CHAR  stackbuff;
+   RVC  buffer = stackbuff;
+   IF width = 0    THEN sprintff(buffer, "%#*.*f"2r"0", 1, digits, value)
+   ELIF width < 0  THEN sprintff(buffer, "%#*.*f"2r"0", -width, digits, value)
+                   ELSE sprintff(buffer, "%#+*.*f"2r"0", width, digits, value)
+   FI;
+   INT l = leng(buffer);
+   HEAP VECTOR [l] CHAR:= buffer[:l]
+END;
+
+
+PROC  float = (NUMB  number,  INT  width,  digits,  expdigits) RVC:
+BEGIN
+   { expdigits is ignored - should be similar to behaviour of width in whole.
+     Note that a negative width requests " " instead of "+" for mantissa.
+   }
+
+   REAL  value = CASE number IN
+                    (SHORT INT s)  REAL (LENG s),
+                    (INT  i)       REAL (i),
+                    (LONG INT  l)  SHORTEN LONG REAL (l),
+                    (REAL  r)      r
+                     ESAC;
+   STRUCT 100 CHAR  stackbuff;
+   RVC  buffer = stackbuff;
+   IF width = 0    THEN sprintff(buffer, "%# *.*e"2r"0", 1, digits, value)
+   ELIF width < 0  THEN sprintff(buffer, "%# *.*e"2r"0", -width, digits, value)
+                   ELSE sprintff(buffer, "%#+*.*e"2r"0", width, digits, value)
+   FI;
+   INT l = leng(buffer);
+   HEAP VECTOR [l] CHAR:= buffer[:l]
+END
+
+
+KEEP  whole, fixed, float
+FINISH

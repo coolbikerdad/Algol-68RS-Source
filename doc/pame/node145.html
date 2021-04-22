@@ -1,0 +1,745 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 11</title>
+<meta name="description" content="chapter 11">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node144.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node146.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3173"
+  href="node146.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3167"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3163"
+  href="node144.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3169"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3171"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3174"
+  href="node146.html">Bibliography</a>
+<b> Up:</b> <a name="tex2html3168"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3164"
+  href="node144.html">Chapter 10</a>
+ &nbsp; <b>  <a name="tex2html3170"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3172"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section0016110000000000000000"></a><a name="app-xi"></a>
+<br>
+Chapter 11
+</h1><dl>
+<dt><strong><a href="node107.html#ex-xi-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-i"></a>11.1</strong></dt>
+<dd><pre>
+   PROGRAM ex11 1 CONTEXT VOID
+   USE standard
+   BEGIN
+      []CHAR digits =
+            "0123456789abcdef"[@0];
+
+      PROC itostr = (INT n,r#adix#)STRING:
+      IF n&lt;r
+      THEN digits[n]
+      ELSE itostr(n%r,r)+digits[n%*r]
+      FI;
+
+      print(("Table of numbers 0--15",
+             newline,newline,
+             "Dec. Hex. Binary",newline));
+
+      FOR i FROM 0 TO 15
+      DO
+         STRING bin = itostr(i,2),
+                dec = itostr(i,10),
+                hex = digits[i];
+                #only one digit#
+         print(((4-UPB dec)*blank,
+                dec,3*blank,hex,
+                4*blank,(4-UPB bin)*"0",
+                bin,newline))
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node107.html#ex-xi-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-ii"></a>11.2</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>
+<br>
+<div align="center" class="mathdisplay">
+<table>
+<tr>
+  <td>94<sub>10</sub></td>
+  <td>=5&times;16<sup>1</sup>+14&times;16<sup>0</sup></td>
+</tr>
+<tr>
+  <td></td>
+  <td>=5e<sub>16</sub></td>
+</tr>
+</table>
+</div>
+<br clear="all">
+
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>
+<br>
+<div align="center" class="mathdisplay">
+<table>
+<tr>
+  <td>13<sub>10</sub></td>
+  <td>=1&times;2<sup>3</sup>+&times;2<sup>2</sup>+0&times;2<sup>1</sup>+1&times;2<sup>0</sup></td>
+</tr>
+<tr>
+  <td></td>
+  <td>=1101<sub>2</sub></td>
+</tr>
+</table>
+</div>
+<br clear="all">
+
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>
+<br>
+<div align="center" class="mathdisplay">
+<table cellpadding="0" align="center" width="100%">
+<tr valign="middle"><td nowrap width="50%" align="right">1111&nbsp;1001<sub>2</sub></td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">f9<sub>16</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+</table></div>
+<br clear="all">
+
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd>
+<br>
+<div align="center" class="mathdisplay">
+<table cellpadding="0" align="center" width="100%">
+<tr valign="middle"><td nowrap width="50%" align="right">3e1<sub>16</sub></td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">3&times;16<sup>2</sup> + e&times;16<sup>1</sup> +1&times;16<sup>0</sup></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">3&times;256 + 14&times;16 + 1</td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">768 + 224 + 1</td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">993<sub>10</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+</table></div>
+<br clear="all">
+
+</dd>
+<dt><strong>(e)</strong></dt>
+<dd>
+<span class="math">2c<sub>16</sub> = 0010&nbsp;1100<sub>2</sub></span>.
+</dd>
+<dt><strong>(f)</strong></dt>
+<dd>
+<br>
+<div align="center" class="mathdisplay">
+<table cellpadding="0" align="center" width="100%">
+<tr valign="middle"><td nowrap width="50%" align="right">10101<sub>2</sub></td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">1&times;2<sup>4</sup> +1&times;2<sup>2</sup> +1&times;2<sup>0</sup></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">16 + 4 + 1</td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">21<sub>10</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+</table></div>
+<br clear="all">
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node107.html#ex-xi-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-iii"></a>11.3</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><span class="math">1011<sub>2</sub></span>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>
+<span class="math">e3<sub>16</sub></span>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><span class="math">56<sub>8</sub></span>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node108.html#ex-xi-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-iv"></a>11.4</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>16r 0101 0101</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>16r 99bb ddff</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><code>16r 6745 2301</code>
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>FALSE</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node108.html#ex-xi-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-v"></a>11.5</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>16r 558</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>16r 17</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node109.html#ex-xi-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-vi"></a>11.6</strong></dt>
+<dd> <pre>
+   PROC transpose=(REF[,]INT m)VOID:
+   IF   1 UPB m - 1 LWB m
+               =
+        2 UPB m - 2 LWB m
+   THEN #m is square#
+      REF[,]INT mm=m[@1,@1]; #a precaution#
+
+      FOR i TO 1 UPB mm - 1
+      DO
+         REF[]INT mr=mm[i,i+1:],
+                  mc=mm[i+1:,i];
+         []INT temp=mr;
+         mr:=mc;  mc:=temp
+      OD
+   FI
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node111.html#ex-xi-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-vii"></a>11.7</strong></dt>
+<dd>Use a cast: <code>REF REAL(xx):=120.5</code>
+</dd>
+<dt><strong><a href="node111.html#ex-xi-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-viii"></a>11.8</strong></dt>
+<dd><pre>
+   REF REF[]CHAR rrq;
+   []CHAR m = "ABCDEFGHIJ";
+   rrq:=LOC REF[]CHAR:=LOC[10]CHAR:=m[@1];
+</pre>
+</dd>
+<dt><strong><a href="node111.html#ex-xi-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-ix"></a>11.9</strong></dt>
+<dd> <br><pre>
+   REF FLEX[]INT rfi;
+   rfi:=FLEX[1:0]INT:=(3,-2,4)
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node112.html#ex-xi-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-x"></a>11.10</strong></dt>
+<dd><code>f</code> has the
+mode <code>REF STRING</code> and <code>ss</code> has the mode
+<code>REF REF STRING</code>.
+</dd>
+<dt><strong><a href="node112.html#ex-xi-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xi"></a>11.11</strong></dt>
+<dd>The multiple of mode
+<code>STRING</code> whose value is <tt>"Joan of Arc"</tt>.
+</dd>
+<dt><strong><a href="node112.html#ex-xi-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xii"></a>11.12</strong></dt>
+<dd><code>f[3:4]=s[7:8]</code>. The modes are both <code>STRING</code>.
+</dd>
+<dt><strong><a href="node112.html#ex-xi-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xiii"></a>11.13</strong></dt>
+<dd>Here are three
+possible answers:
+<pre>
+   REF STRING(ff) IS ss
+   ff IS REF STRING(ss)
+   REF STRING(ff) IS REF STRING(ss)
+</pre>
+
+You could also use <code>ISNT</code>, <code>:=:</code> or <code>:/=:</code>.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node113.html#ex-xi-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xiv"></a>11.14</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>A name of mode <code>REF REF FILE</code>.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>TRUE</code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>BOOL</code>.
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>A name of mode <code>REF FILE</code>.
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>FALSE</code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code>BOOL</code>.
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node113.html#ex-xi-xv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xv"></a>11.15</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REF FILE</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>REF REF FILE</code>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node114.html#ex-xi-xvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xvi"></a>11.16</strong></dt>
+<dd><pre>
+REF REF QUEUE(tail):=
+        LOC QUEUE:=(("Barbara",3),nilq)
+</pre>
+</dd>
+<dt><strong><a href="node114.html#ex-xi-xvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xvii"></a>11.17</strong></dt>
+<dd><code>tail:=next OF tail</code>
+</dd>
+<dt><strong><a href="node114.html#ex-xi-xviii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xviii"></a>11.18</strong></dt>
+<dd>No.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node115.html#ex-xi-xix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xix"></a>11.19</strong></dt>
+<dd> <pre>
+   PROC add fan=(REF REF REF QUEUE
+                    head,tail,
+                 REF FAN fan)VOID:
+      tail:=next OF (REF REF QUEUE
+             (head IS nilq|head|tail):=
+                HEAP QUEUE:=(fan,nilq))
+</pre>
+</dd>
+<dt><strong><a href="node115.html#ex-xi-xx"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xx"></a>11.20</strong></dt>
+<dd> <pre>
+   PROGRAM ex11 20 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE FAN = STRUCT(STRING name,
+                        INT ticket),
+         QUEUE = STRUCT(FAN fan,
+                        REF QUEUE next);
+
+      REF QUEUE nilq = NIL;
+
+      PROC add fan=(REF REF REF QUEUE
+                        head,tail,
+                    REF FAN fan)VOID:
+         tail:=next OF
+                (REF REF QUEUE
+                  (head IS nilq|head|tail)
+                     :=HEAP QUEUE
+                     :=(fan,nilq);
+
+      REF REF QUEUE head,tail;
+      head:=tail:=LOC REF QUEUE:=nilq;
+
+      FOR q TO 1000
+      DO
+         add fan(head,tail,
+                 LOC FAN:=(IF ODD q
+                           THEN "Iain"
+                           ELSE "Fiona"
+                           FI,
+                           q))
+      OD
+   END
+   FINISH
+</pre>
+The generator <code>LOC FAN</code> is used because <code>add fan</code>
+requires a parameter of mode <code>REF FAN</code>. The scope of the
+generated name is from the declarations of <code>head</code> and
+<code>tail</code> to the end of the program because there are no identity
+declarations in the <code>FOR</code> loop clause (therefore it is not a
+range).
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node116.html#ex-xi-xxi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xxi"></a>11.21</strong></dt>
+<dd>Because <code>marker</code> has mode
+<code>REF REF QUEUE</code>, it is made to refer to each <code>REF QUEUE</code>
+name in the linked-list. The condition
+<pre>
+   next OF marker ISNT nilq
+</pre>
+
+ensures that <code>marker</code> is not currently referring to the last
+<code>REF QUEUE</code> in the list. The loop will terminate when
+<code>marker</code> refers to the last <code>REF QUEUE</code> in the list or the
+number of the ticket of the fan to be inserted in the queue does not
+exceed the number of the ticket of the fan referred to by
+<code>marker</code>.
+
+<p>
+<br>
+If the operator <code>AND</code> had been used, both operands would have been
+elaborated before the operator; in which case, if the left operand
+had yielded <code>FALSE</code>, elaboration of the right operand would have
+caused the run-time error <code>"Selection from NIL"</code>.
+</dd>
+<dt><strong><a href="node116.html#ex-xi-xxii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xxii"></a>11.22</strong></dt>
+<dd>This can best be done by
+writing a program. Here is a possible solution:-
+<pre>
+   PROGRAM ex11 22 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE FAN = STRUCT(STRING name,
+                        INT ticket),
+         QUEUE = STRUCT(FAN fan,
+                        REF QUEUE next);
+      REF QUEUE nilq = NIL;
+
+      PROC insert fan = . . .
+      . . .
+      PROC print queue = . . .
+      . . .
+      REF REF QUEUE head,tail;
+      head:=tail:=LOC REF QUEUE:=nilq;
+      INT max ticket = 1000;
+      INT tickets issued:=0;
+      [max ticket]BOOL ticket issued;
+
+      FOR i
+      FROM LWB ticket issued
+      TO UPB ticket issued
+      DO FALSE OD;
+
+      WHILE tickets issued &lt; max ticket
+      DO
+         INT i=random int(max ticket);
+         IF REF BOOL ti=ticket issued[i];
+            NOT ti
+         THEN
+            ti:=TRUE;
+            insert fan(head,tail,HEAP FAN:=
+                       ((ODD i
+                        |"Iain"
+                        |"Fiona"
+                        ),i));
+            tickets issued+:=1
+         FI
+      OD #fans added to the queue#;
+
+      print queue(head)
+   END FINISH
+</pre>
+Instead of sending the output to <code>stand out</code>, it would be
+better to direct it to an output book so that the results could be
+examined at leisure.  Alternatively, command line redirection could
+be used.  The use of <code>ticket issued</code> ensures that unique ticket
+numbers are added to the queue since <code>insert fan</code> does not cater
+explicitly for duplicate ticket numbers.
+</dd>
+<dt><strong><a href="node116.html#ex-xi-xxiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xxiii"></a>11.23</strong></dt>
+<dd>The procedure
+has to find the fan concerned and must keep track of the reference to
+that fan.
+<pre>
+   PROC delete fan=(REF REF QUEUE q,
+                    INT t#icket#
+                   )UNION(REF FAN,BOOL):
+   IF   q IS nilq
+   THEN FALSE #empty queue#
+   ELIF next OF q IS nilq
+   THEN #last fan in the queue#
+      IF   ticket OF q = t
+      THEN REF FAN rf = q;
+         q:=nilq;  #delete last fan#
+         rf
+      ELSE FALSE
+      FI
+   ELIF ticket OF next OF q &lt; t
+   THEN delete fan(next OF q,t)
+   ELIF ticket OF next OF q &gt; t
+   THEN #not found# FALSE
+   ELSE REF FAN rf = next OF q;
+      next OF q:=next OF next OF q;
+      rf
+   FI #delete fan#;
+</pre>
+
+In the assignment, the mode of <code>next OF q</code> is <code>REF</code>
+<code>REF</code> <code>QUEUE</code>, so the mode of <code>next OF next OF q</code> must
+be <code>REF</code> <code>QUEUE</code>. Look at the required dereferencing to see
+what is assigned to <code>next OF q</code>.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node117.html#ex-xi-xxiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-xi-xxiv"></a>11.24</strong></dt>
+<dd> <br><pre>
+   PROGRAM ex11 24 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE
+      LETTER=STRUCT(CHAR c,INT o),
+      TREE=STRUCT(REF LETTER l,
+                  REF TREE left,right);
+
+      REF TREE leaf=NIL;
+      REF TREE root:=leaf;
+
+      PROC get letter=(REF FILE f)
+                        REF LETTER:
+      IF   CHAR ch;  get(f,ch);
+           ch&gt;="A" &amp; ch&lt;="Z"
+                  OR
+           ch&gt;="a" &amp; ch&lt;="z"
+      THEN HEAP LETTER:=(ch,1)
+      ELSE get letter(f) #skip non-letters#
+      FI #get letter#;
+
+      PROC add letter=
+            (REF REF TREE root,
+             REF LETTER let)VOID:
+      IF   root IS leaf
+      THEN root:=HEAP TREE:=(let,leaf,leaf)
+      ELIF c OF l OF root &gt; c OF let
+      THEN add letter(left OF root,let)
+      ELIF c OF l OF root &lt; c OF let
+      THEN add letter(right OF root,let)
+      ELSE o OF l OF root+:=1
+      FI #add letter#;
+
+      FILE inf, arg;
+      STRING in bk;
+
+      INT max row=13;
+      [max row,81]CHAR out page;
+      INT row:=max row, col:=0;
+
+      FOR i TO max row
+      DO
+         out page[i,:80]:=80*blank;
+         out page[i,81]:=lf
+      OD #initialise out page#;
+
+      INT num letters:=0;
+
+      PROC put letter=(REF LETTER let)VOID:
+      BEGIN
+         IF   row=max row
+         THEN col+:=1;  row:=1
+         ELSE row+:=1
+         FI;
+         FILE f;
+         establish(f,
+                   "",
+                   mem channel,
+                   1,1,20);
+         put(f,(c OF let,
+                fixed(o OF let/
+                        num letters*100,
+                      -7,2),blank*12));
+         out page[row,(col-1)*20+1:col*20]
+           :=file buffer(f);
+         close(f)
+      END #put letter#;
+
+      PROC print tree=
+            (REF REF TREE root)VOID:
+      IF   root ISNT leaf
+      THEN
+         print tree(left OF root);
+         IF o OF l OF root &gt; 0
+         THEN put letter(l OF root)
+         FI;
+         print tree(right OF root)
+      FI #print tree#;
+
+      IF open(arg,"",arg channel)/=0
+      THEN
+         put(stand error,
+             ("Cannot access arguments",
+              newline));
+         stop
+      ELIF
+         on logical file end(arg,
+          (REF FILE f)BOOL:
+           (put(stand error,
+             ("Usage: tt in-book",
+              newline)); stop; SKIP));
+         get(arg,(LOC STRING,
+                  LOC CHAR,
+                  in bk));
+         open(inf,
+              in bk,
+              stand in channel)/=0
+      THEN
+         put(stand error,
+             ("Cannot open book ",in bk,
+              newline));
+         stop
+      ELSE
+         on logical file end(inf,
+          (REF FILE f)BOOL:
+           (
+            print tree(root);
+            print((
+               "Frequency of occurrence ",
+               "of letters in the book ",
+               idf(f),newline,
+               newline,out page,newline,
+               "Total letters read: ",
+               whole(num letters,0),
+               newline));
+            stop;  SKIP
+           ))
+      FI;
+
+      FOR i TO 26 #letters in the alphabet#
+      DO
+         add letter(
+            root,
+            HEAP LETTER:=
+             (REPR(ABS("A")-1+i),0));
+         add letter(
+            root,
+            HEAP LETTER:=
+             (REPR(ABS("a")-1+i),0))
+      OD #all letters are now in the tree#;
+
+      DO
+         add letter(root,get letter(inf));
+         num letters+:=1
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3173"
+  href="node146.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3167"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3163"
+  href="node144.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3169"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3171"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3174"
+  href="node146.html">Bibliography</a>
+<b> Up:</b> <a name="tex2html3168"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3164"
+  href="node144.html">Chapter 10</a>
+ &nbsp; <b>  <a name="tex2html3170"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3172"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

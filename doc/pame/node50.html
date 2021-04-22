@@ -1,0 +1,198 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Assignments in formul&#230;</title>
+<meta name="description" content="assignments in formul&#230;">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node51.html">
+<link rel="previous" href="node49.html">
+<link rel="up" href="node48.html">
+<link rel="next" href="node51.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1459"
+  href="node51.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1453"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1447"
+  href="node49.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1455"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1457"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1460"
+  href="node51.html">Multiple names</a>
+<b> Up:</b> <a name="tex2html1454"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1448"
+  href="node49.html">Assignment</a>
+ &nbsp; <b>  <a name="tex2html1456"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1458"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1461"
+  href="node50.html#section00721000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00720000000000000000"></a><a name="name-assform"></a>
+Assignments in formul&#230;</h1>
+
+<p>Since an assignment yields a name, it can be used in a formula.
+However, the assignment must be converted into an enclosed
+clause<a name="2822"></a> (using parentheses or <code>BEGIN</code> and
+<code>END</code>) ensuring that the assignment is elaborated first.
+For example, in</p>
+
+<pre>
+   3*(a:=c+4)+2
+</pre>
+
+<p>if <code>c</code> refers to <code>3</code>, the value of the
+formula will be <code>23</code> with mode <code>INT</code>,
+<code>a</code> will refer to <code>7</code>, the value of the
+assignment is a name of mode <code>REF INT</code> and <code>c</code>
+will still refer to <code>3</code>. Remember that assignment is not an
+operator.</p>
+
+<p>Here is an example of two assignments in a conditional clause:</p>
+
+<pre>
+   IF a&lt;2 THEN x:=3.2 ELSE x:=-5.0 FI
+</pre>
+
+<p>This can be written with greater efficiency as</p>
+
+<pre>
+   x:=IF a &lt; 2 THEN 3.2 ELSE -5.0 FI
+</pre>
+
+<p>The left-hand side of an assignment has a
+<b>soft</b><a name="2830"></a> context. In a soft context,
+dereferencing is not allowed (it is the only context in which
+dereferencing is not allowed). In the following phrase, the
+conditional clause<a name="2831"></a> on the left yields a name which
+is then assigned the value of the right-hand side:</p>
+
+<pre>
+   IF a &lt; 2 THEN x ELSE y FI := 3.5
+</pre>
+
+<p>In the next assignment, a conditional clause appears on both sides
+of the assignment:</p>
+
+<pre>
+   (a&lt;2|x|y):=(b&lt;2|x|y)
+</pre>
+
+<p>The result depends on the values referred to by both <code>a</code> and
+<code>b</code> as much as on the values referred to by both <code>x</code> and
+<code>y</code>.</p>
+
+<hr>
+<h2><a name="section00721000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>5.4<a name="ex-v-iv"></a>
+<dd>What is wrong with the following program fragment?
+<pre>
+   REF REAL x = LOC REAL,
+            y = LOC REAL:=3.5;
+   y:=4.2+x
+</pre>
+Ans<a href="node139.html#ans-v-iv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>5.5<a name="ex-v-v"></a>
+<dd>If <code>x</code> refers to <code>3.5</code> and <code>y</code> refers to
+<code>-2.5</code>, what is the mode and value yielded by the following
+phrases: Ans<a href="node139.html#ans-v-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>x:=-y</code>  
+<p>
+<dt>(b)
+<dd><code>ABS y</code>  
+<p>
+</dd>
+</dl>
+<dt>5.6<a name="ex-v-vi"></a>
+<dd>What does <code>x</code> refer to after
+<pre>
+   x:=1.5;  x PLUSAB 2.0 DIVAB 3.0
+</pre>
+
+(try it in a small program).  Ans<a href="node139.html#ans-v-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1459"
+  href="node51.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1453"
+  href="node48.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1447"
+  href="node49.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1455"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1457"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1460"
+  href="node51.html">Multiple names</a>
+<b> Up:</b> <a name="tex2html1454"
+  href="node48.html">Names</a>
+<b> Previous:</b> <a name="tex2html1448"
+  href="node49.html">Assignment</a>
+ &nbsp; <b>  <a name="tex2html1456"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1458"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

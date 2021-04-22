@@ -1,0 +1,507 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 6</title>
+<meta name="description" content="chapter 6">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node141.html">
+<link rel="previous" href="node139.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node141.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3105"
+  href="node141.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3099"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3093"
+  href="node139.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3101"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3103"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3106"
+  href="node141.html">Chapter 7</a>
+<b> Up:</b> <a name="tex2html3100"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3094"
+  href="node139.html">Chapter 5</a>
+ &nbsp; <b>  <a name="tex2html3102"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3104"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001660000000000000000"></a><a name="app-vi"></a>
+<br>
+Chapter 6
+</h1><dl>
+<dt><strong><a href="node61.html#ex-vi-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-i"></a>6.1</strong></dt>
+<dd>An identity declaration is
+<pre>
+&lt;formal-mode-param&gt; = &lt;actual-mode-param&gt;
+</pre>
+</dd>
+<dt><strong><a href="node61.html#ex-vi-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-ii"></a>6.2</strong></dt>
+<dd>Because it is an identifier with a mode, but no
+associated value.
+</dd>
+<dt><strong><a href="node61.html#ex-vi-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-iii"></a>6.3</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>REAL</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>INT</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>Strong
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd><code>-5</code>
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node61.html#ex-vi-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-iv"></a>6.4</strong></dt>
+<dd>Using a loop:-
+<pre>
+   ([]INT i)[]CHAR:
+   (
+      [LWB i:UPB i]CHAR s;
+
+      FOR n FROM LWB i TO UPB i
+      DO
+      s[n]:=REPR ii
+      OD;
+      s
+   )
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node61.html#ex-vi-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-v"></a>6.5</strong></dt>
+<dd><code>(REF REAL id)REAL:</code>
+</dd>
+<dt><strong><a href="node61.html#ex-vi-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-vi"></a>6.6</strong></dt>
+<dd><code>(REF CHAR a,b)REF CHAR:</code>
+</dd>
+<dt><strong><a href="node61.html#ex-vi-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-vii"></a>6.7</strong></dt>
+<dd> <pre>
+   (STRING s)[]STRING:
+   BEGIN
+      FLEX[1:0]STRING r:="";
+         #rowing coercion#
+      BOOL in word:=FALSE;
+      INT st:=LWB s,fn:=UPB s;
+
+      WHILE s[st]=blank &amp; st&lt;=UPB line
+      DO
+        st+:=1
+      OD;
+
+      WHILE s[fn]=blank &amp; fn&gt;=st
+      DO
+       fn-:=1
+      OD;
+
+      STRING ss:=s[st:fn]+blank;
+
+      FOR c FROM LWB ss UNTIL c &gt; UPB ss
+      DO
+         CHAR ssc=ss[c];
+
+         IF   ssc/=blank &amp; NOT in word
+         THEN st:=c;  in word:=TRUE
+         ELIF ssc=blank &amp; NOT in word
+         THEN SKIP
+         ELIF ssc/=blank &amp; in word
+         THEN SKIP
+         ELSE #ssc=blank &amp; in word#
+            fn:=c-1;  in word:=FALSE;
+            [UPB r+1]STRING rr;
+            rr[:UPB r]:=r;
+            rr[UPB rr]:=ss[st:fn];
+            r:=rr
+        #The word has been added to r#
+         FI
+      OD;
+
+      r[2:]  #Omit the null string#
+   END
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node61.html#ex-vi-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-viii"></a>6.8</strong></dt>
+<dd><code>REAL:</code>
+</dd>
+<dt><strong><a href="node61.html#ex-vi-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-ix"></a>6.9</strong></dt>
+<dd><code>VOID: print("Hi, there")</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node62.html#ex-vi-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-x"></a>6.10</strong></dt>
+<dd>This table summaries the occurrences:-
+<div align="center">
+<table cellpadding=3 border="1">
+<tr><td align="right">&nbsp;</td>
+<td align="center" colspan=2><span>Occurrences</span></td>
+</tr>
+<tr><td align="right">Line</td>
+<td align="left">Applied</td>
+<td align="center">Defining</td>
+</tr>
+<tr><td align="right">5</td>
+<td align="left"><tt>T p</tt></td>
+<td align="center">2</td>
+</tr>
+<tr><td align="right">5</td>
+<td align="left"><tt>T c</tt></td>
+<td align="center">3</td>
+</tr>
+<tr><td align="right">8</td>
+<td align="left"><tt>T 4</tt></td>
+<td align="center">2</td>
+</tr>
+<tr><td align="right">8</td>
+<td align="left"><tt>T q</tt></td>
+<td align="center">7</td>
+</tr>
+<tr><td align="right">10</td>
+<td align="left"><tt>T REPR 2</tt></td>
+<td align="center">3</td>
+</tr>
+<tr><td align="right">12</td>
+<td align="left"><tt>T c</tt></td>
+<td align="center">3</td>
+</tr>
+<tr><td align="right">12</td>
+<td align="left"><tt>T q</tt></td>
+<td align="center">2</td>
+</tr>
+</table>
+</div>
+</dd>
+<dt><strong><a href="node62.html#ex-vi-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xi"></a>6.11</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>A name of mode <code>REF INT</code>.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>The integer denoted by <code>16</code> of
+mode <code>INT</code>.
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>The integer nine of mode
+<code>INT</code>.
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd>The integer four of mode
+<code>INT</code>.
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node62.html#ex-vi-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xii"></a>6.12</strong></dt>
+<dd>The two declarations are firmly related because, in a
+firm context, a name of mode <code>REF[]INT</code> can be dereferenced to a
+multiple of mode <code>[]INT</code>.
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node62.html#ex-vi-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xiii"></a>6.13</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>1.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>1.
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>2.
+</dd>
+<dt><strong>(d)</strong></dt>
+<dd>2.
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node62.html#ex-vi-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xiv"></a>6.14</strong></dt>
+<dd>These reasons are the
+most important:-
+
+<ol>
+<li>Because their actions are not clear from the program code.
+</li>
+<li>They can cause indeterminate states to occur.
+</li>
+</ol>
+</dd>
+<dt><strong><a href="node62.html#ex-vi-xv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xv"></a>6.15</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd>You cannot mix letters and symbols.
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd>The symbol should start with <code>+</code> which
+has already been declared as a monadic operator.
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd>This symbol is used for the identity
+relation (see section <a href="node112.html#adv-idrel">11.6</a>) and is not an operator.
+</dd>
+</dl>
+</dd>
+<dt><strong><a href="node62.html#ex-vi-xvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xvi"></a>6.16</strong></dt>
+<dd><code>OP PP = (REF INT a)REF INT:  a+:=1</code>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node62.html#ex-vi-xvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xvii"></a>6.17</strong></dt>
+<dd><code>PROC p = VOID:  a:=3</code>
+</dd>
+<dt><strong><a href="node62.html#ex-vi-xviii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xviii"></a>6.18</strong></dt>
+<dd> <pre>
+   PROC p = INT:
+   BEGIN
+      [(INT i; read((i,newline)); i)]INT a;
+      read(a);
+      INT sum:=0;
+
+      FOR i TO UPB a DO sum+:=a[i] OD;
+      sum
+   END
+</pre>
+</dd>
+<dt><strong><a href="node63.html#ex-vi-xix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xix"></a>6.19</strong></dt>
+<dd> <pre>
+   PROC p = REF[,]CHAR:
+   (
+      HEAP[3,20]CHAR n;
+      read((n,newline));
+      n
+   )
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node63.html#ex-vi-xx"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xx"></a>6.20</strong></dt>
+<dd> <pre>
+   PROC p=(REF REAL r)REF REAL:
+      r:=r/pi*180
+</pre>
+</dd>
+<dt><strong><a href="node63.html#ex-vi-xxi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxi"></a>6.21</strong></dt>
+<dd> <pre>
+   PROC p = (STRING s,INT i)VOID:
+   (
+      INT ii = IF i &lt; 0
+               THEN print(newline); ABS i
+               ELSE i
+               FI;
+      TO ii DO print(s) OD
+   )
+</pre>
+</dd>
+<dt><strong><a href="node63.html#ex-vi-xxii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxii"></a>6.22</strong></dt>
+<dd> <pre>
+   PROC num in multiple=(INT i,
+                         []INT m,
+                         REF INT p)BOOL:
+   (
+      INT pos:=LWB m - 1;
+
+      FOR j FROM LWB m TO UPB m
+      WHILE pos &lt; LWB m
+      DO
+         (i=m[j]|pos:=j)
+      OD;
+
+      IF pos &lt; LWB m
+      THEN FALSE
+      ELSE p:=pos; TRUE
+      FI
+   )
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node63.html#ex-vi-xxiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxiii"></a>6.23</strong></dt>
+<dd> 
+<p>
+<dl>
+<dt><strong>(a)</strong></dt>
+<dd><code>10.0</code>
+</dd>
+<dt><strong>(b)</strong></dt>
+<dd><code>0.3</code>
+</dd>
+<dt><strong>(c)</strong></dt>
+<dd><p>
+<code>0.0</code>.
+</dd>
+</dl>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node63.html#ex-vi-xxiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxiv"></a>6.24</strong></dt>
+<dd> <pre>
+   PROC reverse = ([]CHAR s)[]CHAR:
+   (SIZE s=1|s|s[UPB s]+reverse(s[:UPB s-1]))
+</pre>
+</dd>
+<dt><strong><a href="node63.html#ex-vi-xxv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxv"></a>6.25</strong></dt>
+<dd> <pre>
+   PROC(INT)INT cube;
+
+   PROC square=(INT p)INT:
+      (ODD p|cube(p)|p^2);
+   cube:=(INT p)INT: (ODD p|p^3|square(p))
+</pre>
+
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node63.html#ex-vi-xxvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxvi"></a>6.26</strong></dt>
+<dd>They form the two sides of an identity declaration.
+</dd>
+<dt><strong><a href="node63.html#ex-vi-xxvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxvii"></a>6.27</strong></dt>
+<dd> <pre>
+   OP LARGEST = ([,]REAL a)REAL:
+   (
+      REAL largest:=a[1 LWB a,2 LWB a];
+
+      FOR i FROM 1 LWB a TO 1 UPB a
+      DO
+         FOR j FROM 2 LWB a TO 2 UPB a
+         DO
+            largest:=largest MAX a[i,j]
+         OD
+      OD;
+      largest
+   )
+</pre>
+</dd>
+<dt><strong><a href="node64.html#ex-vi-xxviii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxviii"></a>6.28</strong></dt>
+<dd> <pre>
+   PROC pr = (INT n)REF[]INT: HEAP[n]INT
+</pre>
+</dd>
+<dt><strong><a href="node64.html#ex-vi-xxix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-vi-xxix"></a>6.29</strong></dt>
+<dd> <pre>
+   PROC leng = INT:
+   (STRING s;
+    read((s,newline));
+    UPB s)
+</pre>
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3105"
+  href="node141.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3099"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3093"
+  href="node139.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3101"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3103"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3106"
+  href="node141.html">Chapter 7</a>
+<b> Up:</b> <a name="tex2html3100"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3094"
+  href="node139.html">Chapter 5</a>
+ &nbsp; <b>  <a name="tex2html3102"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3104"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,1065 @@
+DECS  globalcommands  CONTEXT VOID  USE  putstrings,  messageproc,  options,
+      osinterface,  basics,  testmode,  ioprocs,  variables,  command,
+      commandsyntax,  commandreader,  kernelreader,  commandcaller:
+
+configinfo A68CONFIG "$Id: globalcommands.a68,v 1.2 2001-09-27 13:06:03 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+09:02:89  General purpose global commands (excluding IO)  DCT
+04:08:89  "quit" added - *8 only  DCT
+21:06:90  The command "monitorcommandparameters" added.  DCT
+22:06:90  "helpsyntax" added.  DCT
+22:10:90  Mods to environ incorporated DJS
+31:01:91  Reference to FLEX removed.  DCT
+31:01:91  Some test commands converted to hidden access.  DCT
+12:03:93  *8 removed.  DCT
+28:06:93  variables added, obey command moved in from oscommands.  DCT
+29:06:93  Non PT diagnostics (see comments) and oscommands merged in.  DCT
+30:06:93  iocommands merged in to avoid multiple groups in help.  DCT
+02:07:93  pmem called the wrong procedure.  DCT
+04:08:93  showtime_var not initialised.  DCT
+16:08:93  Upper and lower case now allowed in setvar.  DCT
+23:08:93  Changes in commands for public domain. EVW
+23:08:93  Configuration information now available (printconfiguration).  DCT
+24:09:93  Module environ eliminated - disclaimer moved here.  DCT
+27:09:93  withdrawn moved in from ella.  DCT
+13:10:93  Error in logging - time_str instead of date.  EXIT added.  DCT
+28:10:93  Interface / printissue changed.  DCT
+29:11:93  Interface / printissue changed.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.021 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+06:06:07  34.003  Phoenix Engineering Correction of error messages SL
+??:??:??   ?.???  ????
+COMMENT
+
+{ Should showin/out be vars as well ? }
+
+STR  edit_var = "edit",  showtime_var = "showtime";
+
+{ Globals set up by make_globalcommands }
+
+RVC  edit_type:= NIL, sysdir_var:= NIL;
+PROC VOID  print_issue:= VOID: SKIP;
+
+PROC REF COMMANDENV  commandenv;
+REF COMMANDSTACK  syntaxcheck_context;
+
+{ Local procedures }
+
+PROC  opt_int = (VALUES  v,  MESSAGEPROC  msg) INT:
+   IF is_int(v[1]) THEN  get_int(v[1], msg)  ELSE  0  FI;
+
+PROC  type_more = (BOOL  reset_paging,  FILE  f,  MESSAGEPROC  msg) VOID:
+BEGIN
+   PROC  flt = (MSGNO  msgno,  VECSTR  params) VOID:
+   ( IF reset_paging THEN  io_dontpage(msg)  FI;
+     close_file(f, msg);
+     msg(msgno, params)
+   );
+
+   put(screen, ("File  """, testmode_file_name(f), """:", lines(2)));
+   VECTOR [4096] CHAR  buffer;
+   INT  l;
+   WHILE
+      flt_if_interrupted(flt);
+      IOSTATUS  r = read_line(f, buffer, l, flt);
+      IF r = io_ok
+      THEN  putstr(screen, buffer[:l]);
+            newline(screen);
+            TRUE
+      ELIF r = io_partline
+      THEN  putstr(screen, buffer[:l]);
+            TRUE
+      ELIF r = io_eof
+      THEN  FALSE
+      ELSE  flt(user, "Read failed - closing file");
+            FALSE
+      FI
+   DO  SKIP  OD;
+   close_file(f, msg)
+END;
+
+
+PROC  set_showtime = (VAR  var,  BOOL  changed,  MESSAGEPROC  msg) VOID:
+   IF value OF var = true_var
+   THEN  io_showtime(msg)
+   ELSE  io_dontshowtime(msg)
+   FI;
+
+
+PROC  when = STR:
+BEGIN
+   STR  dt = date_time(SHORTEN get_time);
+   IF UPB dt = 21 THEN  dt[:18]  ELSE  dt  FI
+END;
+
+
+PROC  print_configuration = VOID:
+BEGIN
+   put(out, ("Module configuration information:", lines(2)));
+
+   PROC  printer = (STR  s) VOID:
+   { Try to tidy the output a bit to make it more readable }
+      IF UPB s > 5  ANDTH  s[: 5] = "RSRE "
+      THEN  INT  index:= 5;
+            { write out modulename first }
+            WHILE  (index PLUSAB 1) <= UPB s  ANDTH  s[index] /= " "
+            DO  SKIP  OD;
+            put(out, s[6 : index - 1]);
+            INT  ver = index;
+            WHILE (index PLUSAB 1) <= UPB s  ANDTH  s[index] /= " "
+            DO  SKIP  OD;
+            IF index < UPB s
+            THEN  put(out, ( after(20), width(s[ver : index - 1], 8),
+                             s[index :], newline ))
+            FI
+      ELSE  put(out, (s, newline))
+      FI;
+   show_a68config(printer)
+END;
+
+
+PROC  current_context = STR:
+   context OF current_context OF stack OF commandenv;
+
+PROC  obey_command = (STR  command,  MESSAGEPROC  msg) INT:
+BEGIN
+   PROC  new_msg = (MSGNO  no,  VECSTR  params) VOID:
+      ( IF error_msg(no) THEN  banner(current_context)  FI;
+        msg(no, params)
+      );
+
+   IF UPB command = 0 THEN  banner(concat((os_string, " sub-process")))
+                      ELSE  banner(command)
+   FI;
+   newline(screen);
+
+   INT  return = execute_os_command(command, new_msg);
+   banner(current_context);
+   return
+END;
+
+
+{ Two procedures for manipulating command lists }
+
+PROC  add_globals_to_compounds = (COMMANDVEC  globals, vec_with_commands) VOID:
+BEGIN
+   { This procedure should be called after the global commands have been
+     assembled into a single COMMANDVEC to make them available in all command
+     contexts.  It scans for COMPOUNDS and adds the assembled globals to the
+     "globals" field of any COMPOUNDS found.  This may produce a recursive
+     structure which should be used with care. }
+
+   MODE DONE = STRUCT (REF COMPOUND  env,  REF DONE  rest);
+   REF DONE  list:= REF DONE (NIL);
+
+   PROC  new = (REF COMPOUND  next) BOOL:
+   BEGIN
+      BOOL  not_found:= TRUE;
+      REF DONE  ptr:= list;
+      WHILE (ptr ISNT REF DONE (NIL))  ANDTH  not_found
+      DO  not_found:= env OF ptr ISNT next;  ptr:= rest OF ptr  OD;
+      IF not_found THEN  list:= HEAP DONE:= (next, list)  FI;
+      not_found
+   END;
+
+   PROC  add = (COMMANDVEC  vec) VOID:
+      FORALL command IN vec
+      DO  CASE command IN
+             (REF GROUP  group)
+                add(commands OF group) ,
+             (REF COMPOUND  compound)
+                IF new(compound)
+                THEN  add(globals OF compound);
+                      globals OF compound ADDAB globals
+                FI
+          OUT  SKIP
+          ESAC
+      OD;
+
+   add(vec_with_commands)
+END;
+
+
+PROC  find_command = (STR  name,  abreviation,  COMMANDVEC  vec) INT:
+BEGIN
+   INT  index:= 0;
+   FORALL command IN vec WHILE (index MINUSAB 1) < 0
+   DO  REF SIMPLE  prelude = CASE command IN  (REF SIMPLE  s)    s,
+                                              (REF GROUP  g)     group OF g,
+                                              (REF COMPOUND  c)  prelude OF c
+                              ESAC;
+       IF name = name OF prelude  ANDTH  abreviation = abreviation OF prelude
+       THEN  index:= - index
+       FI
+   OD;
+   IF index < 0 THEN  0  ELSE  index  FI
+END;
+
+
+{ PROC for telling user of withdrawn commands }
+
+PROC  withdrawn_proc = (RVC  str, COMMANDPARAM param, MESSAGEPROC  msg) VOID:
+   msg(user, str);  { this procedure must be global }
+
+
+PROC  withdrawn = (STR  old, old_abr, new) REF SIMPLE:
+BEGIN
+   { Use by including calls of this procedure in a commandlist:
+     withdrawn("OLD_COMMAND", "OLD_COMMAND_ABBREV", "NEW_COMMAND (ABBREV)") }
+
+   RVC  new_name = concat((" - use  """, new, """")),
+        message  = concat(( "Withdrawn",
+                             IF UPB new = 0 THEN  ""  ELSE  new_name  FI ));
+   HEAP SIMPLE:=
+   ( MAKERVC old, MAKERVC old_abr, opt(text_syntax),
+     hidden access  { not "advertised" }, continue, message,
+     RVCPROC (message,  withdrawn_proc)
+   )
+END;
+
+
+
+PROC  make_globalcommands =
+      ( STR  sysdir_varname,         { system directory containing release }
+        default_edit_type,           { parsed onto end file in edit command }
+        PROC VOID  printissue,       { body of the printissue command }
+        PROC REF COMMANDENV  commandenv_proc  { access to commandenv }
+      ) COMMANDVEC:
+BEGIN
+   { Give global access to the parameters }
+
+   edit_type:= MAKERVC  default_edit_type;
+   sysdir_var:= MAKERVC sysdir_varname;
+   print_issue:= printissue;
+   commandenv:= commandenv_proc;   { commandenv_proc must be global }
+
+   { Define "variables" }
+
+   add_var(edit_var, "edit", str_var, default_set_var);
+   add_var(showtime_var, false_var, bool_var, set_showtime);
+   add_var(sysdir_var, sysdir_var, env_var, null_set_var);
+
+   { Write to usage file with silent failure }
+
+   BOOL  not_failed:= TRUE;
+   PROC  new_msg = (MSGNO  no,  VECSTR params) VOID:
+      IF error_msg(no) THEN  not_failed:= FALSE  FI;
+
+   STR  dir = get_var(sysdir_var),
+        fname = concat((dir, "usage.log"));
+   FILE  lf = open_file(fname, append_access, new_msg);
+   STRUCT 600 CHAR  buffer;
+   RVC  line = putb(buffer, ( when, "  ", name OF version, after(36), " [",
+                              get_login_name, "]", after(54), date OF version,
+                              "  ", version OF version, newline_char ));
+   IF not_failed
+   THEN  write_buffer(lf, line, new_msg);
+         close_file(lf, new_msg)
+   FI;
+
+
+   {{ ********* This lot needs reviewing.  29:06:93  DCT  ******** }}
+
+   OP  SPECIALRVC = (STR  str) RVC:
+   BEGIN
+       RVC ans:= MAKERVC str;
+       FORALL  s IN ans DO  s:= REPR ( ((32 - ABS s) MOD 26) + 65 )  OD;
+       ans
+   END;
+
+   BITS  cc = 8r54 0307 0037;  {{{ 30-bit }}}
+
+   PROC  rr = (REF BITS  s) CHAR:
+   BEGIN
+      BITS  t:= 16r0;
+      TO 23
+      DO  IF ABS (s SHL 1) < 0       {{{ VAX  = 31 bits + sign }}}
+          THEN  s:= (s AND NOT cc) OR (NOT s AND cc)
+          FI;
+          s:= s SHL 1;
+          t:= t SHL 1;
+          IF ABS (s SHL 1) < 0 THEN  t:= t OR 16r1  FI
+      OD;
+      REPR ( 65 + (ABS t MOD 26) )
+   END;
+
+   PROC  tt = BITS:  BIN ((seconds  OVER  10800) + 362680);  { unit = 3 hours }
+
+   PROC  pchars = ID:
+   BEGIN
+      HEAP VECTOR [8] CHAR  ans;
+      INT  t = ABS (tt AND 8r77777);
+      BITS  s:= BIN (t * t);
+      FORALL c IN ans DO  c:= rr(s)  OD;
+      ans
+   END;
+
+
+   MAKECOMMANDS VECTOR [] COMMAND
+   BEGIN
+      HEAP SIMPLE:=
+      ( MAKERVC "CHECKSYNTAX", MAKERVC "CS",
+        no parameters, normal access, continue,
+        MAKERVC "Enables command line syntax checking.  You must use """
+                "dontchecksyntax"" (""dcs"") to stop syntax checking.  "
+                "Any syntax errors will be reported and checking will "
+                "continue.  Command input files will be opened and closed "
+                "as normal and ""help"" will continue to function.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           IF check_syntax
+           THEN  msg(user, "Command line syntax checking already active")
+           ELSE  check_syntax:= TRUE;
+                 { Remember the current command context to reinstate later }
+                 syntaxcheck_context:= stack OF commandenv;
+                 put(screen, ( "Command line syntax checking started - "
+                               "use ""dontchecksyntax"" (""dcs"") to stop",
+                               newline ))
+           FI
+      ) ,
+
+      make_group
+         ( "CLEAR", "C", normal access,
+           HEAP SIMPLE:=
+           ( MAKERVC "INPUTS", nullstr,
+             no parameters, normal access, continue,
+             MAKERVC "Closes and removes all files from "
+                     "the input-file stack.",
+             (VALUES  v,  MESSAGEPROC  msg) VOID: io_clearinputs(msg)
+           )
+         ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "COMMENT", MAKERVC "CO",
+        opt(text_syntax), normal access, continue,
+        MAKERVC "Has no functional effect.  Allows comments "
+                "to be included in an input file.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           IF is_text(v[1]) THEN  io_comment(get_text(v[1], msg), msg)  FI
+      ) ,
+
+      make_group
+        ( MAKERVC "DEBUG", MAKERVC "D", secret private access,
+          ( HEAP SIMPLE:=
+            ( MAKERVC "OS", nilstr, switch_syntax,
+              secret private access, continue,
+              MAKERVC "Enables monitoring of operating system responses "
+                      "where they are available",
+              (VALUES  params, MESSAGEPROC  flt) VOID:
+                 set_switch(params[1], os_debug, "OSdebug", flt)
+            ) ,
+
+            HEAP SIMPLE:=
+            ( MAKERVC "HEAP", MAKERVC "H", int_syntax,
+              secret private access, continue,
+              MAKERVC "Sets the diagnostics level for the ALGOL68 "
+                      "garbage collector",
+              (VALUES  params,  MESSAGEPROC  msg) VOID:
+              ( BITS  heapdebug = BIN get_int(params[1], msg);
+                put(screen, ( "Heap diagnostic setting changed to ", heapdebug,
+                              newline ));
+                set_gc_diagnostics(heapdebug);
+                BITS  mask:= 16r1;
+                FORALL opt IN gc_diag_options
+                DO  IF ((heapdebug AND mask) = mask)  ANDTH  UPB opt > 0
+                    THEN  put(screen, (opt, newline))
+                    FI;
+                    mask:= mask SHL 1
+                OD
+              )
+            ) ,
+
+            HEAP SIMPLE:=
+            ( MAKERVC "READER", MAKERVC "R", switch_syntax,
+              secret private access, continue,
+              MAKERVC "Enables trace of command parameter syntax analysis",
+              (VALUES  params,  MESSAGEPROC  msg) VOID:
+                 put(screen, ( set_switch( params[1], debug_reader,
+                                           "Debug_reader", msg ), newline ))
+            )
+          )
+        ) ,
+
+      make_group
+         ( "DONT", "D", normal access,
+           ( HEAP SIMPLE:=
+             ( MAKERVC "CHECKSYNTAX", MAKERVC "CS",
+               no parameters, normal access, continue,
+               MAKERVC "Disables command line syntax checking",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  IF check_syntax
+                  THEN  IF check_syntax
+                        THEN  REF REF COMMANDSTACK (stack OF commandenv):=
+                                 syntaxcheck_context;
+                              show_parameters:= check_syntax:= FALSE;
+                              put(screen, ( "Syntax checking finished",
+                                            newline ))
+                        ELSE  put(screen, ( "You haven't requested syntax "
+                                            "checking", newline ))
+                        FI
+                  FI
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "LOG", MAKERVC "LOG",
+               no parameters, normal access, continue,
+               MAKERVC "Stops recording a log-file and closes it.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_dontlog(msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "OUTPUT", MAKERVC "OUT",
+               no parameters, normal access, continue,
+               MAKERVC "Closes the current output file and resumes "
+                       "sending output to the terminal.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_dontoutput(msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "MONITORCOMMANDPARAMETERS", MAKERVC "MCP",
+               no parameters, hidden access, continue,
+               MAKERVC "Stops the monitoring of parameters given to commands",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+               ( show_parameters:= FALSE;
+                 put(screen, ("Parameter monitoring disabled", newline))
+               )
+             ) ,
+
+             make_group
+                ( "SHOW", "S", normal access,
+                  ( HEAP SIMPLE:=
+                    ( MAKERVC "INPUT", MAKERVC "IN",
+                      no parameters, normal access, continue,
+                      MAKERVC "Switches off screen-echoing of offline input.",
+                      (VALUES  v,  MESSAGEPROC  msg) VOID:
+                          io_dontshowinput(msg)
+                    ) ,
+
+                    HEAP SIMPLE:=
+                    ( MAKERVC "OUTPUT", MAKERVC "OUT",
+                      no parameters, normal access, continue,
+                      MAKERVC "Switches off screen-echoing "
+                              "of file-directed output.",
+                      (VALUES  v,  MESSAGEPROC  msg) VOID:
+                         io_dontshowoutput(msg)
+                    ) ,
+
+                    HEAP SIMPLE:=
+                    ( MAKERVC "TIME", MAKERVC "T",
+                      no parameters, normal access, continue,
+                      concat(( "Stops including the time-of-day and CPU-time "
+                               "used with the ", facility, " prompt." )),
+                      (VALUES  v,  MESSAGEPROC  msg) VOID:
+                         set_var(showtime_var, false_var, msg)
+                    )
+                  )
+                ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "PAGE", MAKERVC "PAGE",
+               no parameters, normal access, continue,
+               MAKERVC "Switches off paged mode for screen output.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_dontpage(msg)
+             )
+           )
+         ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "EDIT", MAKERVC "ED", filename_syntax, normal access, continue,
+        concat(( "Invokes the operating system editor defined by the ",
+{ Phoenix Engineering -- SL: BP21306-06-18
+                 facility, " variable ""edit"" on the file name parameter." )), }
+                 facility, " mm environment variable ""edit_command"" on the module name parameter." )),
+        (VALUES  params,  MESSAGEPROC  msg) VOID:
+          IF var_unset(edit_var)
+          THEN  msg(user, concat(( "command """, edit_var,
+                                   """ is not defined" )))
+          ELSE  STR  name =
+                        filename OF get_filename(params[1], edit_type, msg),
+                     cmd = get_var(edit_var),
+                     command = concat((cmd, " ", name));
+                obey_command(command, msg)
+          FI
+      ) ,
+
+      HEAP SIMPLE:=
+      ( SPECIALRVC 10r"27 12 21 21 25 28 21 17", nullstr, word_syntax,
+        secret private access, continue,
+        (REF SIMPLE  c, RCH  ch) VOID:
+           put(ch, ( "Gives details of all the commands avaliable in ",
+                           facility, ":",
+                           newline,
+                     "LOW       display command names once only.", newline,
+                     "MEDIUM    display command names in the contexts in "
+                           "which they occur marking those encountered "
+                           "elsewhere by ""***""", newline,
+                     "HIGH      output help message for each command."
+                   ) ),
+        (VALUES names, MESSAGEPROC msg) VOID:
+            CASE get_word(names[1], msg, ("LOW", "MEDIUM", "HIGH")) IN
+               full_help(commandenv, out, TRUE, FALSE, msg) ,
+               full_help(commandenv, out, FALSE, FALSE, msg) ,
+               full_help(commandenv, out, TRUE, TRUE, msg)
+            ESAC
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "GARBAGECOLLECT", MAKERVC "GC", no parameters,
+        secret private access, continue,
+        MAKERVC "Calls the ALGOL68 garbage collector",
+        (VALUES  v, MESSAGEPROC  msg) VOID:
+        ( put(screen, (time_str, "Garbage collecting...", newline));
+          garbage_collect;
+          put(screen, (time_str, "...finished", newline));
+          gc_statistics((STR s) VOID:  put(screen, (s, newline)))
+        )
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "HELP", MAKERVC "H",
+        star(opt(command_name_syntax)), normal access, continue,
+        (REF SIMPLE  s,  RCH  ch) VOID:
+            put(ch, (newline, concat((
+
+               "With no argument, help displays two lists of the commands "
+               "available in the selected ", current_context, " environment; "
+               "those in the first list are available only in the selected "
+               "environment and those in the second list are available "
+               "throughout ", facility, ".  Commands which start with the "
+               "same first word, group commands, are listed as """
+               "<firstword>..."".  With a command name as an argument, help "
+               "displays information about the command.  With a group "
+               "command name as argument, help displays a list of the "
+               "appropriate group commands."
+
+               )), newline )),
+        (VALUES names,  MESSAGEPROC msg) VOID:
+           IF is_command_name(names[1])
+           THEN  FORALL name IN names
+                 DO  help( commandenv, screen,
+                           get_command_name(name, msg), FALSE, msg )
+                 OD
+           ELSE  help(commandenv, screen, nullstr, FALSE, msg)
+           FI
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "HELPSYNTAX", MAKERVC "HS",
+        star(opt(string_syntax)), hidden access, continue,
+        concat(( "Provides a brief description of the syntactic units that "
+                 "form the parameters to ", facility, " commands.  When no "
+                 "parameter is given, a summary of the available readers is "
+                 "given.  Give ""full"" as a parameter to obtain a detailed "
+                 "list." )),
+        (VALUES  names,  MESSAGEPROC  msg) VOID:
+           IF NOT is_string(names[1])
+           THEN  syntax_help(commandenv, screen, nullstr, FALSE, msg)
+           ELIF  get_string(names[1], msg) = "full"
+           THEN  syntax_help(commandenv, screen, nullstr, TRUE, msg);
+                 IF UPB names > 1 THEN  msg(user, "Extra parameter found")  FI
+           ELSE  FORALL name IN names
+                 DO  syntax_help( commandenv, screen,
+                                  get_string(name, msg), TRUE, msg )
+                 OD
+           FI
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "HIDDEN", nullstr, switch_syntax,
+        secret access, continue,
+        MAKERVC "Enables help of test and withdrawn facilities",
+        (VALUES  params,  MESSAGEPROC  msg) VOID:
+           put(screen, ( set_switch( params[1], hidden OF commandenv,
+                                     "Hidden", msg ), newline ))
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "INPUT", MAKERVC "IN",
+        filename_syntax, normal access, continue,
+        MAKERVC "Adds the specified file to the input-file stack "
+                "and starts reading from it.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           io_input(filename OF get_filename(v[1], infile_type, msg), msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "LOG", nullstr,
+        filename_syntax, normal access, continue,
+        MAKERVC "Opens a log-file and starts recording "
+                "all input and output in it.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           io_log(filename OF get_filename(v[1], logfile_type, msg), msg)
+      ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "MESSAGE", MAKERVC "ME",
+        opt(text_syntax), normal access, continue,
+        MAKERVC "Outputs a message.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           IF is_text(v[1]) THEN  io_message(get_text(v[1], msg), msg)  FI
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "MONITORCOMMANDPARAMETERS", MAKERVC "MCP",
+        no parameters, hidden access, continue,
+        MAKERVC "Monitors parameters given to commands by displaying them"
+                " before the command is obeyed indicating which readers were"
+                " used.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+        ( show_parameters:= TRUE;
+          put(screen, ("Parameter monitoring enabled", newline))
+        )
+      ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "MORE", nullstr,
+        prod((filename_syntax, opt(int_syntax))), normal access, continue,
+        oneline(( "Outputs ", filename_str, " to the screen a page at a time "
+                  "and to the log file if open.  The ", int_str, " parameter "
+                  "may be used to specify the page size." )),
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+        ( FILENAME  fn = get_filename(v[1], source_type, msg);
+          INT  size = IF UPB v = 2 THEN  get_int(v[2], msg)  ELSE  0  FI;
+          FILE  f = open_file(filename OF fn, read_access, msg);
+          BOOL  paging = paging OF iostate;
+          io_page(size, msg);
+          type_more(NOT paging, f, msg);
+          IF NOT paging THEN  io_dontpage(msg)  FI
+        )
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "OBEY", MAKERVC "!", opt(text_syntax),
+        normal access, continue,
+        concat(( "Suspends ", facility, " and executes the specified ",
+                 os_string, " operating system command, or launches a "
+                 "sub-process in which a sequence of ", os_string, " commands "
+                 "may be given.  The current ", facility, " session resumes "
+                 "on completion." )),
+        (VALUES  params,  MESSAGEPROC  msg) VOID:
+          obey_command(value OF params[1] { null if not text }, msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "SPAWN", MAKERVC "$", opt(text_syntax),
+        hidden access, continue, MAKERVC "See the ""obey"" command",
+        (VALUES  params,  MESSAGEPROC  msg) VOID:
+          obey_command(value OF params[1] { null if not text }, msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "OFFLINE", MAKERVC "OFF",
+        no parameters, normal access, continue,
+        MAKERVC "Resumes reading from the file at "
+                "the top of the input-file stack.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:  io_offline(msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "ONLINE", MAKERVC "ON",
+        no parameters, normal access, continue,
+        MAKERVC "Specifies a break-point in an input-file "
+                "at which control is to return online.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:  io_online(msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "OUTPUT", MAKERVC "OUT",
+        filename_syntax, normal access, continue,
+        MAKERVC "Directs output to the specified file.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+           io_output(filename OF get_filename(v[1], outfile_type, msg), msg)
+      ) ,
+
+      make_group
+         ( "OVERWRITE", "O", secret private access,
+           BEGIN
+              HEAP SIMPLE:=
+              ( MAKERVC "STACK", MAKERVC "S", int_syntax,
+                secret private access, continue,
+                MAKERVC "Overwrites <int> * 10 K Bytes of the stack",
+                (VALUES names, MESSAGEPROC msg) VOID:
+                BEGIN
+                   INT  n = get_int(names[1], msg);
+                   VECTOR [n * 10240] CHAR  array;
+                   FORALL a IN array DO  a:= "*"  OD
+                END
+              ) ,
+
+              HEAP SIMPLE:=
+              ( MAKERVC "HEAP", MAKERVC "H", int_syntax, secret private access,
+                continue,
+                MAKERVC "Generates <int> * 10K 4-byte sized objects of "
+                        "garbage on the HEAP",
+                (VALUES names, MESSAGEPROC msg) VOID:
+                   TO get_int(names[1], msg) DO  TO 10240
+                   DO  HEAP STRUCT 4 CHAR:= "####"  OD  OD
+              )
+           END
+         ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "PAGE", nullstr,
+        opt(int_syntax), normal access, continue,
+        MAKERVC "Sets paged mode (and page length) for screen output.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:  io_page(opt_int(v, msg), msg)
+      ) ,
+
+      make_group
+         ( "PRINT", "P", normal access,
+           ( HEAP SIMPLE:=
+             ( MAKERVC "CONFIGURATION", MAKERVC "CONFIG", no parameters,
+               hidden access, continue,
+               concat(( "Displays the configuration details of all the "
+                        "software modules used to build the current version "
+                        "of ", facility )),
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                   print_configuration
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "ISSUE", MAKERVC "IS", no parameters,
+               normal access, continue,
+               concat(( "Displays the configuration details of the "
+                        "current version of ", facility )),
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  print_issue
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "HEAP", nilstr, no parameters,
+               secret private access, continue,
+               MAKERVC "Gives a summary of the ALGOL68 HEAP memory statistics",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  gc_statistics((STR s) VOID:  put(screen, (s, newline)))
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "MEMORY", MAKERVC "MEM", no parameters,
+               secret private access, continue,
+               MAKERVC "Gives a summary of the ALGOL68 HEAP memory statistics",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  mem_statistics((STR s) VOID:  put(screen, (s, newline)))
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "TIME", MAKERVC "TIME",
+               no parameters, normal access, continue,
+               MAKERVC "Displays time-of-day and CPU-time used.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_printtime(msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "VARIABLE", MAKERVC "V",
+               opt(star(name_syntax)), normal access, continue,
+               concat(( "Print the values of the ", facility, " variables, or "
+                        "all ", facility, " variables if none are specified."
+                        "  ", facility, " variables are used to define "
+                        "operating system commands and certain working "
+                        "environment parameters within ", facility, "." )),
+               (VALUES  params,  MESSAGEPROC  msg) VOID:
+                  IF is_name(params[1])
+                  THEN  FORALL v IN params
+                        DO  show_var(get_name(v, msg), msg)  OD
+                  ELSE  show_var("", msg)
+                  FI
+             )
+           )
+         ) ,
+
+      make_group
+         ( SPECIALRVC 10r"17 15 24 11 32 13 28", nullstr, secret access,
+           BEGIN
+              HEAP SIMPLE:=
+              ( SPECIALRVC 10r"18 27 27", nullstr, no parameters,
+                secret private access, continue, nullstr,
+                (VALUES names, MESSAGEPROC msg) VOID:
+                ( REF BOOL(private OF commandenv) := FALSE;
+                  put(screen, ("Private OFF", newline))
+                )
+              ) ,
+
+              make_group(SPECIALRVC 10r"18 19", nullstr, secret access,
+              BEGIN
+                  HEAP SIMPLE:=
+                  ( pchars, nullstr, no parameters, secret access, continue,
+                    nullstr,
+                    (VALUES names, MESSAGEPROC msg) VOID:
+                    ( REF BOOL(private OF commandenv) := TRUE;
+                      msg(user, "Command not recognised")
+                    )
+                  ) ,
+
+                  HEAP SIMPLE:=
+                  ( MAKERVC "TESTINGINPROGRESS", nullstr, no parameters,
+                    secret access, continue, nullstr,
+                    (VALUES names, MESSAGEPROC msg) VOID:
+                       REF BOOL(private OF commandenv) := TRUE
+                  )
+              END )
+           END
+         ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "REMOVEFILE", MAKERVC "RF",
+        no parameters, normal access, continue,
+        MAKERVC "Closes and removes a file from the "
+                "top of the input-file stack.",
+        (VALUES  v,  MESSAGEPROC  msg) VOID:  io_removefile(msg)
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "REPORT", nullstr, text_syntax, hidden access, continue,
+        MAKERVC "Passes the rest of the line as a message to a central log "
+                "file.  This command is designed for reporting bugs, "
+                "comments, suggestions and general insults.",
+        (VALUES names, MESSAGEPROC  flt) VOID:
+        BEGIN
+           RVC  text = get_text(names[1], flt);
+
+           PROC  fault = (MSGNO no, VECSTR vs) VOID:
+              IF error_msg(no)
+              THEN  flt(user, "REPORT facility not available")
+              ELSE  flt(no, vs)
+              FI;
+
+           IF var_unset(sysdir_var) THEN  fault(user, "")  FI;
+
+           STR  dir = get_var(sysdir_var),
+                fname = concat((dir, "report.log"));
+           FILE  lf = open_file(fname, append_access, fault);
+
+           PROC  new_fault = (MSGNO no, VECSTR msg) VOID:
+                 ( close_file(lf, fault);  flt(no, msg) );
+
+           STRUCT 600 CHAR  buffer;
+           RVC  line = putb(buffer, ( when, "  ", facility, after(36), " [",
+                                      get_login_name, "]", after(54),
+                                      date OF version, "  ",
+                                      version OF version, after(80),
+                                      "Message:  """, text, """",
+                                      newline_char ));
+           write_buffer(lf, line, new_fault);
+           close_file(lf, flt);
+           put(screen, ("REPORT sent", newline))
+        END
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "RECORD", nullstr, prod((filename_syntax, text_syntax)),
+        secret access, continue,
+        MAKERVC "Records the current time and a message (<text>) "
+                "in <filename>.  This command is designed to be called a "
+                "number of times during a large run to allow the user to "
+                "monitor progress by reading <filename> at intervals.",
+        (VALUES names, MESSAGEPROC  flt) VOID:
+        BEGIN
+           RVC  filename = filename OF get_filename(names[1], ".log", flt);
+           RVC  text = get_text(names[2], flt);
+           STR  message = concat((time_str, text, newline_char));
+           FILE  record_file = open_file(filename, append_access, flt);
+           PROC  new_flt = (MSGNO no, VECSTR  msg) VOID:
+              ( close_file(record_file, flt);  flt(no, msg) );
+           write_buffer(record_file, message, new_flt);
+           close_file(record_file, flt);
+           put(screen, (message[: UPB message - 1], newline))
+        END
+      ) ,
+
+      HEAP SIMPLE :=
+      ( MAKERVC "TYPE", MAKERVC "TY",
+        filename_syntax, normal access, continue,
+        oneline(( "Outputs ", filename_str, " to the screen and to log file "
+# Changed output: is ==> if (Phoenix Engineering BP21306-06-18)
+                  "if open.  Use ""more"" is output is required a page at a " #
+                  "if open.  Use ""more"" if output is required a page at a "
+                  "time." )),
+        (VALUES  v,  MESSAGEPROC  msg) VOID:
+        ( FILENAME  fn = get_filename(v[1], source_type, msg);
+          FILE  f = open_file(filename OF fn, read_access, msg);
+          type_more(FALSE, f, msg)
+        )
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "EXIT", nullstr, no parameters, normal access, return,
+        (REF SIMPLE  s,  RCH  ch) VOID:
+           put(ch, ( "Exits from the current ", current_context,
+                     " session and returns to the calling environment",
+                     newline )),
+        nullcommand
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "FINISH", nullstr, no parameters, secret access, return,
+        (REF SIMPLE  s,  RCH  ch) VOID:
+           put(ch, ( "Finishes the current ", current_context,
+                     " session and returns to the calling environment",
+                     newline )),
+        nullcommand
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "QUIT", nullstr, no parameters, normal access, return,
+        (REF SIMPLE  s,  RCH  ch) VOID:
+           put(ch, ( "Aborts the current ", current_context,
+                     " session and returns to the calling environment",
+                     newline )),
+        nullcommand
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "RETURN", nullstr, no parameters, hidden access, return,
+        (REF SIMPLE  s,  RCH  ch) VOID:
+           put(ch, ( "Returns from the current ", current_context,
+                     " session to the calling environment",
+                     newline )),
+        nullcommand
+      ) ,
+
+      HEAP SIMPLE:=
+      ( MAKERVC "SECRET", nullstr, switch_syntax,
+        secret private access, continue,
+        MAKERVC "Enables help of test and withdrawn facilities",
+        (VALUES  params,  MESSAGEPROC  msg) VOID:
+           put(screen, ( set_switch( params[1], secret OF commandenv,
+                                     "Secret", msg ), newline ))
+      ) ,
+
+      make_group
+         ( "SET", "S", hidden access,
+           ( HEAP SIMPLE:=
+             ( MAKERVC "DIAGNOSTICLEVEL", MAKERVC "DL",
+               int_syntax, hidden access, continue,
+               MAKERVC "Sets the diagnostic level to <int>.  This flag is "
+                       "used to control the amount of diagnostic information "
+                       "sent to the screen or output file.  The default value "
+                       "is ""0"" - no diagnostic information.  ""1"" will "
+# Inserted "with" (Phoenix Engineering -- SL BP21306-06-18)
+                       "monitor general operations rather more detail where " #
+                       "monitor general operations with rather more detail where "
+                       "available.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  put(screen, ( "Diagnostic level now set to ",
+                                diagnostic_level:= get_int(v[1], msg),
+                                newline ))
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "WIDTH", MAKERVC "W",
+               opt(int_syntax), normal access, continue,
+               (REF SIMPLE  s, RCH  ch) VOID:
+                  put(ch, ( "Sets the maximum length of lines written to the "
+                            "screen or to the log or output files - with no "
+                            "parameter, the width is reset to its default ",
+                            "value.  (Current width is ", width OF iostate,
+                            ")", newline )),
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  io_setwidth(opt_int(v, msg), msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "VARIABLE", MAKERVC "V",
+               prod((name_syntax, opt(text_syntax))), normal access, continue,
+               concat(( "Set the ", facility, " variable to the new value "
+                        "specified.  ", facility, " variables are used to "
+                        "define operating system commands and certain working "
+                        "environment parameters within ", facility, "." )),
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  set_var( get_name(v[1], msg),
+                           IF UPB v = 2 THEN get_text(v[2], msg) ELSE "" FI,
+                            msg )
+             )
+           )
+         ) ,
+
+      make_group
+         ( "SHOW", "S", hidden access,
+           ( HEAP SIMPLE:=
+             ( MAKERVC "COMMANDPARAMETERS", MAKERVC "CP",
+               no parameters, hidden access, continue,
+               MAKERVC  "As ""checksyntax"" but also displays a list of the "
+                        "parameters specified by the user.  Use ""dontchecksy"
+                        "ntax"" (""dcs"") to revert to normal interpretation.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  IF check_syntax
+                  THEN  msg( user,
+                             "Command line syntax checking already active" )
+                  ELSE  show_parameters:= check_syntax:= TRUE;
+                        syntaxcheck_context:= stack OF commandenv;
+                        put(screen, ( "Command line syntax checking started "
+                                      "with display of input parameters - use "
+                                      """dontchecksyntax"" (""dcs"") to stop",
+                                      newline ))
+                  FI
+             ) ,
+
+              HEAP SIMPLE:=
+             ( MAKERVC "INPUT", MAKERVC "IN",
+               no parameters, normal access, continue,
+               MAKERVC "Switches on screen-echoing of offline input.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_showinput(msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "OUTPUT", MAKERVC "OUT",
+               no parameters, normal access, continue,
+               MAKERVC "Switches on the screen-echoing "
+                       "of file-directed output.",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:  io_showoutput(msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "READERS", MAKERVC "R",
+               no parameters, hidden access, continue,
+               MAKERVC "Displays a list of the different sorts "
+                       "of basic command parameters used",
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                  syntax_help(commandenv, screen, nullstr, FALSE, msg)
+             ) ,
+
+             HEAP SIMPLE:=
+             ( MAKERVC "TIME", MAKERVC "T",
+               no parameters, normal access, continue,
+               concat(( "Displays the time-of-day and CPU-time with the ",
+                        facility, " prompt." )),
+               (VALUES  v,  MESSAGEPROC  msg) VOID:
+                    set_var(showtime_var, true_var, msg)
+             )
+           )
+         )
+   END
+END
+
+KEEP  add_globals_to_compounds,  find_command,  withdrawn,  make_globalcommands
+FINISH

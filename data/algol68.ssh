@@ -1,0 +1,83 @@
+# Style sheet for Algol 68
+# Copyright (c) 2000 Sian Leitch
+
+style Algol is
+
+written by "Sian Leitch <algol68@sleitch.nildram.co.uk>"
+version is 1.0
+requires a2ps version 4.10.4
+
+documentation is
+	"The Algol 68 covered by this style is that of the Revised Report"
+	"plus some extra keywords for the a68toc compiler."
+end documentation
+
+first alphabet is
+   "ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+second alphabet is
+   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+
+case sensitive
+
+keywords in Keyword_strong are
+	ALIEN, AT,
+	BEGIN, BITS, BOOL, BY, BYTES,
+	CASE, CHANNEL, CHAR, CODE, COMPL,
+	CONTEXT,
+	DO,
+	EDOC, ELIF, ELSE, EMPTY, END,
+	ESAC, EXIT,
+	FALSE, FI, FILE, FLEX, FOR, FORMAT,
+	FROM,
+	GO, GOTO, HEAP,
+	IF, IN, INT, INTYPE,
+	KEEP, LOC, LONG,
+	MODE, NIL,
+	OD, OF, OUSE, OUT, OUTTYPE,
+	PAR, PR, PRAGMAT, PRIO, PROGRAM,
+	REAL, REF,
+	SEMA, SHORT, SKIP, STRING, STRUCT,
+	THEN, TO, TRUE,
+	UNION, USE, VECTOR, VOID, WHILE
+end keywords
+
+keywords in Keyword are
+	/[A-Z_][0-9A-Z_]*/
+end keywords
+
+optional operators are
+	"AND"       \wedge,
+	"&"         \wedge,
+	"OR"        \vee,
+	/\/=\\|NE/  \neq,
+	/<=\\|LE/   \leq,
+	/>=\\|GE/   \geq,
+	"+:=", "-:=", "*:=", "/:=", "+=:",
+	"+*:=",
+	":="        \Leftarrow,
+	"**"        \Uparrow,
+	"SHL"       \Uparrow,
+	"SHR"       \Downarrow
+end operators
+
+sequences are
+	"#" Keyword_strong Comment "#" Keyword_strong,
+   /CO$\\|CO / Keyword_strong Comment /^CO\\| CO/ Keyword_strong,
+	"COMMENT" Keyword_strong Comment "COMMENT" Keyword_strong,
+	"\"" Plain String "\"" Plain
+		exceptions are
+			"\"\""
+		end exceptions,
+	"PROC" Keyword_strong Label
+		closers are
+			/ [a-z][0-9a-z_]+/ Plain,
+			"("     Plain
+		end closers,
+	"OP" Keyword_strong Label
+		closers are
+			/ [A-Z]+/ Keyword,
+			"("     Plain
+		end closers
+end sequences
+
+end style

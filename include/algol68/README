@@ -1,0 +1,20 @@
+
+This file lists the contents and use of directory
+                           include/algol68
+
+
+This directory contains:- Aalloc.h
+                          Aassign.h
+                          Acoerce.h
+                          Aconfig.h
+                          Aindex.h
+                          Alibrary.h
+                          Amacros.h
+                          Astrings.h
+                          Asupport.h
+                          Atypes.h
+
+This area depends on:-  no other area.
+
+There is no rebuild procedure for this area, it is used by the rebuild for
+the area library and compilation of ALGOL68 files.

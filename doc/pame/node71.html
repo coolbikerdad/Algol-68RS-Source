@@ -1,0 +1,200 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Rows of structures</title>
+<meta name="description" content="rows of structures">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node72.html">
+<link rel="previous" href="node70.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node72.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1838"
+  href="node72.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1832"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1826"
+  href="node70.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1834"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1836"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1839"
+  href="node72.html">Transput of structures</a>
+<b> Up:</b> <a name="tex2html1833"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1827"
+  href="node70.html">Multiples in structures</a>
+ &nbsp; <b>  <a name="tex2html1835"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1837"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1840"
+  href="node71.html#section00961000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00960000000000000000"></a><a name="struc-rows"></a>
+Rows of structures</h1>
+
+<p>In<a name="4909"></a> the last section, we considered multiples in
+structures.  What happens if we have a multiple each of whose elements
+is a structure?  No problem.  If we had declared</p>
+
+<pre>
+   [10]COMPL z4
+</pre>
+
+<p>then the selection <code>re OF z4</code> would yield a name with
+mode <code>REF[]REAL</code> and bounds
+<code>[1:10]</code>.<a name="tex2html23"
+href="footnode.html#foot5001"><sup><span
+class="arabic">8</span>.<span class="arabic">1</span></sup></a> It
+would be possible, because it is a name, to assign to it:</p>
+
+<pre>
+   re OF z4:=(1,2,3,4,5,6,7,8,9,10)
+</pre>
+
+<p>Selecting the field of a sliced multiple of a structure is
+straightforward. Since the multiple is sliced before the field is
+selected, no parentheses are necessary. Thus the real part of the
+third <code>COMPL</code> of <code>z4</code> above is given by the
+expression</p>
+
+<pre>
+   re OF z4[3]
+</pre>
+
+<p>Now consider a multiple of a structure which contains a multiple.
+Here is its declaration:</p>
+
+<pre>
+   [100]STRUCT(CHAR c,[5]INT i)s
+</pre>
+
+<p>Then the fourth integer in the 25<sup>th</sup> structure of
+<code>s</code> is given by</p>
+
+<pre>
+   (i OF s[25])[4]
+</pre>
+
+<p>and all the characters are given by the selection</p>
+
+<pre>
+   c OF s
+</pre>
+
+<p>with mode <code>REF[]CHAR</code> and bounds
+<code>[1:100]</code>.<a name="tex2html24"
+href="footnode.html#foot5002"><sup><span
+class="arabic">8</span>.<span class="arabic">2</span></sup></a></p>
+
+<hr>
+<h2><a name="section00961000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.13<a name="ex-vii-xiii"></a>
+<dd>Suppose a firm had 20 employees, and in writing one of the
+programs in their payroll system, the modes of section 7.5 were used.
+Suppose now that we have the declaration
+<pre>
+   [20]EMPLOYEE employee;
+</pre>
+
+What would be the mode of each of the following: Ans<a href="node141.html#ans-vii-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>(dept OF employee[3])[3]</code>  
+<p>
+<dt>(b)
+<dd><code>dept OF employee[10:12]</code>  
+<p>
+<dt>(c)
+<dd><code>ni code OF employee[1]</code>  
+<p>
+<dt>(d)
+<dd><code>net pay OF employee[15]</code>  
+<p>
+<dt>(e)
+<dd><code>(tax OF employee[2])[50:51]</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1838"
+  href="node72.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1832"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1826"
+  href="node70.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1834"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1836"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1839"
+  href="node72.html">Transput of structures</a>
+<b> Up:</b> <a name="tex2html1833"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1827"
+  href="node70.html">Multiples in structures</a>
+ &nbsp; <b>  <a name="tex2html1835"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1837"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

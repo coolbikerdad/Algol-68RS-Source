@@ -1,0 +1,1692 @@
+DECS mm_basics CONTEXT VOID USE putstrings, osinterface, basics, messageproc :
+
+configinfo A68CONFIG "$Id: mm_basics.a68,v 1.3 2002-06-06 13:55:55 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+31:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 32.1 
+02:09:94  33.001  DJS    
+08:09:94  33.002  DJS   MMCR001   
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE MODULELIST,
+     SYMBOL = STRUCT( REF VECTOR[ ]CHAR name,
+                                        text,
+                      BITS tags,
+                      REF SYMBOL last, rest ),
+     STAR = STRUCT( CHAR mode, value ),
+     ATTRIBUTE = STRUCT( REF VECTOR[ ]CHAR name,
+                                           value,
+                                           initvalue,
+                         REF SYMBOL default,
+                         BOOL permanent,
+                         BITS marker ),
+     MODULE = STRUCT( REF VECTOR[ ]CHAR name,
+                                        filename,
+                      BOOL decs,
+                           recursive,
+                           analysed,
+                      BITS state,
+                      REF VECTOR[ ]ATTRIBUTE attributes,
+                      INT level,
+                          number,
+                          marker,
+                      REF MODULELIST uses,
+                                     usedby ),
+     MODULELIST = STRUCT( REF MODULE module,
+                          STAR star,
+                          REF MODULELIST rest ),
+     BASIC = STRUCT( INT token,
+                     REF VECTOR[ ]CHAR value,
+                     STAR star ),
+     RESERVED = STRUCT( VECTOR[ 0 ]CHAR word,
+                        INT token );
+
+REF SYMBOL nilsymbol = NIL;
+REF MODULELIST nilmodulelist = NIL;
+REF MODULE nilmodule = NIL;
+
+STAR blank_star = ( " ", " " );
+OP INCLUDES = (STAR a, b )BOOL:
+    mode OF a = " " OREL mode OF b = " " OREL
+    ( IF value OF a = value OF b THEN mode OF a = mode OF b
+                                 ELSE TRUE
+      FI );
+
+VECTOR[ ]CHAR signature = "2109930912";
+VECTOR[ 0 ]CHAR blankname;
+VECTOR[ 11 ]CHAR nostars := "no staredit";
+VECTOR[ 11 ]CHAR nooptimise := "no optimise";
+VECTOR[ 4 ]CHAR true_string := "true";
+VECTOR[ 5 ]CHAR false_string := "false";
+VECTOR[ 2 ]CHAR on_string := "on";
+VECTOR[ 3 ]CHAR off_string := "off";
+VECTOR[ 2 ]CHAR cc_string := "cc";
+VECTOR[ 2 ]CHAR tr_string := "tr";
+VECTOR[ 6 ]CHAR failed_string := "failed";
+VECTOR[ 8 ]CHAR trfailed_string := "trfailed";
+VECTOR[ 8 ]CHAR ccfailed_string := "ccfailed";
+VECTOR[ 9 ]CHAR translate_string := "translate";
+VECTOR[ 7 ]CHAR compile_string := "compile";
+VECTOR[ 4 ]CHAR link_string := "link";
+
+VECTOR[ ]REF VECTOR[ ]CHAR std_sym_values = ( true_string,
+                                              false_string,
+                                              on_string,
+                                              off_string,
+                                              failed_string,
+                                              trfailed_string,
+                                              cc_string,
+                                              tr_string,
+                                              ccfailed_string,
+                                              translate_string,
+                                              compile_string,
+                                              link_string );
+
+INT translate_str_top = UPB translate_string,
+    compile_str_top = UPB compile_string,
+    link_str_top = UPB link_string;
+
+OP FLAGON = (REF SYMBOL flag )BOOL:
+    ( text OF flag = true_string OREL text OF flag = on_string );
+
+OP FLAGOFF = (REF SYMBOL flag )BOOL:
+    ( text OF flag = false_string OREL text OF flag = off_string );
+
+INT bsize = 80,    { line size for output to text files }
+    bufmax = 256;  { line size for input }
+CHAR tab = 10r"9", lf = 10r"10", eof = 10r"26";
+INT lcbias = ABS "a" - ABS "A",
+    zero = ABS "0";
+BITS std_state = 16r0;
+VECTOR[ ]CHAR mmd_type = ".mmd",
+              aux_type = ".aux",
+              inp_type = ".mmi",
+              sta_type = ".sta",
+              a68_type = ".a68";
+VECTOR[ ]CHAR init_file_name = "$MM_INIT_FILE";
+
+INT max_level := 0,
+    max_module_name_size := 0,
+    init_module_count := 0,
+    init_file_count := 0;
+BOOL need_to_tidy := FALSE,
+     diagnose := FALSE,
+     attribute_modified := FALSE,
+     ring_bell := FALSE,
+     case_sensitive := FALSE;
+REF MODULELIST modules := nilmodulelist;
+REF SYMBOL symbols := nilsymbol;
+REF REF SYMBOL sym_tail := symbols;
+BITS changed_tag = 16r001,
+         mmd_tag = 16r002,
+         aux_tag = 16r004,
+        init_tag = 16r008,
+       local_tag = 16r010,
+      system_tag = 16r020,
+   translate_tag = 16r040,
+     compile_tag = 16r080,
+        link_tag = 16r100;
+BITS dest_tag = mmd_tag OR aux_tag OR init_tag,
+     dest_mask = NOT dest_tag,
+     action_tag = translate_tag OR compile_tag OR link_tag;
+BITS symbols_modified := 2r0;
+
+REF VECTOR[ ]CHAR std_star_chars := blankname;
+REF VECTOR[ ]CHAR std_edit_command := blankname;
+REF VECTOR[ ]CHAR std_exe_dir := blankname;
+REF VECTOR[ ]CHAR std_heap_size := blankname;
+
+VECTOR[ 7 ]CHAR std_database_name := "modules";
+REF VECTOR[ ]CHAR database_name := std_database_name,
+                  detach_name := blankname,
+                  init_detach_name := blankname,
+                  operating_system := blankname;
+
+REF SYMBOL      default_off := nilsymbol,
+                 default_on := nilsymbol,
+              default_debug := nilsymbol,
+         default_star_chars := nilsymbol,
+          default_heap_size := nilsymbol,
+     default_optimise_chars := nilsymbol,
+            default_exe_dir := nilsymbol,
+               edit_command := nilsymbol,
+                  auto_link := nilsymbol,
+               auto_version := nilsymbol,
+               notify_at_go := nilsymbol,
+                  bell_flag := nilsymbol;
+
+VECTOR[ ]REF REF SYMBOL standard_symbols = ( default_debug,
+                                             default_star_chars,
+                                             default_heap_size,
+                                             default_optimise_chars,
+                                             default_exe_dir,
+                                             edit_command,
+                                             auto_link,
+                                             auto_version,
+                                             notify_at_go,
+                                             bell_flag );
+
+VECTOR[ UPB standard_symbols ]REF VECTOR[ ]CHAR init_sym_values;
+
+PROC scansymbols = (VECTOR[ ]CHAR prefix,
+                    PROC( REF SYMBOL )BOOL action )REF SYMBOL:
+BEGIN
+INT ptop = UPB prefix;
+BOOL select = ( ptop > 0 );
+REF SYMBOL sym := symbols;
+
+    WHILE ( sym ISNT nilsymbol ) ANDTH
+          (( select ANDTH ( UPB name OF sym < ptop OREL
+                            ( name OF sym )[ : ptop ] /= prefix )) OREL
+            action( sym ))
+    DO
+        sym := rest OF sym
+    OD;
+    sym
+END;
+
+PROC findsymbol = (VECTOR[ ]CHAR name )REF SYMBOL:
+BEGIN
+    scansymbols( "", (REF SYMBOL s )BOOL: name OF s /= name )
+END;
+
+PROC move_symbol_pointer = (VECTOR[ ]CHAR name, BOOL before )BOOL:
+BEGIN
+BOOL noname = ( UPB name = 0 );
+
+    PROC move_action = (REF SYMBOL s )BOOL:
+        IF before THEN FALSE
+                  ELSE sym_tail := rest OF s; TRUE
+        FI;
+
+    sym_tail := symbols;
+    IF noname ANDTH before THEN
+        TRUE
+  ELSE
+        scansymbols( name, move_action );
+        IF sym_tail IS nilsymbol THEN noname ELSE TRUE FI
+    FI
+END;
+
+PROC mark_action_symbol = (REF SYMBOL sym )VOID:
+BEGIN
+REF VECTOR[ ]CHAR name = name OF sym;
+INT top = UPB name;
+
+    IF top > link_str_top ANDTH
+       name[ : link_str_top ] = link_string THEN
+        tags OF sym := tags OF sym OR link_tag
+  ELIF top > compile_str_top ANDTH
+       name[ : compile_str_top ] = compile_string THEN
+        tags OF sym := tags OF sym OR compile_tag
+  ELIF top > translate_str_top ANDTH
+       name[ : translate_str_top ] = translate_string THEN
+        tags OF sym := tags OF sym OR translate_tag
+    FI
+END;
+
+PROC define_symbol = (VECTOR[ ]CHAR name,
+                      REF VECTOR[ ]CHAR text,
+                      BITS tags )REF SYMBOL:
+BEGIN
+REF SYMBOL sym := symbols;
+BITS is_changed_tag = ( tags AND changed_tag ),
+     dest_mark = ( tags AND dest_tag );
+
+    IF is_changed_tag /= 2r0 THEN
+        symbols_modified := symbols_modified OR dest_mark
+    FI;
+    WHILE ( sym ISNT nilsymbol ) ANDTH name /= name OF sym
+    DO
+        sym := rest OF sym
+    OD;
+    IF sym ISNT nilsymbol THEN
+    BOOL local_sym = (( tags OF sym AND local_tag ) /= 2r0 );
+
+        IF ( tags AND local_tag ) /= 2r0 OREL
+           ( NOT local_sym ANDTH text OF sym /= text ) THEN
+            tags OF sym := ( tags OF sym AND dest_mask ) OR
+                           dest_mark OR is_changed_tag;
+            text OF sym := text
+      ELIF local_sym THEN
+            sym := nilsymbol
+        FI
+  ELSE
+        REF REF SYMBOL( sym_tail ) := sym := HEAP SYMBOL :=
+                ( MAKERVC name, text, tags, nilsymbol, sym_tail );
+        sym_tail := rest OF sym_tail
+    FI;
+    sym
+END;
+
+PROC undefine_symbol = (REF VECTOR[ ]CHAR name )INT:
+BEGIN
+REF REF SYMBOL sym := symbols;
+
+    WHILE ( sym ISNT nilsymbol ) ANDTH name /= name OF sym
+    DO
+        sym := rest OF sym
+    OD;
+    IF sym IS nilsymbol THEN
+        2
+  ELIF ( tags OF sym AND system_tag ) /= 2r0 THEN
+    BITS dest_mark = tags OF sym AND dest_tag;
+
+        symbols_modified := symbols_modified OR dest_mark;
+        tags OF sym := tags OF sym AND dest_mask;
+        FORALL sym IN standard_symbols, text IN init_sym_values
+        DO
+            IF name OF sym = name THEN text OF sym := text FI
+        OD;
+        3
+  ELIF ( tags OF sym AND local_tag ) /= 2r0 THEN
+        4
+  ELSE
+    BITS dest_mark = tags OF sym AND dest_tag;
+
+        symbols_modified := symbols_modified OR dest_mark;
+        REF REF SYMBOL( sym ) := rest OF sym;
+        1
+    FI
+END;
+
+PROC symbols_changed = (BITS tag )BOOL:
+BEGIN
+    ( symbols_modified AND tag ) /= 2r0
+END;
+
+PROC initialise_std_symbols = VOID:
+BEGIN
+    default_off :=
+        define_symbol( "off", off_string, local_tag );
+    default_on :=
+        define_symbol( "on", on_string, local_tag );
+    default_debug :=
+        define_symbol( "default_debug", on_string, system_tag );
+    default_star_chars :=
+        define_symbol( "default_star_chars", std_star_chars, system_tag );
+    default_heap_size :=
+        define_symbol( "default_heap_size", std_heap_size, system_tag );
+    default_optimise_chars :=
+        define_symbol( "default_optimise_chars", off_string, system_tag );
+    default_exe_dir :=
+        define_symbol( "default_exe_dir", std_exe_dir, system_tag );
+
+    edit_command :=
+        define_symbol( "edit_command", std_edit_command, system_tag );
+    auto_link :=
+        define_symbol( "auto_link", on_string, system_tag );
+    auto_version :=
+        define_symbol( "auto_version", off_string, system_tag );
+    notify_at_go :=
+        define_symbol( "notify_at_go", on_string, system_tag );
+    bell_flag :=
+        define_symbol( "bell_flag", on_string, system_tag );
+
+    FORALL sym IN standard_symbols, text IN init_sym_values
+    DO
+        text := text OF sym
+    OD;
+    SKIP
+END;
+
+PROC default_off_proc       = REF VECTOR[ ]CHAR: off_string;
+PROC default_on_proc        = REF VECTOR[ ]CHAR: on_string;
+PROC default_debug_proc     = REF VECTOR[ ]CHAR: text OF default_debug;
+PROC default_star_proc      = REF VECTOR[ ]CHAR: text OF default_star_chars;
+PROC default_heap_proc      = REF VECTOR[ ]CHAR: text OF default_heap_size;
+PROC default_exename_proc   = REF VECTOR[ ]CHAR: text OF default_exe_dir;
+PROC default_optimise_proc  = REF VECTOR[ ]CHAR: text OF default_optimise_chars;
+
+INT compile_attribute = 1,
+       link_attribute = 2,
+      debug_attribute = 3,
+       star_attribute = 4,
+       heap_attribute = 5,
+    exename_attribute = 6,
+    version_attribute = 7,
+   optimise_attribute = 8;
+INT max_attribute = 8;   { Must be maximum attribute number }
+
+VECTOR[ 7 ]CHAR compile_txt   := "Compile";
+VECTOR[ 4 ]CHAR link_txt      := "Link";
+VECTOR[ 5 ]CHAR debug_txt     := "Debug";
+VECTOR[ 5 ]CHAR star_txt      := "Stars";
+VECTOR[ 9 ]CHAR heap_size_txt := "Heap size";
+VECTOR[ 7 ]CHAR exename_txt   := "Exename";
+VECTOR[ 7 ]CHAR version_txt   := "Version";
+VECTOR[ 8 ]CHAR optimise_txt  := "Optimise";
+
+VECTOR[ max_attribute ]ATTRIBUTE default_attributes;
+
+PROC initialise_mm_basics = (STRUCT( REF VECTOR[ ]CHAR operating_system,
+                                                       star_chars,
+                                                       edit_command,
+                                                       exe_dir,
+                                                       heap_size,
+                                     BOOL case_sensitive
+                                    ) os )REF VECTOR[ ]CHAR:
+BEGIN
+    operating_system := operating_system OF os;
+    std_star_chars := star_chars OF os;
+    std_edit_command := edit_command OF os;
+    std_exe_dir := exe_dir OF os;
+    std_heap_size := heap_size OF os;
+    case_sensitive := case_sensitive OF os;
+    initialise_std_symbols;
+    default_attributes :=
+       ( ( compile_txt, off_string, off_string, default_off,
+           FALSE, 16r1 ),
+         ( link_txt, off_string, off_string, default_off,
+           FALSE, 16r4 ),
+         ( debug_txt, on_string, on_string, default_debug,
+           FALSE, 16r10 ),
+         ( star_txt, std_star_chars, std_star_chars, default_star_chars,
+           TRUE, 16r40 ),
+         ( heap_size_txt, std_heap_size, std_heap_size, default_heap_size,
+           FALSE, 16r100 ),
+         ( exename_txt, std_exe_dir, std_exe_dir, default_exe_dir,
+           FALSE, 16r400 ),
+         ( version_txt, off_string, off_string, default_off,
+           TRUE, 16r10000 ),
+         ( optimise_txt, off_string, off_string, default_optimise_chars,
+           TRUE, 16r40000 ));
+    operating_system
+END;
+
+PROC attribute_name = (INT attribute_number )VECTOR[ ]CHAR:
+BEGIN
+    name OF default_attributes[ attribute_number ]
+END;
+
+PROC attribute_value = (REF MODULE m, INT attribute_number )REF VECTOR[ ]CHAR:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+
+     IF ( state OF m AND marker OF attr ) /= 2r0 THEN
+         value OF attr
+   ELSE
+         text OF default OF attr
+     FI
+END;
+
+PROC attribute_state = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR value = attribute_value( m, attribute_number );
+
+    ( value = on_string ) OREL ( value = true_string )
+END;
+
+PROC set_attribute = (REF MODULE m,
+                      INT attribute_number,
+                      UNION( REF VECTOR[ ]CHAR, BOOL ) value )VOID:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+REF VECTOR[ ]CHAR new_value =
+    CASE value IN
+    (REF VECTOR[ ]CHAR str ) str,
+    (BOOL on ) IF on THEN on_string ELSE off_string FI
+    OUT
+        SKIP
+    ESAC;
+
+    state OF m := state OF m OR marker OF attr;
+    value OF attr := new_value
+END;
+
+PROC clear_attribute = (REF MODULE m, INT attribute_number )VOID:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+
+    state OF m := state OF m AND NOT marker OF attr;
+    value OF attr := text OF default OF attr
+END;
+
+PROC permanent_attribute = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+ATTRIBUTE attr = IF m IS nilmodule THEN
+                     default_attributes[ attribute_number ]
+               ELSE
+                     ( attributes OF m )[ attribute_number ]
+                 FI;
+
+    permanent OF attr
+END;
+
+PROC attribute_marked = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+
+    ( state OF m AND marker OF attr ) /= 2r0
+END;
+
+PROC initialise_attribute = (REF MODULE m,
+                             INT attribute_number,
+                             VECTOR[ ]CHAR value )VOID:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+BITS mark_init = marker OF attr SHL 1;
+BOOL notstd := TRUE;
+
+    state OF m := state OF m OR marker OF attr OR mark_init;
+    FORALL str IN std_sym_values
+    WHILE notstd
+    DO  IF value = str THEN
+            value OF attr := str;
+            notstd := FALSE
+        FI
+    OD;
+    IF notstd THEN value OF attr := MAKERVC value FI;
+    initvalue OF attr := value OF attr
+END;
+
+PROC fetch_attribute = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+BITS mark_init = marker OF attr SHL 1;
+
+    IF ( state OF m AND marker OF attr ) /= 2r0 THEN
+        initvalue OF attr := value OF attr;
+        state OF m := state OF m OR mark_init;
+        TRUE
+  ELSE
+        state OF m := state OF m AND NOT mark_init;
+        FALSE
+    FI
+END;
+
+PROC attribute_changed = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+REF ATTRIBUTE attr = ( attributes OF m )[ attribute_number ];
+BITS mask = marker OF attr OR ( marker OF attr SHL 1 );
+BITS mark = ( state OF m AND mask );
+
+    mark /= 16r0 ANDTH ( mark /= mask OREL
+                         value OF attr /= initvalue OF attr )
+END;
+
+PROC set_lowercase = (REF VECTOR[ ]CHAR str )VOID:
+BEGIN
+BOOL in_quotes := FALSE;
+
+    FORALL c IN str
+    DO
+        IF NOT in_quotes ANDTH c >= "A" ANDTH c <= "Z" THEN
+            c := REPR( ABS c + lcbias )
+        FI;
+        IF c = """" THEN in_quotes := NOT in_quotes FI
+    OD
+END;
+
+BOOL query_active := TRUE;
+PROC can_query = BOOL: query_active ANDTH interactive;
+
+INT default_yes = 1,
+    default_no  = 2,
+    no_default  = 3;
+PROC query = (VECTOR[ ]CHAR question, INT default, MESSAGEPROC msg )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR qn = oneline(( question,
+                                 IF default = default_no  THEN " [n] ? "
+                               ELIF default = default_yes THEN " [y] ? "
+                                                          ELSE " ? "
+                                 FI ));
+REF VECTOR[ ]CHAR reply;
+BOOL result := FALSE;
+CHAR fc;
+
+    IF can_query THEN
+        WHILE
+            reply := prompt( qn );
+            set_lowercase( reply );
+            IF UPB reply = 0 THEN
+                result := ( default = default_yes );
+                ( default = no_default )
+          ELIF ( fc := reply[ 1 ] ) = "y" THEN
+                result := TRUE;
+                FALSE
+          ELIF fc = "n" THEN
+                result := FALSE
+          ELSE
+                TRUE
+            FI
+        DO
+            put( screen, ( "Please answer yes or no", newline ))
+        OD
+  ELIF default = no_default THEN
+        global_msg( fatal, "Query called non-interactively with no default." )
+  ELSE
+        result := ( default = default_yes )
+    FI;
+    result
+END;
+
+PROC is_in_string = (CHAR required, VECTOR[ ]CHAR str )BOOL:
+BEGIN
+BOOL found := FALSE;
+
+    FORALL c IN str WHILE NOT found DO found := ( c = required ) OD;
+    found
+END;
+
+PROC not_found = (VECTOR[ ]CHAR heading, name )REF VECTOR[ ]CHAR:
+BEGIN
+    oneline(( heading, " ", name, " not found." ))
+END;
+
+PROC mnot_found = (VECTOR[ ]CHAR name )REF VECTOR[ ]CHAR:
+BEGIN
+    not_found( "Module", name )
+END;
+
+PROC fnot_found = (VECTOR[ ]CHAR name )REF VECTOR[ ]CHAR:
+BEGIN
+    not_found( "File", name )
+END;
+
+PROC check_star = (STAR s, VECTOR[ ]CHAR stars )BOOL:
+    mode OF s = " " OREL
+    ( mode OF s = "*" ANDTH is_in_string( value OF s, stars )) OREL
+    ( mode OF s = "%" ANDTH NOT is_in_string( value OF s, stars ));
+
+PROC shortname = (FILENAME fn )REF VECTOR[ ]CHAR:
+    IF type OF fn = "." THEN
+        MAKERVC name OF fn
+  ELSE
+        oneline(( name OF fn, type OF fn ))
+    FI;
+
+PROC fullname = (FILENAME fn )REF VECTOR[ ]CHAR:
+    IF type OF fn = "." THEN
+        oneline(( directory OF fn, name OF fn ))
+  ELSE
+        oneline(( directory OF fn, name OF fn, type OF fn ))
+    FI;
+
+PROC scanmodules = ( REF MODULELIST list,
+                     PROC( REF MODULE, STAR ) BOOL action )REF MODULELIST:
+BEGIN
+REF MODULELIST l := list;
+
+    WHILE ( l ISNT nilmodulelist ) ANDTH
+          action( module OF l, star OF l ) DO l := rest OF l OD;
+    l
+END;
+
+PROC mark_modules = (REF MODULELIST list, INT state )VOID:
+BEGIN
+    PROC action = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        marker OF m := state;
+        TRUE
+    END;
+
+    scanmodules( list, action )
+END;
+
+PROC findmodule = (REF MODULELIST list, VECTOR[ ]CHAR name )REF MODULELIST:
+BEGIN
+    scanmodules( list, (REF MODULE m, STAR s ) BOOL: name /= name OF m )
+END;
+
+PROC add_module = (REF REF MODULELIST head,
+                   REF MODULE m,
+                   STAR s )REF MODULELIST:
+BEGIN
+REF REF MODULELIST ml := head;
+
+    WHILE ml ISNT nilmodulelist DO ml := rest OF ml OD;
+    REF REF MODULELIST( ml ) := HEAP MODULELIST := ( m, s, ml )
+END;
+
+INT save_none = 0,
+    save_environ = 1,
+    save_modules = 2;
+INT save_all = save_environ + save_modules;
+PROC database_modified = INT:
+BEGIN
+BOOL detach_changed = ( detach_name /= init_detach_name );
+BOOL env_changed := attribute_modified OREL
+                    detach_changed OREL
+                    symbols_changed( mmd_tag ),
+     mod_changed := detach_changed OREL symbols_changed( aux_tag );
+INT m_count := 0;
+
+    PROC action = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        m_count PLUSAB 1;
+        mod_changed := mod_changed OREL analysed OF m;
+        FOR an TO max_attribute WHILE NOT env_changed
+        DO
+            env_changed := attribute_changed( m, an )
+        OD;
+        NOT( mod_changed ANDTH env_changed )
+    END;
+
+    scanmodules( modules, action );
+    mod_changed := mod_changed OREL ( m_count /= init_module_count );
+
+    IF mod_changed ANDTH
+       env_changed THEN save_all
+  ELIF mod_changed THEN save_modules
+  ELIF env_changed THEN save_environ
+                   ELSE save_none
+    FI
+END;
+
+PROC file_exists = ( VECTOR[ ]CHAR name, MESSAGEPROC msg )BOOL:
+BEGIN
+BOOL found := FALSE;
+
+    PROC trap = (MSGNO n, VECTOR[ ]VECTOR[ ]CHAR p )VOID:
+    BEGIN
+        GOTO nofile
+    END;
+
+FILE f = open_file( name, read_access, trap );
+
+    found := TRUE;
+    close_file( f, trap );
+nofile:
+    found
+END;
+
+PROC set_modulenumbers = INT:
+BEGIN
+INT module_number := 0;
+
+    PROC cnt_module = (REF MODULE module, STAR star_char )BOOL:
+       ( number OF module := module_number PLUSAB 1; TRUE );
+
+    scanmodules( modules, cnt_module );
+    module_number
+END;
+
+INT      by_number = 1,
+          by_level = 2,
+    alphabetically = 3;
+PROC order_modules = (REF MODULELIST list, INT mode )REF MODULELIST:
+BEGIN
+REF MODULELIST new := nilmodulelist,
+                ll := list,
+                next;
+REF REF MODULELIST tail;
+
+    WHILE ( ll ISNT nilmodulelist )
+    DO
+        tail := new;
+        next := rest OF ll;
+        WHILE ( tail ISNT nilmodulelist ) ANDTH
+              CASE mode IN number OF module OF ll > number OF module OF tail,
+                            level OF module OF ll > level OF module OF tail,
+                             name OF module OF ll > name OF module OF tail
+              OUT
+                                                FALSE
+              ESAC
+        DO
+            tail := rest OF tail
+        OD;
+        rest OF ll := tail;
+        REF REF MODULELIST( tail ) := ll;
+        ll := next
+    OD;
+    new
+END;
+
+PROC set_levels = (VECTOR[ ]CHAR stars, MESSAGEPROC msg )VOID:
+BEGIN
+BOOL has_recursion := FALSE;
+INT d_cnt := 0, p_cnt := 0;
+
+    PROC do_setlevels = ( REF MODULELIST list, INT level )VOID:
+    BEGIN
+        PROC set_action = (REF MODULE module, STAR st )BOOL:
+        BEGIN
+            IF NOT check_star( st, stars ) THEN
+                SKIP
+          ELIF marker OF module /= 0 THEN
+                IF NOT recursive OF module THEN
+                    put( screen, ( "Warning:- module ", name OF module,
+                                   " is used recursively?", newline ));
+                    has_recursion := recursive OF module := TRUE
+                FI
+          ELIF level OF module < level THEN
+                IF level OF module = 0 THEN
+                    IF decs OF module THEN d_cnt ELSE p_cnt FI PLUSAB 1
+                FI;
+                max_level := max_level MAX level;
+                level OF module := level;
+                marker OF module := 1;
+                do_setlevels( usedby OF module, level + 1 );
+                marker OF module := 0
+            FI;
+            TRUE
+        END;
+
+        scanmodules( list, set_action )
+    END;
+
+    PROC clear_levels = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        marker OF m := level OF m := 0;
+        TRUE
+    END;
+
+    IF modules ISNT nilmodulelist THEN
+        max_level := 0;
+        scanmodules( modules, clear_levels );
+        do_setlevels( modules, 1 );
+
+        IF has_recursion THEN msg( fatal, "Recursive modules present." ) FI;
+
+        put( screen, ( "Number of decs modules    = ", d_cnt, newline,
+                       "Number of program modules = ", p_cnt, newline,
+                       "Maximum level             = ", max_level, newline ));
+
+        modules := order_modules( modules, by_level )
+  ELSE
+        put( screen, ( "There are no modules in the database.", newline ))
+    FI
+END;
+
+PROC read_database_file = (VECTOR[ ]CHAR filename,
+                                         mode_chars,
+                           BITS src_tag,
+                           MESSAGEPROC msg )VOID:
+BEGIN
+REF MODULE current_module := nilmodule;
+BOOL have_signature := FALSE;
+FILE dbfile = open_file( filename, read_access, msg );
+VECTOR[ bufmax ]CHAR buffer;
+INT buftop := 0, cpos := 0;
+BOOL continue := TRUE;
+
+    PROC next_char = CHAR:
+    BEGIN
+        WHILE continue ANDTH cpos >= buftop
+        DO
+            continue :=
+                       NOT( read_line( dbfile, buffer, buftop, msg ) = io_eof );
+            cpos := 0;
+            IF NOT continue THEN buftop := 0 FI;
+            buffer[ buftop PLUSAB 1 ] := lf
+        OD;
+        IF continue THEN buffer[ cpos PLUSAB 1 ] ELSE eof FI
+    END;
+
+INT text_mode = 0,
+    string_mode = 1,
+    name_mode = 2,
+    number_mode = 3;
+
+    PROC next_item = (INT mode )VECTOR[ ]CHAR:
+    BEGIN
+    CHAR c;
+
+        WHILE c:= next_char; c = " " OREL c = lf DO SKIP OD;
+        IF continue THEN
+        INT start = cpos;
+
+            WHILE
+                c := next_char;
+                c /= lf ANDTH
+                CASE mode IN c /= " ",
+                             ( ( c >= "A" ANDTH c <= "Z" ) OREL
+                               ( c >= "a" ANDTH c <= "z" ) OREL
+                               ( c >= "0" ANDTH c <= "9" ) OREL
+                               c = "_" ),
+                             c >= "0" ANDTH c <= "9"
+                          OUT TRUE
+                ESAC
+            DO SKIP OD;
+
+        INT end = cpos - 1;
+
+            IF c /= " " ANDTH c /= lf THEN cpos MINUSAB 1 FI;
+            buffer[ start : end ]
+      ELSE
+            blankname
+        FI
+    END;
+
+    PROC read_star = STAR:
+    BEGIN
+    CHAR mode;
+
+        WHILE mode := next_char; mode = " " DO SKIP OD;
+        IF mode = "*" OREL mode = "%" THEN
+            ( mode, next_char )
+      ELSE
+            cpos MINUSAB 1;
+            blank_star
+        FI
+    END;
+
+    PROC external_database = (VECTOR[ ]CHAR sort,
+                                            def_type,
+                              BITS tag )REF VECTOR[ ]CHAR:
+    BEGIN
+    REF VECTOR[ ]CHAR dbfile_name;
+
+        dbfile_name := MAKERVC next_item( string_mode );
+        IF NOT case_sensitive THEN set_lowercase( dbfile_name ) FI;
+
+    FILENAME fn = parse_filename( dbfile_name, def_type, msg );
+
+        IF file_exists( filename OF fn, msg ) THEN
+            read_database_file( filename OF fn, sort, tag, msg )
+      ELSE
+            msg( fatal, oneline(( sort, " file ", dbfile_name, def_type,
+                                  " not found." )) )
+        FI;
+        dbfile_name
+    END;
+
+    PROC read_database_line = VOID:
+    BEGIN
+    CHAR c;
+
+        PROC check_module = (REF REF MODULELIST head,
+                             VECTOR[ ]CHAR name )REF MODULELIST:
+        BEGIN
+        STAR star = read_star;
+        REF MODULELIST ml := findmodule( modules, name );
+        REF MODULE mu;
+
+            IF ml IS nilmodulelist THEN
+                mu := HEAP MODULE :=
+                 ( MAKERVC name, blankname, TRUE, FALSE, FALSE, std_state,
+                   HEAP VECTOR[ max_attribute ]ATTRIBUTE :=
+                                                        default_attributes,
+                   0, 0, 0, nilmodulelist, nilmodulelist );
+                add_module( modules, mu, blank_star )
+          ELSE
+                mu := module OF ml
+            FI;
+            add_module( head, mu, star )
+        END;
+
+    VECTOR[ ]CHAR word = next_item( name_mode );
+
+        IF word = "Version" THEN
+            have_signature := ( signature = next_item( string_mode ))
+      ELIF UPB word = 0 THEN
+            SKIP
+      ELIF NOT have_signature THEN
+            msg( fatal, "Database is out of date." )
+      ELIF word = "Stop" THEN
+            msg( fatal, next_item( text_mode ))
+      ELIF word = "Decs" OREL word = "Prog" THEN
+        BOOL decs_type = ( word = "Decs" );
+        VECTOR[ ]CHAR name = next_item( name_mode );
+        BOOL nerr;
+        INT level = charstoint( next_item( number_mode ), nerr );
+
+            WHILE ( c := next_char ) = " " DO SKIP OD;
+
+        REF VECTOR[ ]CHAR filename := blankname;
+        STAR star := blank_star;
+
+            IF c /= "?" THEN
+                cpos MINUSAB 1;
+                filename := MAKERVC next_item( string_mode );
+                star := read_star
+            FI;
+
+        REF MODULELIST ml = findmodule( modules, name );
+
+            IF NOT case_sensitive THEN set_lowercase( filename ) FI;
+            max_level := max_level MAX level;
+            max_module_name_size := max_module_name_size MAX UPB name;
+            IF ml IS nilmodulelist THEN
+                current_module := HEAP MODULE :=
+                 ( MAKERVC name, filename, decs_type, FALSE, FALSE,
+                   std_state,
+                   HEAP VECTOR[ max_attribute ]ATTRIBUTE :=
+                                                        default_attributes,
+                   level, 0, 0, nilmodulelist, nilmodulelist );
+                add_module( modules, current_module, star )
+          ELSE
+                current_module := module OF ml;
+                filename OF current_module := filename;
+                decs OF current_module := decs_type;
+                level OF current_module := level;
+                star OF ml := star
+            FI
+
+      ELIF word = "Uses" THEN
+        REF REF MODULELIST uses := uses OF current_module;
+
+            WHILE
+                uses := rest OF check_module( uses, next_item( name_mode ) );
+                next_char = ","
+            DO
+                SKIP
+            OD
+
+      ELIF word = "Attribute" THEN
+        VECTOR[ ]CHAR mname = next_item( name_mode );
+        VECTOR[ ]CHAR state_chars = next_item( string_mode );
+        INT state_top = UPB state_chars;
+        INT state_char_pos := 0;
+        REF MODULELIST mml = findmodule( modules, mname );
+
+            IF mml IS nilmodulelist THEN
+                attribute_modified := TRUE;
+                put( screen, ( "Attribute: module ", mname,
+                               " no longer in database.", newline ))
+            FI;
+            FOR an TO max_attribute
+            DO
+                IF ( state_char_pos PLUSAB 1 ) <= state_top ANDTH
+                   ( state_chars[ state_char_pos ] = "+" )  THEN
+                    IF mml ISNT nilmodulelist THEN
+                        initialise_attribute( module OF mml, an,
+                                              next_item( string_mode ))
+                  ELSE
+                        next_item( string_mode )
+                    FI
+                FI
+            OD
+
+      ELIF word = "Initialise" THEN
+        VECTOR[ 10 ]CHAR symname;
+
+           symname[ :9 ] := "Initfile ";
+           symname[ 10 ] := REPR(( init_file_count PLUSAB 1 ) + ABS "0" );
+           define_symbol( symname,
+                          external_database( "Initialise", mmd_type, init_tag ),
+                          local_tag )
+
+      ELIF word = "Detach" THEN
+            detach_name := external_database( "Detached", aux_type, aux_tag )
+
+      ELIF word = "Define" THEN
+        VECTOR[ ]CHAR name = next_item( string_mode );
+        REF SYMBOL sym = define_symbol( name, blankname, src_tag );
+
+            PROC addtxt = (VECTOR[ ]CHAR txt )VOID:
+            BEGIN
+            INT top := UPB txt;
+            BOOL more = ( top > 0 ) ANDTH txt[ top ] = "~";
+
+                IF more THEN top MINUSAB 1 FI;
+                IF top > 2 THEN
+                    text OF sym := oneline(( text OF sym, txt[ 2 : top - 1 ] ))
+                FI;
+                IF more THEN addtxt( next_item( text_mode )) FI
+            END;
+
+            IF sym IS nilsymbol THEN
+                msg( fatal, oneline(( "Symbol ", name,
+                                      " is local and cannot be re-defined." )) )
+          ELSE
+                addtxt( "~" )
+            FI;
+            mark_action_symbol( sym )
+      ELIF word = "Diag" THEN
+            diagnose := TRUE
+      ELSE
+            msg( fatal,
+                 oneline(( "Error in database: ", word, " not recognised." )) )
+        FI
+    END;
+
+    put( screen, ( mode_chars, " database file ", file_name( dbfile ),
+                   newline ));
+    WHILE continue DO  read_database_line  OD;
+    close_file( dbfile, msg )
+END;
+
+PROC set_usedby_lists = (REF MODULELIST list )VOID:
+BEGIN
+    PROC module_action = (REF MODULE mm, STAR ss )BOOL:
+    BEGIN
+
+        PROC set_usedby_action = (REF MODULE m, STAR s )BOOL:
+        BEGIN
+            usedby OF m := HEAP MODULELIST := ( mm, s, usedby OF m );
+            TRUE
+        END;
+
+        scanmodules( uses OF mm, set_usedby_action );
+        TRUE
+    END;
+
+    scanmodules( list, module_action )
+END;
+
+PROC clear_usedby_lists = (REF MODULELIST list )VOID:
+BEGIN
+    PROC remove_old_usedby = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        usedby OF m := nilmodulelist;
+        TRUE
+    END;
+
+    scanmodules( list, remove_old_usedby )
+END;
+
+
+PROC read_database = (VECTOR[ ]CHAR dbname,
+                                    mode_chars,
+                      BITS tag,
+                      MESSAGEPROC msg )BOOL:
+BEGIN
+FILENAME fn = parse_filename( dbname, mmd_type, msg );
+
+    IF file_exists( filename OF fn, msg ) THEN
+        read_database_file( filename OF fn, mode_chars, tag, msg );
+        init_detach_name := detach_name;
+        symbols_modified := 2r0;
+        set_usedby_lists( modules );
+        set_levels( text OF default_star_chars, msg );
+        init_module_count := set_modulenumbers;
+        TRUE
+  ELSE
+        FALSE
+    FI
+END;
+
+PROC create_database = (VECTOR[ ]CHAR dbname,
+                        MESSAGEPROC msg )VOID:
+BEGIN
+FILENAME fn = parse_filename( dbname, mmd_type, msg );
+FILE dbfile = open_file( filename OF fn, write_access, msg );
+
+    put( screen, ( "Create database file ", filename OF fn, newline ));
+    write_buffer( dbfile,
+                  oneline(( "Version ", signature, newline_char )), msg );
+    IF read_database( init_file_name, "Initialise", init_tag, msg ) THEN
+        write_buffer( dbfile, oneline(( "Initialise ", init_file_name,
+                                        newline_char )), msg )
+    FI;
+    close_file( dbfile, msg )
+END;
+
+PROC save_moduledata = (REF CHANNEL db_chan, REF MODULELIST list )VOID:
+BEGIN
+CHAR sep := " ";
+INT module_count := 0;
+
+    PROC put_list = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+    INT top = UPB name OF m;
+    INT extra = IF mode OF s = " " THEN 1 ELSE 4 FI;
+
+        put( db_chan, sep );
+        IF top + extra > charsleft( db_chan ) THEN
+            put( db_chan, ( newline, "     " ))
+        FI;
+        sep := ",";
+        put( db_chan, name OF m );
+        IF mode OF s /= " " THEN put( db_chan, ( mode OF s, value OF s )) FI;
+        TRUE
+    END;
+
+    PROC put_module = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        module_count PLUSAB 1;
+        put( db_chan, ( IF decs OF m THEN "Decs " ELSE "Prog " FI,
+                        name OF m, " ", level OF m, " " ));
+        IF UPB filename OF m > 0 THEN
+            put( db_chan, ( filename OF m, " " ));
+            IF mode OF s /= " " THEN
+                put( db_chan, ( mode OF s, value OF s, " " ))
+            FI
+      ELSE
+            put( db_chan, "?" )
+        FI;
+        put( db_chan, newline );
+
+        IF uses OF m ISNT nilmodulelist THEN
+            sep := " ";
+            put( db_chan, "Uses" );
+            scanmodules( uses OF m, put_list );
+            put( db_chan, ( ".", newline ))
+        FI;
+        TRUE
+    END;
+
+    module_count := 0;
+    scanmodules( list, put_module );
+    init_module_count := module_count
+END;
+
+PROC write_symbols = (REF CHANNEL db_chan, BITS dst_tag )VOID:
+BEGIN
+REF SYMBOL sym := symbols;
+INT cleft, top, pos;
+REF VECTOR[ ]CHAR text;
+
+    WHILE sym ISNT nilsymbol
+    DO
+        IF ( tags OF sym AND dst_tag ) /= 2r0 THEN
+            put( db_chan, ( "Define ", name OF sym, " """ ));
+            text := text OF sym;
+            top := UPB text;
+            pos := 0;
+            WHILE pos < top
+            DO
+                cleft := charsleft( db_chan ) - 2;
+                IF top - pos > cleft THEN
+                    put( db_chan, ( text[ pos + 1 : pos + cleft ], """~",
+                                    newline, """" ));
+                    pos PLUSAB cleft
+              ELSE
+                    put( db_chan, ( text[ pos + 1 : ], """", newline ));
+                    pos := top
+                FI
+            OD
+        FI;
+        sym := rest OF sym
+    OD
+END;
+
+PROC save_database = (VECTOR[ ]CHAR dbname,
+                                    dtname,
+                      INT save_mode,
+                      MESSAGEPROC msg )VOID:
+BEGIN
+INT mode = IF save_mode /= 0 ANDTH UPB dtname = 0 THEN save_all
+                                                  ELSE save_mode
+           FI;
+VECTOR[ ]CHAR dbtype = IF diagnose THEN ".tmp" ELSE mmd_type FI;
+FILE database;
+VECTOR[ bsize ]CHAR db_buffer;
+
+    PROC db_line = (VECTOR[ ]CHAR line )VOID:
+                                        write_buffer( database, line, msg );
+
+REF CHANNEL db_chan = make_channel( db_buffer, db_line );
+
+    PROC put_attributes = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+    REF VECTOR[ ]CHAR att_val;
+    VECTOR[ max_attribute ]INT attribute_map;
+    VECTOR[ max_attribute ]CHAR attr_string;
+    INT map_ptr := 0;
+
+        FOR an TO max_attribute
+        DO
+            IF fetch_attribute( m, an ) THEN
+                attribute_map[ map_ptr PLUSAB 1 ] := an;
+                attr_string[ an ] := "+"
+          ELSE
+                attr_string[ an ] := "-"
+            FI
+        OD;
+
+        IF map_ptr > 0 THEN
+            put( db_chan, ( "Attribute ", name OF m, " ", attr_string ));
+            FOR ptr TO map_ptr
+            DO
+                att_val := attribute_value( m, attribute_map[ ptr ] );
+                IF UPB att_val + 1 > charsleft( db_chan ) THEN
+                    put( db_chan, newline )
+                FI;
+                put( db_chan, ( " ", att_val ))
+            OD;
+            put( db_chan, newline )
+        FI;
+        TRUE
+    END;
+
+    IF ODD mode THEN
+    FILENAME dbfn = parse_filename( dbname, dbtype, msg );
+
+        PROC write_init = (REF SYMBOL sym )BOOL:
+        BEGIN
+            put( db_chan, ( "Initialise ", text OF sym, newline ));
+            tags OF sym := ( tags OF sym AND dest_mask ) OR local_tag;
+            TRUE
+        END;
+
+        database := open_file( filename OF dbfn, write_access, msg );
+        put( screen, ( "Writing database file ", filename OF dbfn, newline ));
+        put( db_chan, ( "Version ", signature, newline ));
+        scansymbols( "Initfile", write_init );
+        attribute_modified := FALSE;
+        symbols_modified := 2r0;
+        write_symbols( db_chan, mmd_tag )
+    FI;
+
+    IF mode >= 2 THEN
+        IF UPB dtname = 0 THEN
+            write_symbols( db_chan, aux_tag );
+            save_moduledata( db_chan, modules )
+      ELSE
+        VECTOR[ ]CHAR auxdbtype = IF diagnose THEN ".tmx" ELSE aux_type FI;
+        FILENAME axfn = parse_filename( dtname, auxdbtype, msg );
+        FILE auxfile := open_file( filename OF axfn, write_access, msg );
+        VECTOR[ bsize ]CHAR aux_buffer;
+
+            PROC aux_line = (VECTOR[ ]CHAR line )VOID:
+                                            write_buffer( auxfile, line, msg );
+
+        REF CHANNEL aux_chan = make_channel( aux_buffer, aux_line );
+
+            put( screen, ( "Saving detached modules in file ",
+                           filename OF axfn, newline ));
+            put( aux_chan, ( "Version ", signature, newline ));
+            write_symbols( db_chan, aux_tag );
+            save_moduledata( aux_chan, modules );
+            close_file( auxfile, msg );
+            need_to_tidy := TRUE
+        FI
+    FI;
+
+    IF ODD mode THEN
+        IF UPB dtname > 0 THEN
+            put( db_chan, ( "Detach ", dtname, newline ))
+        FI;
+
+        scanmodules( modules, put_attributes );
+        close_file( database, msg );
+        need_to_tidy := TRUE
+    FI
+END;
+
+INT unknown_tok = 0,
+    name_tok = 1,
+    program_tok = 2,
+    decs_tok = 3,
+    use_tok = 4,
+    begin_tok = 5,
+    context_tok = 6,
+    void_tok = 7,
+    comma_tok = 8,
+    colon_tok = 9;
+VECTOR[ ]RESERVED reserved_words = (( "PROGRAM", program_tok ),
+                                    ( "DECS", decs_tok ),
+                                    ( "USE", use_tok ),
+                                    ( "BEGIN", begin_tok ),
+                                    ( "CONTEXT", context_tok ),
+                                    ( "VOID", void_tok ));
+
+PROC read_module = (REF VECTOR[ ]CHAR fname, MESSAGEPROC msg )BOOL:
+BEGIN
+FILE mf = open_file( fname, read_access, msg );
+VECTOR[ bufmax ]CHAR buffer;
+INT buftop := 0, cpos := 0;
+
+FILENAME fn = parse_filename( fname, "", msg );
+REF VECTOR[ ]CHAR filename = shortname( fn );
+STAR star_char := blank_star;
+REF MODULELIST local_modules := nilmodulelist;
+BOOL errors := FALSE;
+
+    PROC failed = (VECTOR[ ]CHAR text )VOID:
+    BEGIN
+        errors := TRUE;
+        put( screen, ( newline, "Read module:- ", text, newline ))
+    END;
+
+    PROC nextline = VOID:
+    BEGIN
+    IOSTATUS rr;
+
+        WHILE rr := read_line( mf, buffer, buftop, msg );
+              NOT( rr = io_eof ) ANDTH buftop = 0 DO SKIP OD;
+        IF rr = io_eof THEN
+            failed( "End of file" );
+            GOTO end_of_file
+        FI;
+        cpos := 0;
+        buffer[ buftop PLUSAB 1 ] := " ";
+        IF buftop >= 3 THEN
+        CHAR fc = buffer[ 1 ];
+
+            star_char := IF fc = "*" OREL fc = "%" THEN
+                             ( fc, buffer[ cpos := 2 ] )
+                       ELSE
+                             blank_star
+                         FI
+        FI
+    END;
+
+    PROC nextchar = CHAR:
+    BEGIN
+        IF cpos < buftop THEN
+        CHAR c := buffer[ cpos PLUSAB 1 ];
+
+            IF c = "{" THEN
+                WHILE nextchar /= "}" DO SKIP OD;
+                c := nextchar
+            FI;
+            IF c = tab THEN " " ELSE c FI
+      ELSE
+            nextline;
+            nextchar
+        FI
+    END;
+
+    PROC get_basic = BASIC:
+    BEGIN
+    CHAR c := " ";
+    VECTOR[ bsize ]CHAR tmpstr;
+    INT tpos := 0;
+
+        WHILE c := nextchar; c = " " DO SKIP OD;
+        IF c >= "a" ANDTH c <= "z" THEN
+            WHILE IF c /= " " THEN tmpstr[ tpos PLUSAB 1 ] := c FI;
+                  c := nextchar;
+                  ( c >= "a" ANDTH c <= "z" ) OREL
+                  ( c >= "0" ANDTH c <= "9" ) OREL
+                  c = "_" OREL c = " "
+            DO SKIP OD;
+            cpos MINUSAB 1;
+            ( name_tok, MAKERVC tmpstr[ : tpos ], star_char )
+
+      ELIF c >= "A" ANDTH c <= "Z" THEN
+        INT token := unknown_tok;
+
+            WHILE tmpstr[ tpos PLUSAB 1 ] := c;
+                  c := nextchar;
+                  c >= "A" ANDTH c <= "Z"
+            DO SKIP OD;
+            cpos MINUSAB 1;
+
+        VECTOR[ ]CHAR word = tmpstr[ : tpos ];
+
+            FORALL rw IN reserved_words WHILE token = unknown_tok
+            DO
+                IF word OF rw = word THEN token := token OF rw FI
+            OD;
+            ( token, blankname, star_char )
+      ELIF c = "," THEN
+            ( comma_tok, blankname, star_char )
+      ELIF c = ":" THEN
+            ( colon_tok, blankname, star_char )
+      ELSE
+            ( unknown_tok, blankname, star_char )
+        FI
+    END;
+
+    PROC install_use_list = (REF MODULELIST ml,
+                             REF REF MODULELIST uses )VOID:
+    BEGIN
+        IF ml ISNT nilmodulelist THEN
+        REF MODULE mm = module OF ml;
+        STAR star = star OF ml;
+        REF MODULELIST new := nilmodulelist;
+        REF REF MODULELIST ll := uses,
+                           tail := new;
+        BOOL make_new_list = ( rest OF ml ISNT nilmodulelist );
+
+            WHILE ll ISNT nilmodulelist
+            DO
+                IF star INCLUDES star OF ll THEN
+                    IF make_new_list THEN
+                        REF REF MODULELIST( tail ) := HEAP MODULELIST :=
+                                ( module OF ll, star OF ll, tail );
+                        tail := rest OF tail
+                    FI;
+                    ll := rest OF ll
+              ELIF make_new_list THEN
+                    ll := rest OF ll
+              ELSE
+                    REF REF MODULELIST( ll ) := rest OF ll
+                FI
+            OD;
+            uses OF mm := IF make_new_list THEN new ELSE uses FI;
+            install_use_list( rest OF ml, uses )
+        FI
+    END;
+
+    PROC read_uselist = (STAR fs )VOID:
+    BEGIN
+    REF MODULELIST uses := nilmodulelist;
+    REF VECTOR[ ]CHAR mname;
+    REF MODULE mu;
+    REF MODULELIST mue, mm;
+    STAR ls := fs;
+    BASIC b, sep := ( comma_tok, blankname, fs );
+
+        WHILE
+            b := get_basic;
+            IF token OF sep = comma_tok THEN
+                IF token OF b /= name_tok THEN
+                    failed( "Used module name expected" )
+                FI;
+                TRUE
+          ELIF mode OF star OF sep = " " OREL token OF b /= name_tok THEN
+                FALSE
+          ELSE
+                TRUE
+            FI
+        DO
+            ls := star OF b;
+            mname := value OF b;
+            mue := findmodule( modules, mname );
+            IF mue IS nilmodulelist THEN
+                max_module_name_size := max_module_name_size MAX UPB mname;
+                mu := HEAP MODULE :=
+                 ( mname, blankname, TRUE, FALSE, FALSE, std_state,
+                   HEAP VECTOR[ max_attribute ]ATTRIBUTE := default_attributes,
+                   0, 0, 1, nilmodulelist, nilmodulelist );
+                add_module( modules, mu, ls );
+                mm := nilmodulelist
+          ELSE
+                mm := findmodule( uses, mname );
+                mu := module OF mue;
+                IF marker OF mu = 0 THEN marker OF mu := 1 FI
+            FI;
+            IF mm IS nilmodulelist THEN
+                add_module( uses, mu, ls )
+          ELIF value OF ls /= value OF star OF mm THEN
+                failed( "Conflict of stars in use list" )
+          ELIF mode OF ls /= mode OF star OF mm THEN
+                star OF mm := blank_star
+            FI;
+            sep := get_basic
+        OD;
+
+        install_use_list( local_modules, uses )
+    END;
+
+    PROC check_star_clash = (BASIC basic, REF MODULELIST ml )BOOL:
+    BEGIN
+        IF value OF star OF basic /= value OF star OF ml THEN
+            failed( "Conflict of stars for module name" );
+            FALSE
+      ELIF mode OF star OF basic /= mode OF star OF ml THEN
+            star OF ml := blank_star;
+            TRUE
+      ELSE
+            TRUE
+        FI
+    END;
+
+    PROC make_module = (BASIC basic, BOOL decs )BOOL:
+    BEGIN
+    REF VECTOR[ ]CHAR name = value OF basic;
+    REF MODULELIST ml = findmodule( modules, name ),
+               locmod = findmodule( local_modules, name );
+    REF MODULE module := nilmodule;
+
+        PROC update_module = (REF MODULE m )VOID:
+        BEGIN
+            module := m;
+            uses OF module := nilmodulelist;
+            filename OF module := filename;
+            star OF ml := star OF basic;
+            marker OF module := 2;
+            analysed OF module := TRUE;
+            add_module( local_modules, module, star OF basic )
+        END;
+
+        IF locmod ISNT nilmodulelist THEN
+            IF value OF star OF basic /= value OF star OF locmod THEN
+                failed( "Conflict of stars for module name" );
+                FALSE
+          ELIF mode OF star OF basic /= mode OF star OF locmod THEN
+                star OF locmod := blank_star;
+                TRUE
+          ELSE
+                TRUE
+            FI
+      ELIF ml IS nilmodulelist THEN
+            max_module_name_size := max_module_name_size MAX UPB name;
+            module := HEAP MODULE :=
+                 ( name, filename, decs, FALSE, TRUE, std_state,
+                   HEAP VECTOR[ max_attribute ]ATTRIBUTE :=
+                                                        default_attributes,
+                   0, 0, 2, nilmodulelist, nilmodulelist );
+            add_module( modules, module, star OF basic );
+            add_module( local_modules, module, star OF basic );
+            TRUE
+      ELIF marker OF module OF ml /= 2 THEN
+            IF NOT decs ANDTH decs OF module OF ml THEN
+                failed( oneline(( "Module ", name, " must be DECS" )) );
+                FALSE
+          ELSE
+                update_module( module OF ml );
+                TRUE
+            FI
+      ELIF UPB filename OF module OF ml > 0 THEN
+            put( screen, ( newline, "     Module ", name, " already read," ));
+            FALSE
+      ELSE
+            FALSE
+        FI
+    END;
+
+BASIC basic;
+BOOL decs := FALSE,
+     program := FALSE,
+     continue := TRUE;
+
+    IF NOT case_sensitive THEN set_lowercase( filename ) FI;
+    WHILE continue
+    DO
+        basic := get_basic;
+        IF token OF basic = decs_tok OREL
+           token OF basic = program_tok THEN
+            IF NOT( program OREL decs ) THEN
+                decs := ( token OF basic = decs_tok );
+                program := NOT decs
+          ELIF ( token OF basic = decs_tok ) /= decs THEN
+                failed( "All versions must be of the same type" );
+                continue := FALSE
+            FI;
+            basic := get_basic;
+            IF token OF basic /= name_tok THEN
+                failed( "Module name expected" );
+                continue := FALSE
+          ELSE
+                continue := make_module( basic, decs )
+            FI
+      ELIF NOT( program OREL decs ) THEN
+            continue := FALSE
+      ELIF token OF basic = use_tok THEN
+            read_uselist( star OF basic );
+            continue := FALSE
+      ELIF token OF basic /= context_tok ANDTH
+           token OF basic /= void_tok THEN
+            continue := FALSE
+        FI
+    OD;
+
+end_of_file:
+
+    close_file( mf, msg );
+    IF errors THEN
+        SKIP
+  ELIF decs OREL program THEN
+        IF local_modules ISNT nilmodulelist THEN
+        CHAR sep := " ";
+        REF MODULELIST mm := local_modules;
+
+            put( screen, ( newline, "     Modul" ));
+            IF rest OF local_modules IS nilmodulelist THEN
+                sep := "e"
+          ELSE
+                put( screen, "e" );
+                sep := "s"
+            FI;
+
+            WHILE mm ISNT nilmodulelist
+            DO
+                put( screen, ( sep, " ", name OF module OF mm ));
+                sep := ",";
+                mm := rest OF mm
+            OD;
+            put( screen, ( " analysed", newline ))
+      ELSE
+            put( screen, newline )
+        FI
+  ELSE
+        failed( "No algol heading" )
+    FI;
+    errors
+END;
+
+    SKIP
+KEEP MODULELIST, MODULE, STAR, SYMBOL,
+     FLAGON( REF SYMBOL ), FLAGOFF( REF SYMBOL ),
+     nilmodulelist, nilmodule, nilsymbol,
+     zero, ring_bell, initialise_mm_basics, case_sensitive,
+     bsize, bufmax, lcbias, blankname, nostars, nooptimise, blank_star,
+     database_modified, save_none, save_environ, save_modules, save_all,
+     need_to_tidy, diagnose, default_star_chars, default_heap_size,
+     default_exe_dir, edit_command, default_optimise_chars, database_name,
+     operating_system, standard_symbols,
+     mmd_type, inp_type, detach_name, aux_type,
+     changed_tag, mmd_tag, aux_tag, init_tag, dest_tag, local_tag, system_tag,
+     translate_tag, compile_tag, link_tag, action_tag,
+     set_lowercase, shortname, fullname, max_module_name_size,
+     default_yes, default_no,  no_default, query,
+     not_found, mnot_found, fnot_found,
+     define_symbol, undefine_symbol, scansymbols, findsymbol, 
+     mark_action_symbol, move_symbol_pointer,
+     modules, mark_modules, scanmodules, findmodule,
+     sta_type, a68_type, library_type,
+     file_exists, set_modulenumbers,
+     read_database, create_database, save_database,
+     read_module, set_levels, max_level, order_modules,
+     by_number, by_level, alphabetically, attribute_modified,
+     compile_attribute, link_attribute, debug_attribute, star_attribute,
+     heap_attribute, exename_attribute,
+     version_attribute, optimise_attribute, max_attribute, check_star,
+     attribute_name, attribute_value, attribute_state,
+     set_attribute, clear_attribute, permanent_attribute, attribute_marked,
+     on_string, off_string, true_string, false_string, failed_string, 
+     trfailed_string, cc_string,
+     ccfailed_string, tr_string, translate_string, compile_string, link_string,
+     notify_at_go, auto_link, auto_version, default_debug, bell_flag,
+     set_usedby_lists, clear_usedby_lists, query_active, can_query
+FINISH

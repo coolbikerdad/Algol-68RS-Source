@@ -1,0 +1,20 @@
+PROGRAM tt2
+CONTEXT VOID
+USE standard
+BEGIN
+FILE inf;
+IF open(inf,"tt2.data",stand back channel)/=0
+THEN put(stand error,("Cannot find tt2.data",newline));  stop
+FI;
+
+BOOL p;  CHAR c; STRING s;  make term(inf,lf);
+LONG INT ln; INT n; SHORT INT sn; SHORT SHORT INT ssn;
+LONG BITS lt; BITS t; SHORT BITS st; SHORT SHORT BITS sst;
+REAL r; SHORT REAL sr; COMPL z; SHORT COMPL sz;
+
+get(inf,(p,c,s,ln,n,sn,ssn,lt,t,st,sst,r,sr,z,sz));
+close(inf);
+print((p,c,s,newline,ln,newline,n,newline,sn,newline,ssn,newline,
+       lt,newline,t,newline,st,newline,sst,newline,r,sr,z,sz,newline))
+END
+FINISH

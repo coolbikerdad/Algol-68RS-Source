@@ -1,0 +1,13 @@
+
+This file lists the contents and use of directory
+             include/algol68/linux
+
+
+This area contains:-  Ahhostgc.h
+                      Ahostenv.h
+                      Ahswitch.h
+
+This area depends on:-  include/algol68
+
+There is no rebuild procedure for this area, it is used by the rebuild for
+the area library.

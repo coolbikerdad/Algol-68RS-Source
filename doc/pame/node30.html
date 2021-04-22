@@ -1,0 +1,238 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Slicing</title>
+<meta name="description" content="slicing">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node31.html">
+<link rel="previous" href="node29.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node31.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1129"
+  href="node31.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1123"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1117"
+  href="node29.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1125"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1127"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1130"
+  href="node31.html">Trimming</a>
+<b> Up:</b> <a name="tex2html1124"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1118"
+  href="node29.html">Multiples</a>
+ &nbsp; <b>  <a name="tex2html1126"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1128"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1131"
+  href="node30.html#section00521000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00520000000000000000"></a><a name="rep-slice"></a>
+<br>
+Slicing
+</h1>
+
+<p>In the previous section, it was mentioned that a subscript is
+associated with every element in a multiple.  The lower-bound of the
+multiple for a dimension determines the minimum subscript for that
+dimension and the upper-bound for that dimension determines the
+maximum subscript.  Thus there is a set of subscripts for each
+dimension.  The individual elements can be accessed by quoting all
+the subscripts for that element. For example, the elements of the
+multiple</p>
+
+<pre>
+   []INT odds = (1,3,5)
+</pre>
+
+<p>can be accessed as <code>odds[1]</code>, <code>odds[2]</code> and
+<code>odds[3]</code>.  The first of these is read &ldquo;odds sub one
+bus&rdquo; (&ldquo;bus<a name="1470"></a>&rdquo; is the opposite of
+&ldquo;sub<a name="1471"></a>&rdquo;).  In a multi-dimensional
+multiple, two or more subscripts are required to access a single
+element, the subscripts being separated by commas.  For example, in
+the multiple</p>
+
+<pre>
+   [,]REAL rs = ((1.0, 2.0, 3.0),
+                 (4.0, 5.0, 6.0))
+</pre>
+
+<p><code>rs[1,2]</code> yields <code>2.0</code>.  Similarly,
+<code>rs[2,3]</code> yields <code>6.0</code>.  Thus one can
+declare</p>
+
+<pre>
+   REAL rs12 = rs[1,2],
+        rs23 = rs[2,3]
+</pre>
+
+<p>Although, technically, a multiple with all its subscripts
+specified is called a <b>slice</b><a name="1477"></a>, the term is
+usually reserved for a multiple with less than the maximum number of
+subscripts (in other words, at least one of the dimensions does not
+have a subscript).  For example, using <code>rs</code> declared above,
+we can write</p>
+
+<pre>
+   []REAL srs = rs[1,]
+</pre>
+
+<p>which yields the multiple denoted by <code>(1.0,2.0,3.0)</code>.
+The comma<a name="1480"></a> must be present in the slice on the
+right-hand side otherwise the compiler will report an error of
+&ldquo;wrong number of indices&rdquo;.</p>
+
+<p> Vertical slicing is also possible. The phrase <code>rs[,2]</code>
+yields the multiple <code>(2.0,5.0)</code>. In the context of the
+declaration<p>
+
+<pre>
+   [,]CHAR rs2 = (("a","b","c","d"),
+                  ("e","f","g","h"),
+                  ("i","j","k","l"))
+</pre>
+
+<p>the slice <code>rs2[,3]</code> yields the value <code>"cgk"</code>
+with a mode of <code>[]CHAR</code>. Note, however, that vertical
+slicing<a name="1483"></a> is only possible for multiples with at
+least two dimensions.  The multiple <code>days</code>, declared in the
+previous section, is one-dimensional and so cannot be sliced
+vertically.</p>
+
+<p>In a 3-dimensional multiple, both 2-dimensional and 1-dimensional
+slices can be produced. Here are some examples:</p>
+
+<pre>
+   [,,]INT r3 = (((1,2),(3,4),((5,6),(7,8)));
+   [,]INT r31 = r3[1,,],
+          r32 = r3[,2,],
+          r33 = r3[,,3];
+   []INT r312 = r31[2,], r4 = r31[,2]
+</pre>
+
+<hr>
+<h2><a name="section00521000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.5<a name="ex-iii-v"></a>
+<dd>The declaration
+<pre>
+   [,]INT r = (( 1, 2, 3, 4),
+               ( 5, 6, 7, 8),
+               ( 9,10,11,12),
+               (13,14,15,16))
+</pre>
+
+is in force for this and the following exercise.  Give the value of
+the following slices: Ans<a href="node137.html#ans-iii-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>r[2,2]</code>  
+<p>
+<dt>(b)
+<dd><code>r[3,]</code>  
+<p>
+<dt>(c)
+<dd><code>r[,2 UPB r]</code>  
+<p>
+</dd>
+</dl>
+<dt>3.6<a name="ex-iii-vi"></a>
+<dd>Write slices for the following values Ans<a href="node137.html#ans-iii-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>10</code>  
+<p>
+<dt>(b)
+<dd><code>(5,6,7,8)</code>  
+<p>
+<dt>(c)
+<dd><code>(3,7,11,15)</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1129"
+  href="node31.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1123"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1117"
+  href="node29.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1125"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1127"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1130"
+  href="node31.html">Trimming</a>
+<b> Up:</b> <a name="tex2html1124"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1118"
+  href="node29.html">Multiples</a>
+ &nbsp; <b>  <a name="tex2html1126"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1128"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

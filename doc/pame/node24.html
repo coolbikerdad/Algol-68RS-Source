@@ -1,0 +1,87 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Miscellaneous operators</title>
+<meta name="description" content="miscellaneous operators">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node25.html">
+<link rel="previous" href="node23.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node25.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1020"
+  href="node25.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1014"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1008"
+  href="node23.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1016"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1018"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1021"
+  href="node25.html">Operators using CHAR</a>
+<b> Up:</b> <a name="tex2html1015"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html1009"
+  href="node23.html">Changing the mode</a>
+ &nbsp; <b>  <a name="tex2html1017"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1019"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00490000000000000000"></a><a name="form-miscop"></a>
+<br>
+Miscellaneous operators
+</h1>
+
+<p>The operators <tt>MAX</tt><a name="1076"></a> and
+<tt>MIN</tt><a name="1077"></a> are defined for any combination of
+<code>INT</code> and <code>REAL</code> operands and yield the maximum,
+or minimum, of two values. They can also be combined in the same
+formula:</p>
+
+<pre>
+   INT max min = 345 MAX 249 MIN 1000
+</pre>
+
+<p>which yields <code>345</code>.  Like <code>+</code>,
+<code>-</code>, and <code>*</code>, they only yield a value of mode
+<code>INT</code> if both their operands are <code>INT</code>.
+Otherwise, they yield a value of mode <code>REAL</code>.  They both
+have a priority of&nbsp;9.</p>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

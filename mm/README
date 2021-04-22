@@ -1,0 +1,18 @@
+
+This file lists the contents and use of directory
+                   /home/sian/src/algol68toc-1.2/mm
+
+The file
+      nameseed  is the ctrans seed file, this must be re-initialised to
+                AAAAAMM before the start of a build (use rctr).
+
+The default staredit characters are
+      259U
+
+This area depends on:-   include
+                         Linux
+                         library
+                         a68library
+                         liba68prel
+
+Rebuild using make

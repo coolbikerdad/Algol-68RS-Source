@@ -1,0 +1,714 @@
+DECS  commandreader  CONTEXT VOID  USE  putstrings,  messageproc,  osinterface,
+      commandsyntax:
+
+{ " Id: commandreader.sta,v 1.1 91/10/14 14:26:14 edcad Exp $" }
+configinfo A68CONFIG "$Id: commandreader.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1989
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+26:01:89  Command reader extracted from Module readprocs for new kernel.  DCT
+15:12:89  "same_char" added to reduce external use of rdbuffer.  DCT
+12:01:90  "read_char" moved from simreader and help added.  DCT
+17:01:90  debug_reader added for diagnosing reader - fault in prod.  DCT
+19:01:90  next_first_char added (to start a word without leading spaces). DCT
+07:03:90  READCONTROL added to reduce confusion.  DCT
+22:03:92  Extra REF added to reader to permit extension for new OSIF.  DCT
+23:09:93  obey_command_char removed from osinterface.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.008 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+
+{ Constants and procedures defining basic groups of characters
+  *****  ASCII character set assumed - needs modification otherwise  *****
+}
+
+
+PROC  instring = (CHAR  c,  VECTOR [] CHAR  str) BOOL:
+BEGIN
+   BOOL  ans:= FALSE;
+   FOR i TO UPB str WHILE NOT ans DO  ans:= str[i] = c  OD;
+   ans
+END;
+
+
+CHAR  sp = " ",  sep = ",";
+STR  arrow_str = " <- ";
+
+
+PROC  space = (CHAR  c) BOOL:  c <= sp;
+      { Treat <CTRL> chars, in particular <TAB>, <FF>, <CR> and <LF>, as space }
+
+PROC  separator = (CHAR c) BOOL:  c <= sp  OREL  c = sep;
+
+PROC  visible_space = (CHAR  c) BOOL:  c = "_";
+
+PROC  digit = (CHAR c) BOOL:  c >= "0" ANDTH c <= "9";
+
+PROC  letter = (CHAR c) BOOL:  c >= "a"  ANDTH  c <= "z";
+
+PROC  bold = (CHAR c) BOOL:  c >= "A"  ANDTH  c <= "Z";
+
+PROC  upper_case = (CHAR  c) CHAR:
+   IF letter(c) THEN  REPR (ABS c - 32)  ELSE  c  FI;
+
+PROC  lower_case = (CHAR  c) CHAR:
+   IF bold(c) THEN  REPR (ABS c + 32)  ELSE  c  FI;
+
+
+
+
+
+{ Basic read procedures for use in defining other readers. Only one buffer may
+  be active at one time. "," is used to separate commands and ".." at the end
+  of a line is used to request reading to continue onto the next line. The
+  continuation marker or end-of-line will terminate a particular symbol. Space
+  (non-visible, " ") is the main symbol separator. Comma may be used
+  immediately the last parameter of a command. "set reader" is to define the
+  current buffer. Certain procedures are used to interface with the command
+  interpreter.
+}
+
+
+MODE  LINESTACK = STRUCT (RVC  line,  REF LINESTACK  rest),
+      READERDETAILS = STRUCT ( RVC  rdbuffer,
+                               PROC (REF RVC, MESSAGEPROC) INT  rdline,
+                               INT  rdcharend,  rdcharno,  start_of_word,
+                               REF LINESTACK  stack
+                             );
+
+REF LINESTACK  no_lines = NIL;
+READERDETAILS  current_details;
+
+REF PROC (REF RVC, MESSAGEPROC) INT  rdline = rdline OF current_details;
+REF RVC  rdbuffer = rdbuffer OF current_details;
+REF INT  rdcharend = rdcharend OF current_details,
+         rdcharno = rdcharno OF current_details,
+         start_of_word = start_of_word OF current_details;
+REF REF LINESTACK  line_stack = stack OF current_details;
+
+
+PROC  set_reader = ( RVC  buffer,  { initial buffer - may get extended }
+                     PROC (REF RVC, MESSAGEPROC) INT  reader) REF READERDETAILS:
+BEGIN
+   { Interface to command line reader Module (ioprocs for ELLA). Buffer must be
+     at least one char longer than the maximum input length. }
+   rdbuffer:= buffer;
+   rdline:= reader;         { Must be a global procedure }
+   rdcharno:= start_of_word:= 0;
+   rdbuffer[rdcharend:= 1]:= sep;  {  seed with comma for first command  }
+   current_details
+END;
+
+PROC  reset_reader = (READERDETAILS  details) VOID:
+   { Used to re-instate a reader (more strictly, a buffer) along with original
+     read position.  The READERDETAILS (from set_reader) must be copied before
+     it is stored away (copy should be done immediately before a subsequent
+     call of set_reader). }
+   current_details:= details;
+
+
+
+PROC  get_input_lines = REF VECTOR [] RVC:
+BEGIN
+   { Used to generate an error message. This procedure delivers the input lines
+     necessary to display a whole command when it continues over more than one
+     line. The stack is reset before a command is read. The report_error
+     procedure in Module command will replay the input, as given by the user,
+     from the start of the first line containing the command up to the start of
+     the next command (or end-of-line). It is also called to remember the
+     user's input for a call of a COMPOUND command so that an appropriate error
+     message can be generated if needed on exit. }
+   REF VECTOR [] RVC  ans;
+   PROC  add = (REF LINESTACK  stack,  INT  n) INT:
+      IF stack IS no_lines
+      THEN  ans:= HEAP VECTOR [n] RVC;  1
+      ELSE  INT  ind = add(rest OF stack, n + 1);
+            ans[ind]:= line OF stack;
+            ind + 1
+      FI;
+   ans[add(line_stack, 1)]:= MAKERVC rdbuffer[: rdcharno];
+   ans
+END;
+
+
+PROC  skip_command = VOID:
+BEGIN
+   { To be called when an error has been reported by the command interpreter.
+     It will override a continuation marker (if present) and cause a new line
+     to be read when the next command is requested. }
+   rdbuffer[rdcharend]:= sep;
+   rdcharno:= rdcharend - 1
+END;
+
+
+
+
+
+PROC  rdchar = (BOOL  stack, MESSAGEPROC  msg) CHAR:
+BEGIN
+   { Continuation mark is ".." at end of line }
+   IF rdcharno >= rdcharend
+   THEN  IF stack  ANDTH  rdcharend > 0  ANDTH  rdbuffer[rdcharend] = sp
+         THEN  { had continuation mark }
+               rdbuffer[rdcharno]:= ".";
+               line_stack:= HEAP LINESTACK:=
+                  (MAKERVC rdbuffer[: rdcharend + 1], line_stack)
+         FI;
+         rdcharno:= start_of_word:= 0;
+         rdcharend:= rdline(rdbuffer, msg);
+         WHILE rdcharend >= 1  ANDTH  space(rdbuffer[rdcharend])
+         DO  rdcharend MINUSAB 1  OD;
+         IF rdcharend >= 2  ANDTH  rdbuffer[rdcharend] = "."  ANDTH
+            rdbuffer[rdcharend - 1] = "."
+         THEN  rdbuffer[rdcharend MINUSAB 1]:= sp
+         ELSE  { search for parameters stops at the command separator }
+               rdbuffer[rdcharend PLUSAB 1]:= sep
+         FI
+   FI;
+   rdbuffer[rdcharno PLUSAB 1]
+END;
+
+
+PROC  next_char = (MESSAGEPROC  msg) CHAR:
+   { used by PROCs after "first_char" to avoid calling rdline }
+   IF rdcharno = rdcharend THEN  sp  ELSE  rdchar(TRUE, msg)  FI;
+
+
+PROC  first_char = (MESSAGEPROC  msg) CHAR:
+BEGIN
+   { Go forward to first non-space character }
+   CHAR  c;
+   WHILE  space(c := rdchar(TRUE, msg))  DO  SKIP  OD;
+   { Mark start of word so that read position may be reset after a miss-match }
+   start_of_word:= rdcharno - 1;
+   c
+END;
+
+PROC  next_first_char = (MESSAGEPROC  msg) CHAR:
+BEGIN
+   { Used to start reading a new word without skipping any leading spaces.
+     This should be used instead of "next_char" to ensure that "start_of_word"
+     is set so that an error in reading does not cause the previous word to
+     be re-read. It is assumed that a new line (continued by "..") is allowed. }
+   CHAR  c = rdchar(TRUE, msg);
+   start_of_word:= rdcharno - 1;
+   c
+END;
+
+
+
+PROC  put_back_char = (MESSAGEPROC  msg) VOID:
+   IF rdcharno = 0
+   THEN  msg(system, "back_space:  no characters left")
+   ELSE  rdcharno MINUSAB 1
+   FI;
+
+
+PROC  same_char = (MESSAGEPROC  msg) CHAR:
+   IF rdcharno = 0
+   THEN  msg(system, "same_char:  index zero");  16r"0"
+   ELSE  rdbuffer[rdcharno]
+   FI;
+
+
+
+PROC  check_for_more = (MESSAGEPROC  msg) BOOL:
+BEGIN
+   { Used by the command interpreter to check that no more parameters follow }
+   CHAR  c;
+   WHILE space(c:= rdchar(TRUE, msg))  DO  SKIP  OD;
+   IF c = sep
+   THEN  rdcharno MINUSAB 1;
+         FALSE  { no extra parameters encountered }
+   ELSE  { move to next space to indicate (first) extra parameter }
+         WHILE NOT separator(next_char(msg))  DO  SKIP  OD;
+         rdcharno MINUSAB 1;
+         TRUE
+   FI
+END;
+
+
+PROC  skip_parameter = (MESSAGEPROC  msg) VOID:
+BEGIN
+   { Used by the command interpreter to skip over the current parameter when
+     it does not match the specified readers prior to calling report_error. }
+   WHILE NOT separator(next_char(msg)) DO  SKIP  OD;
+   rdcharno MINUSAB 1
+END;
+
+
+
+BOOL  debug_reader:= FALSE;
+
+PROC  read_parameters = ( REF VECTOR [] ANALYSER  analysers,
+                          COMMANDSYNTAX  syntax,
+                          MESSAGEPROC  msg
+                        ) COMMANDPARAM:
+BEGIN
+    { The VECTOR [] ANALYSER may be sparse - a linked list is passed to
+      initialise commands which is converted into this vector for efficiency.
+
+      Uses the following additional side-effect procedures from this Module:
+      PROC (MESSAGEPROC) VOID  skip_parameter,
+      PROC (MESSAGEPROC) BOOL  check_for_more
+    }
+
+    INT  indent:= 0;
+    PROC  inc_indent = VOID:  indent PLUSAB 2;
+    PROC  dec_indent = VOID:  indent MINUSAB 2;
+    PROC  show = (COMMANDSYNTAX  syntax) RVC:  show_syntax(syntax, analysers);
+
+    PROC  print = (VECTOR [] OUTMODE  line) VOID:
+       ( put(screen, line); put(screen, (newline, " " * indent)) );
+
+    IF debug_reader THEN  print(("Reading ", show(syntax)))  FI;
+
+    VALUE  illegal = (-1, nilstr);
+
+    PROC  is_illegal = (COMMANDPARAM  p) BOOL:
+       CASE p IN (VALUE  v)  sort OF v = -1  OUT  FALSE  ESAC;
+
+    PROC  is_legal = (COMMANDPARAM  p) BOOL:  { NOT illegal AND present }
+       CASE p IN (VALUE  v)  sort OF v > 0  OUT  TRUE  ESAC;
+
+
+    PROC (COMMANDSYNTAX, BOOL) COMMANDPARAM  read_rule;
+
+    PROC  error = (COMMANDSYNTAX  syntax,  COMMANDPARAM  param) VOID:
+       msg( user, oneline(( IF is_illegal(param)
+                            THEN  skip_parameter(msg);  { set error pos }
+                                  "Wrong sort of parameter - "
+                            ELSE  nullstr
+                            FI,
+                            show_syntax(syntax, analysers), " expected" ))
+          );
+
+
+    PROC  alternative = (REF VECTOR [] COMMANDSYNTAX  choices,  BOOL  expected)
+                        COMMANDPARAM:
+    BEGIN
+       IF debug_reader
+       THEN  inc_indent;
+             print((expected, " Alternatives ", show(alt(choices))))
+       FI;
+
+       COMMANDPARAM  p:= illegal;
+       INT  choice:= 0;
+       FORALL  arm IN choices  WHILE is_illegal(p:= read_rule(arm, FALSE))
+       DO  choice PLUSAB 1  OD;
+
+       IF debug_reader THEN  dec_indent  FI;
+       CASE p IN
+          (VALUE  v)
+             IF is_legal(p)
+             THEN  CHOICE (choice, HEAP VECTOR [1] COMMANDPARAM:= v)
+             ELSE  IF expected THEN  error(alt(choices), p)  FI;
+                   v
+             FI ,
+          (CHOICE  c)
+             CHOICE (choice, HEAP VECTOR [1] COMMANDPARAM:= c)
+       ESAC
+    END;
+
+
+    PROC  product = (REF VECTOR [] COMMANDSYNTAX  words,  BOOL  expected)
+                    COMMANDPARAM:
+    BEGIN
+       { An optional product is said to be present if its first non optional
+         component is present (legal). }
+
+       IF debug_reader
+       THEN  inc_indent;
+             print((expected, " Product ", show(prod(words))))
+       FI;
+
+       BOOL  should_find:= expected;
+       HEAP VECTOR [UPB words] COMMANDPARAM  values;
+       INT  index:= 0;
+
+       FORALL w IN words
+       WHILE
+          REF COMMANDPARAM  val = values[index + 1];
+          val:= read_rule(w, should_find);
+          IF is_legal(val)
+          THEN  index PLUSAB 1;       { The item is illegal, remember it }
+                should_find:= TRUE;   { Now committed to reading the rest }
+                TRUE                  { Proceed to the next item }
+          ELIF CASE w IN (RULE r) is_opt(r) OUT FALSE ESAC
+          THEN  val:= no_parameters;  { This item was optional - can draw... }
+                TRUE                  { ...no conclusion - test the next item }
+          ELSE                        { A miss-match... }
+                IF should_find
+                THEN  error(w, val)   { Either the product was expected or... }
+                FI;                   { ...an earlier item had matched }
+                FALSE                 { Test no more }
+          FI
+       DO  SKIP  OD;
+
+       IF debug_reader THEN  dec_indent  FI;
+
+       IF index = 0 THEN  values[1]  ELSE  CHOICE (1, values[: index])  FI
+    END;
+
+
+    PROC  alt_or_prod = (RULE  rule,  BOOL  expected) COMMANDPARAM:
+       IF is_alt(rule)
+       THEN  alternative(elements OF rule, expected)
+       ELSE  product(elements OF rule, expected)
+       FI;
+
+
+    PROC  more_than_one = (RULE  rule,  COMMANDPARAM  first) CHOICE:
+    BEGIN
+       IF debug_reader
+       THEN  inc_indent;
+             print(("More than one ", show(rule)))
+       FI;
+
+       MODE  PARAMLIST = STRUCT (COMMANDPARAM  param,  REF PARAMLIST  rest);
+       REF PARAMLIST  list:= HEAP PARAMLIST:= (first, NIL);
+       INT  n:= 1;
+       REF REF PARAMLIST  ptr:= rest OF list;
+       WHILE
+          COMMANDPARAM p = alt_or_prod(rule, FALSE);
+          is_legal(p)
+       DO  n PLUSAB 1;
+           ptr:= rest OF (REF REF PARAMLIST (ptr):= HEAP PARAMLIST:= (p, NIL))
+       OD;
+       HEAP VECTOR [n] COMMANDPARAM  params;
+       FORALL p IN params
+       DO  p:= param OF list;  list:= rest OF list  OD;
+
+       IF debug_reader THEN  dec_indent  FI;
+       (0, params)
+    END;
+
+
+    read_rule:= (COMMANDSYNTAX  unit,  BOOL  expected) COMMANDPARAM:
+    BEGIN
+       IF debug_reader
+       THEN  inc_indent;
+             print((expected, " Read rule ", show(unit)))
+       FI;
+
+       COMMANDPARAM  ans =
+          CASE  unit IN
+             (REF INT  index)
+                ( REF ANALYSER  analyser = analysers[index];
+                  IF sort OF analyser < 1
+                  THEN  msg( system,
+                             oneline(("read_rule - illegal reader: ", index)) )
+                  FI;
+                  CASE  reader OF analyser IN
+                     (PROC (MESSAGEPROC) RVC  read)
+                        VALUE
+                           ( RVC  val = read(msg);
+                             { If an expected object is not found it will be
+                               reported further out to give more information. }
+                             IF val IS nilstr
+                             THEN  IF debug_reader
+                                   THEN  print("Wrong sort of parameter")
+                                   FI;
+                                   (-1, nilstr)
+                             ELIF UPB val = 0
+                             THEN  IF debug_reader
+                                   THEN  print("Nothing read")
+                                   FI;
+                                   (0, nullstr)    { = "no_parameters" }
+                             ELSE  IF debug_reader
+                                   THEN  print(( sort OF analyser,
+                                                 " """, val, """" ))
+                                   FI;
+                                   (sort OF analyser, val)
+                             FI
+                           ) ,
+
+                     (COMMANDSYNTAX  syntax)
+                        read_rule(syntax, expected)
+                  ESAC
+                ) ,
+
+             (RULE  rule)
+                ( IF is_opt(rule)
+                  THEN  COMMANDPARAM  p = alt_or_prod(rule, FALSE);
+                        IF is_legal(p)
+                        THEN  IF is_star(rule)
+                              THEN  more_than_one(rule, p)
+                              ELSE  CHOICE (0, HEAP VECTOR [1] COMMANDPARAM:= p)
+                              FI
+                        ELSE  p   { nothing or no match }
+                        FI
+                  ELSE  { At least one parameter manditory }
+                        COMMANDPARAM  p = alt_or_prod(rule, expected);
+                        IF NOT is_legal(p)
+                        THEN  p
+                        ELIF is_star(rule)
+                        THEN  more_than_one(rule, p)
+                        ELSE  CHOICE (0, HEAP VECTOR [1] COMMANDPARAM:= p)
+                        FI
+                  FI
+                )
+          ESAC;
+       IF debug_reader THEN  dec_indent  FI;
+       ans
+    END;
+
+
+
+    COMMANDPARAM  ans =
+       IF CASE syntax IN  (REF INT  index)  index = 0  OUT  FALSE  ESAC
+       THEN  IF check_for_more(msg)
+             THEN  msg(user, "This command does not have parameters")
+             FI;
+             no_parameters
+       ELSE  COMMANDPARAM  param = read_rule(syntax, TRUE);
+             IF { "Expected" test is inhibitted for single object in
+                  "read_rule" - so must test here }
+                CASE syntax IN (REF INT)  TRUE  OUT  FALSE  ESAC  ANDTH
+                NOT is_legal(param)
+             THEN  error(syntax, param)
+             ELIF check_for_more(msg)
+             THEN  IF is_illegal(param)
+                   THEN  msg( user,
+                              oneline(( "Wrong sort of parameter - ",
+                                        show_syntax(syntax, analysers),
+                                        " expected" ))
+                            )
+                   ELSE  msg(user, "Unexpected parameter")
+                   FI
+             FI;
+             IF is_legal(param) THEN  param  ELSE  no_parameters  FI
+       FI;
+    IF debug_reader THEN  put(screen, ("End", newline))  FI;
+    ans
+END;
+
+
+
+PROC  read_failed = RVC:
+BEGIN
+   { Resets the read position for any subsequent attempted read. }
+   rdcharno:= start_of_word;
+   nilstr
+END;
+
+
+PROC  nothing_read = RVC:
+   { Called if the first character read does not match }
+   IF rdbuffer[rdcharno] = sep  ANDTH  rdcharno <= start_of_word + 1
+   THEN  rdcharno MINUSAB 1;    { must not read command separator yet }
+         nullstr                { nothing to read }
+   ELSE  read_failed            { wrong character for requested object  }
+   FI;
+
+
+PROC  check_read = (RVC  word_read,  STR  name,  MESSAGEPROC  msg) RVC:
+   { To be called after every read (of at least one character) to check that
+     nothing illegal follows. Assumes that the next char has been read. Will
+     call msg if a non-empty name is given, otherwise returns "wrong object". }
+   IF CHAR  c = rdbuffer[rdcharno];
+      separator(c)
+   THEN  { must not read command separator yet }
+         IF c = sep THEN  rdcharno MINUSAB 1  FI;
+         { reset fault position }
+         word_read
+   ELSE  WHILE  NOT separator(next_char(msg)) DO  SKIP  OD;
+         rdcharno MINUSAB 1;
+         IF UPB name > 0
+         THEN  msg( user,
+                    oneline(("Unexpected character """, c, """ in ", name)) )
+         ELSE  rdcharno:= start_of_word
+         FI;
+         nilstr           { wrong kind of object read }
+   FI;
+
+
+
+
+PROC  check_value = (VALUE  v,  INT  no,  MESSAGEPROC  msg) VOID:
+   IF sort OF v /= no
+   THEN  msg(system, oneline(("check_no:  wrong parameter sort: ", sort OF v)))
+   FI;
+
+
+
+MODE  READCONTROL = STRUCT (BOOL  get_first,  check);
+READCONTROL  first_and_check = (TRUE, TRUE),  get_first = (TRUE, FALSE),
+             check_end = (FALSE, TRUE),       not_first = (FALSE, FALSE);
+
+
+
+PROC  read_token = (READCONTROL  rc,  STR  token,  MESSAGEPROC  msg) RVC:
+BEGIN
+   { Reader for specific words }
+   CHAR  c:=
+      IF get_first OF rc THEN  first_char(msg)  ELSE  next_first_char(msg)  FI;
+   IF  upper_case(c) = token[1]
+   THEN  BOOL  ok:= TRUE;
+         FORALL char IN token[2:] WHILE ok
+         DO  ok:= upper_case(next_char(msg)) = char  OD;
+         IF ok
+         THEN  RVC  ans = MAKERVC token;
+               next_char(msg);  { check_read checks the current character }
+               IF check OF rc THEN  check_read(ans, token, msg)  ELSE  ans  FI
+         ELSE  read_failed
+         FI
+   ELSE  nothing_read
+   FI
+END;
+
+
+
+PROC  read_char = (CHAR  char,  MESSAGEPROC  msg) RVC:
+   { Reader for specific characters (often used to read syntactic separators) }
+   IF first_char(msg) = char
+   THEN  MAKERVC char         { Note:  permit anything to follow }
+   ELSE  nothing_read
+   FI;
+
+
+
+
+{ First reader defines a command_name }
+
+STR  command_name_str = "<ELLA-command>",
+     command_name_help = "An ELLA command must start with a letter which may be"
+                         " followed by further letters, digits of visible space"
+                         " characters (""_"").  Commands are not case sensitive"
+                         " but certain parameters are.";
+INT  command_name_no:= 1;
+COMMANDSYNTAX  command_name_syntax = command_name_no;
+
+
+PROC  read_command_name = (MESSAGEPROC  msg) RVC:
+BEGIN
+   CHAR  c:= first_char(msg);
+   INT  index:= 0;
+   IF c = "!"  OREL  c = "$"
+   THEN  { May be followed by another char immediately - no need to check_read }
+         MAKERVC c
+   ELSE  IF letter(c)  OREL  bold(c)
+         THEN  VECTOR [rdcharend] CHAR  ans;
+               WHILE letter(c)  OREL  bold(c)  OREL  digit(c)  OREL
+                     visible_space(c)
+               DO  ans[index PLUSAB 1]:=
+                      IF letter(c) THEN  upper_case(c)  ELSE  c  FI;
+                   c:= next_char(msg)
+               OD;
+               check_read(MAKERVC ans[:index], command_name_str, msg)
+         ELSE  nothing_read
+         FI
+
+   FI
+END;
+
+
+PROC  is_command_name = (VALUE  v) BOOL:  sort OF v = command_name_no;
+
+
+PROC  get_command_name = (VALUE  v,  MESSAGEPROC  msg) RVC:
+BEGIN
+   check_value(v, command_name_no, msg);
+   value OF v
+END;
+
+
+
+
+
+{ Reader for commands - called directly by the command interpreter }
+
+PROC  read_command = (MESSAGEPROC  msg) RVC:
+BEGIN
+   { Used by the command interpreter to read the next command.  Enforces the
+     requirement for a command separator (comma). }
+
+   line_stack:= no_lines;     { new command so reset line memory }
+
+   PROC  first = CHAR:
+   BEGIN
+      { Version that avoids stacking new lines }
+      CHAR  c;
+      WHILE space(c:= rdchar(FALSE, msg)) DO  SKIP  OD;
+      c
+   END;
+
+   RVC  command;
+
+   IF first /= sep  OREL
+         ( WHILE first = sep DO  SKIP  OD;  { permit no command }
+           rdcharno MINUSAB 1;
+           command:= read_command_name(msg);
+           (command IS nilstr)  OREL  UPB command = 0
+         )
+   THEN  msg(user, oneline((command_name_str, " expected")))
+   FI;
+   command
+END
+
+
+
+KEEP  { Basic constants and procedures for making readers }
+
+      instring,  sp,  sep,  arrow_str,  space, separator,  visible_space,
+      digit,  letter,  bold,  upper_case,  lower_case,
+
+      { Interface to line reading Module }
+
+      READERDETAILS,  set_reader,   reset_reader,
+
+      { Interface to Command Interpreter }
+
+      get_input_lines,  skip_command,  check_for_more,  skip_parameter,
+      read_command,  debug_reader,  read_parameters,
+
+      { Variables for making readers - use procedures below if possible }
+
+      rdbuffer,  rdcharend,  rdcharno,  start_of_word,
+
+      { Procedures for building readers }
+
+      next_char,  first_char,  next_first_char,  put_back_char,  same_char,
+      read_failed,  nothing_read,  check_read,  check_value,  READCONTROL,
+      first_and_check,  get_first,  check_end,  not_first,  read_token,
+      read_char,
+
+      { Reader for a command_name (used by the help command) }
+
+      command_name_no,  command_name_str,  command_name_syntax,
+      command_name_help,  read_command_name,  is_command_name,
+      get_command_name
+FINISH

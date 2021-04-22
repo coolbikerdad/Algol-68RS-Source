@@ -1,0 +1,198 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Summary</title>
+<meta name="description" content="summary">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="previous" href="node26.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node28.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1060"
+  href="node28.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1054"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1050"
+  href="node26.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1056"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1058"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1061"
+  href="node28.html">Repetition</a>
+<b> Up:</b> <a name="tex2html1055"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html1051"
+  href="node26.html">print revisited</a>
+ &nbsp; <b>  <a name="tex2html1057"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1059"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1062"
+  href="node27.html#section004121000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section004120000000000000000"></a><a name="form-summ"></a>
+<br>
+Summary
+</h1>
+
+<p>Operators combined with operands are called formul&#230;. Operators are
+monadic or dyadic. Monadic operators take a single operand, bind more
+tightly than dyadic operators and when combined are elaborated from
+right to left. Dyadic operators take two operands and have a priority
+of 1 to&nbsp;9. Successive dyadic operators having the same priority are
+elaborated from left to right. Parentheses, or <code>BEGIN</code> and
+<code>END</code>, may be used to alter the order of elaboration.</p>
+
+<p>A summary of all the operators described in this chapter, together
+with their priorities, can be found in chapter&nbsp;13.</p>
+
+<p>Here are some exercises which test you on what you have learned in
+this chapter.  The exercises involving <code>ABS</code> and <code>REPR</code>
+will need to be written as small programs and compiled and run.  In
+fact, it would be a good idea to write all the answers as small
+programs (or incorporate them all in one large program).  Don't
+forget to use the <code>print</code> phrase with <code>newline</code> and
+<code>newpage</code> to separate your output.</p>
+
+<hr>
+<h2><a name="section004121000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>2.11<a name="ex-ii-xi"></a>
+<dd>The following declarations are assumed to be in force for
+these exercises:
+<pre>
+   INT i = 13, j = -4, k = 7;
+   CHAR s = "s", t = "T";
+   REAL x = -2.4, y = 2.7, z = 0.0
+</pre>
+
+What is the value of each of the following formul&#230;? Ans<a href="node136.html#ans-ii-xi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>(2 + 3) * (3 - 2)</code>  
+<p>
+<dt>(b)
+<dd><code>j+i-k</code>  
+<p>
+<dt>(c)
+<dd><code>3*ABS s</code>  
+<p>
+<dt>(d)
+<dd><code>ABS"t"-ABS t</code>  
+<p>
+<dt>(e)
+<dd><code>REPR(k**2)</code>  
+<p>
+<dt>(f)
+<dd><code>ROUND(x**2-y/(x+1))</code>  
+<p>
+<dt>(g)
+<dd><code>z**9</code>  
+<p>
+</dd>
+</dl>
+<dt>2.12<a name="ex-ii-xii"></a>
+<dd>Because of the kind of arithmetic performed by the compiler,
+division of values of mode <code>REAL</code> by zero does not cause a
+program to fail (but see section <a href="node131.html#stan-fpov">13.6.1</a>). Write a program
+containing the phrases <code>REAL z=0.0/0.0;</code> and <code>REAL iz=1/0;</code>
+and see what happens.  In practice, it's probably a good idea to
+check for division by zero.  Ans<a href="node136.html#ans-ii-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>2.13<a name="ex-ii-xiii"></a>
+<dd>Now try the phrase <code>print(1%0)</code>.  Ans<a href="node136.html#ans-ii-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>2.14<a name="ex-ii-xiv"></a>
+<dd>What is wrong with the following formul&#230;? Ans<a href="node136.html#ans-ii-xiv"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd><code>[4-j]*3</code>  
+<p>
+<dt>(b)
+<dd><code>(((3-j)*x+3)*x+5.6</code>  
+<p>
+<dt>(c)
+<dd><code>ROUND "e"</code>  
+<p>
+<dt>(d)
+<dd><code>ENTIER 4 + 3.0</code>  
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1060"
+  href="node28.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1054"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1050"
+  href="node26.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1056"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1058"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1061"
+  href="node28.html">Repetition</a>
+<b> Up:</b> <a name="tex2html1055"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html1051"
+  href="node26.html">print revisited</a>
+ &nbsp; <b>  <a name="tex2html1057"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1059"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

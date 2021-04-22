@@ -1,0 +1,212 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Program structure</title>
+<meta name="description" content="program structure">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node12.html">
+<link rel="previous" href="node10.html">
+<link rel="up" href="node3.html">
+<link rel="next" href="node12.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html814"
+  href="node12.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html808"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html802"
+  href="node10.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html810"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html812"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html815"
+  href="node12.html">Comments</a>
+<b> Up:</b> <a name="tex2html809"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html803"
+  href="node10.html">Real numbers</a>
+ &nbsp; <b>  <a name="tex2html811"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html813"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html816"
+  href="node11.html#section00381000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00380000000000000000"></a><a name="intro-prog"></a>
+<br>
+Program structure
+</h1>
+
+<p>Algol&nbsp;68 programs can be written in one or more
+parts<a name="322"></a> Here is a valid Algol&nbsp;68
+program<a name="323"></a>:</p>
+
+<pre>
+   PROGRAM firstprogram CONTEXT VOID
+   USE standard
+   BEGIN
+      print(20)
+   END
+   FINISH
+</pre>
+
+<p>Only the three lines starting with <code>BEGIN</code> and ending
+with <code>END</code> are strictly part of the Algol 68 program. The
+first, second and last lines are specific to the
+a68toc<a name="326"></a> compiler. The first line gives the
+identification of the program as <tt>firstprogram</tt> and the fact
+that this file contains a program.  The <code>CONTEXT VOID</code>
+phrase specifies that the program stands on its own instead of being
+embedded in other parts. The phrase is a vestige of the modular
+compilation system originally provided by the compiler at the heart of
+<code>a68toc</code>.</p>
+
+<p> A full explanation of the <code>print</code>
+phrase<a name="328"></a> will be found in chapter&nbsp;9 (Transput).
+For now, it is enough to know that it causes the value in the
+parentheses to be displayed on the screen.<a name="tex2html3"
+href="footnode.html#foot451"><sup><span
+class="arabic">2</span>.<span class="arabic">3</span></sup></a> The
+standard prelude must be <tt>USE</tt><a name="452"></a>d if you want
+to use <tt>print</tt><a name="453"></a>. You can use any identifier
+for the operating system file in which to store the Algol&nbsp;68
+<b>source code</b><a name="335"></a> of the program. Although it does
+not have to be the same as the identifier of the module, it is
+advisable to make it so.</p>
+
+<p> Both the <code>print</code> phrase and the
+denotation<a name="336"></a> are units<a name="337"></a>.  Chapter 10
+will explain units in detail.  Phrases are separated by the go-on
+symbol (a semicolon <tt>;</tt><a name="454"></a>).  Because there is
+only one phrase in <code>firstprogram</code>, no go-on symbols are
+required.  Here is another valid program:</p>
+
+<pre>
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT special integer = 48930767;
+      print(20) ; print(special integer)
+   END
+   FINISH
+</pre>
+
+<p>The semicolon between the two <code>print</code> phrases is not a
+terminator: it is a separator.  It means &ldquo;throw away any value
+yielded by the previous phrase and go on with the succeeding
+phrase&rdquo;.  That is why it is called the go-on
+symbol<a name="455"></a>.  Notice that there is no semicolon after the
+third phrase.</p>
+
+<p> Algol 68 programs are written in free format<a name="343"></a>.
+This means that the meaning of your program is independent of the
+layout of the source program. However, it is sensible to lay out the
+code so as to show the structure of the program. For example, you
+could write the first program like this:</p>
+
+<pre>
+   PROGRAM firstprogram CONTEXT VOID
+   USE standard(print(20))FINISH
+</pre>
+
+<p>which is just as valid, but not as comprehensible. Notice that
+<code>BEGIN</code> and <code>END</code> can be replaced by <code>(</code> and <code>)</code>
+respectively.  How you lay out your program is up to you, but writing
+it as shown in the examples in this book will help you write
+comprehensible programs.</p>
+
+<hr>
+<h2><a name="section00381000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>1.12<a name="ex-i-xii"></a>
+<dd>What is wrong with this sample program?
+<pre>
+   PROGRAM test
+   BEGIN
+      print("A"))
+   END
+   FINISH
+</pre>
+Ans<a href="node135.html#ans-i-xii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>1.13<a name="ex-i-xiii"></a>
+<dd>Using an editor, key in the two sample programs given in this
+section, and compile and execute them. What do they display on your
+screen?   Ans<a href="node135.html#ans-i-xiii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html814"
+  href="node12.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html808"
+  href="node3.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html802"
+  href="node10.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html810"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html812"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html815"
+  href="node12.html">Comments</a>
+<b> Up:</b> <a name="tex2html809"
+  href="node3.html">Introduction</a>
+<b> Previous:</b> <a name="tex2html803"
+  href="node10.html">Real numbers</a>
+ &nbsp; <b>  <a name="tex2html811"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html813"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

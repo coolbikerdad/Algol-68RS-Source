@@ -1,0 +1,123 @@
+DECS  options  CONTEXT VOID:
+
+{ " Id: options.sta,v 1.1 91/10/14 14:30:46 edcad Exp $" }
+configinfo A68CONFIG "$Id: options.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1990
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+04:07:90  Written to provide a uniform interface to those transforms offering
+             a number of different options.  Procedures are provided to help
+             set up options, call the transform with selected options and
+             generate a user interface for the asscommands environment.  DCT
+13:03:92  INCLUDES and EXCLUDES will now accept INT for the nth option.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.002 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+{ The MODE of the parameter to the transform procedure for specifying the
+  options required - use between the object being transformed and
+  the MESSAGEPROC parameters. }
+
+MODE  OPTIONS = STRUCT (BITS  options);
+
+{ Operators for combining options to pass to the transform procedure. }
+
+OP  +  = (OPTIONS  a, b) OPTIONS:
+BEGIN
+   OPTIONS  ans:= a;
+   options OF ans:= options OF ans OR options OF b;
+   ans
+END;
+
+OP  PLUSAB  = (REF OPTIONS  a, OPTIONS  b) REF OPTIONS:
+BEGIN
+   options OF a:= options OF a OR options OF b;
+   a
+END;
+
+OP  - = (OPTIONS  a, b) OPTIONS:
+BEGIN
+   OPTIONS  ans:= a;
+   options OF ans:= options OF ans AND NOT options OF b;
+   ans
+END;
+
+OP  MINUSAB = (REF OPTIONS  a,  OPTIONS  b) REF OPTIONS:
+BEGIN
+   options OF a:= options OF a AND NOT options OF b;
+   a
+END;
+
+
+OP  =  = (OPTIONS  a, b) BOOL:  options OF a = options OF b;
+OP /=  = (OPTIONS  a, b) BOOL:  options OF a /= options OF b;
+
+
+{ Operators for use within the transform procedure for determining
+  whether a particular option has been requested or not. }
+
+OP  INCLUDES = (OPTIONS  options, option) BOOL:
+   (options OF options AND options OF option) /= 16r0;
+
+OP  INCLUDES = (OPTIONS  options, INT  nth) BOOL:
+   (options OF options AND (16r1 SHL (nth - 1))) /= 16r0;
+
+OP  EXCLUDES = (OPTIONS  options, option) BOOL:
+   (options OF options AND options OF option) = 16r0;
+
+OP  EXCLUDES = (OPTIONS  options, INT  nth) BOOL:
+   (options OF options AND (16r1 SHL (nth - 1))) = 16r0;
+
+{ An operator for constructing an option - it is expected that options are
+  numbered from one. }
+
+OP  MAKEOPTIONS = (INT  nth) OPTIONS:
+BEGIN
+   OPTIONS  ans;
+   options OF ans:= 16r1 SHL (nth - 1);
+   ans
+END;
+
+{ Default parameter when no options are required. }
+
+OPTIONS  null_options = (OPTIONS  ans;  options OF ans:= 16r0;  ans)
+
+KEEP  OPTIONS,  + (OPTIONS, OPTIONS),  PLUSAB (REF OPTIONS, OPTIONS),
+      - (OPTIONS, OPTIONS),  MINUSAB (REF OPTIONS, OPTIONS),
+      = (OPTIONS, OPTIONS),  /= (OPTIONS, OPTIONS),
+      INCLUDES (OPTIONS, OPTIONS),  INCLUDES (OPTIONS, INT),
+      EXCLUDES (OPTIONS, OPTIONS),  EXCLUDES (OPTIONS, INT),
+      MAKEOPTIONS (INT),  null_options
+FINISH

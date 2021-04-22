@@ -1,0 +1,18 @@
+PROGRAM client2 CONTEXT VOID
+USE standard
+BEGIN
+
+FILE f;
+
+IF INT r=establish(f,"127.0.0.1",client socket channel,af inet,9734,0);
+   r/=0
+THEN put(stand error,("client2: ",error text(r),newline));  exit(r)
+FI;
+
+CHAR ch:="A";  print(("putting '",ch,"'",newline)); put(f,ch);  flush buffer(f); get(f,ch);
+
+print(("char from server = ",ch,newline));
+close(f)
+
+END
+FINISH

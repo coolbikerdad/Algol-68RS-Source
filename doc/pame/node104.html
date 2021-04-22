@@ -1,0 +1,136 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Orthogonality</title>
+<meta name="description" content="orthogonality">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node105.html">
+<link rel="previous" href="node103.html">
+<link rel="up" href="node92.html">
+<link rel="next" href="node105.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2393"
+  href="node105.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2387"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2381"
+  href="node103.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2389"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2391"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2394"
+  href="node105.html">Summary</a>
+<b> Up:</b> <a name="tex2html2388"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2382"
+  href="node103.html">Flexible names</a>
+ &nbsp; <b>  <a name="tex2html2390"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2392"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section0012120000000000000000"></a><a name="gram-orth"></a>
+Orthogonality</h1>
+
+<p>We<a name="6923"></a> have come a long way and introduced many new
+ideas, yet all these ideas are based on the primitive
+concepts<a name="6924"></a> of value<a name="6925"></a>,
+mode<a name="6926"></a>, context<a name="6927"></a>,
+coercion<a name="6928"></a> and phrase<a name="6929"></a>.  These
+concepts are independent of each other, but their combination provides
+Algol&nbsp;68 with a flexibility<a name="6930"></a> that few
+programming languages possess.  For example, if a value of mode
+<code>INT</code> is required, such as in a trimmer or the bounds of
+the declaration of a multiple, then any unit which will yield an
+integer in that context will suffice.  The consequence is that
+Algol&nbsp;68 programs can be written in a wide variety of styles.
+Here is a simple example: given the problem of printing the sum of two
+numbers read from the keyboard, it could be programmed in two
+completely different ways.  The conventional solution would be
+something like</p>
+
+<pre>
+   INT a,b;  read((a,b));
+   print((a+b,newline))
+</pre>
+
+<p>but an equally valid solution is</p>
+
+<pre>
+   print(((INT a,b;
+           read((a,b));
+           a+b),newline))
+</pre>
+
+<p>Provided that what you write is legal Algol&nbsp;68, you can adopt
+any approach you please. Orthogonality refers to the independence of
+the basic concepts in that you can combine them without
+side-effects.</p>
+
+<p>Another consequence of that independence is that there are very few
+exceptions to the rules of the language.  This makes the language much
+easier to learn.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2393"
+  href="node105.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2387"
+  href="node92.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2381"
+  href="node103.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2389"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2391"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2394"
+  href="node105.html">Summary</a>
+<b> Up:</b> <a name="tex2html2388"
+  href="node92.html">Units</a>
+<b> Previous:</b> <a name="tex2html2382"
+  href="node103.html">Flexible names</a>
+ &nbsp; <b>  <a name="tex2html2390"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2392"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

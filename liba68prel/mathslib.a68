@@ -1,0 +1,58 @@
+DECS  mathslib  CONTEXT VOID:
+
+configinfo A68CONFIG "$Id: mathslib.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1994
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+05:12:94  33.001  ELLA   CmplxNos   Standard ALGOL68 maths library. 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+
+PROC (REAL) REAL  sqrt   = ALIEN "sqrt" "#include <math.h>",
+                  exp    = ALIEN "exp"  "#include <math.h>",
+                  ln     = ALIEN "log"  "#include <math.h>",
+                  cos    = ALIEN "cos"  "#include <math.h>",
+                  sin    = ALIEN "sin"  "#include <math.h>",
+                  tan    = ALIEN "tan"  "#include <math.h>",
+                  arccos = ALIEN "acos" "#include <math.h>",
+                  arcsin = ALIEN "asin" "#include <math.h>",
+                  arctan = ALIEN "atan" "#include <math.h>";
+
+REAL  hp;  A68INIT PROC VOID (VOID:  hp:= 2.0 * arctan(1.0));
+
+REAL  halfpi = hp,  pi = 2.0 * halfpi,  twopi = 2.0 * pi
+
+KEEP  sqrt,  exp,  ln,  cos,  sin,  tan,  arccos,  arcsin,  arctan,
+      halfpi,  pi,  twopi
+FINISH

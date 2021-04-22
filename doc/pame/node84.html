@@ -1,0 +1,368 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Events</title>
+<meta name="description" content="events">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node85.html">
+<link rel="previous" href="node83.html">
+<link rel="up" href="node79.html">
+<link rel="next" href="node85.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2059"
+  href="node85.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2053"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2047"
+  href="node83.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2055"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2057"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2060"
+  href="node85.html">The command line</a>
+<b> Up:</b> <a name="tex2html2054"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2048"
+  href="node83.html">String terminators</a>
+ &nbsp; <b>  <a name="tex2html2056"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2058"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2061"
+  href="node84.html#section001151000000000000000">Logical file end</a>
+<li><a name="tex2html2062"
+  href="node84.html#section001152000000000000000">Physical file end</a>
+<li><a name="tex2html2063"
+  href="node84.html#section001153000000000000000">Value error</a>
+<li><a name="tex2html2064"
+  href="node84.html#section001154000000000000000">Char error</a>
+<li><a name="tex2html2065"
+  href="node84.html#section001155000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001150000000000000000"></a><a name="trans-event"></a>
+Events</h1>
+
+<p>Algol 68 transput is characterised by its use of events. In the
+limited transput supplied with the a68toc<a name="5672"></a> compiler,
+only four kinds of events are detected. These are:</p>
+
+<ol>
+<li>The end of the file when reading. This is called the
+&ldquo;logical file end<a name="5674"></a>&rdquo;.
+</li>
+<li>The end of the file when writing. This is called the
+&ldquo;physical file end<a name="5675"></a>&rdquo;.
+</li>
+<li>A value error.
+</li>
+<li>A character error.
+</li>
+</ol>
+
+<p>The default action when an event occurs depends on the event.
+However, the default action can be replaced by a programmer-defined
+action using one of the &ldquo;on&rdquo;-procedures.</p>
+
+<p>
+
+<h2><a name="section001151000000000000000"></a><a name="trans-logi"></a>
+Logical file end</h2>
+
+<p>When the logical end of a file has been detected, the default
+action is to terminate the program immediately. All open files will be
+closed by the operating system, but any buffered output files will
+lose any data in the buffer. A programmer-supplied action must be a
+procedure with the header</p>
+
+<pre>
+   (REF FILE f)BOOL:
+</pre>
+
+<p>The yield should be <code>TRUE</code> if some action has been taken to
+remedy the end of the file, in which case transput is re-attempted,
+or <code>FALSE</code>, when the default action will be taken.</p>
+
+<p>The procedure <code>on logical file end</code> has the header</p>
+
+<pre>
+   PROC on logical file end=
+      (REF FILE f,
+       PROC(REF FILE)BOOL p)VOID:
+</pre>
+
+<p>and an example will help explain its use. Here is a program which
+will display the contents of its text input file and print a message
+at its end.</p>
+
+<pre>
+   PROGRAM readfile CONTEXT VOID
+   USE standard
+   IF FILE inf; []CHAR infn="textbook";
+      open(inf,infn,stand in channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot open ",
+           infn,newline));
+      exit(1)
+   ELSE
+      on logical file end(inf,
+         (REF FILE f)BOOL:
+            (write(("End of ",
+                    idf(f),
+                    " read",newline));
+             close(f);  FALSE));
+      STRING line;
+      DO
+         get(inf,(line,newline));
+         write((line,newline))
+      OD
+   FI
+   FINISH
+</pre>
+
+<p>The anonymous procedure provided as the second parameter to
+<code>on logical file end</code> prints an informative message and
+closes the book before yielding <code>FALSE</code>. Since in this case
+all we want is for the program to end when the input has been read,
+the default action is fine. Notice also that the <code>DO</code> loop
+simply repeats the reading of a line until the <code>logical file
+end</code> procedure is called. The procedure <code>idf</code> is
+described in section <a href="node90.html#trans-other">9.11</a>.</p>
+
+<p>You should be careful if you do any transput on the parameter
+<code>f</code> in the anonymous routine otherwise you could get an
+infinite loop (a loop which never ends). Also, because the <code>on
+logical file end</code> procedure assigns its procedure parameter to
+its <code>REF FILE</code> parameter, you should be wary of using
+<code>on logical file end</code> in limited ranges. The way out of
+this problem is to make a local copy of the <code>REF FILE</code>
+parameter as in:</p>
+
+<pre>
+   BEGIN
+      FILE loc f:=stand in;
+      on logical file end(
+           f,(REF FILE f)BOOL: ...);
+        ...
+   END
+</pre>
+
+<p>Any piece of program which will yield an object of mode
+<code>PROC(REF FILE)BOOL</code> in a strong context is suitable as the
+second parameter of <code>on logical file end</code>.</p>
+
+<p>If you want to reset the action to the default action, use the
+phrase</p>
+
+<pre>
+   on logical file end(f,no file end)
+</pre>
+
+<h2><a name="section001152000000000000000"></a><a name="trans-phys"></a>
+Physical file end</h2>
+
+<p>The physical end of a file is met on writing if, for example, the
+disk is full. It can also occur when using the <code>mem
+channel</code> (see section
+<a href="node89.html#trans-intern">9.10</a>). The default action
+closes all open files (but the buffers of buffered files will not be
+flushed to disk) and terminates the program with an exit value of
+255.</p>
+
+<p>A replacement procedure should have the mode</p>
+
+<pre>
+   PROC(REF FILE)BOOL
+</pre>
+
+<p>and it should yield <code>TRUE</code> if the event has been
+remedied in some way, in which case transput will be re-attempted, and
+<code>FALSE</code> otherwise (when the default action will be
+elaborated).</p>
+
+<p>The default procedure can be replaced with a procedure defined by
+the programmer using the procedure <tt>on physical file end</tt> which
+has the header:</p>
+
+<pre>
+   PROC on physical file end =
+      (REF FILE f,
+       PROC(REF FILE)BOOL p)VOID:
+</pre>
+<p>
+
+<h2><a name="section001153000000000000000"></a><a name="trans-val"></a>
+Value error</h2>
+
+<p>This event is caused by the following circumstances:-</p>
+
+<ol>
+<li>If an integer is expected, then the value read exceeds
+<code>max int</code>.
+</li>
+<li>If a real number is expected, then the value read exceeds
+<code>max real</code>.
+</li>
+<li>If a complex number is expected, then the value read for either
+the real part or the imaginary part exceeds <code>max real</code>.
+</li>
+</ol>
+
+<p>The procedure <code>on value error</code> lets the programmer
+provide a programmer-defined procedure whose header must be</p>
+
+<pre>
+   (REF FILE f)BOOL:
+</pre>
+
+<p>although any identifier could replace the <code>f</code>. Transput
+on the file <code>f</code> within the procedure should be avoided (but
+see <code>backspace</code> below), but any other transput is
+allowable, but try to ensure that a value error won't occur!</p>
+
+<p>If the programmer-supplied routine yields <code>TRUE</code>,
+transput continues, otherwise an error message is issued to
+<code>stand error</code> and the program aborted with an
+exit value of <code>247</code>.</p>
+
+<h2><a name="section001154000000000000000"></a><a name="trans-char"></a>
+Char error</h2>
+
+<p>This event can occur when reading a number if the number is
+entirely absent so that the first character is neither a sign nor a
+digit. In this case a default procedure is called having the
+header</p>
+
+<pre>
+   (REF FILE f,REF CHAR c)BOOL:
+</pre>
+
+<p>The default procedure can be replaced with a programmer-defned
+procedure using the procedure <code>on char error</code>.</p>
+
+<p>The char error procedure is called with the <code>c</code>
+referring to a suggested value for the next character. The replacement
+character must be a member of a particular set of characters. The
+default value is <code>0</code>. If the procedure returns
+<code>FALSE</code> the default suggested character will be used,
+otherwise the value referred to by <code>c</code> will be used. Thus
+the programmer-supplied procedure can not only change the default
+suggested character, but can also perform such other actions as are
+deemed necessary (such as logging the error).</p>
+
+<p> The event can also occur when reading the digits before a possible
+<code>"."</code> for real numbers and the digits after the
+<code>"."</code>. For complex numbers, after the real part, an
+<code>i</code> or <code>I</code> is expected and its non-appearance
+will cause the <code>char error</code> procedure to be executed. The
+default suggestion is <code>i</code>, but can be replaced by another
+character and optional actions.</p>
+
+<p>For a <code>BITS</code><a name="tex2html30"
+href="footnode.html#foot6004"><sup><span
+class="arabic">10</span>.<span class="arabic">3</span></sup></a>
+value, whenever a character which is neither <code>flip</code> nor
+<code>flop</code> is met, the <code>char error</code> procedure is
+called with <code>flop</code> as the suggested value. Thus the
+available suggested character sets are:-</p>
+
+<ol>
+<li>For digits: <span class="math">0...9</span>
+</li>
+<li>For exponent: <code>e E</code>
+<span class="math">&#92;</span>
+</li>
+<li>For plus i times: <code>i I</code>
+</li>
+<li>For flip or flop: <code>FT</code> (uppercase only) respectively
+</li>
+</ol>
+
+<hr>
+<h2><a name="section001155000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>9.7<a name="ex-ix-vii"></a>
+<dd>Write a program whose input book has the identification
+<code>inbook</code> and which contains lines of differing length. Use
+<code>on logical file end</code> to specify a procedure which establishes
+the output book <code>outbook</code>, writes the average length and closes
+it and then yields <code>FALSE</code>.  Ans<a href="node143.html#ans-ix-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2059"
+  href="node85.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2053"
+  href="node79.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2047"
+  href="node83.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2055"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2057"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2060"
+  href="node85.html">The command line</a>
+<b> Up:</b> <a name="tex2html2054"
+  href="node79.html">Transput</a>
+<b> Previous:</b> <a name="tex2html2048"
+  href="node83.html">String terminators</a>
+ &nbsp; <b>  <a name="tex2html2056"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2058"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

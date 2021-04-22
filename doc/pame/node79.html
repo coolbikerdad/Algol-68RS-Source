@@ -1,0 +1,174 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Transput</title>
+<meta name="description" content="transput">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node92.html">
+<link rel="previous" href="node74.html">
+<link rel="up" href="pame.html">
+<link rel="next" href="node80.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1960"
+  href="node80.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1954"
+  href="pame.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1948"
+  href="node78.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1956"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1958"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1961"
+  href="node80.html">Books, channels and files</a>
+<b> Up:</b> <a name="tex2html1955"
+  href="pame.html">pame</a>
+<b> Previous:</b> <a name="tex2html1949"
+  href="node78.html">Summary</a>
+ &nbsp; <b>  <a name="tex2html1957"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1959"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001100000000000000000"></a><a name="chapix"></a>
+Transput</h1>
+
+<p>At various points you have been reading external values from the
+keyboard and displaying internal values on the screen. This chapter
+addresses the means whereby an Algol&nbsp;68 program can obtain
+external values from other sources and send internal values to places
+other than the screen.  <b>straightening</b> is the only new language
+construct involved and all the matters discussed are available in the
+standard prelude<a name="5505"></a>.</p>
+
+<p>Algol 68 transput gives the first taste of &ldquo;event-driven
+programming<a name="5506"></a>&rdquo;.  In effect, all programs are
+event-driven, but simple programs are driven only by the originating
+event: that is, the initiation of the program.  In other words, simple
+programs, once started, run to completion, unless, of course, they
+contain errors. Event-driven programs, however, are dependent on the
+occurrence of events which are outwith the control of the program. We
+shall be examining later the kinds of event which can affect your
+programs if they read or write data.</p>
+
+<hr>
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1962"
+  href="node80.html">Books, channels and files</a>
+<li><a name="tex2html1963"
+  href="node81.html">Reading books</a>
+<ul>
+<li><a name="tex2html1964"
+  href="node81.html#section001121000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1965"
+  href="node82.html">Writing to books</a>
+<ul>
+<li><a name="tex2html1966"
+  href="node82.html#section001131000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1967"
+  href="node83.html">String terminators</a>
+<ul>
+<li><a name="tex2html1968"
+  href="node83.html#section001141000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1969"
+  href="node84.html">Events</a>
+<ul>
+<li><a name="tex2html1970"
+  href="node84.html#section001151000000000000000">Logical file end</a>
+<li><a name="tex2html1971"
+  href="node84.html#section001152000000000000000">Physical file end</a>
+<li><a name="tex2html1972"
+  href="node84.html#section001153000000000000000">Value error</a>
+<li><a name="tex2html1973"
+  href="node84.html#section001154000000000000000">Char error</a>
+<li><a name="tex2html1974"
+  href="node84.html#section001155000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1975"
+  href="node85.html">The command line</a>
+<ul>
+<li><a name="tex2html1976"
+  href="node85.html#section001161000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1977"
+  href="node86.html">Environment strings</a>
+<ul>
+<li><a name="tex2html1978"
+  href="node86.html#section001171000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1979"
+  href="node87.html">Writing reports</a>
+<ul>
+<li><a name="tex2html1980"
+  href="node87.html#section001181000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1981"
+  href="node88.html">Binary books</a>
+<ul>
+<li><a name="tex2html1982"
+  href="node88.html#section001191000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1983"
+  href="node89.html">Internal books</a>
+<li><a name="tex2html1984"
+  href="node90.html">Other transput procedures</a>
+<ul>
+<li><a name="tex2html1985"
+  href="node90.html#section0011111000000000000000">Exercises</a>
+</ul>
+<br>
+<li><a name="tex2html1986"
+  href="node91.html">Summary</a>
+<ul>
+<li><a name="tex2html1987"
+  href="node91.html#section0011121000000000000000">Exercises</a>
+</ul></ul>
+<!--end of table of child-links-->
+<br><hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

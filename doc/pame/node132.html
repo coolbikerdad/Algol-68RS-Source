@@ -1,0 +1,1333 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Transput</title>
+<meta name="description" content="transput">
+<meta name="keywords" content="pame,algol68,standard prelude">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="author" content="sian mountbatten">
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node133.html">
+<link rel="previous" href="node131.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node133.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2969"
+  href="node133.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a>
+
+<a name="tex2html2963"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a>
+
+<a name="tex2html2957"
+  href="node131.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a>
+
+<a name="tex2html2965"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a>
+
+<a name="tex2html2967"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a>
+
+<br>
+<b> Next:</b> <a name="tex2html2970"
+  href="node133.html">Summary</a>
+<b> Up:</b> <a name="tex2html2964"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2958"
+  href="node131.html">Control routines</a>
+ &nbsp; <b>  <a name="tex2html2966"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2968"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2971"
+  href="node132.html#section001571000000000000000">Transput modes</a>
+<li><a name="tex2html2972"
+  href="node132.html#section001572000000000000000">Standard channels</a>
+<li><a name="tex2html2973"
+  href="node132.html#section001573000000000000000">Standard files</a>
+<li><a name="tex2html2974"
+  href="node132.html#section001574000000000000000">Opening files</a>
+<li><a name="tex2html2975"
+  href="node132.html#section001575000000000000000">Closing files</a>
+<li><a name="tex2html2976"
+  href="node132.html#section001576000000000000000">Transput routines</a>
+<ul>
+<li><a name="tex2html2977"
+  href="node132.html#section001576100000000000000">Straightening</a>
+<li><a name="tex2html2978"
+  href="node132.html#section001576200000000000000">Formatless transput</a>
+<li><a name="tex2html2979"
+  href="node132.html#section001576300000000000000">Binary transput</a>
+<li><a name="tex2html2980"
+  href="node132.html#section001576400000000000000">Other procedures</a>
+</ul>
+<br>
+<li><a name="tex2html2981"
+  href="node132.html#section001577000000000000000">Interrogating files</a>
+<li><a name="tex2html2982"
+  href="node132.html#section001578000000000000000">File properties</a>
+<li><a name="tex2html2983"
+  href="node132.html#section001579000000000000000">Event routines</a>
+<li><a name="tex2html2984"
+  href="node132.html#section0015710000000000000000">Conversion routines</a>
+<li><a name="tex2html2985"
+  href="node132.html#section0015711000000000000000">Layout routines</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001570000000000000000"></a><a name="stan-trans"></a>
+Transput</h1>
+
+<p>If you are unclear about the working of Algol&nbsp;68 transput, consult
+chapter&nbsp;9. The function of this section is to document all the transput
+declarations so that you can use it as a reference manual.</p>
+
+<p>The declarations will be covered in the following order:-</p>
+
+<ol>
+<li>Modes</li>
+<li>Standard channels</li>
+<li>Standard files</li>
+<li>Opening files</li>
+<li>Closing files</li>
+<li>Transput routines</li>
+<li>Interrogating files</li>
+<li>File properties</li>
+<li>Event routines</li>
+<li>Conversion routines</li>
+<li>Layout routines</li>
+</ol>
+
+<p>In the sequel, transput errors are mentioned using identifiers whose
+values appear in the following table:-</p>
+
+<table align="center" border="1">
+<tr><th>Identifiers for transput errors</th></tr>
+<tr><td><tt>physical file end not mended</tt><a name="11208"></a></td><td>255</td></tr>
+<tr><td><tt>logical file end not mended</tt><a name="11209"></a></td><td>254</td></tr>
+<tr><td><tt>stand in redirected</tt><a name="11210"></a></td><td>253</td></tr>
+<tr><td><tt>environment string unset</tt><a name="11211"></a></td><td>252</td></tr>
+<tr><td><tt>environment string estab err</tt><a name="11212"></a></td><td>251</td></tr>
+<tr><td><tt>estab invalid parameters</tt><a name="11213"></a></td><td>250</td></tr>
+<tr><td><tt>open invalid parameters</tt><a name="11214"></a></td><td>249</td></tr>
+<tr><td><tt>no program args</tt><a name="11215"></a></td><td>248</td></tr>
+<tr><td><tt>value error not mended</tt><a name="11216"></a></td><td>247</td></tr>
+</table>
+
+<h2><a name="section001571000000000000000"></a><a name="stan-trmodes">
+Transput modes</a></h2>
+
+<p>Only five modes are available:-</p>
+<dl>
+<dt><strong><tt>FILE</tt><a name="11217"></a></strong></dt>
+<dd>A structure containing details of a a book
+accessed by the program.</dd>
+<dt><strong><tt>CHANNEL</tt><a name="11218"></a></strong></dt>
+<dd>A structure containing procedures for
+accessing books.</dd>
+<dt><strong><tt>SIMPLIN</tt><a name="11219"></a></strong></dt>
+<dd>A union of names of all plain modes, rows of
+plain modes, structures of plain modes and their combinations.</dd>
+<dt><strong><tt>SIMPLOUT</tt><a name="11220"></a></strong></dt>
+<dd>A union of all plain modes, rows of plain
+modes, structures of plain modes and their combinations.</dd>
+<dt><strong><tt>BUFFER</tt><a name="11221"></a></strong></dt>
+<dd>A synonym for <tt>RVC</tt><a name="11222"></a>. It is used as the
+yield of the procedure <tt>file buffer</tt><a name="11223"></a> (see section
+<a href="#stan-trinterr">13.7.7</a>).</dd>
+</dl>
+<p>The mode <code>NUMBER</code> is used as a parameter of the
+procedures <code>whole</code>, <code>fixed</code> and
+<code>float</code>, but because it is the union of all number modes,
+it is unnecessary to specify it and so has not been made available for
+general use.</p>
+
+<h2><a name="section001572000000000000000"></a><a name="stan-trchan"></a>
+Standard channels</h2>
+
+<p>For each channel in this section, the general properties are first
+given, followed by a table giving the properties of books opened on the
+channel and then a list of specific properties for the following
+procedures where applicable:-</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><td>establish</td></tr>
+<tr><td>open</td></tr>
+<tr><td>create</td></tr>
+<tr><td>close</td></tr>
+<tr><td>lock</td></tr>
+<tr><td>scratch</td></tr>
+<tr><td>set</td></tr>
+<tr><td>logical end</td></tr>
+<tr><td>reidf</td></tr>
+</table>
+</div>
+
+<ol>
+<li><tt>CHANNEL stand in channel</tt><a name="11224"></a>
+<br>
+<tt>CHANNEL stand out channel</tt><a name="11225"></a>
+<br>
+<tt>CHANNEL stand back channel</tt><a name="11226"></a>
+<br>
+These three channels have similar properties because they use the
+same access procedures. The standard buffered input channel is
+<code>stand in channel</code>. Books on this channel have the following
+properties:-
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>stand in channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE</tt></td>
+<tr><td>put possible</td><td><tt>FALSE</tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+
+</div>
+and are available as the <tt>stand in
+book</tt><a name="11227"></a>.</li>
+</ol>
+
+<p>The <code>stand out channel</code> is the standard buffered output channel.
+Books on this channel have the following properties:-</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>stand out channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>put possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>get possible</td><td><tt>FALSE</tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+
+<p>and are available as the <tt>stand out
+   book</tt><a name="11228"></a>.</p>
+
+<p>The <code>stand back channel</code> is the standard buffered input/output
+channel. Books on this channel have the following properties:-</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>stand back channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>put possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>reidf possible</td><td><tt>TRUE</tt></td></tr>
+</table>
+</div>
+<p>and are available as the <tt>stand back
+   book</tt><a name="11229"></a>.</p>
+
+<p>The channels have the following properties:-</p>
+<dl>
+<dt><strong><tt>establish</tt><a name="11230"></a></strong></dt>
+<dd>You must have write access to the file. If it already
+exists, it will be truncated to zero length. The default mode is
+<code>8r644</code>. If the file cannot be established, the routine will return
+the value <code>errno</code> (the system error name) refers to.
+</dd>
+<dt><strong><tt>open</tt><a name="11231"></a></strong></dt>
+<dd>the file will be opened with a default mode of <code>8r444</code>.
+If the file cannot be opened, the routine will return the value
+<code>errno</code> refers to.
+</dd>
+<dt><strong><tt>create</tt><a name="11232"></a></strong></dt>
+<dd>A zero length file with a unique identification will be
+created using the default mode of <code>8r644</code>.
+</dd>
+<dt><strong><tt>close</tt><a name="11233"></a></strong></dt>
+<dd>The file will be closed. For the
+<tt>stand out channel</tt><a name="11234"></a> and the <tt>stand back channel</tt><a
+name="11235"></a>, the buffer will be flushed.
+</dd>
+<dt><strong><tt>lock</tt><a name="11236"></a></strong></dt>
+<dd>The file will be closed and then all permissions will be
+removed from the file provided you have write access to the directory
+containing the file.</dd>
+<dt><strong><tt>scratch</tt><a name="11237"></a></strong></dt>
+<dd>The file will be closed and then unlinked.</dd>
+<dt><strong><tt>set</tt><a name="11238"></a></strong></dt>
+<dd>The current position will be set to any legal position in
+the book (non-negative positions only). If the position is set beyond
+the current logical end, a sparse file will be created.</dd>
+<dt><strong><tt>logical end</tt><a name="11239"></a></strong></dt>
+<dd>The position will be set to just beyond the last
+byte in the file.</dd>
+<dt><strong><tt>reidf</tt><a name="11240"></a></strong></dt>
+<dd>For the <tt>stand back channel</tt><a name="11241"></a> only. When
+the file is closed, it will be renamed. If the rename fails (an
+already existing file with that name, for example), an error message
+will be output on the <tt>stand error</tt><a name="11242"></a> file giving
+a description of the error and identifying the file.</dd>
+</dl></li>
+<li><tt>CHANNEL arg channel</tt><a name="11243"></a>
+<br>
+The <tt>arg channel</tt><a name="11244"></a> gives access to the
+program arguments including the actual call of the program which
+precedes the program arguments. Arguments are separated by a single
+space. A name of mode <code>REF FILE</code> opened with this channel
+has <tt>blank</tt><a name="11245"></a> as the string terminator. The
+arguments, as a book, have the following properties:-
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>arg channel</td></tr>
+<tr><td>bin possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>put possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+The channel has the following properties:-
+<dl>
+<dt><strong><tt>establish</tt><a name="11247"></a></strong></dt>
+<dd>Same as <code>open</code>.</dd>
+<dt><strong><tt>open</tt><a name="11248"></a></strong></dt>
+<dd>The program arguments will be made available. If the
+arguments are unavailable, the routine will return
+<code>no program args</code>.</dd>
+<dt><strong><tt>create</tt><a name="11249"></a></strong></dt>
+<dd>Same as <code>open</code>.</dd>
+<dt><strong><tt>close</tt><a name="11250"></a></strong></dt>
+<dd>No action.</dd>
+<dt><strong><tt>lock</tt><a name="11251"></a></strong></dt>
+<dd>No action.</dd>
+<dt><strong><tt>scratch</tt><a name="11252"></a></strong></dt>
+<dd>No action.</dd>
+<dt><strong><tt>set</tt><a name="11253"></a></strong></dt>
+<dd>Provided that the required position lies between the
+beginning and the end of the arguments, the position will be set
+accordingly.</dd>
+<dt><strong><tt>logical end</tt><a name="11254"></a></strong></dt>
+<dd>The position will be set to just beyond the last
+character of the last argument.</dd>
+<dt><strong><tt>reidf</tt><a name="11255"></a></strong></dt>
+<dd>Inapplicable.</dd>
+</dl>
+The procedure <code>make term</code> can be used to set the string
+delimiter to any required value to facilitate searching for
+quote-delimited or otherwise delimited arguments.</li>
+<li><tt>CHANNEL env channel</tt><a name="11256"></a><br>
+The <tt>env channel</tt><a name="11257"></a> gives read-only access to
+environment strings (which Linux documentation calls "environment
+variables"). The environment string, as a book, has the following
+properties:-
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>env channel</th></tr>
+<tr><td>bin possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>put possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+The channel has the following properties:-
+<dl>
+<dt><strong><tt>establish</tt><a name="11259"></a></strong></dt>
+<dd>Yields an error of value<br>
+<tt>environment string estab err</tt><a name="11260"></a>.</dd>
+<dt><strong><tt>open</tt><a name="11261"></a></strong></dt>
+<dd>If the environment string is the null string or
+is unset, <code>open</code> yields an error of value<br>
+<tt>environment string unset</tt><a name="11262"></a>.  Otherwise, the string
+is available as a book.</dd>
+<dt><strong><tt>create</tt><a name="11263"></a></strong></dt>
+<dd>Yields an error of value<br>
+<tt>environment string estab err</tt><a name="11264"></a>.</dd>
+<dt><strong><tt>close</tt><a name="11265"></a></strong></dt>
+<dd>No action.</dd>
+<dt><strong><tt>lock</tt><a name="11266"></a></strong></dt>
+<dd>The routine will attempt to remove all
+permissions from a file of the same identification as the environment
+string identification.</dd>
+<dt><strong><tt>scratch</tt><a name="11267"></a></strong></dt>
+<dd>The routine will attempt to unlink a file of
+the given identification.</dd>
+<dt><strong><tt>set</tt><a name="11268"></a></strong></dt>
+<dd>Provided that the required position lies between the
+beginning and the end of the string, the position will be set
+accordingly.</dd>
+<dt><strong><tt>logical end</tt><a name="11269"></a></strong></dt>
+<dd>The position will be set to just beyond the last character.</dd>
+<dt><strong><tt>reidf</tt><a name="11270"></a></strong></dt>
+<dd>Inapplicable.</dd>
+</dl>
+The default string terminator is <tt>nul ch</tt><a name="11271"></a>.
+You should set the string terminator using <tt>make term</tt>
+<a name="11272"></a>.</li>
+<li><tt>CHANNEL kbd channel</tt><a name="11273"></a>
+<br>
+The <tt>kbd channel</tt><a name="11274"></a> provides access to
+unechoed keystrokes (also referred to as "non-canonical input"). Be
+warned that if a file opened with this channel is not closed and the
+program ends prematurely, none of your keystrokes will be echoed! You
+can reset to canonical input using the command
+<pre>
+   stty sane
+</pre>
+
+The keyboard is made available as a book having the following
+properties:-
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>kbd channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>put possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>set possible</td><td><tt>FALSE </tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+
+The channel is usually used to access the characters input by control
+and function keys as well as normal keystrokes, so it is advisable to
+use <code>get bin</code> rather than <code>get</code>. The channel has the
+following properties:-
+<dl>
+<dt><strong><tt>establish</tt><a name="11276"></a></strong></dt>
+<dd>Same as <code>open</code>.</dd>
+<dt><strong><tt>open</tt><a name="11277"></a></strong></dt>
+<dd>You should use the null string <code>""</code> for the
+identification. The routine checks to see whether stand in has been
+redirected and yields the error <tt>stand in redirected</tt><a name="11278"></a>
+if so. Otherwise, the characteristics of <code>stand
+in</code> are changed to wait for a single character with no minimum
+waiting time and with no echo of the input.</dd>
+<dt><strong><tt>create</tt><a name="11279"></a></strong></dt>
+<dd>Same as <code>open</code>.</dd>
+<dt><strong><tt>close</tt><a name="11280"></a></strong></dt>
+<dd>The routine resets <tt>stand in</tt><a name="11281"></a> to the
+condition it was in previously.</dd>
+<dt><strong><tt>lock</tt><a name="11282"></a></strong></dt>
+<dd>Same as <code>close</code>.</dd>
+<dt><strong><tt>scratch</tt><a name="11283"></a></strong></dt>
+<dd>Same as <code>close</code>.</dd>
+<dt><strong><tt>set</tt><a name="11284"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>logical end</tt><a name="11285"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>reidf</tt><a name="11286"></a></strong></dt>
+<dd>Inapplicable.</dd>
+</dl></li>
+<li><tt>CHANNEL mem channel</tt><a name="11287"></a><a name="stan-memch"></a>
+<br>
+The <tt>mem channel</tt><a name="11288"></a> provides a memory buffer with
+access to all transput
+facilities. It is similar to the standard Algol&nbsp;68 <code>associate</code>
+except that binary transput is also allowed. The buffer behaves as a
+book with the following properties:-
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>mem channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>put possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>set possible</td><td><tt>TRUE </tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+The channel has the following properties:-
+<dl>
+<dt><strong><tt>establish</tt><a name="11290"></a></strong></dt>
+<dd>If the values of <code>p</code> and <code>l</code> are both
+<code>1</code> and the value of <code>c</code> is a positive integer then
+<code>c</code> is taken to be the size of the buffer. Otherwise, the
+routine yields <tt>estab invalid parameters</tt><a name="11291"></a>
+as error value. The identification should be <code>""</code>.</dd>
+<dt><strong><tt>open</tt><a name="11292"></a></strong></dt>
+<dd>The routine should be called with an identification of mode
+<code>RVC</code> (see section <a href="node130.html#stan-rvc">2b</a>). The
+identification will be used as the memory buffer.</dd>
+<dt><strong><tt>create</tt><a name="11293"></a></strong></dt>
+<dd>The value <tt>estab invalid parameters</tt><a name="11294"></a> will
+be returned.</dd>
+<dt><strong><tt>close</tt><a name="11295"></a></strong></dt>
+<dd>No action.</dd>
+<dt><strong><tt>lock</tt><a name="11296"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>scratch</tt><a name="11297"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>set</tt><a name="11298"></a></strong></dt>
+<dd>Provided the position lies in or just beyond the end of the
+buffer, the position will be set.</dd>
+<dt><strong><tt>logical end</tt><a name="11299"></a></strong></dt>
+<dd>The position will be set to just beyond the end of
+the buffer.</dd>
+<dt><strong><tt>reidf</tt><a name="11300"></a></strong></dt>
+<dd>Inapplicable.</dd>
+</dl>
+The channel can be used to access individual characters of integers and
+reals. <tt>make term</tt><a name="11301"></a> can also be used.</li>
+<li><tt>CHANNEL client socket channel</tt><a name="11302"></a>
+<br>
+<a name="stan-sockch"></a><tt>CHANNEL server socket channel</tt><a name="11303"></a>
+<br>
+These channels provide UNIX- or Internet-type sockets in the form
+of standard Algol&nbsp;68 files.
+Sockets behave as books with the following properties:-
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><th align="center" colspan=2>client/server socket channel</th></tr>
+<tr><td>bin possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>put possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>get possible</td><td><tt>TRUE</tt></td></tr>
+<tr><td>set possible</td><td><tt>FALSE</tt></td></tr>
+<tr><td>reidf possible</td><td><tt>FALSE</tt></td></tr>
+</table>
+</div>
+The channels have the following properties:-
+<dl>
+<dt><strong><tt>establish</tt><a name="11305"></a></strong></dt>
+<dd>The <code>p</code> should be the family of socket (either
+<tt>af unix</tt><a name="11306"></a> or <tt>af inet</tt><a name="11307"></a>).
+If the latter, the <code>l</code> should
+be the port. The <code>c</code> should be the MTU (maximum transport unit).
+This governs the size of the buffer associated with the socket. No
+checks are performed on its value. If <code>p</code> is neither <code>af
+unix</code> nor <code>af inet</code>, the routine returns
+<tt>estab invalid parameters</tt><a name="11308"></a>
+as error value. The server socket should be established before the
+client socket.</dd>
+<dt><strong><tt>open</tt><a name="11309"></a></strong></dt>
+<dd>Yields an error of <code>open invalid parameters</code> for both
+channels.</dd>
+<dt><strong><tt>create</tt><a name="11310"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>close</tt><a name="11311"></a></strong></dt>
+<dd>The buffer is flushed and the socket closed.</dd>
+<dt><strong><tt>lock</tt><a name="11312"></a></strong></dt>
+<dd>The buffer is flushed, the socket closed and then all
+access permissions removed (provided that write access is available to
+the directory containing the socket).</dd>
+<dt><strong><tt>scratch</tt><a name="11313"></a></strong></dt>
+<dd>The buffer is flushed, the socket closed and then
+unlinked.</dd>
+<dt><strong><tt>set</tt><a name="11314"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>logical end</tt><a name="11315"></a></strong></dt>
+<dd>Inapplicable.</dd>
+<dt><strong><tt>reidf</tt><a name="11316"></a></strong></dt>
+<dd>Inapplicable.</dd>
+</dl>
+An extra procedure <tt>accept</tt><a name="11317"></a>, which mirrors the
+C&nbsp;library procedure, has the following header
+<pre>
+   PROC accept = (REF FILE socket)REF FILE:
+</pre>
+and is used by the server to accept a <tt>client socket</tt><a name="11318"></a>,
+thereby yielding a <code>REF FILE</code> name which can be used to communicate with
+the client.
+
+The example programs <code>client1</code>, <code>server1</code>, <code>client2</code>
+and <code>server2</code> (whose source can be found in the <code>examples</code>
+directory) demonstrate simple use of sockets.</li>
+</ul>
+
+<h2><a name="section001573000000000000000"></a>
+<a name="stan-trfiles">Standard files</a></h2>
+<p>Four standard files are provided:-</p>
+<ol>
+<li><tt>REF FILE stand in</tt><a name="11319"></a>
+<br>
+This file corresponds to the C&nbsp;<code>stdin</code>. Books connected via
+<code>stand in</code> differ from those connected via the channel
+<tt>stand in channel</tt><a name="11320"></a>: <tt>set possible</tt><a name="11321"></a>
+returns <code>FALSE</code>. Thus
+this file must be regarded as a simple stream of bytes. When the
+<tt>kbd channel</tt><a name="11322"></a> is being used, <tt>stand in</tt><a
+name="11323"></a> is unavailable.</li>
+<li><tt>REF FILE stand out</tt><a name="11324"></a>
+<br>
+This file corresponds to the C&nbsp;<code>stdout</code>. Books connected
+via
+<code>stand out</code> differ from those connected via the channel
+<tt>stand out channel</tt><a name="11325"></a>:
+<a name="11326"><tt>set possible</tt></a>
+returns <code>FALSE</code>. Thus this file must be regarded as a
+simple stream of bytes.</li>
+<li><tt>REF FILE stand error</tt><a name="11327"></a>
+<br>
+This file corresponds to the C&nbsp;<code>stderr</code> and behaves like
+the file <code>stand out</code>.</li>
+<li><tt>REF FILE stand back</tt><a name="11328"></a>
+<br>
+This file accesses a workbook which is deleted on termination of the
+program. All kinds of transput are allowed on this file.</li>
+</ol>
+
+<h2><a name="section001574000000000000000"></a><a name="stan-tropen"></a>
+Opening files</h2>
+<p>Three procedures are available for opening files:-</p>
+<ol>
+<li><tt>PROC establish=</tt><a name="11329"></a>
+<br>
+      <code>   (REF FILE f,STRING idf,</code>
+<br>
+      <code>    CHANNEL chann,INT p,l,c)INT:</code>
+<br>
+In standard Algol&nbsp;68, this procedure creates a new file with <code>p</code>
+pages, each page containing <code>l</code> lines, each line containing
+<code>c</code> characters. In the QAD standard prelude, the
+<tt>mem channel</tt><a name="11330"></a> (see section <a href="#stan-memch">5</a>)
+takes notice of
+<code>p</code>, <code>l</code> and <code>c</code> and both <code>p</code>
+and <code>l</code> must
+be <code>1</code>. The socket channels (see section
+<a href="#stan-sockch">6</a>) use <code>p</code> for the socket family, <code>l</code>
+for
+the port if the family is <code>af inet</code> and <code>c</code> for the
+size of
+the MTU. For other channels, the values of <code>p</code>, <code>l</code>
+and
+<code>c</code> are ignored. The procedure yields zero on success, otherwise
+an integer denoting an error (see section <a href="#stan-trchan">13.7.2</a>).
+</li>
+<li><tt>PROC open=(REF FILE f,</tt><a name="11331"></a>
+<br>
+      <code>           UNION(CHAR,STRING,RVC) idf,</code>
+<br>
+      <code>           CHANNEL chann)INT</code>
+<br>
+In standard Algol&nbsp;68, the second parameter of this procedure has mode
+<code>STRING</code>. The above union ensures that an <tt>RVC</tt><a name="11332"></a>
+parameter can
+be used to open an existing memory buffer with the memory channel. This
+is particularly useful for performing transput on buffers obtained from
+C&nbsp;library routines. The procedure yields zero on success, otherwise
+an
+integer denoting an error (see section <a href="#stan-trchan">13.7.2</a>).
+</li>
+<li><code>PROC create=(REF FILE f,CHANNEL chann)INT:</code>
+<br>
+Creates a work file with a unique identification in the directory
+<code>/tmp</code> using the given channel.
+</li>
+</ol>
+
+<h2><a name="section001575000000000000000"></a><a name="stan-trclose"></a>
+Closing files</h2>
+<p>Three procedures are provided:-</p>
+<ol>
+<li><code>PROC close=(REF FILE f)VOID:</code>
+<br>
+This is the standard procedure for closing a file. It is standard
+practice to close every opened file. The procedure checks to see
+whether the file is open. If the <code>reidf</code> procedure has been
+called, after closing the file, the procedure renames the file to the
+identification given in the <code>reidf</code> field.
+</li>
+<li><code>PROC lock=(REF FILE f)VOID:</code>
+<br>
+The Algol&nbsp;68 Revised Report requires that the file be closed in such
+a
+manner that some system action is required before it can be reopened.
+In this case, the file is closed and then all access permissions
+removed. Before the file can be reopened, the user will have to use
+<code>chmod</code>.
+</li>
+<li><code>PROC scratch=(REF FILE f)VOID:</code>
+<br>
+The file is closed and then unlinked.
+</li>
+</ol>
+
+<h2><a name="section001576000000000000000"></a><a name="stan-trtran"></a>
+Transput routines</h2>
+
+<p>The procedures in this section are responsible for the transput of
+actual values. Firstly, formatless transput is covered and then binary
+transput. The a68toc<a name="10558"></a> compiler does not support formatted
+transput. In each section, the shorthand <code>L</code> is used for the
+various precisions of numbers and bits values.</p>
+
+<h3><a name="section001576100000000000000"></a><a name="stan-straight"></a>
+Straightening</h3>
+
+<p>The term <b>straightening</b><a name="10562"></a> is used in
+Algol&nbsp;68 to mean the process whereby a complex mode is separated
+into its constituent modes. For example, the mode</p>
+
+<pre>
+   MODE X=STRUCT(INT a,
+                 CHAR b,
+                 UNION(REAL,VOID) u)
+</pre>
+
+<p>would be straightened into values of the following modes:-</p>
+
+<ul>
+<li><code>INT</code></li>
+<li><code>CHAR</code></li>
+<li><code>UNION(REAL,VOID)</code></li>
+</ul>
+
+<p>The mode <code>REF[]X</code> would be straightened into a number of values
+each having the mode <code>REF X</code>, and then each such value would be
+further straightened into values having the modes</p>
+<ul>
+<li><code>REF INT</code></li>
+<li><code>REF CHAR</code></li>
+<li><code>REF UNION(REAL,VOID)</code></li>
+</ul>
+
+<p>However, a value of mode <code>COMPL</code> is not straightened into two
+values both of mode <code>REAL</code>. Instead, the real part is transput,
+then an <code>"I"</code> read or written followed by the imaginary part.</p>
+
+<h3><a name="section001576200000000000000"></a><a name="stan-fmtless"></a>
+Formatless transput</h3>
+
+<p>Formatless transput converts internal values into strings of
+characters or strings of characters into internal values.</p>
+
+<ol>
+<li><tt>PROC write=([]UNION(SIMPLOUT,</tt><a name="11333"></a>
+<br>
+<code>            PROC(REF FILE)VOID) x)VOID:</code>
+<br>
+This is equivalent to <code>put(stand out,x)</code> (synonym <tt>print</tt><a
+name="11334"></a>).
+</li>
+<li><tt>PROC put=(REF FILE f,</tt><a name="11335"></a>
+<br>
+<code>          []UNION(SIMPLOUT,</code>
+<br>
+<code>          PROC(REF FILE)VOID) x)VOID:</code>
+<br>
+The parameter <code>x</code> is straightened and the resulting values are
+output. Each plain mode is output as follows:-
+<dl>
+<dt><strong><tt>CHAR</tt></strong></dt>
+<dd>Output a character to the next logical position in the
+file. For <code>[]CHAR</code>, output all the characters on the current
+line.
+</dd>
+<dt><strong><tt>BOOL</tt></strong></dt>
+<dd>Output <code>flip</code> or <code>flop</code> for <code>TRUE</code> or
+<code>FALSE</code> respectively. For <code>[]BOOL</code>, output <code>flip</code>
+or
+<code>flop</code> for each <code>BOOL</code>.
+</dd>
+<dt><strong><tt>L BITS</tt></strong></dt>
+<dd>Output <code>flip</code> for each bit equal to one and
+<code>flop</code> for each bit equal to zero. <code>l bits width</code>
+characters are output in all. No newline or newpage is output. For
+<code>[]L BITS</code>, each <code>BITS</code> value is output as above with
+no
+intervening spaces.
+</dd>
+<dt><strong><tt>L INT</tt></strong></dt>
+<dd>Output a space character if the logical position is not
+at the start of a line. Then output the integer using the call
+<pre>
+   whole(i,1+l int width)
+</pre>
+
+which will right-justify the integer in
+<pre>
+   1+l int width
+</pre>
+
+positions with a preceding sign. For <code>[]L INT</code>, each integer is
+output as described above, preceded by a space if it is not at the
+beginning of the line. No newlines or newpages are output.
+</dd>
+<dt><strong><tt>L REAL</tt></strong></dt>
+<dd>A space is output if the logical position is not at the
+start of a line and then the number is output space-filled
+right-justified in
+<pre>
+   l real width+l exp width+3
+</pre>
+
+positions in floating-point format and preceded by a sign. For a
+value of mode <code>[]L REAL</code>, each <code>REAL</code> value is output
+as
+described above.
+</dd>
+<dt><strong><tt>L COMPL</tt></strong></dt>
+<dd>The complex value is output as two real numbers in
+floating-point format separated by <code> i </code>. For <code>[]L COMPL</code>,
+each complex value is output as described above.
+</dd>
+<dt><strong><tt>PROC(REF FILE)VOID:</tt></strong></dt>
+<dd>An <code>lf</code> character is output if the routine is <tt>newline</tt>
+and an <code>ff</code> character if the routine is <tt>newpage</tt>.
+User-defined routines with this mode can be used.
+</dd>
+</dl>
+</li>
+<li><tt>PROC read=([]UNION(SIMPLIN,</tt><a name="11336"></a>
+<br>
+<code>           PROC(REF FILE)VOID) x)VOID:</code>
+<br>
+This is equivalent to <code>get(stand in,</code><span class="math">...</span><code>)</code>.
+</li>
+<li><tt>PROC get=(REF FILE f,</tt><a name="11337"></a>
+<br>
+<code>          []UNION(SIMPLIN,</code>
+<br>
+<code>          PROC(REF FILE)VOID x)VOID:</code>
+<br>
+This procedure converts strings of characters into internal values.
+Inputting data is covered for each plain mode and <code>REF STRING</code>.
+In
+each case, if the end of the file is detected while reading characters,
+the logical file end procedure is called:-
+<dl>
+<dt><strong><tt>REF CHAR</tt></strong></dt>
+<dd> <br>
+Any characters <code>c</code> where <code>c &lt; blank</code> are
+skipped and the next character is assigned to the name.
+If a <code>REF[]CHAR</code> is given, then the above action occurs for each
+of the required characters of the multiple.
+</dd>
+<dt><strong><tt>REF STRING</tt></strong></dt>
+<dd> <br>
+All characters, including any control characters, are
+assigned to the name until any character in the character set specified
+by the <code>string term</code> field of <code>f</code> is read. The file
+is then
+backspaced so that the string terminator will be available for the next
+<code>get</code>.
+</dd>
+<dt><strong><tt>REF BOOL</tt></strong></dt>
+<dd> <br>
+The next non-space character is read and, if it is
+neither <code>flip</code> nor <code>flop</code>, the char error procedure
+is
+called with <code>flop</code> as the suggestion. For <code>REF[]BOOL</code>,
+each
+<code>\texttt{REF BOOL}</code> name is assigned a value as described above.
+</dd>
+<dt><strong><tt>REF L BITS</tt></strong></dt>
+<dd> <br>
+The action for <code>REF BOOL</code> is repeated for each bit in the name.
+For <code>REF[]L BITS</code>, each <tt>REF L BITS</tt> name is assigned a
+value as described above.
+</dd>
+<dt><strong><tt>REF L INT</tt></strong></dt>
+<dd> <br>
+If the next non-control character (<span  class="textit">ie</span>, a
+character which is neither a space, a tab character, a newline or
+newpage character or other control character) is not a decimal
+digit, then the char error procedure is called with <code>"0"</code> as the
+suggestion. Reading of decimal digits continues until a character
+which is not a decimal digit is encountered when the file is
+backspaced. If during the reading of decimal digits, the value of
+<code>l max int</code> would be exceeded, reading continues, but the input
+value is not increased. For <code>REF[]L INT</code>, each integer is read
+as described above.
+</dd>
+<dt><strong><tt>REF L REAL</tt></strong></dt>
+<dd> <br>
+A real number consists of 3 parts:-
+
+<ul>
+<li>an optional sign possibly followed by spaces
+</li>
+<li>an optional integral part
+</li>
+<li>a <code>"."</code> followed by any number of control characters (such
+as newline or tab characters) and the fractional part
+</li>
+<li>an optional exponent preceded by a character in the set
+<code>"Ee\"</code>. The exponent may have a sign. Absence of a sign is
+taken to mean a positive exponent
+</li>
+</ul>
+The number may be preceded by any number of control characters or
+spaces. For <code>REF[]L REAL</code>, each <code>REAL</code> value is read
+as
+described above.
+</dd>
+<dt><strong><tt>REF L COMPL</tt></strong></dt>
+<dd> <br>
+Two real numbers separated by <code>"i"</code> are read
+from the file. Newlines or newpages or other control characters can
+precede each real. The first number is regarded as the real part and
+the second the imaginary part. For <code>REF[]L COMPL</code>, each
+<code>REF L COMPL</code> is read as described above.
+</dd>
+</dl>
+</li>
+</ol>
+
+<h3><a name="section001576300000000000000"></a><a name="stan-bin"></a>
+Binary transput</h3>
+<p>Binary transput performs no conversion on internal values, thus
+providing a means of storing internal values in a compact form in
+books or reading such values into a program.</p>
+<ol>
+<li><tt>PROC write bin=([]SIMPLOUT x)VOID:</tt><a name="11338"></a>
+<br>
+This is equivalent to <code>put bin(stand back,x)</code>.
+</li>
+<li><tt>PROC put bin=(REF FILE f,</tt><a name="11339"></a>
+<br>
+<code>              []SIMPLOUT x)VOID:</code>
+<br>
+This procedure outputs internal values in a compact form. Then
+external size is the same as the internal size.
+</li>
+<li><tt>PROC read bin=([]SIMPLIN x)VOID:</tt><a name="11340"></a>
+<br>
+This procedure is equivalent to
+<pre>
+      get bin(stand back,x)
+</pre>
+</li>
+<li><tt>PROC get bin=(REF FILE f,[]SIMPLIN x)VOID:</tt><a name="11341"></a>
+<br>
+This procedure transfers external values in a compact form directly
+into internal values.
+</li>
+</ol>
+<p>In all the above procedures, the transput is direct with no code
+conversion. It should also be noted that the procedure
+<tt>make term</tt><a name="11342"></a>,
+although usually used with formatless transput, can
+also be used with binary transput in the QAD standard prelude for
+inputting a <code>STRING</code> terminated by any of a number of
+characters. You should note that if set possible<a name="10629"></a> for
+the channel
+concerned, then the terminator (which will <span  class="textit">always</span>
+include
+the lf<a name="10631"></a>
+character) will not have been read when
+get bin<a name="10632"></a>
+returns. However, if not
+<tt>set possible</tt><a name="11343"></a> for the channel (and neither
+<tt>stand in</tt><a name="11344"></a> nor
+<tt>stand out</tt><a name="11345"></a> can be set), then no backspace is
+possible for binary transput and so the terminating character will
+have been read.</p>
+
+<h3><a name="section001576400000000000000"></a><a name="stan-otherproc"></a>
+Other procedures</h3>
+<p>A number of miscellaneous procedures fall into this category.</p>
+<ol>
+<li><tt>PROC file buffer  = (REF FILE f)BUFFER:</tt><a name="11346"></a>
+<br>
+Yields the buffer of a <code>REF FILE</code> value.
+</li>
+<li><tt>PROC flush buffer = (REF FILE f) VOID:</tt><a name="11347"></a>
+<br>
+This procedures empties the buffer if it has been changed by a
+<code>put</code> or a <code>put bin</code>.
+</li>
+<li><tt>PROC no file end=(REF FILE f)BOOL:</tt><a name="11348"></a>
+<br>
+One of the default procedures in <tt>default io procs</tt><a name="11349"></a>.
+</li>
+<li><tt>PROC ignore value error = (REF FILE f)BOOL:</tt><a name="11350"></a>
+<br>
+One of the default procedures in <tt>default io procs</tt><a name="11351"></a>.
+</li>
+<li><tt>PROC ignore char error = (REF FILE f, REF CHAR ch)BOOL:</tt><a name="11352"></a>
+<br>
+One of the default procedures in <tt>default io procs</tt><a name="11353"></a>.
+</li>
+</ol>
+
+<h2><a name="section001577000000000000000"></a><a name="stan-trinterr"></a>
+Interrogating files</h2>
+<p>A number of procedures are available for interrogating the properties
+of files:-</p>
+<ol>
+<li>Properties of the book:-
+
+<ol>
+<li><tt>PROC bin possible=(REF FILE f)BOOL:</tt><a name="11354"></a>
+<br>
+Yields <code>TRUE</code> if binary transput is possible.
+</li>
+<li><tt>PROC put possible=(REF FILE f)BOOL:</tt><a name="11355"></a>
+<br>
+Yields <code>TRUE</code> if data can be sent to the book.
+</li>
+<li><tt>PROC get possible=(REF FILE f)BOOL:</tt><a name="11356"></a>
+<br>
+Yields <code>TRUE</code> if data can be got from the book.
+</li>
+<li><tt>PROC set possible=(REF FILE f)BOOL:</tt><a name="11357"></a>
+<br>
+Yields <code>TRUE</code> if the book can be browsed: that is, if the position
+in the book for further transput can be set.
+</li>
+<li><tt>PROC reidf possible=(REF FILE f)BOOL:</tt><a name="11358"></a>
+<br>
+Yields <code>TRUE</code> if the identification of the book can be changed.
+</li>
+</ol>
+</li>
+<li><tt>PROC current pos=(REF FILE f)INT:</tt><a name="11359"></a>
+<br>
+The standard Algol&nbsp;68 procedure yields a triple giving the page, line
+and character number. However, the QAD standard prelude does not use
+pages, lines and characters, so this procedure yields the current
+character position within the book for the next transput operation.</li>
+<li><tt>PROC file buffer=(REF FILE f)BUFFER:</tt><a name="11360"></a>
+<br>
+Yields the memory buffer<a name="11361"></a> associated with the
+file <code>f</code>.
+</li>
+<li><tt>PROC idf=(REF FILE f)RVC:</tt><a name="11362"></a>
+<br>
+Yields the current<a name="11363"></a> identification of the book.
+</li>
+<li><tt>PROC logical end=(REF FILE f)INT:</tt><a name="11364"></a>
+<br>
+The current length of the book connected to <code>f</code>.
+</li>
+</ol>
+
+<h2><a name="section001578000000000000000"></a><a name="stan-trprop"></a>
+File properties</h2>
+<p>Three procedures are provided for altering the properties of files:-</p>
+<ol>
+<li><tt>PROC make term=(REF FILE f,</tt><a name="11365"></a>
+<br>
+<code>                STRING term)VOID:</code>
+<br>
+Makes <code>term</code> the current string terminator.
+</li>
+<li><tt>PROC reidf=(REF FILE f,STRING new idf)VOID:</tt><a name="11366"></a>
+<br>
+Changes the <code>reidf</code> field of <code>f</code> to the given value
+so that
+when the file is closed, the book will be renamed.
+</li>
+<li><tt>PROC set flush after put=(REF FILE f)VOID:</tt><a name="11367"></a>
+<br>
+Ensures that the buffer of a file is flushed whenever data is written
+to the file.
+</li>
+</ol>
+
+<h2><a name="section001579000000000000000"></a><a name="stan-trevent"></a>
+Event routines</h2>
+<p>Four event routines are provided. For each routine, the default
+behaviour will be described. In each case, if the user routine yields
+<code>FALSE</code>, the default action will be elaborated. If it yields
+<code>TRUE</code>, the action depends on the event.</p>
+<ol>
+<li><tt>PROC on char error=(REF FILE f,</tt><a name="11368"></a>
+<br>
+<code>                    PROC(REF FILE,</code>
+<br>
+<code>                    REF CHAR)BOOL p)VOID:</code>
+<br>
+This procedure assigns the procedure <code>p</code>, which may be an
+identifier or an anonymous procedure, to the <tt>char error mended</tt>
+field of <code>f</code>. The actions on character error are:-
+<dl>
+<dt><strong>Default action</strong></dt>
+<dd>Use the default character for the particular
+situation.
+</dd>
+<dt><strong>User action</strong></dt>
+<dd>A character may be assigned to the <tt>REF
+CHAR</tt> parameter and will be used if it is in the particular character
+set involved.
+</dd>
+</dl>
+<p>The relevant situations are:-</p>
+
+<ol>
+<li>When reading an integer of any precision, first character,
+possibly following an optional sign with following spaces, is not a
+digit. Any decimal digit can be substituted. The default is <code>"0"</code>.
+</li>
+<li>When reading a real of any precision, the first non-space
+character, optionally preceded by a decimal point <code>"."</code>, is not
+a
+digit. Any decimal digit can be substituted. The default is <code>"0"</code>.
+</li>
+<li>When reading a real of any precision, an exponent is present
+(the character <code>"e"</code> or <code>"E"</code> or <code>"\"</code> has
+been read),
+and the first non-space character is not a digit. Any decimal digit
+can be substituted. The default is <code>"0"</code>.</li>
+<li>When reading a complex number, the first non-space character
+following the first real is not in the set <code>iI</code>. The default is
+<code>"i"</code>.
+</li>
+</ol>
+</li>
+<li><tt>PROC on logical file end=</tt><a name="11369"></a>
+<br>
+<code> (REF FILE f,PROC(REF FILE)BOOL p)VOID:</code>
+<br>
+This procedure assigns the procedure <code>p</code>, which may be an
+identifier or an anonymous procedure, to the <tt>logical file
+mended</tt> field of <code>f</code>. The actions on logical file end are:-
+<dl>
+<dt><strong>Default action</strong></dt>
+<dd>The default action is elaborated if the procedure <code>p</code>
+yields <tt>FALSE</tt>. If it yields <tt>TRUE</tt> then it is
+presumed that the end of the file has been attended to and transput
+is resumed. On any channel, if the end of the file has been reached or, in
+unformatted character transput, an <code>eof char</code> is read then the
+error message <tt>logical file end not mended</tt> will be issued and
+the program terminated with the exit value <tt>logical file end
+not mended</tt>.
+</dd>
+<dt><strong>User action</strong></dt>
+<dd>Any action as specified. Care should be taken if transput is performed
+on the file in question as an infinite loop could occur.
+</dd>
+</dl>
+</li>
+<li><tt>PROC on physical file end=</tt><a name="11370"></a>
+<br>
+<code>   (REF FILE f,PROC(REF FILE)BOOL p)VOID:</code>
+<br>
+This procedure assigns the procedure <code>p</code>, whether an identifier
+or an anonymous procedure, to the<br>
+<pre>
+   physical file mended
+</pre>
+field of <code>f</code>. The actions on physical file end are:-
+<dl>
+<dt><strong>Default action</strong></dt>
+<dd>If the procedure <code>p</code> yields <tt>FALSE</tt> then the
+default action is elaborated, If <tt>p</tt> yields <tt>TRUE</tt>
+then the ending of the file is presumed to be attended to and
+transput is then re-attempted. On any channel, if there is no more
+room on the physical medium, the program issues the error message</br>
+<pre>
+   physical file end not mended
+</pre>
+and then terminates the program with the exit value <tt>physical
+file end not mended</tt>.</dd>
+<dt><strong>User action</strong></dt>
+<dd>Any action as specified. Care should be taken if transput is performed
+on the file in question as an infinite loop could occur.</dd>
+</dl></li>
+<li><tt>PROC on value error=</tt><a name="11371"></a>
+<br>
+<pre>   (REF FILE f,PROC(REF FILE)BOOL p)VOID:</pre>
+<br>
+This procedure assigns procedure <code>p</code> to the <tt>value error
+mended</tt> field of <code>f</code>. The actions taken on a value error are:-
+<dl>
+<dt><strong>Default action</strong></dt>
+<dd>The program issues the error message <code>value error not mended</code>
+and then terminates with the same exit value.</dd>
+<dt><strong>User action</strong></dt>
+<dd>Transput continues.</dd>
+</dl>
+The error occurs in the following situations:-
+<ol>
+<li>When an integer on input exceeds <code>max int</code> for the precision
+concerned.</li>
+<li>The size of the exponent of a real number exceeds <tt>max
+int</tt>.</li>
+<li>An input real number is &plusmn; &infin; or greater than <tt>max
+real</tt> or is less than <code>min real</code> for the precision concerned.</li>
+</ol></li>
+</ol>
+
+
+<h2><a name="section0015710000000000000000"></a><a name="stan-trconv"></a>
+Conversion routines</h2>
+<p>The conversion routines consist of three procedures converting
+numbers to strings of characters, one operator and the procedure
+<tt>char in string</tt>. All the procedures <code>whole</code>,
+<code>fixed</code> and <code>float</code> will return a string of
+<code>error char</code> if the number to be converted is too large for the
+given width, or, if the number is a real, if it is infinite or
+otherwise invalid.</p>
+<ol>
+<li><tt>PROC char in string=</tt><a name="11372"></a>
+<br>
+      <code>        (CHAR c,REF INT p,STRING s)BOOL:</code>
+<br>
+If the character <code>c</code> occurs in the string <code>s</code>, its
+index is
+assigned to <code>p</code> and the procedure yields <code>TRUE</code>, otherwise
+no
+value is assigned to <code>p</code> and the procedure yields <code>FALSE</code>.
+</li>
+<li><tt>PROC whole=(NUMBER v,INT width)STRING:</tt><a name="11373"></a>
+<br>
+The procedure converts integer values. Leading zeros are replaced by
+spaces and a sign is included if <code>width&gt;0</code>. If <code>width</code>
+is
+zero, the shortest possible string is yielded. If a real number is
+supplied for the parameter <code>v</code>, then the call
+<code>fixed(v, width, 0)</code> is elaborated.
+</li>
+<li><code>PROC fixed=(NUMBER v,</code>
+<br>
+<tt>            INT width,after)STRING:</tt><a name="11374"></a>
+<br>
+The procedure converts real numbers to fixed point form, that is,
+without an exponent. The total number of characters in the converted
+value is given by the parameter <code>width</code> whose sign controls the
+presence of a sign in the converted value as for <code>whole</code>. The
+parameter <code>after</code> specifies the number of required digits after
+the decimal point. From the values of <code>width</code> and <code>after</code>,
+the number of digits in front of the decimal point can be calculated.
+If the space left in front of the decimal point is insufficient to
+contain the integral part of the value being converted, digits after
+the decimal point are sacrificed.
+</li>
+<li><tt>PROC float=(NUMBER v,</tt><a name="11375"></a>
+<br>
+<code>            INT width,after,exp)STRING:</code>
+<br>
+The procedure converts reals to floating-point form
+("scientific notation"). The total number of characters in the
+converted value is given by the parameter <code>width</code> whose sign
+controls the presence of a sign in the converted value as for
+<code>whole</code>. Likewise, the sign of <code>exp</code> controls the presence
+of
+a preceding sign for the exponent. If <code>exp</code> is zero, then the
+exponent is expressed in a string of minimum length. In this case, the
+value of <code>width</code> must not be zero. Note that <code>float</code>
+always
+leaves a position for the sign. If there is no sign, a blank is
+produced instead. The values of <code>width</code>, <code>after</code> and
+<code>exp</code> determine how many digits are available before the decimal
+point and, therefore, the value of the exponent. The latter value has
+to fit into the width specified by <code>exp</code> and so, if it cannot
+fit,
+decimal places are sacrificed one by one until either it fits or there
+are no more decimal places (and no decimal point). If it still doesn't
+fit, digits before the decimal place are also sacrificed. If no space
+for digits remains, the whole string is filled with <code>error char</code>.
+</li>
+<li><code>OP HEX=(L BITS v)[]CHAR:</code>
+<br>
+The operator <tt>HEX</tt><a name="11376"></a> converts a value of mode <code>L
+BITS</code> into a
+row of hexadecimal digits. The total number of digits equals
+<code>l bits width OVER 4</code>. For example, <code>HEX 4r3</code> yields
+<code>00000003</code>.
+</li>
+</ol>
+<p>
+
+<h2><a name="section0015711000000000000000"></a><a name="stan-trlay"></a>
+Layout routines</h2>
+<p>These routines provide formatting capability on both input and output.</p>
+<ol>
+<li><tt>PROC space=(REF FILE f)VOID:</tt><a name="11377"></a>
+<br>
+The procedure advances the position in file <code>f</code> by 1 byte. It
+does
+<span  class="textit">not</span> read or write a blank.
+</li>
+<li><tt>PROC backspace=(REF FILE f)VOID:</tt><a name="11378"></a>
+<br>
+The procedure advances the position in file <code>f</code> by -1 bytes. It
+does not read or write a backspace. Note that not every channel
+permits backspacing more than once consecutively.
+</li>
+<li><tt>PROC newline=(REF FILE f)VOID:</tt><a name="11379"></a>
+<br>
+On input, skips any remaining characters on the current line and
+positions the file at the beginning of the next line. This means that
+all characters on input are skipped until a linefeed character
+<code>lf</code> is read. On output, emits a linefeed character. This is
+non-standard behaviour.
+</li>
+<li><tt>PROC newpage=(REF FILE f)VOID:</tt><a name="11380"></a>
+<br>
+On input, skips any remaining characters on the current page and
+positions the file at the beginning of the next page. This means that
+all characters on input are skipped until a formfeed character
+<code>ff</code> is read. Note that if the character following a number is
+a
+formfeed character, then that character will have been read during the
+read of the number. Hence, the skip to formfeed character will skip the
+whole of the <span  class="textit">following</span> page. On output, a formfeed
+character is
+emitted immediately.
+</li>
+<li><tt>PROC skip terminators=(REF FILE f)VOID:</tt><a name="11381"></a>
+<br>
+Any <code>STRING</code> terminators are skipped on input
+and the file positioned at the next non-terminating character. The
+procedure is usually called after a <code>STRING</code> has been read.
+</li>
+</ol>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2969"
+  href="node133.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a>
+
+<a name="tex2html2963"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a>
+
+<a name="tex2html2957"
+  href="node131.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a>
+
+<a name="tex2html2965"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a>
+
+<a name="tex2html2967"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a>
+
+<br>
+<b> Next:</b> <a name="tex2html2970"
+  href="node133.html">Summary</a>
+<b> Up:</b> <a name="tex2html2964"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2958"
+  href="node131.html">Control routines</a>
+ &nbsp; <b>  <a name="tex2html2966"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2968"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

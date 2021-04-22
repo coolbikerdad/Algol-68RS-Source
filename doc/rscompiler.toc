@@ -1,0 +1,131 @@
+@numchapentry{Introduction}{1}{}{1}
+@numsecentry{The Source Language}{1.1}{}{2}
+@numchapentry{Stream Language Output}{2}{}{3}
+@numsecentry{The Structure Of Stream Language}{2.1}{}{3}
+@numsecentry{The Reverse Polish Stack}{2.2}{}{4}
+@numsecentry{The Creation Of New Objects}{2.3}{}{5}
+@numsecentry{Assignment}{2.4}{}{6}
+@numchapentry{Implementation}{3}{}{9}
+@numchapentry{The Compiler Shell}{4}{}{11}
+@numsecentry{Input Of Source Text}{4.1}{}{11}
+@numsecentry{The @code {charset} Parameter}{4.2}{}{11}
+@numsecentry{Values Of Symbols}{4.3}{}{13}
+@numsecentry{The Lookup Procedure}{4.4}{}{13}
+@numsecentry{Output Of Fault Messages}{4.5}{}{14}
+@numsecentry{Output Of Stream Language}{4.6}{}{14}
+@numchapentry{Stream Language In Outline}{5}{}{17}
+@numsecentry{The Imperatives}{5.1}{}{17}
+@numsubsecentry{@code {XEDIT}}{5.1.1}{}{17}
+@numsubsecentry{@code {REF VECTOR [] MDE}}{5.1.2}{}{18}
+@numsubsecentry{@code {XDEC}}{5.1.3}{}{18}
+@numsubsecentry{@code {XROUTINE}}{5.1.4}{}{18}
+@numsubsecentry{@code {XSIZES}}{5.1.5}{}{18}
+@numsubsecentry{@code {XLOAD}}{5.1.6}{}{18}
+@numsubsecentry{@code {XCHARS}}{5.1.7}{}{18}
+@numsubsecentry{@code {XOPER}}{5.1.8}{}{18}
+@numsubsecentry{@code {XWARN}}{5.1.9}{}{19}
+@numsubsecentry{@code {XPRAG}}{5.1.10}{}{19}
+@numsubsecentry{@code {XCHARPOS}}{5.1.11}{}{19}
+@numsubsecentry{@code {XCONTROL}}{5.1.12}{}{19}
+@numsecentry{Syntax Analysis Of Stream Language}{5.2}{}{20}
+@numsubsecentry{Abridged Syntax Of Stream Language}{5.2.1}{}{20}
+@numsubsubsecentry{Notation}{5.2.1.1}{}{20}
+@numsubsubsecentry{Syntax rules}{5.2.1.2}{}{20}
+@numsubsubsecentry{Skeleton translator --- stage 1}{5.2.1.3}{}{21}
+@numsecentry{The Reverse Polish Stack}{5.3}{}{22}
+@numsubsubsecentry{Skeleton translator --- stage 2}{5.3.0.1}{}{23}
+@numchapentry{Stream language in detail}{6}{}{27}
+@numsecentry{The Vector Of Modes --- @code {REF VECTOR [] MDE modes}}{6.1}{}{27}
+@numsubsecentry{Constituent Modes Of @code {MDE}}{6.1.1}{}{27}
+@numsubsecentry{@code {REF STRCT}}{6.1.2}{}{27}
+@numsubsecentry{@code {REF ISTRUCT}}{6.1.3}{}{27}
+@numsubsecentry{@code {REF VCTOR}}{6.1.4}{}{28}
+@numsubsecentry{@code {REF ARRAY}}{6.1.5}{}{28}
+@numsubsecentry{@code {REF UNN}}{6.1.6}{}{28}
+@numsubsecentry{@code {REF PROCP}}{6.1.7}{}{28}
+@numsubsecentry{@code {REF PRC}}{6.1.8}{}{28}
+@numsubsecentry{@code {REF STEN}}{6.1.9}{}{28}
+@numsubsecentry{@code {REF AMODE}}{6.1.10}{}{28}
+@numsubsecentry{@code {SAMEAS}}{6.1.11}{}{28}
+@numsubsecentry{@code {PRIMITIVE}}{6.1.12}{}{28}
+@numsecentry{Identifier Declarations (@code {XIDDEC} from @code {XDEC})}{6.2}{}{29}
+@numsecentry{Routine Text Declarations, @code {XROUTINE}}{6.3}{}{29}
+@numsecentry{Label Declarations (@code {XLABDEC} from @code {XDEC})}{6.4}{}{30}
+@numsecentry{The Loading Imperative, @code {XLOAD}, And @code {XCHARS}}{6.5}{}{31}
+@numsubsecentry{@code {BOOL}}{6.5.1}{}{31}
+@numsubsecentry{@code {INT}}{6.5.2}{}{31}
+@numsubsecentry{@code {REF LABEL}}{6.5.3}{}{31}
+@numsubsecentry{@code {STRUCT (INT Nse)}}{6.5.4}{}{31}
+@numsubsecentry{@code {XGEN = STRUCT (INT mode, BOOL loc)}}{6.5.5}{}{31}
+@numsubsecentry{@code {XNUMBER = STRUCT (INT mode, REF VECTOR [] CHAR nu)}}{6.5.6}{}{31}
+@numsubsecentry{@code {XSTRING = STRUCT (INT strmode)}}{6.5.7}{}{32}
+@numsubsecentry{@code {XFORMAT = STRUCT (INT nochars, nocases, w)}}{6.5.8}{}{32}
+@numsubsecentry{@code {XALIEN = STRUCT (INT almode)}}{6.5.9}{}{32}
+@numsubsecentry{@code {XCODE = STRUCT (INT mode, nopars)}}{6.5.10}{}{32}
+@numsubsecentry{@code {XCHARS = STRUCT (INT nochars, base, REF VECTOR [] CHAR chars)}}{6.5.11}{}{32}
+@numsecentry{Operations, @code {XOPER}}{6.6}{}{33}
+@numsubsecentry{Standard prelude operators}{6.6.1}{}{33}
+@numsubsecentry{Coercions and similar operations}{6.6.2}{}{34}
+@numsubsecentry{Field selection and array indexing}{6.6.3}{}{34}
+@numsubsecentry{Procedure calls}{6.6.4}{}{35}
+@numsubsecentry{Assignment}{6.6.5}{}{35}
+@numsubsecentry{Space finding}{6.6.6}{}{35}
+@numsubsecentry{Straightening}{6.6.7}{}{36}
+@numsecentry{The Control Imperatives (@code {XCONTROL})}{6.7}{}{37}
+@numsubsecentry{Fields of an @code {XCONTROL}}{6.7.1}{}{37}
+@numsubsecentry{The @code {props} field of an @code {XCONTROL}}{6.7.2}{}{38}
+@numsubsubsecentry{General preliminary information}{6.7.2.1}{}{38}
+@numsubsubsecentry{Dynamic result bits}{6.7.2.2}{}{38}
+@numsubsubsecentry{Routine bits}{6.7.2.3}{}{39}
+@numsubsecentry{Other control imperatives}{6.7.3}{}{39}
+@numsubsubsecentry{@code {fn} = @code {xforall}}{6.7.3.1}{}{39}
+@numsubsubsecentry{@code {fn} = @code {xuchoice}}{6.7.3.2}{}{40}
+@numsecentry{The @code {XWARN} Imperative}{6.8}{}{40}
+@numsecentry{The @code {XPRAG} Imperative}{6.9}{}{40}
+@numsecentry{The @code {XCHARPOS} Imperative}{6.10}{}{40}
+@numsecentry{An example of stream language}{6.11}{}{41}
+@numsubsecentry{Sizes}{6.11.1}{}{41}
+@numsubsecentry{Modes}{6.11.2}{}{41}
+@numsubsecentry{Other imperatives}{6.11.3}{}{41}
+@numchapentry{Introduction}{7}{}{43}
+@numchapentry{The Source Language}{8}{}{45}
+@numsecentry{keeplists}{8.1}{}{45}
+@numsecentry{Simple declarations modules}{8.2}{}{45}
+@numsecentry{Simple Programs}{8.3}{}{46}
+@numsecentry{Nested Modules}{8.4}{}{46}
+@numsecentry{Composition}{8.5}{}{47}
+@numsubsecentry{Example}{8.5.1}{}{47}
+@numsecentry{Partial Composition}{8.6}{}{48}
+@numsecentry{Use of environmental packages}{8.7}{}{48}
+@numsecentry{Declarations Modules In A Context}{8.8}{}{49}
+@numsecentry{Provision For ALGOL 68 Standard Environment}{8.9}{}{49}
+@numsecentry{The @code {VOID} Context}{8.10}{}{50}
+@numsecentry{Summary Of Syntax And Semantics Of Modules}{8.11}{}{51}
+@numsubsecentry{@code {DECS} Module}{8.11.1}{}{51}
+@numsubsecentry{@code {PROGRAM} Modules}{8.11.2}{}{51}
+@numsubsecentry{Notes}{8.11.3}{}{51}
+@numsecentry{Composition Rules}{8.12}{}{51}
+@numsecentry{Accessibility Of Kepts For Use In A Cc Module}{8.13}{}{52}
+@numsecentry{Accessibility Of Kepts For Use In A DECS Module}{8.14}{}{52}
+@numchapentry{Stream Language}{9}{}{53}
+@numsecentry{The Current Compilation}{9.1}{}{53}
+@numsecentry{Parameters Of The Compile Procedure}{9.2}{}{54}
+@numsecentry{Information About Other Modules}{9.3}{}{55}
+@numsecentry{A Model For A Running CC Module}{9.4}{}{56}
+@numsecentry{Constructions In The Code}{9.5}{}{57}
+@numsecentry{An Example Of Modular Compilation}{9.6}{}{58}
+@numsubsecentry{Stream Language Produced For The Above Modules}{9.6.1}{}{59}
+@appentry{Values and representations of symbols}{A}{}{65}
+@appsecentry{Note}{A.1}{}{65}
+@appentry{Fixed Mode Numbers}{B}{}{67}
+@appentry{Numbering of standard prelude operators in @code {XOPER}}{C}{}{69}
+@appsecentry{Monadic operators}{C.1}{}{69}
+@appsecentry{Dyadic operators}{C.2}{}{69}
+@appentry{Extensions To ALGOL 68}{D}{}{71}
+@appsecentry{Vectors and indexable structures}{D.1}{}{71}
+@appsecentry{The @code {FORALL} statement}{D.2}{}{71}
+@appsecentry{Straightening}{D.3}{}{72}
+@appsecentry{Low level facilities}{D.4}{}{73}
+@appsecentry{Built-in operators}{D.5}{}{73}
+@appsecentry{Generalised modes}{D.6}{}{74}
+@appsecentry{Implementation dependent declarations}{D.7}{}{74}

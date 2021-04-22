@@ -1,0 +1,439 @@
+DECS  liblookup  CONTEXT VOID  USE
+*L    usefulops, osif,
+      common, environment, incinstallation, moduletracer:
+
+configinfo A68CONFIG "$Id: liblookup.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.5 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+28:09:99  34.002  SL    Phoenix Engineering: Removed double file closure
+COMMENT
+
+{
+  LIBLOOKUP
+
+  Maps identifiers onto the names of library modules.
+
+  Knowledge of how to decode RS compiler specs is encapsulated in this module.
+}
+
+
+MODE MAP = STRUCT( REF VECTOR [] CHAR symbol, REF ID module, REF MAP next );
+
+REF MAP nilmap = NIL;
+ID nullid = "                                ";
+
+REF MAP
+  id table := nilmap,         { normal identifiers }
+  compound table := nilmap,   { compound symbols (ie operators) }
+  bold table := nilmap;       { bold symbols (operators and modes) }
+
+
+{ ----------------------------------------------------------- }
+
+PROC debug message = ( INT level, VECTOR [] CHAR m ) VOID:
+{
+ 	for debugging only
+}
+  IF TRACELEVEL "liblookup" >= level
+  THEN list( "LIBLOOKUP("+whole(level,0)+"): " + m )
+  FI;
+                                                             
+
+{
+  DECODING OF RS COMPILER SPEC
+}
+
+OP VTOI = ( VECTOR [] CHAR v ) INT:
+BEGIN
+  INT  res := 0;
+  FOR i  TO UPB v
+  DO 
+    res := maxchar*res + ABS v[i]
+  OD;
+  res
+END;
+
+PROC  decode spec = ( VECTOR [] CHAR spec, PROC(INT,VECTOR[]CHAR)VOID debug message ) VOID:
+BEGIN
+  INT index := 1;
+  debug message( 5, "Decoded spec is:" );
+  WHILE  UPB spec > index
+  DO
+    CASE INT type = ABS spec[index] ; index +:= 1 ; type  IN
+    BEGIN  {1: identifier}    
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+           index +:= namelength;
+      INT mode = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "IDENTIFIER: """+ name +""" mode="+ XC mode )
+    END,                                                      
+    BEGIN  {2: bival}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      index +:= namelength;
+      INT bival = VTOI spec[index:][:2];  index +:= 2;
+      INT mode  = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "BIVAL: """+ name +""" mode="+ XC mode
+      + " bival=" + XC bival
+      )
+    END,
+    BEGIN  {3: mode}
+         INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      index +:= namelength;
+      INT mode = VTOI spec[index:][:2];  index +:= 2;
+      VECTOR [] CHAR gen =
+        ( ABS spec[index] = 1
+        | " has gen routine"
+        | " no gen routine"
+        );
+      index +:= 1;
+      debug message
+      ( 5, "modename: """+ name +""" mode="+ XC mode + gen )
+    END,             
+    BEGIN  {4: operator}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR[]CHAR name = spec[index:][:namelength];
+      index +:= namelength;
+      INT prio = ABS spec[index];    index +:= 1;
+      INT lhs mode = VTOI spec[index:][:2];  index +:= 2;
+      INT rhs mode = VTOI spec[index:][:2];  index +:= 2;
+      INT res mode = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "OPERATOR: """ + name +""" prio=" + XC prio +
+        " lhs="+ XC lhs mode +" rhs=" + XC rhs mode +
+        " res="+ XC res mode
+      )
+    END,
+    BEGIN  {5: biop}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      index +:= namelength;
+      INT prio = ABS spec[index];    index +:= 1;
+      INT lhs mode = VTOI spec[index:][:2];  index +:= 2;
+      INT rhs mode = VTOI spec[index:][:2];  index +:= 2;
+      INT res mode = VTOI spec[index:][:2];  index +:= 2;
+      INT biop = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "BIOP: """+ name +""" prio="+ XC prio +
+        " lhs="+ XC lhs mode +" rhs="+ XC rhs mode +
+        " res="+ XC res mode +" biop="+ XC biop
+      )
+    END,
+    BEGIN  {6: proc}
+      INT mode = VTOI spec[index:][:2];  index +:= 2;
+      INT res  = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "proc: mode="+ XC mode +" res="+ XC res )
+    END,
+    BEGIN  {7: procp}
+      INT mode = VTOI spec[index:][:2];  index +:= 2;
+      INT res  = VTOI spec[index:][:2];  index +:= 2;
+      INT params = ABS spec[index];    index +:= 1;
+      index +:= 2*params;
+      debug message
+      ( 5, "procp: mode="+ XC mode +" res="+ XC res +
+        " params=" + XC params
+      )
+    END,
+    BEGIN  {8: union}
+      INT mode  = VTOI spec[index:][:2];  index +:= 2;
+      INT nmodes = ABS spec[index];    index +:= 1;
+      index +:= 2*nmodes;
+      debug message
+      ( 5, "union: mode="+ XC mode + " nmodes="+ XC nmodes
+      )
+    END,
+    BEGIN  {9: struct}
+      INT mode   = VTOI spec[index:][:2];  index +:= 2;
+      INT nfields = ABS spec[index];      index +:= 1;
+      TO  nfields
+      DO      index +:= 2;
+        index +:= ABS spec[index] + 1
+      OD;
+      debug message
+      ( 5, "struct: mode=" + XC mode +" nfields="+ XC nfields
+      )
+    END,
+    BEGIN  {10: istruct}
+      INT mode     = VTOI spec[index:][:2];  index +:= 2;
+      INT elemmode = VTOI spec[index:][:2];  index +:= 2;
+      INT noelems  = VTOI spec[index:][:3];  index +:= 3;
+      debug message
+      ( 5, "istruct: mode="+ XC mode +
+        " elemmode=" + XC elemmode +
+        " noelems=" + XC noelems
+      )
+    END,
+    BEGIN  {11: vector}
+      INT mode     = VTOI spec[index:][:2];  index +:= 2;
+      INT elemmode = VTOI spec[index:][:2];  index +:= 2;
+      VECTOR [] CHAR flex =
+        ( ABS spec[index] = 2 | "non-flex " | "flex " );
+      index +:= 1;
+      debug message
+      ( 5, flex +"vector: mode="+ XC mode +
+        " elemmode=" + XC elemmode
+      )
+    END,
+    BEGIN  {12: array}
+      INT mode     = VTOI spec[index:][:2];  index +:= 2;
+      INT elemmode = VTOI spec[index:][:2];  index +:= 2;
+      INT dims     =  ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR flex =
+        ( ABS spec[index] = 2 | "non-flex " | "flex " );
+      index +:= 1;
+      debug message
+      ( 5, flex +"array: mode=" + XC mode +
+        " elemmode=" + XC elemmode +
+        " dims=" + XC dims
+      )
+    END,
+    BEGIN  {13: straight}
+      INT mode = VTOI spec[index:][:2];  index +:= 2;
+      INT elemmode = VTOI spec[index:][:2];  index +:= 2;
+      debug message
+      ( 5, "straight: mode="+ XC mode +" elemmode="+ XC elemmode
+      )
+    END
+    OUT     debug message(5, "   invalid type: "+ XC type );
+      index := UPB spec
+    ESAC
+  OD
+END;
+
+PROC process spec = (VECTOR [] CHAR spec, REF ID current module) VOID:
+{
+  Adds the symbols in `spec' to the appropriate tables.
+}
+BEGIN
+  debug message( 10, "process spec(" + (current module BEFORE " ") + ")" );
+  INT index := 1;
+  WHILE  UPB spec > index
+  DO
+    CASE INT type = ABS spec[index] ; index +:= 1 ; type  IN
+    BEGIN  {1: identifier}    
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      id table := HEAP MAP := (MAKERVC name, current module, id table);
+      index +:= namelength + 2
+    END,                                                      
+    BEGIN  {2: bival}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      id table := HEAP MAP := (MAKERVC name, current module, id table);
+      index +:= namelength + 4
+    END,
+    BEGIN  {3: mode}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      bold table := HEAP MAP := (MAKERVC name, current module, bold table);
+      index +:= namelength + 3
+    END,             
+    BEGIN  {4: operator}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR[]CHAR name = spec[index:][:namelength];
+      REF REF MAP table = ( CHAR c = name[1]; c >= "a" ANDTH c <= "z" | bold table | compound table );
+      table := HEAP MAP := (MAKERVC name, current module, table);
+      index +:= namelength + 7
+    END,
+    BEGIN  {5: biop}
+      INT name length = ABS spec[index];  index +:= 1;
+      VECTOR [] CHAR name = spec[index:][:namelength];
+      REF REF MAP table = ( CHAR c = name[1]; c >= "a" ANDTH c <= "z" | bold table | compound table );
+      table := HEAP MAP := (MAKERVC name, current module, table);
+      index +:= namelength + 9
+    END,
+    {6: proc}
+      index +:= 4,
+    BEGIN  {7: procp}
+      index +:= 4;
+      INT params = ABS spec[index];
+      index +:= 2*params + 1
+    END,
+    BEGIN  {8: union}
+      index +:= 2;
+      INT nmodes = ABS spec[index];
+      index +:= 2*nmodes +1
+    END,
+    BEGIN  {9: struct}
+      index +:= 2;
+      INT nfields = ABS spec[index];      index +:= 1;
+      TO  nfields
+      DO      index +:= 2;
+        index +:= ABS spec[index] + 1
+      OD
+    END,
+    {10: istruct}
+      index +:= 7,
+    {11: vector}
+      index +:= 5,
+    {12: array}
+      index +:= 6,
+    {13: straight}
+      index +:= 4
+    OUT
+      index := UPB spec
+    ESAC
+  OD
+END;
+
+
+{
+  TABLE INITIALISATION
+}
+
+BOOL initialised := FALSE;
+
+PROC init_liblookup = (PROC(ID,FILE,BOOL)YMODINFO unpack modinfo) VOID:
+{
+  'read spec' must, given an open modinfo file, return the RS compiler spec
+}
+IF
+  initialised := TRUE;
+  DIRPTR d = open_directory(dir OF library_directory,ignore_msg);
+  d IS null_dirptr
+THEN { can't open library directory }
+  pwarning(816,dir OF library_directory);
+  library_directory := nil_dirlist   { disable library lookup }
+ELSE
+  debug message(1,"Initialising library lookup");
+
+  PROC add_lib_module = (VECTOR [] CHAR filename) VOID:
+  IF
+    debug message (5, "add_lib_module(" + filename + ")");
+    REF VECTOR [] CHAR fullname;
+    FILE f = find_and_open_file(filename,library_directory,fullname);
+    f IS nil_file
+  THEN
+    pwarning(817,fullname)
+  ELIF
+    ID current module := nullid;
+    current module[:UPB filename-2] := filename[:UPB filename-2];
+    YMODINFO ymodinfo = unpack modinfo(current module,f,TRUE);
+    UPB specs OF ym OF ymodinfo = 1
+  THEN
+    REF VECTOR [] CHAR spec = (u OF xs OF (specs OF ym OF ymodinfo)[1]|(REF VECTOR [] CHAR s):s);
+    process spec(spec , HEAP ID := current module )#;
+    Next but one line changed by Phoenix Engineering SL PE61-09-28
+	 because FILE f has already been closed by `unpack modinfo'.
+    close_file(f,ignore_msg)#
+  FI;
+
+  WHILE
+    REF VECTOR [] CHAR filename = get_next_dir_entry(d,ignore_msg);
+    filename ISNT NIL
+  DO
+    IF
+      ( UPB filename > 2 { allows for ".m" }) ANDTH
+      ( filename[UPB filename -1:] = ".m" )
+    THEN
+       add_lib_module(filename)
+    FI
+  OD;
+
+  close_directory(d,ignore_msg);
+
+  IF TRACELEVEL "liblookup" >= 10
+  THEN
+    PROC print map = (REF MAP map) VOID:
+    BEGIN
+      REF MAP current := map;
+      WHILE current ISNT REF MAP(NIL)
+      DO
+        debug message(10, symbol OF current + " --> " + ((module OF current) BEFORE " "));
+        current := next OF current
+      OD
+    END;
+
+    debug message(10, "id table is:"); print map (id table);
+    debug message(10, "compound table is:"); print map (compound table);
+    debug message(10, "bold table is:"); print map (bold table)
+  FI
+FI;
+
+PROC lookup_in_table = ( ID id, REF MAP map ) ID:
+BEGIN
+  VECTOR [] CHAR reqd_symbol = id BEFORE " ";
+
+  debug message(1, "looking up " + reqd_symbol);
+
+  REF MAP current_map := map;
+
+  WHILE current_map ISNT nilmap
+  DO
+    IF symbol OF current_map = reqd_symbol THEN GOTO found FI;
+    current_map := next OF current_map
+  OD;
+
+  debug message(1, reqd_symbol + " not found");
+  nullid
+EXIT found:
+  debug message(1, reqd_symbol + " found in " + (module OF current_map) BEFORE " " );
+  module OF current_map
+END;
+
+PROC lookup_library = ( ID id, INT type, PROC(ID,FILE,BOOL)YMODINFO unpack modinfo ) ID:
+{
+  lookup the required ID of the specified type.
+  Returns the name of the library modinfo file containing 'id',
+  or an empty string if not found.
+
+  The lookup table is set up on the first call.
+}
+IF
+  library_directory IS nil_dirlist
+THEN
+  nullid
+ELSE
+  IF NOT initialised THEN init_liblookup(unpack modinfo) FI;
+
+  lookup_in_table( id, ( type | id table, compound table, bold table ))
+FI;
+
+SKIP
+
+KEEP
+  lookup_library, decode spec
+FINISH 
+
+{
+Local Variables:
+eval: (auto-fill-mode 0)
+End:
+}

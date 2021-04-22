@@ -1,0 +1,115 @@
+DECS  incvalue  CONTEXT VOID  USE  centities, incinstallation:
+
+configinfo A68CONFIG "$Id: incvalue.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1992
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.0 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+MODE
+	VALUELIST,
+	TREEOPER	= STRUCT( INT fn, param, REF VALUELIST operands ),
+	TREENSE		= STRUCT( INT nse ),
+
+	ROUTINEINFO 	= STRUCT( INT rdenno ),
+	CONSTANT	= LONG BITS,
+
+	IDENTIFIER	= STRUCT( INT id no ),
+	TEMPORARY	= STRUCT( UNAME name, INT mode ),
+
+	EXTRA		=
+		UNION
+		( CONSTANT		{ compiler-defined constants       },
+		  ROUTINEINFO		{ index to routine table           },
+		  VOID	      		{ unset - used for unset 'answers' },
+		  IDENTIFIER 		{ index to identifier table        },
+		  TEMPORARY		{ unique name                      },
+		  CFRAGMENT		{ C expression                     },
+		  LABNO			{ index to the label table	   },
+		  TREENSE		{ nil, skip or empty               },
+		  TREEOPER		{ introduced in tree-building      }
+		),
+	VALUE		= STRUCT( INT mode, BITS info , EXTRA extra ),
+	VALUELIST	= STRUCT( VALUE value, REF VALUELIST rest ),
+	ANSWER		= STRUCT( REF VALUE value, REF LABEL end, INT type);
+
+REF VALUE	nil value	= NIL;
+REF VALUELIST	nil valuelist	= NIL;
+
+INT	no idno = 0, fault mode = 6;
+
+{
+	Constants defined for the attribute field of a VALUE
+}
+BITS	default info	= BIN 0;
+
+BITS	constant= 16r1,	{ VALUE is a denotation, may be #defined	}
+	atomic	= 16r2,	{ CFRAGMENT is fully bracketed			}
+	effects	= 16r4,	{ CFRAGMENT is an expression with side effects	}
+	nonloc	= 16r8,	{ IDENTIFIER is a non-local value		}
+	voided	= 16r10,{ Result of expression is not requied		}
+	lvalue	= 16r20,{ VALUE is the lhs of an assignment 		}
+	isnil	= 16r40,{ VALUE is a representation of NIL		}
+	fxwarn	= 16r80;{ Side effects warning for call op		}
+
+VALUE	skipvalue = ( fault mode, default info, "/* SKIP VALUE */" );
+                      
+INT	{ Result types }
+	void     result	= 0,
+	memory   result	= 1,
+	register result	= 2,
+	routine  result	= 3,
+	enquiry  result	= 4,
+	optbool  result	= 5,
+	no particular result = 6;
+
+SKIP
+
+KEEP
+	ANSWER, CONSTANT, EXTRA, ROUTINEINFO, 
+	TREENSE, TREEOPER, VALUE, VALUELIST,
+	IDENTIFIER, TEMPORARY, LABNO,
+	nil value, nil valuelist, no idno, skipvalue,
+	default info,
+	constant, atomic, effects, nonloc, voided, lvalue, isnil, fxwarn,
+	void     result,
+	memory   result,
+	register result,
+	routine  result,
+	enquiry  result,
+	optbool  result,
+	no particular result
+FINISH

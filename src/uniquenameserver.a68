@@ -1,0 +1,245 @@
+DECS  uniquenameserver  CONTEXT VOID  USE
+*L    usefulops, cif, osif,
+      centities, coutput, environ, incinstallation, environment:
+
+configinfo A68CONFIG "$Id: uniquenameserver.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.7 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{ workspace for arithmetic to base UPB idchars }
+VECTOR [maxuname] INT num ;
+
+{ list of characters allowed in unique names }
+VECTOR [] CHAR idchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ;
+
+INT	upb idchars = UPB idchars,
+	upb num = UPB num ;
+
+PROC increment num = VOID:
+CO
+	increments workspace, in base 'upb idchars' arithmetic
+	outputs a warning when overflow occurs as this may result in 
+	non-uniqueness of identifiers
+CO                                      
+(
+	num[1] +:= 1 ;
+
+	FOR i TO upb num - 1
+	DO
+		IF
+			num[i] > upb idchars
+		THEN
+			num[i+1] +:= 1;
+			num[i] := 1
+		FI
+	OD;
+
+	IF
+		num[upb num] > upb idchars
+	THEN
+		warning(800) ; { unique name wraparound }
+		num[upb num] := 1
+	FI
+) ;                      
+
+PROC new unique name = UNAME:
+CO
+	generates the next unique name in the cycle
+CO
+(
+	UNAME result ;
+	increment num;
+	FOR i TO max uname
+	DO
+		result[i] := idchars[num[i]]
+	OD ;
+	result
+);
+
+
+VECTOR [] CHAR c_prologue = "/* UNAME:";
+
+PROC read_cfile_uname = (REF UNAME uname) BOOL:
+IF
+  REF VECTOR [] CHAR full_filename;
+  FILE cfile = find_and_open_file(basename source file + ".c",cfile_dirlist,full_filename);
+  cfile IS nil_file
+THEN
+  warning(812 {no C file});
+  FALSE
+ELIF
+  VECTOR [19] CHAR buffer;
+  INT chars read;
+  read_buffer(cfile,buffer,chars read,ignore_msg);
+  close_file(cfile,ignore_msg);
+  chars read /= UPB buffer OREL buffer[:UPB c_prologue] /= c_prologue
+THEN
+  warning(815 {unrecognised header});
+  FALSE
+ELSE
+  uname[:maxuname] := buffer[UPB c_prologue + 1:][:maxuname];
+  TRUE
+FI;
+
+PROC write_cfile_uname = (UNAME uname) VOID:
+    write c stream((
+      c_prologue, uname, " */", cnewline
+      ), preamble stream );
+
+
+PROC (NAMESEEDSPEC) VOID initialise unique name server;
+
+PROC init num = (UNAME uname) VOID:
+BEGIN
+  BOOL ok := TRUE;
+
+  FORALL c IN uname, i IN num
+  WHILE ok
+  DO
+    ok := charinstring(c,i,idchars)  { assigns offset into i }
+  OD;
+
+  IF NOT ok
+  THEN
+    warning(803 {invalid character in uname});
+    initialise unique name server(EMPTY)
+  ELSE
+    name seed OF config_info := uname
+  FI
+END;
+
+initialise unique name server := (NAMESEEDSPEC origin) VOID:
+CO
+  Uses 'uname_option' from environment to determine initialisation method.
+  Sets 'config_info' to the seed used and its origin.
+  initialises the workspace to the value it held when last closed
+  down which was saved in the seed file.
+CO
+CASE name seed origin OF config_info := origin IN
+  (UNAME uname):
+    init num (uname),
+
+  (FROMSEEDFILE):
+    IF
+      FILE ufile; UNAME init; INT chars read;
+  
+      (seed file name IS REF VECTOR [] CHAR (NIL))
+        OREL
+      ((ufile := open_file(seed file name,read_access,ignore_msg)) IS nil_file)
+    THEN
+      warning(801 {no seed file});
+      initialise unique name server(EMPTY)
+    ELIF
+      read_buffer(ufile,init,chars read,ignore_msg);
+      close_file(ufile,ignore_msg);
+      chars read /= UPB init
+    THEN
+      warning(814);
+      initialise unique name server(EMPTY)
+    ELSE
+      init num(init)
+    FI,
+
+  { previously generated C file -- read first line }
+  (FROMCFILE):
+    IF
+      UNAME init;
+      read_cfile_uname(init)
+    THEN
+      init num(init)
+    ELSE
+      initialise unique name server(EMPTY)
+    FI,
+
+  (VOID):
+    ( warning(813);
+      init num ( "AAAAAAA" )
+    )
+OUT
+  "invalid name seed origin" ASSERT FALSE
+ESAC;
+
+PROC nameseed origin string = (NAMESEEDSPEC nameseed) VECTOR [] CHAR:
+CASE nameseed IN
+  (UNAME): " ( from -uname option )",
+  (FROMSEEDFILE): " (from seed file) ",
+  (FROMCFILE): " (from previously generated C) ",
+  (VOID): " (other name seeds not available) "
+OUT
+  "invalid name seed origin" ASSERT FALSE; SKIP
+ESAC;
+
+PROC closedown unique name server = VOID:
+CO
+  Saves the current workspace in the seed file.
+  If this is not writable, a warning is given.
+CO
+CASE name seed origin OF config_info IN
+(FROMSEEDFILE):
+  IF
+    FILE ufile;
+    (seed file name IS REF VECTOR [] CHAR (NIL))
+    OREL( (ufile := open_file(seed file name,write_access,ignore_msg)) IS NIL)
+  THEN
+    warning(802 {could not open seed file for writing})
+  ELSE
+    FORALL i IN num
+    DO
+      write_buffer(ufile,idchars[i],ignore_msg)
+    OD;
+    close_file(ufile,ignore_msg)
+  FI
+OUT
+  SKIP
+ESAC;
+
+SKIP
+
+KEEP
+  initialise unique name server,
+  closedown unique name server,
+  new unique name,
+  write_cfile_uname,
+  nameseed origin string        
+FINISH 
+
+{
+Local Variables:
+auto-fill-hook:nil
+End:
+}

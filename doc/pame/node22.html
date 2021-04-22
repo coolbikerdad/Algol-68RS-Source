@@ -1,0 +1,100 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Order of elaboration</title>
+<meta name="description" content="order of elaboration">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node23.html">
+<link rel="previous" href="node21.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node23.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html991"
+  href="node23.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html985"
+  href="node15.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html979"
+  href="node21.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html987"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html989"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html992"
+  href="node23.html">Changing the mode</a>
+<b> Up:</b> <a name="tex2html986"
+  href="node15.html">Formul&#230;</a>
+<b> Previous:</b> <a name="tex2html980"
+  href="node21.html">Mixed arithmetic</a>
+ &nbsp; <b>  <a name="tex2html988"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html990"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00470000000000000000"></a><a name="form-order"></a>
+<br>
+Order of elaboration
+</h1>
+
+<p>Even though the order of elaboration<a name="927"></a> is dependent
+on the priority of operators, it is often convenient to change the
+order.  This can be done by inserting parentheses<a name="928"></a>
+<tt>(</tt><a name="1069"></a> and <tt>)</tt><a name="1070"></a> (or
+<tt>BEGIN</tt><a name="1071"></a> and
+<tt>END</tt><a name="1072"></a>): the formula inside the parentheses
+is evaluated first.  Here are two formul&#230; which differ only by
+the insertion of parentheses:</p>
+
+<pre>
+   3 * 4 - 2
+   3 *(4 - 2)
+</pre>
+
+<p>The first has the value <code>10</code>, and the second <code>6</code>.
+Parentheses can be nested<a name="940"></a> to any
+depth<a name="941"></a>.</p>
+
+<pre>
+   REAL a = (3*a3*(xmin+eps1)**2)/4;
+   REAL alpha g=(ymax - ymin)/(xmax - xmin);
+   INT p=BEGIN 2 * 3**4 % (13-2**3) END - 4.0
+</pre>
+
+<p>It is uncommon to find <code>BEGIN</code> and <code>END</code> in
+short formul&#230;. If you use <code>BEGIN</code> at the start of a
+formula, you must use <code>END</code> to complete it even though
+these symbols and parentheses are equivalent.</p>
+
+<hr>
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

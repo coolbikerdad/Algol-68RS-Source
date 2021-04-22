@@ -1,0 +1,659 @@
+DECS  osinterface  CONTEXT VOID  USE  putstrings,  messageproc,
+*4    vmsif,
+%4    cif, osif,
+      osmessages:
+
+{ " Id: osinterface.sta,v 1.1 91/10/14 14:30:54 edcad Exp $" }
+configinfo A68CONFIG "$Id: osinterface.a68,v 1.1.1.1 2001-05-07 10:16:11 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1986
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+01:03:93  Hack to shell VMS.  DCT
+11:03:93  Needed to reintroduce "block_" access for KEEPSAKE under VMS.  DCT
+28:05:93  VMS part separated out as first stage of integration.  DCT
+28:06:93  get_env_var and file_name now deliver STR.  Tested on UNIX.  DCT
+29:06:93  make_temp_filename,  rename_file,  set_gc_params added.  DCT
+02:07:93  Some SUN changes for latest OSIF + gc stuff on VAX.  DCT
+05:08:93  Temporary args procedures for UNIX corrected.  DCT/DJS
+13:08:93  Modification to merge with AAP OSIF Level 2 (sigs &c).  DCT
+17:08:93  Add PROC interactive.   DJS
+23:09:93  find_file replaced by nil_file_details return from
+             get_file_details.  initialise_osinterface now buffers IO.  DCT
+30:09:93  Simple procedures to help parse arguments added.  DCT
+20:10:93  Spelling.  DCT
+28:10:93  error_msg not good enough check in default_msg.  DCT
+29:11:93  MODE VERSION added.  DCT
+
+   Note:  *4 = VMS,  %4 = NOT VMS (ie UNIX),  *5 = UNIX / POSIX,   *D = DOS
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.014 
+31:01:95  33.002  DCT   PCPort-1  Added fflush to write_stdout for OS/2 - maybe 				  a gcc 2.5.7 on emx problem.
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+18:06:00  35.000  SL    Changed OS name
+??:??:??   ?.???  ????
+COMMENT
+
+PROC  fail = (STR  name,  MESSAGEPROC  msg) IOSTATUS:
+   ( msg(system, concat((name, ":  not yet implemented")));  io_error );
+
+*4 {{{
+
+INT  int_size = 4,  word_size = 32;
+
+IOSTATUS  io_partline = io_no_newline;
+
+FILEACCESS  block_update_access          = update_access,
+            block_update_truncate_access = update_truncate_access;
+
+PROC  write_stdout = (STR  buffer) VOID:
+BEGIN
+   write_buffer(stdout, buffer, ignore_msg);
+   PROC (REF BITS) INT  fflush =
+      ALIEN "FFLUSH"
+            "#include <stdio.h>"
+            "#define FFLUSH(file) A_int_INT(fflush(A_FILEPTR_fileptr(file)))";
+   fflush(stdio file OF stdout)
+END;
+
+*4 }}}
+
+
+
+
+{{{  ELLA Operating system environment  }}}
+
+{ Basic level IO and messageprocs }
+
+RVC  nilstr = NIL;
+RVC  osfacility:= nilstr,  version_str:= nilstr,  version_date:= nilstr,
+     version_msg:= nilstr,  sys_fault_message:= nilstr;
+
+MODE  VERSION = STRUCT ( STR  name,
+                              version,
+                              date,
+                              msg,
+                              sys_fault
+                       );
+
+RCH  screen:= NIL,   { standard output }
+     out:= NIL,      { divertable output - screen or file }
+     err:= NIL;      { error messages }
+
+
+{ The default messageproc - called at the lowest level to handle messages }
+
+STR  message_is = "Message is: """,  bell_str = 16r"7 7 7";
+
+PROC (VERSION, BOOL) VOID  initialise_osinterface;
+
+PROC  facility = STR:  osfacility;
+
+PROC  version = VERSION:
+   (osfacility, version_str, version_date, version_msg, sys_fault_message);
+
+PROC  give_version = STR:  concat(( osfacility, ":  Version  ", version_str,
+                                    "  -  ",  version_date ));
+
+
+PROC  default_msg = (MSGNO  msgno,  VECSTR  params) VOID:
+BEGIN
+   IF osfacility IS nilstr
+   THEN  initialise_osinterface( ("ANON", "", "", "", "Please report"),
+                                 FALSE { no traps } )
+   FI;
+   MESSAGE message = translate_msg(msgno, params);
+   IF log_msg(message)
+   THEN  IF error_msg(message)
+         THEN  putstr(err, text OF message);
+               IF newline_msg(message) THEN  newline(err)  FI
+         ELSE  putstr(screen, text OF message);
+               IF newline_msg(message) THEN  newline(screen)  FI
+         FI
+   FI;
+   IF out_msg(message)
+   THEN  putstr(out, text OF message);
+         IF newline_msg(message) THEN  newline(out)  FI
+   FI;
+   IF sysfault_msg(message)
+   THEN  put(err, ( "A System error has occurred in ", facility, " (",
+                    name OF facility OF msgno OF message, ")", newline,
+                    message_is, text OF message, """", newline,
+                    sys_fault_message, bell_str, newline ));
+         exit(-1)
+   ELIF cli_msg(message)  OREL  abort_msg(message)
+   THEN  { abort or cli messages }
+         put(err, ( facility, " has been aborted", newline,
+                    message_is, text OF message, """", newline ));
+         exit(-2)
+   FI
+END;
+
+
+*4 STR  os_string = "VMS";
+*5 STR  os_string = "Linux";
+{*5 STR  os_string = "UNIX"; (Phoenix Engineering -- SL BP21500-06-18)}
+
+
+{{{  Higher Level bits for ELLA  }}}
+
+%4  PROC  interactive = BOOL:  is_terminal(stdin);
+
+
+PROC  prompt = (STR  str) RVC:
+BEGIN
+   PROC  read = RVC:
+   BEGIN
+      HEAP VECTOR [80] CHAR  ans;
+      INT  l:= 0;
+      IF read_line(stdin, ans, l, global_msg) = io_partline
+      THEN  concat((ans[: l], read))
+      ELSE  ans[: l]
+      FI
+   END;
+
+   write_stdout(str);
+   read
+END;
+
+
+{ Two procedures to help with argument parsing }
+
+PROC  filename_arg = ( STR  name,    { name supplied as argument }
+                            sort,    { description of file for error messages }
+                            type,    { default file type for parse_filename }
+                       REF RVC  ans, { the result }
+                       BOOL  should_exist
+                     ) BOOL:  { OK }
+   IF UPB name = 0
+   THEN  put(err, (sort, " file name argument expected", newline));
+         FALSE
+   ELIF UPB ans > 0
+   THEN  put(err, (( name, " ? - ", sort,
+                     " file name has already been specified", newline )));
+         FALSE
+   ELSE  BOOL  failed:= FALSE;
+         PROC  msg = (MSGNO  no, VECSTR  params) VOID:
+            IF error_msg(no) THEN  failed:= TRUE  FI;
+
+         ans:= filename OF parse_filename(name, type, msg);
+         IF failed
+         THEN  put(err, ("Error in ", sort, " file name", newline))
+         ELSE  { try to open the file for read }
+               FILE  f = open_file(ans, read_access, msg);
+               IF failed
+               THEN  IF should_exist
+                     THEN  put(err, ( "Could not open ", sort, " file ",
+                                      ans, newline ));
+                           ans:= nullstr
+                     ELSE  failed:= FALSE
+                     FI
+               ELSE  IF NOT should_exist
+                     THEN  failed:= TRUE;
+                           put(err, ( file_name(f), " ? - ", sort,
+                                      " file name already exists", newline ));
+                           ans:= nullstr
+                     FI;
+                     close_file(f, ignore_msg)
+               FI
+         FI;
+         NOT failed
+   FI;
+
+
+PROC  parse_arguments =
+   ( STR  prompt,                           { Given to prompt_args for retry }
+     PROC VOID  reset,                      { Clear variables for another try }
+     PROC (STR, PROC STR) BOOL  check_arg,  { Have arg with proc for next }
+     PROC (BOOL) BOOL  no_more              { No more params read - OK so far -
+                                              return OK or give help }
+   ) VOID:
+BEGIN
+   INT  attempts:= 0;
+   WHILE
+      attempts PLUSAB 1;
+      VECSTR  args = get_args;
+      reset;
+      BOOL  failed:= UPB args <= 1;
+      PROC  msg = (MSGNO  no, VECSTR  params) VOID:
+         IF error_msg(no) THEN  failed:= TRUE  FI;
+
+      INT  argc:= 1;
+      PROC  next = STR:
+         IF (argc PLUSAB 1) <= UPB args THEN  args[argc]  ELSE  nullstr  FI;
+
+      WHILE argc < UPB args  ANDTH  NOT failed
+      DO  STR  arg = next;
+          IF NOT check_arg(arg, next) THEN  failed:= TRUE  FI
+      OD;
+
+      NOT no_more(NOT failed)  OREL  failed
+   DO  IF attempts = 3  OREL  NOT interactive
+       THEN  global_msg(fatal, "given up trying to read the arguments")
+       ELSE  prompt_args(prompt, global_msg)
+       FI
+   OD
+END;
+
+
+{ Signals / exception handlers }
+
+{ - dicided that the user interrupt behaviour will be built in but accessable
+    to the simulator.  The Praxis simulator will make use of osif or
+    vmsinterface directly to obtain the desired sigfpe (arithmetic error)
+    behaviour.  trap_errors has been implemented for the assemble environment
+    but it is unclear that it should be used at present.  11:08:93  DCT
+}
+
+*4 {{{ VAX interrupts handled using ASTs or condition handlers
+
+INT  user_bored_threshold = 3;   { point at which hard interrupt is generated }
+INT  n_interrupts:= 0;           { count of user interrupts - ^C }
+
+PROC  interrupted = BOOL:
+   IF n_interrupts > 0 THEN  n_interrupts:= 0;  TRUE  ELSE  FALSE  FI;
+
+PROC  clear_interrupt = VOID:  n_interrupts:= 0;
+
+MESSAGEPROC  sig_msg = (MSGNO  no,  VECSTR  params) VOID:
+   { The MSGNO envent is assumed to be a signal event }
+   IF number OF no = sigint
+   THEN  global_msg(log, "***** Received user interrupt *****");
+         IF (n_interrupts PLUSAB 1) >= user_bored_threshold
+         THEN  global_msg(user, "***** A hard user interrupt has occurred - "
+                                "the current operation has possibly been left "
+                                "in an unsafe state - consider aborting *****")
+         FI
+   ELSE  global_msg(log, concat(( "Received signal:  ",
+                                   text OF translate_msg(no, params) )));
+         global_msg(user, "***** The current operation has been aborted and "
+                          "has possibly been left in an unsafe state - "
+                          "consider quiting *****")
+   FI;
+
+
+
+
+
+VECTOR [] INT  trap_signals = (sigfpe, sigbus, sigsegv, sigill, sigtrap);
+
+*4 }}}
+
+
+PROC  flt_if_interrupted = (MESSAGEPROC  msg) VOID:
+   IF n_interrupts > 0
+   THEN  clear_interrupt;
+         { ********** Note - should generate proper msgno *********** }
+         msg(user, "Operation aborted after user interrupt")
+   FI;
+
+
+PROC  trap_errors = (PROC (MESSAGEPROC) VOID  action,  MESSAGEPROC  msg) VOID:
+BEGIN
+   { Obey procedure "action" intercepting any failures that occur }
+
+   MESSAGEPROC  old_global = global_msg;
+%4 VECTOR [UPB trap_signals] MESSAGEPROC  old_sigs;
+%4 FORALL sig IN trap_signals,  old IN old_sigs
+%4 DO  old:= get_sigmsgproc(sig, msg)  OD;
+
+   PROC  reset_sigmsg = VOID:
+   BEGIN
+      { To ensure trap is reset before any kind of jump }
+      global_msg:= old_global;
+%4    FORALL sig IN trap_signals, old IN old_sigs
+%4    DO  set_sigmsgproc(sig, old, msg)  OD;
+      SKIP
+   END;
+
+%4 set_sigmsgproc(trap_signals, sig_msg, msg);
+
+   global_msg:= (MSGNO  no,  VECSTR  params) VOID:
+   BEGIN
+      IF error_msg(no) THEN  reset_sigmsg  FI;
+      msg(no, params)
+   END;
+
+%4 action(global_msg);
+*4 vms_trap(action, global_msg);
+
+   reset_sigmsg
+END;
+
+
+{ HEAP management }
+
+%4 PROC  mem_statistics = (PROC (STR) VOID  p) VOID:
+%4       p("No memory statistics available");
+
+*4 MODE GCPARAM = STRUCT (STR  name,  INT  value);
+*4 PROC  set_gc_params = (VECTOR [] GCPARAM  p,  MESSAGEPROC  msg) VOID:  SKIP;
+
+
+{ Miscellaneous stuff for ELLA }
+
+
+BOOL  os_debug:= FALSE;
+
+
+*4 PROC (REAL) REAL sqrt = ALIEN "MTH$DSQRT";
+*5 PROC (REAL) REAL sqrt = ALIEN "sqrt" "#include <math.h>";
+
+
+PROC  check_host_data = (RVC  input) RVC:  MAKERVC "No host details";
+
+
+{ ELLA initialise interface routine }
+
+initialise_osinterface:= ( VERSION  version,  { See mode VERSION above }
+                           BOOL  trap_user_interrupts
+                         ) VOID:
+BEGIN
+   osfacility:= MAKERVC name OF version;
+   version_str:= MAKERVC version OF version;
+   version_date:= MAKERVC date OF version;
+   version_msg:= MAKERVC msg OF version;
+   sys_fault_message:= MAKERVC sys_fault OF version;
+   global_msg:= default_msg;
+*4 out:= screen:= make_channel(HEAP VECTOR [81] CHAR, write_stdout);
+%4 out:= screen:= make_channel(80 { unbuffered }, write_stdout);
+*4 err:= make_channel( HEAP VECTOR [81] CHAR, (STR s) VOID:
+%4 err:= make_channel( 80, (STR s) VOID:
+                       write_buffer(stderr, s, ignore_msg) );
+   IF trap_user_interrupts
+%4 THEN  set_sigmsgproc(sigint, sig_msg, ignore_msg)
+*4 THEN  trap_interrupts
+   FI
+END
+
+KEEP
+
+{{{  Architecture mappings  }}}
+
+int_size,              { size in bytes of an integer (ALGOL68 INT) }
+word_size,             { number of bits in ALGOL68 INT / BITS value }
+
+
+{{{  Pure OSIF items except where noted - not all items are kept  }}}
+
+FILE,                  { Private mode - describing an opened file }
+IOSTATUS,              { Private mode - return value from OSIF procedure }
+
+=  (IOSTATUS, IOSTATUS),  { Operator for testing returns }
+/= (IOSTATUS, IOSTATUS),
+
+io_ok,                 { operation succeeded }
+io_eof,                { end of file reached - may still have read characters }
+io_error,              { operation failed }
+io_partline,           { read part of a line - ie not encountered newline_char }
+
+newline_char,          { character used to indicate end of line }
+null_char,             { character with representation zero byte }
+
+nil_file,              { unset FILE }
+stdin,  stdout,        { FILE  standard C / POSIX input and output streams }
+stderr,                { FILE  stream used by convention for error reporting }
+read_access,           { open an existing file for reading only }
+write_access,          { create / truncate a file for writing only }
+append_access,         { create / append to a file for writing only }
+update_access,         { open an existing file for update - reading or writing }
+update_truncate_access,  { create / truncate a file for update }
+update_append_access,  { create / append to a file for update }
+block_update_access,   { bodge for KEEPSAKE under VMS }
+block_update_truncate_access,  { bodge for KEEPSAKE under VMS }
+
+open_file,             { PROC (STR, FILEACCESS, MESSAGEPROC) FILE -
+                         open a file of name STR for access FILEACCESS - errors
+                         are reported via MESSAGEPROC }
+
+close_file,            { PROC (FILE, MESSAGEPROC) IOSTATUS - close a file -
+                         errors are reported via MESSAGEPROC and returned value
+                       }
+
+file_name,             { PROC (FILE) STR - return name of file }
+
+read_buffer,           { PROC (FILE, RVC, REF INT, MESSAGEPROC) IOSTATUS -
+                         read UPB RVC characters into RVC from the current
+                         position in FILE - the REF INT indicates actual number
+                         read - this can be less when EOF has been reached.
+                         IOSTATUS indicates EOF.  Errors are reported via
+                         MESSAGEPROC and returned value }
+
+read_line,             { PROC (FILE, RVC, REF INT, MESSAGEPROC) IOSTATUS -
+                         reads upto and including the next newline_char or
+                         UPB RVC if less (in which case it delivers
+                         io_partline).  The REF INT will be set to indicate
+                         the number of characters read (excluding the
+                         newline_char).  A null_char is written after the last
+                         character read - it may be used to detect EOF, or
+                         the returned value may be tested }
+
+write_buffer,          { PROC (FILE, STR, MESSAGEPROC) IOSTATUS - write STR to
+                         the current position in file.  Errors are reported via
+                         MESSAGEPROC and returned value }
+
+FILEDETAILS,           { STRUCT ( LONG INT  size,
+                                  LONG INT  data_modified ) -
+                         file information - NB element position is private }
+
+nil_file_details,      { REF returned by get_file_details when called with a
+                         string parameter that does not exist }
+
+get_file_details,      { PROC ( UNION (FILE, STR), MESSAGEPROC ) FILEDETAILS -
+                         get information about a file }
+
+get_file_position,     { PROC (FILE, REF LONG INT, MESSAGEPROC) IOSTATUS -
+                         request the current file position - ie the byte number
+                         in the stream for the next read or write - the first
+                         byte is numbered 1 }
+
+set_file_position,     { PROC (FILE, LONG INT, MESSAGEPROC) IOSTATS - set
+                         the file position for the next read or write }
+
+update_disk,           { PROC (FILE, MESSAGEPROC) IOSTATUS - commit to disk any
+                         outstanding operations on FILE }
+
+delete_file,           { PROC (STR, MESSAGEPROC) IOSTATUS - delete file named
+                         STR }
+
+get_env_var,           { PROC (STR) STR - get (translate) the contents os the
+                         environment variable STR.  Delivers nullstr if unset }
+
+exit,                  { PROC (INT) VOID - exit programme with value INT }
+
+get_time,              { PROC LONG INT - time in seconds since start of
+                         01:01:1970 (= UNIX time) }
+
+execute_os_command,    { PROC (STR, MESSAGEPROC) INT - execute command STR and
+                         return exit value }
+
+get_cpu_time,          { PROC INT - cpu time used since initialisation in cS }
+
+
+rename_file,           { PROC (STR  old, new, MESSAGEPROC) IOSTATUS - rename
+                         a file }
+
+
+FILENAME,             { Mode containing a file name parsed into different
+                        fields:  filename - whole name;  directory - file name
+                        upto, but excluding, its local name;  name - local name
+                        excluding any type or type convention;  type - the
+                        remaining part of the name, starting with the type }
+
+parse_filename,       { PROC (STR, STR, MESSAGEPROC) FILENAME - parses the
+                        first STR filling in any missing details from the
+                        second STR - the library procedure "expand" is called
+                        first }
+
+get_login_name,       { PROC STR - loggin user name string }
+
+%4 prelude,           { INT  - this must not be used.  It must appear in the
+%4                      KEEP list of osinterface to give access to argsc and
+%4                      argsv for "get_args".  osinterface in turn must
+%4                      appear in the USE list of any PROGRAM module that
+%4                      wishes to use get_args or prompt_args }
+
+get_args,             { PROC VECSTR - return command arguments from shell or
+                        those most recently defined by a call of prompt_args }
+
+prompt_args,          { PROC (STR) VECSTR - prompt for arguments }
+
+interactive,          { PROC BOOL  - TRUE if interactive session else FALSE }
+
+set_gc_params,        { PROC (VECTOR [] STRUCT (STR, INT), MESSAGEPROC) VOID -
+                        set garabage collector control parameters - name, value
+                        pairs }
+
+garbage_collect,      { PROC VOID - force a garbage collection }
+
+set_gc_diagnostics,   { PROC (BITS) VOID - turn on or off garbage collector
+                        diagnostics according to the bits set in the parameter }
+
+gc_diag_options,      { VECTOR [] STR - a list of descriptions for the
+                        garbage collector diagnostic bits }
+
+gc_statistics,        { PROC (PROC (STR) VOID) VOID - procedure generates
+                        lines of statistics to be processed by its parameter }
+
+mem_statistics,       { PROC (PROC (STR) VOID) VOID - procedure generates
+                        lines of statistics to be processed by its parameter }
+
+
+{ Miscellaneous bits for ELLA }
+
+os_debug,             { REF BOOL - enables any debugging that may be provided }
+
+check_host_data,      { PROC (RVC) RVC - check a node details line from the
+                        customer file }
+
+sqrt,                 { PROC (REAL) REAL - returns the square root of its
+                        parameter - it will cause a signal if REAL is < 0.0 }
+
+
+
+{{{  ELLA operating system environment  }}}
+
+VERSION,              { STRUCT ( STR  name, version, date, msg, sys_fault) }
+
+initialise_osinterface,  { PROC ( VERSION  version,
+                                  BOOL trap_interrupts ) VOID -
+                           procedure to initialise messageproc error strings
+                           and any operating system dependent vairables
+                           (eg cpu timer and io channels).  }
+
+facility,             { PROC STR  the name of the current programme as defined
+                        by initialise_osinterface - name OF version }
+
+version,              { PROC VERSION - gives version information as passed to
+                        initialise_osinterface }
+
+give_version,         { PROC STR - give version str with name and date }
+
+os_string,            { STR  name of the operating system }
+
+{ Global faults.  A MESSAGEPROC is a procedure which can be used to abort an
+  operation and return control to the ELLA command line interpreter or the host
+  operating system.  Although a MESSAGEPROC procedure may not return after
+  reporting an error (it may contain a GOTO) all interface routines must cope
+  with a return.  A MESSAGEPROC procedure may also be used to generate output
+  for diagnostic, logging or primary output purposes.  The MESSAGEPROC system
+  has been designed to allow events to be recognised in a portable manner by
+  a message passing shell.  Where a MESSAGEPROC procedure is not available then
+  "global_msg" may be used, in which case, there is only limited scope for
+  intercepting errors and tidying up.  Errors fall into four categories:
+  "error" - mistake, report and continue; "user" - mistake, abandon current
+  operation;  "fatal" - unrecoverable mistake;  "system" - unexpected
+  programming error.  See module MESSAGEPROC.
+}
+
+MESSAGEPROC, MSGNO,
+global_msg,            { REF PROC (MSGNO, VECSTR) VOID - global message proc }
+default_msg,           { PROC (MSGNO, VECSTR) VOID - outer / default msg proc }
+ignore_msg,            { PROC (MSGNO, VECSTR) VOID - ignores event and returns }
+
+
+{ Procedures for reading from the keyboard and writing to the screen }
+
+screen,                { REF RCH  global variable - opened to screen (stdout)
+                         within the OS interface to allow output to the screen.
+                         It is subsequently modified within IOPROCS to allow
+                         "log"ging of screen messages to a file. }
+
+out,                   { REF RCH  global variable - assigned to screen in
+                         OS interface, allows messages to be sent to an output
+                         file. Modified within IOPROCS. }
+
+err,                   { REF RCH  global variable - assigned to stderr }
+
+write_stdout,          { PROC (STR) VOID - simplified form of write_buffer to
+                         UNIX stdout file.  Errors are ignored }
+
+prompt,                { PROC (STR) RVC - write STR to screen (without
+                         newline_char) and read reply }
+
+filename_arg,          { PROC (STR  name, sort, type, REF RVC, BOOL) BOOL - OK.
+                         Procedure to check an argument (name) that is supposed
+                         to be a file name.  "sort" is a description of the
+                         purpose of the file for error messages.  "type" is
+                         used as a default for parse_filename.  The REF RVC
+                         is the answer.  The BOOL specifies whether the file
+                         should be readable (not implies one will be created).
+                       }
+
+parse_arguments,       { PROC ( STR, PROC VOID, PROC (STR, PROC STR) BOOL,
+                                PROC (BOOL) BOOL ) VOID - parses arguments
+                         obtained by calling get_args.  STR is the prompt for
+                         another try.  The first proc resets any user defined
+                         varabiles before parsing.  The second is called with
+                         each argument - its procedure parameter allows
+                         subsequent arguments to be read (and consumed).
+                         The final procedure is called after all arguments
+                         have been read / a failure detected.  Its parameter
+                         will be current status (OK ?) and should return OK
+                         if all expected arguments have been found and are OK,
+                         otherwise it should give a help message.
+                       }
+
+{ Exceptions and signals for ELLA }
+
+n_interrupts,         { REF INT - number of user interrupts received }
+
+interrupted,          { PROC BOOL - has been interrupted (then count is reset) }
+
+clear_interrupt,      { PROC VOID - reset interrupt count }
+
+flt_if_interrupted,   { PROC (MESSAGEPROC) VOID - user fault if interrupted }
+
+trap_errors           { PROC (PROC (MESSAGEPROC) VOID, MESSAGEPROC) VOID -
+                        runs its first parameter intercepting any fatal errors
+                        and changing them the "user" errors }
+
+FINISH

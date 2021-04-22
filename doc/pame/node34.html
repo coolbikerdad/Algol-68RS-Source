@@ -1,0 +1,128 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Ranges</title>
+<meta name="description" content="ranges">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node35.html">
+<link rel="previous" href="node33.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node35.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1189"
+  href="node35.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1183"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1177"
+  href="node33.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1185"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1187"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1190"
+  href="node35.html">Program repetition</a>
+<b> Up:</b> <a name="tex2html1184"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1178"
+  href="node33.html">Operators with multiples</a>
+ &nbsp; <b>  <a name="tex2html1186"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1188"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section00560000000000000000"></a><a name="rep-range"></a>
+Ranges</h1>
+
+<p>If you cast your mind back to the form of an Algol&nbsp;68 program,
+you will remember that it consists of a number of phrases enclosed by
+<code>BEGIN</code> and <code>END</code> (or parentheses) preceded by a
+<tt>PROGRAM</tt><a name="1786"></a> phrase with an optional
+<tt>USE</tt><a name="1787"></a> phrase.  The part of the program
+enclosed by <code>BEGIN</code> and <code>END</code> (including the
+<code>BEGIN</code> and <code>END</code>) is called a <b>closed
+clause</b><a name="1608"></a>.  The important point here is that a
+closed clause consists of one or more phrases separated by
+semicolons<tt>;</tt><a name="1788"></a> (the last
+phrase<a name="1611"></a> being a unit<a name="1612"></a>), surrounded
+by parentheses (or <code>BEGIN</code> and <code>END</code>).  Since a
+declaration is not a unit, the last phrase cannot be a declaration.
+We say that the value of a closed clause<a name="1613"></a> is the
+value yielded by the final unit.  As an example, here is a closed
+clause with a value of mode <code>INT</code>:</p>
+
+<pre>
+   BEGIN
+      INT i = 43;
+      print((i,newline));
+      i
+   END
+</pre>
+
+<p>An important adjunct of a closed clause is that any identifiers
+declared in the clause do not exist outside the clause.  We say that
+the <b>range</b><a name="1617"></a> of an
+identifier<a name="1618"></a> is confined to that section of the
+closed clause from its declaration to the end of the clause.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1189"
+  href="node35.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1183"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1177"
+  href="node33.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1185"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1187"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1190"
+  href="node35.html">Program repetition</a>
+<b> Up:</b> <a name="tex2html1184"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1178"
+  href="node33.html">Operators with multiples</a>
+ &nbsp; <b>  <a name="tex2html1186"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1188"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

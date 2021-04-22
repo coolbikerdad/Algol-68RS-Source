@@ -1,0 +1,412 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+<!--converted with latex2html 2008 (1.71)
+original version by: nikos drakos, cblu, university of leeds
+* revised and updated by: marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+  <title>The mode BITS</title>
+  <meta name="description" content="the mode bits">
+  <meta name="keywords" content="pame">
+  <meta name="resource-type" content="document">
+  <meta name="distribution" content="global">
+  <meta http-equiv="content-style-type" content="text/css">
+  <link rel="stylesheet" href="pame.css">
+  <link rel="next" href="node109.html">
+  <link rel="previous" href="node107.html">
+  <link rel="up" href="node106.html">
+  <link rel="next" href="node109.html">
+</head>
+
+<body>
+
+<div class="navigation">
+<!--navigation panel-->
+<a name="tex2html2475" href="node109.html"><img width="37" height="24"
+align="bottom" border="0" alt="next" src="next.png"></a> <a name="tex2html2469"
+href="node106.html"><img width="26" height="24" align="bottom" border="0"
+alt="up" src="up.png"></a> <a name="tex2html2463" href="node107.html"><img
+width="63" height="24" align="bottom" border="0" alt="previous"
+src="prev.png"></a> <a name="tex2html2471" href="node1.html"><img width="65"
+height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> <a
+name="tex2html2473" href="node147.html"><img width="43" height="24"
+align="bottom" border="0" alt="index" src="index.png"></a> <br>
+<b>Next:</b> <a name="tex2html2476" href="node109.html">Overlapping slices</a>
+<b>Up:</b> <a name="tex2html2470" href="node106.html">Advanced constructs</a>
+<b>Previous:</b> <a name="tex2html2464" href="node107.html">Bits, bytes and
+words</a> &nbsp; <b><a name="tex2html2472" href="node1.html">Contents</a></b>
+&nbsp; <b><a name="tex2html2474" href="node147.html">Index</a></b> <br>
+<br>
+</div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a> 
+<ul class="childlinks">
+  <li><a name="tex2html2477"
+    href="node108.html#section001321000000000000000">Monadic operators for
+    <tt>BITS</tt></a> </li>
+  <li><a name="tex2html2478"
+    href="node108.html#section001322000000000000000">Dyadic operators for
+    <tt>BITS</tt></a> </li>
+  <li><a name="tex2html2479"
+    href="node108.html#section001323000000000000000">Exercises</a> </li>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001320000000000000000"></a><a name="adv-bits"></a> <br>
+The mode <tt>BITS</tt> </h1>
+
+<p>A value occupying a machine word has the mode
+<tt>BITS</tt><a name="7959"></a>.  The number of binary digits in one
+machine word is given by the environment enquiry<a name="7436"></a>
+(see section&nbsp;<a href="node127.html#stan-enq">13.2</a>) <tt>bits
+width</tt><a name="7960"></a> which, for the a68toc<a name="7961"></a>
+compiler is <code>32</code>. A <code>BITS</code> value can be denoted
+in four different ways using denotations<a name="7962"></a> written
+with radices of 2, 4, 8 or&nbsp;16. Thus the declarations</p>
+
+<pre>
+   BITS a = 2r 0000 0000 0000 0000
+               0000 0010 1110 1101
+   BITS b = 4r 0000 0000 0002 3231
+   BITS c = 8r 000 0000 1355
+   BITS d = 16r0000 02ed
+</pre>
+
+<p>are all equivalent because they all denote the same value. Notice
+that the radix<a name="7444"></a> precedes the <code>r</code> and is
+written in decimal.  Notice also that the numbers can be written with
+spaces, or newlines, in the middle of the number. However, you cannot
+put a comment in the middle of the number. Since a machine
+word<a name="7445"></a> contains 32 bits, each denotation should
+contain 32 digits in radix 2, 16 digits in radix 4, 11 digits in radix
+8 and 8 digits in radix 16, but it is common practice to omit digits
+on the left of the denotation whose value is zero. Thus the
+declaration for <code>d</code> could have been written </p>
+
+<pre>
+   BITS d = 16r2ed
+</pre>
+
+<p>When discussing values of mode <code>BITS</code> where the values
+of more significant bits is important, full denotations like the above
+may be more appropriate.</p>
+
+<h2><a name="section001321000000000000000"></a><a name="adv-mbitops"></a> <br>
+Monadic operators for <tt>BITS</tt> </h2>
+
+<p>There are many operators for <code>BITS</code> values. Firstly, the
+monadic operator <tt>BIN</tt><a name="7964"></a> takes an
+<code>INT</code> operand and yields the equivalent value with mode
+<code>BITS</code>. The operator <tt>ABS</tt><a name="7965"></a>
+converts a <code>BITS</code> value to its equivalent with mode
+<code>INT</code>. The <tt>NOT</tt><a name="7966"></a> operator which
+you first met in chapter&nbsp;4
+(section&nbsp;<a href="node42.html#choice-bops">4.2</a>) takes a
+<code>BITS</code> operand and yields a <code>BITS</code> value where
+every bit in the operand is reversed.  Thus</p>
+
+<pre>
+   NOT 2r 1000 1110 0110 0101 0010 1111 0010 1101
+</pre>
+
+<p>yields</p>
+
+<pre>
+       2r 0111 0001 1001 1010 1101 0000 1101 0010
+</pre>
+
+<p>Notice that spaces have been used to make these binary denotations
+more comprehensible. <code>NOT</code> is said to be a <b>bit-wise
+operator</b><a name="7462"></a> because its action on each bit is
+independent of the value of other bits.</p>
+
+<h2><a name="section001322000000000000000"></a><a name="adv-dbitops"></a> <br>
+Dyadic operators for <tt>BITS</tt> </h2>
+
+<p><tt>AND</tt><a name="7968"></a> and <tt>OR</tt><a name="7969"></a>
+(both of which you also met in chapter&nbsp;4) both take two
+<code>BITS</code> operands and yield a <code>BITS</code> value. They
+are both bit-wise operators and their actions are summarised as
+follows:</p>
+
+<table cellpadding="3" border="1" align="center">
+  <tbody>
+    <tr>
+      <th>Left Operand</th>
+      <th>Right Operand</th>
+      <th><tt>AND</tt></th>
+      <th><tt>OR</tt></th>
+    </tr>
+    <tr>
+      <td align="center">0</td>
+      <td align="center">0</td>
+      <td align="center">0</td>
+      <td align="center">0</td>
+    </tr>
+    <tr>
+      <td align="center">0</td>
+      <td align="center">1</td>
+      <td align="center">0</td>
+      <td align="center">1</td>
+    </tr>
+    <tr>
+      <td align="center">1</td>
+      <td align="center">0</td>
+      <td align="center">0</td>
+      <td align="center">1</td>
+    </tr>
+    <tr>
+      <td align="center">1</td>
+      <td align="center">1</td>
+      <td align="center">1</td>
+      <td align="center">1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For <code>OR</code>, the yield of</p>
+
+<pre>
+   2r 100110 OR 2r 10101
+</pre>
+
+<p>is <code>2r 110111</code>. The priority of <code>AND</code> is 3
+and the priority of <code>OR</code> is 2.</p>
+
+<p>The <code>AND</code> operator is particularly useful for extracting
+parts of a machine word. For example, suppose you have a
+<tt>BITS</tt><a name="7970"></a> value where the least-significant 8
+bits are equivalent to a character. You could write</p>
+
+<pre>
+   CHAR c = REPR ABS (b AND 16rff)
+</pre>
+
+<p>Here, the operators <tt>REPR</tt><a name="7971"></a> and <tt>ABS</tt><a
+name="7972"></a> do not generate machine-code instructions, but merely satisfy
+the compiler that the modes are correct. This sort of formula is, in fact, very
+efficient in Algol&nbsp;68.</p>
+
+<p>It is possible to extract a single bit from a word using the operator
+<tt>ELEM</tt><a name="7973"></a> which has the header</p>
+
+<pre>
+   (INT n,BITS t)BOOL:
+</pre>
+
+<p>For example, given the declaration</p>
+
+<pre>
+   BITS bi = 16r 394a 2716
+</pre>
+
+<p>then each hexadecimal digit represents 4 bits: the <code>3</code> occupies bit
+positions 1-4, the <code>9</code> occupies bit positions 5-8, the
+<code>4</code>, bit positions 9-12, and so on. Suppose we want the third bit
+(the leftmost bit is bit-1). The following declaration is valid:</p>
+
+<pre>
+   BOOL bit3 = 3 ELEM bi
+</pre>
+
+<p>Thus, if the third bit is a <code>1</code>, the declaration will give the value
+<code>TRUE</code> for bit 3. In fact, <code>3</code> written in binary<a
+name="7490"></a> is <span class="math">0011<sub>2</sub></span>, so bit 3 is
+<code>1</code>. Thus</p>
+
+<pre>
+   2 ELEM bi
+</pre>
+
+<p>would yield <code>FALSE</code>. The priority of <code>ELEM</code>
+is&nbsp;7.</p>
+
+<p>Incidentally, notice that in Algol&nbsp;68 the most significant bit
+in a machine word is bit-1 and the least significant bit is bit-32.
+This strongly suggests that computers in the 1960's were
+&ldquo;big-endian&rdquo;. Intel microprocessors and other compatible
+processors are &ldquo;little-endian&rdquo;<a name="tex2html38"
+href="footnode.html#foot7493"><sup><span
+class="arabic">12</span>.<span class="arabic">1</span></sup></a>.
+Because the a68toc<a name="7494"></a> compiler translates
+Algol&nbsp;68 programs into&nbsp;C programs, it is quite possible for
+the Algol68toC system to be implemented on a &ldquo;big-endian&rdquo;
+microprocessor, such as the Motorola 68000-series. A
+&ldquo;big-endian&rdquo; processor stores a machine word as four bytes
+(each of 8-bits) with the most significant byte at the lowest memory
+address.  &ldquo;Little-endian&rdquo; processors store the least
+significant byte at the lowest memory address. Whatever kind of
+microprocessor is used to elaborate your programs, the most
+significant bit of the word is bit-1 and the least significant bit is
+bit-32 in Algol&nbsp;68.</p>
+
+<p>The<a name="7495"></a> dyadic operators
+<tt>SHL</tt><a name="7974"></a> and <tt>SHR</tt><a name="7975"></a>
+shift a machine word to the left or to the right respectively by the
+number of bits specified by their right operand.  Their priority is
+<code>8</code>. To illustrate their action we shall suppose that they
+all operate on the <code>BITS</code> value <code>16r 89ab cdef</code>.
+Both the shifts are by four bits which is equivalent to one
+hexadecimal digit (4 bits is half a byte and is commonly called a
+nibble<a name="7500"></a>: yes, software engineers do possess a sense
+of humour!).</p>
+
+<p>The result of shifting the above value by 4 bits is given by the
+following table:</p>
+
+<div align="center" class="mathdisplay">
+
+<table cellpadding="3" border="1" align="center">
+  <tbody>
+    <tr>
+      <td align="center" colspan="3"><span>Original value = <tt>16r 89ab
+        cdef</tt></span></td>
+    </tr>
+    <tr>
+      <td>Operator</td>
+      <td>Bits shifted</td>
+      <td align="center">Yield</td>
+    </tr>
+    <tr>
+      <td align="center"><tt>SHL</tt></td>
+      <td align="center">4</td>
+      <td align="center"><tt>9abc def0</tt></td>
+    </tr>
+    <tr>
+      <td align="center"><tt>SHL</tt></td>
+      <td align="center">-4</td>
+      <td align="center"><tt>089a bcde</tt></td>
+    </tr>
+    <tr>
+      <td align="center"><tt>SHR</tt></td>
+      <td align="center">4</td>
+      <td align="center"><tt>089a bcde</tt></td>
+    </tr>
+    <tr>
+      <td align="center"><tt>SHR</tt></td>
+      <td align="center">-4</td>
+      <td align="center"><tt>9abc def0</tt></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>When shifting left (<code>SHL</code>), bits shifted beyond the most significant
+part of the word are lost. New bits shifted in from the right are always zero.
+When shifting right (<code>SHR</code>), the reverse happens. Note that the
+number of bits shifted should be in the range <span class="math">[- 32, +
+32]</span>. For <code>SHL</code>, if the number of bits to be shifted is
+negative, the <code>BITS</code> value is shifted to the right and likewise for
+<code>SHR</code>. The header for <code>SHL</code> is</p>
+
+<pre>
+   OP SHL = (BITS b,INT i)BITS:
+</pre>
+
+<p>and correspondingly for <code>SHR</code>. The value <code>b</code>
+is the value to be shifted and the integer <code>i</code> is the
+number of bits to shift.  <code>UP</code> and <code>DOWN</code> are
+synonyms for <code>SHL</code> and <code>SHR</code> respectively. The
+priorities of <code>SHL</code> and <code>SHR</code> are both 8.</p>
+
+<p>As well as the operators <code>=</code> and <code>/=</code> (which have the
+usual meaning), the operators <code>&lt;=</code> and <code>&gt;=</code> are
+also defined for mode <code>BITS</code>. The formula</p>
+
+<pre>
+   s &gt;= t
+</pre>
+
+<p>yields <code>TRUE</code> only if for all bits in <code>t</code> that are
+<code>1</code>, the corresponding bits in <code>s</code> are also
+<code>1</code>. This is sometimes regarded as &ldquo;s implies t&rdquo;.
+Contrariwise, the formula</p>
+
+<pre>
+   s &lt;= t
+</pre>
+
+<p>yields <code>TRUE</code> only if for all bits in <code>t</code> which are
+<code>0</code>, the corresponding bits in <code>s</code> are also
+<code>0</code>. Likewise, this is sometimes regarded as &ldquo;<code>NOT
+t</code> implies <code>s</code>&rdquo;.</p>
+
+<hr>
+
+<h2><a name="section001323000000000000000">Exercises</a> </h2>
+<dl compact="compact">
+  <dt>11.4<a name="ex-xi-iv"></a> </dt>
+    <dd>Given the declarations 
+      <pre>   BITS a = 16r 1111 1111,
+        b = 16r 89ab cdef</pre>
+      what is the value of each of the following: Ans<a
+      href="node145.html#ans-xi-iv"><img align="bottom" border="1" alt="[*]"
+      src="answer.png"></a> 
+      <dl compact="compact">
+        <dt>(a) </dt>
+          <dd><code>a AND b</code> 
+            <p></p>
+          </dd>
+        <dt>(b) </dt>
+          <dd><code>a OR b</code> 
+            <p></p>
+          </dd>
+        <dt>(c) </dt>
+          <dd><code>NOT a OR b</code> [Hint: convert each value to radix 2 and
+            then combine] 
+            <p></p>
+          </dd>
+        <dt>(d) </dt>
+          <dd><code>a = b</code> 
+            <p></p>
+          </dd>
+      </dl>
+    </dd>
+  <dt>11.5<a name="ex-xi-v"></a> </dt>
+    <dd>What is the value of Ans<a href="node145.html#ans-xi-v"><img
+      align="bottom" border="1" alt="[*]" src="answer.png"></a> 
+      <dl compact="compact">
+        <dt>(a) </dt>
+          <dd><code>16rab SHL 3</code> 
+            <p></p>
+          </dd>
+        <dt>(b) </dt>
+          <dd><code>16rba SHR 3</code> 
+            <p></p>
+          </dd>
+      </dl>
+    </dd>
+</dl>
+
+<p></p>
+<hr>
+
+<p></p>
+
+<div class="navigation">
+<hr>
+<!--navigation panel-->
+<a name="tex2html2475" href="node109.html"><img width="37" height="24"
+align="bottom" border="0" alt="next" src="next.png"></a> <a name="tex2html2469"
+href="node106.html"><img width="26" height="24" align="bottom" border="0"
+alt="up" src="up.png"></a> <a name="tex2html2463" href="node107.html"><img
+width="63" height="24" align="bottom" border="0" alt="previous"
+src="prev.png"></a> <a name="tex2html2471" href="node1.html"><img width="65"
+height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> <a
+name="tex2html2473" href="node147.html"><img width="43" height="24"
+align="bottom" border="0" alt="index" src="index.png"></a> <br>
+<b>Next:</b> <a name="tex2html2476" href="node109.html">Overlapping slices</a>
+<b>Up:</b> <a name="tex2html2470" href="node106.html">Advanced constructs</a>
+<b>Previous:</b> <a name="tex2html2464" href="node107.html">Bits, bytes and
+words</a> &nbsp; <b><a name="tex2html2472" href="node1.html">Contents</a></b>
+&nbsp; <b><a name="tex2html2474" href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+  Sian Mountbatten 2012-01-19 
+</address>
+</body>
+</html>

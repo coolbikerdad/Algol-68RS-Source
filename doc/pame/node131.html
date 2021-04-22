@@ -1,0 +1,366 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Control routines</title>
+<meta name="description" content="control routines">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node132.html">
+<link rel="previous" href="node130.html">
+<link rel="up" href="node125.html">
+<link rel="next" href="node132.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2952"
+  href="node132.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2946"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2940"
+  href="node130.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2948"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2950"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2953"
+  href="node132.html">Transput</a>
+<b> Up:</b> <a name="tex2html2947"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2941"
+  href="node130.html">a68toc extensions</a>
+ &nbsp; <b>  <a name="tex2html2949"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2951"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2954"
+  href="node131.html#section001561000000000000000">Floating-point unit control</a>
+<li><a name="tex2html2955"
+  href="node131.html#section001562000000000000000">Terminating a process</a>
+<li><a name="tex2html2956"
+  href="node131.html#section001563000000000000000">Garbage-collector control</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001560000000000000000"></a><a name="stan-cont"></a>
+Control routines</h1>
+
+<p>Three groups of procedures and operators are provided to control
+various aspects of the run-time environment. These are floating-point
+control, process termination control and garbage-collector
+control.</p>
+
+<h2><a name="section001561000000000000000"></a><a name="stan-fpov"></a>
+Floating-point unit control</h2>
+
+<p>The Intel Pentium microprocessors all have a floating-point unit
+(FPU) as an integral part of the microprocessor. The action of the FPU
+is determined by the contents of a 16-bit register called the
+&ldquo;control word register&rdquo;. Details of the register can be
+found in the file</p>
+
+<pre>
+   /usr/include/fpu_control.h
+</pre>
+
+<p>Details of the working of the FPU, as controlled by the control
+word register can be found in the three volumes of the
+<a
+href="http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html">Intel
+Architecture Software Developer's Manual</a>. The control word
+contains bits which control rounding, precision and whether
+floating-point errors should cause an exception.</p>
+
+<p>
+The QAD standard prelude provides two integers which control the
+rounding method. They are</p>
+
+<ol>
+<li><tt>fe to nearest</tt><a name="11173"></a>
+</li>
+<li><tt>fe downward</tt><a name="11174"></a>.
+</li>
+</ol>
+
+<p>The <tt>spaliens.a68</tt> file also has three procedures which give
+access to two C&nbsp;functions.</p>
+
+<ol>
+<li><tt>fe set round</tt><a name="11175"></a> with header <tt>PROC(INT)INT</tt>
+which is used with the two integers aforementioned.
+</li>
+<li><tt>fe get round</tt><a name="11176"></a> which has mode <tt>PROC INT</tt>.
+</li>
+<li><tt>lrint</tt><a name="11177"></a> which has mode <tt>PROC(REAL)INT</tt> and gives
+access to the C&nbsp;function of the same name.
+</li>
+</ol>
+
+<p>Here is the source code (in <tt>spops.a68</tt>) for the operator
+<code>ROUND</code>:-</p>
+
+<pre>
+   OP ROUND = (REAL r)INT:
+   IF r &gt; max int OR r &lt; -max int
+   THEN 0
+   ELSE
+      INT method=fe get round;
+      fe set round(fe tonearest);
+      INT i=lrint(r);
+      fe set round(method);
+      i
+   FI; #ROUND#
+</pre>
+
+<p>Notice how the FPU control word is reset to its original value before
+the end of the operator.</p>
+
+<p>The FPU control word is also used to control whether overflow
+should be detectable. The standard mode of operation is to ignore
+integer overflow. The procedure to trap a signal (<tt>on
+signal</tt><a name="11178"></a>) is declared as follows:-</p>
+
+<pre>
+   PROC on signal=(INT sig,
+                   PROC(INT)VOID handler)VOID:
+</pre>
+
+<p>The example program <code>testov.a68</code> shows how <code>on signal</code> can be
+used. The Algol&nbsp;68 identifiers for all the Linux signals are the same
+as the Linux signal identifiers, but in lower case. For example, the
+signal used in FPU control is <code>sigfpu</code>. The signal generated by
+keying <code>Ctrl-C</code> (sometimes depicted as <code>^C</code>) on program input
+is <code>sigint</code>. Here is a short program which illustrates signal
+trapping:-</p>
+
+<pre>
+   PROGRAM sig CONTEXT VOID
+   USE standard
+   BEGIN
+      on signal(sigint,
+                (INT sig)VOID:
+                 (write(("sigint trapped",
+                         newline));
+                  exit(1)));
+      write("Please key ^C: "); read(LOC CHAR);
+      write(("No signal trapped",newline))
+   END
+   FINISH
+</pre>
+
+<p>Usually, when you trap a signal such as
+<tt>sigint</tt><a name="11179"></a>, your program could close down
+processing in an orderly manner: files could be closed properly, a
+message to the user could be issued, and so on. You can do anything
+you want in the procedure provided as a parameter to <code>on
+signal</code>. You can also predeclare the procedure and simply
+provide its identifier in the <code>on signal</code> call.</p>
+
+<p>Integer overflow is ignored by the microprocessor. So the formula
+<code>max int + 3</code> simply yields an incorrect value.</p>
+
+<p>The procedure <tt>ansi raise</tt><a name="11180"></a> will cause
+any specified signal to occur. Here is the mode of <tt>ansi
+raise</tt><a name="11181"></a>:</p>
+
+<pre>
+   PROC ansi raise = (INT sig)INT:
+</pre>
+
+<h2><a name="section001562000000000000000"></a><a name="stan-prcont"></a>
+Terminating a process</h2>
+
+<p>As well as raising and trapping signals, it is sometimes useful to
+specify procedures to be elaborated when your program has finished, for
+whatever reason. Four procedures are provided for process
+termination:-</p>
+
+<ol>
+<li><tt>PROC iso at exit=(PROC VOID p)INT:</tt><a name="11182"></a>
+<br>
+The procedure <code>p</code> is registered to be elaborated when the program
+terminates normally or when the procedure <code>exit</code> (see procedure
+<a href="#stan-pcexit">3</a>) is called. Registered procedures are elaborated in
+the reverse order of being registered, so that the procedure registered
+last is elaborated first. The procedure <code>at exit</code> yields <span class="math">0</span> for
+success, <span class="math">-1</span> for an error.
+</li>
+<li><tt>PROC on exit=(PROC(INT,CPTR)VOID p,</tt><a name="11183"></a>
+<br>
+<code>              []CHAR arg)INT:</code><a name="stan-pconexit"></a>
+<br>
+Unlike the procedure <tt>at exit</tt><a name="11184"></a> (see above),
+<code>on exit</code> allows you to register a procedure which takes two
+parameters. The first is the integer parameter given to the
+<tt>exit</tt><a name="11185"></a>
+procedure (or 0 for normal termination) and the second is a
+<code>[]CHAR</code> which the procedure <code>p</code> can use. <tt>on exit</tt><a name="11186"></a>
+yields 0 for success and -1 for an error.
+</li>
+<li><tt>PROC exit = (INT status)VOID:</tt><a name="11187"></a>
+<br>
+<a name="stan-pcexit"></a>This procedure terminates the program immediately. Any procedures
+registered using <tt>at exit</tt><a name="11188"></a> or <tt>on exit</tt><a name="11189"></a> will be elaborated in
+the reverse order of registration. Any open files will be closed, but
+Algol&nbsp;68 buffers will not be flushed. The value of <code>status</code> will
+be passed to the parent process of the program.
+</li>
+<li><tt>PROC stop = VOID:</tt><a name="11190"></a>
+<br><a name="stan-stop"></a>This is a synonym for <code>exit(0)</code>.
+</li>
+</ol>
+The example program <code>testexit.a68</code> shows one way in which
+<code>at exit</code> and <code>on exit</code> may be used.
+
+<h2><a name="section001563000000000000000"></a><a name="stan-gc"></a>
+Garbage-collector control</h2>
+
+<p>The garbage-collector manages the run-time heap. The term
+&ldquo;garbage&rdquo; is used to designate memory on the heap which is
+no longer referenced. Although the garbage-collector is usually called
+whenever space on the heap is required, a number of routines are
+provided for explicit garbage collection or for fine control of the
+garbage-collector.</p>
+
+<ol>
+<li><tt>PROC garbage_collect = VOID:</tt><a name="11191"></a>
+<br>
+The garbage-collector can be called explicitly by an Algol&nbsp;68 program
+using this procedure.
+</li>
+<li><tt>PROC disable_garbage_collector = VOID:</tt><a name="11192"></a>
+<br>
+Disables the garbage-collector.
+</li>
+<li><tt>PROC enable_garbage_collector = VOID:</tt><a name="11193"></a>
+<br>
+Enables the garbage-collector.
+</li>
+<li><tt>PROC gc_param = (VECTOR[]CHAR cmd,INT v)INT:</tt><a name="11194"></a>
+<br>
+This routine is used to set or get the values of a number of
+parameters which control the garbage-collector. The <code>cmd</code> should
+consist of <code>GET </code> or <code>SET </code> followed by the string
+identifying the required parameter followed by a <code>nul ch</code>.
+The available strings are
+
+<ol>
+<li><tt>COLLECTION THRESHOLD</tt><a name="11195"></a> The number of bytes in use before
+the next garbage collection is allowed.
+</li>
+<li><tt>HEAP INCREMENT</tt><a name="11196"></a> The number of bytes by which the heap
+should be increased in size whenever the heap is grown.
+</li>
+<li><tt>MAX HEAP SIZE</tt><a name="11197"></a> The maximum size of the heap in bytes.
+</li>
+<li><tt>MIN HEAP SIZE</tt><a name="11198"></a> The minimum size of the heap in bytes.
+</li>
+<li><tt>MAX SEGMENT SIZE</tt><a name="11199"></a> The maximum size of a memory segment
+acquired for the heap.
+</li>
+<li><tt>MIN SEGMENT SIZE</tt><a name="11200"></a> The minimum size of a memory segment
+acquired for the heap.
+</li>
+<li><tt>POLICY</tt><a name="11201"></a> The heap policy. Three values are provided for
+setting the heap policy:-
+
+<ol>
+<li><tt>INT always collect</tt><a name="11202"></a>
+<br>
+The garbage-collector will always be called if space is required.
+</li>
+<li><tt>INT always grow heap</tt><a name="11203"></a>
+<br>
+The garbage-collector will never be called even if space is required.
+</li>
+<li><tt>INT default policy</tt><a name="11204"></a>
+<br>
+The garbage-collector will be called if there is insufficient space
+in the heap for the memory required. Extra space will be acquired if
+garbage-collection does not yield the spaced needed.
+</li>
+</ol>
+Whether the heap is grown or whether garbage-collection takes place
+depends on the current policy which is usually specified by the
+environment string <tt>A68_GC_POLICY</tt><a name="11205"></a>.
+</li>
+</ol>
+</li>
+<li><tt>PROC get_gc_param = (VECTOR[]CHAR param)INT:</tt><a name="11206"></a>
+<br>
+Gets the current value of the garbage-collector parameter (any one of
+the strings given in this section).
+</li>
+<li><tt>PROC set_gc_params = (VECTOR[]GCPARAM gcpar)VOID:</tt><a name="11207"></a>
+<br>
+Sets the value of the garbage-collector parameter (any one of the
+strings given in this section).
+</li>
+</ol>
+<p>
+For further details about the garbage-collector, consult the code in
+the <code>library</code> directory in the a68toc source tree.
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2952"
+  href="node132.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2946"
+  href="node125.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2940"
+  href="node130.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2948"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2950"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2953"
+  href="node132.html">Transput</a>
+<b> Up:</b> <a name="tex2html2947"
+  href="node125.html">Standard Prelude</a>
+<b> Previous:</b> <a name="tex2html2941"
+  href="node130.html">a68toc extensions</a>
+ &nbsp; <b>  <a name="tex2html2949"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2951"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

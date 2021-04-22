@@ -1,0 +1,282 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Mode declarations</title>
+<meta name="description" content="mode declarations">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node69.html">
+<link rel="previous" href="node67.html">
+<link rel="up" href="node65.html">
+<link rel="next" href="node69.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1793"
+  href="node69.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1787"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1781"
+  href="node67.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1789"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1791"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1794"
+  href="node69.html">Complex numbers</a>
+<b> Up:</b> <a name="tex2html1788"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1782"
+  href="node67.html">Field selection</a>
+ &nbsp; <b>  <a name="tex2html1790"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1792"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1795"
+  href="node68.html#section00931000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00930000000000000000"></a><a name="struc-mode"></a>
+Mode declarations</h1>
+
+<p>Structure<a name="4710"></a> declarations are very common
+in Algol 68 programs because they are a convenient way of grouping
+disparate data elements, but writing out their modes every time a
+name needs declaring is error-prone.  Using the
+<span  class="textbf">mode declaration</span><a name="4712"></a>, a new mode indicant<a name="4713"></a> can
+be declared to act as an abbreviation.  For example, the mode
+declaration</p>
+
+<pre>
+   MODE VEC = STRUCT(REAL x,y,z)
+</pre>
+
+<p>makes <code>VEC</code> synonymous for the mode specification on the
+right-hand side of the equals symbol. Henceforth, new values using
+<code>VEC</code> can be declared in the ordinary way:</p>
+
+<pre>
+   VEC vec = (1,2,3);
+   VEC vn := vec;
+   [10]VEC va;
+   PROC(VEC v)VEC pv=CO a routine-denotation CO;
+   STRUCT(VEC v,w,x) tensor
+</pre>
+
+<p>Here is a mode declaration for a structure which contains a
+reference mode:</p>
+
+<pre>
+   MODE RV = STRUCT(CHAR c,REF[]CHAR s)
+</pre>
+
+<p>but we shall consider such advanced modes in chapter&nbsp;11. Using
+a mode declaration, you might be tempted to declare a mode such as</p>
+
+<pre>
+   MODE CIRCULAR =
+         STRUCT(INT i,CIRCULAR c)  CO wrong CO
+</pre>
+
+<p>but this is not allowed. However, there is nothing wrong with such
+modes as</p>
+
+<pre>
+   MODE NODE  = STRUCT(STRING s,
+                       REF NODE next),
+        PNODE = STRUCT(STRING s,
+                       PROC(PNODE)STRING proc)
+</pre>
+
+<p>because the <code>NODE</code> inside the <code>STRUCT</code> of its
+declaration is hidden by the <code>REF</code>. Likewise, the
+<code>PNODE</code> parameter for <code>proc</code> in the declaration
+of <code>PNODE</code> is hidden by the <code>PROC</code>.</p>
+
+<p>Suppose you want a mode which refers to another mode which hasn't
+been declared, and the second mode will refer back to the first mode.
+Both mode declarations cannot be first. In Algol 68 proper, you simply
+declare both modes in the usual way. However, the
+a68toc<a name="4724"></a> compiler is a single-pass compiler (it reads
+the source program once only) and so all applied-occurrences must
+occur later in the source program than the defining-occurrences. In
+this case, one of the modes is declared using a <b>stub
+declaration</b><a name="4726"></a>.  Here is an example:</p>
+
+<pre>
+   MODE MODE2,
+        MODE1 = STRUCT(CHAR c,REF MODE2 rb),
+        MODE2 = STRUCT(INT i,REF MODE1 ra)
+</pre>
+
+<p>There is nothing circular about these declarations.  This is another
+example of mutual recursion<a name="4729"></a>.  Go ahead and
+experiment.</p>
+
+<p>This raises the point of which modes are actually permissible. We
+shall deal with this in chapter&nbsp;10. For now, just ensure that you
+don't declare modes like <code>CIRCULAR</code>, and avoid modes which
+can be strongly coerced into themselves, such as</p>
+
+<pre>
+MODE WRONG = [1:5]WRONG
+</pre>
+
+<p>If you inadvertently declare a disallowed mode, the compiler will
+declare that the mode is not legal.</p>
+
+<p>Mode declarations are not confined to structures. For example, the
+mode <tt>STRING</tt><a name="4981"></a> is declared in the standard
+prelude as</p>
+
+<pre>
+   MODE STRING = FLEX[1:0]CHAR
+</pre>
+
+<p>and you can write declarations like</p>
+
+<pre>
+MODE FDES     = INT,
+     MULTIPLE = [30]REAL,
+     ROUTINE  = PROC(INT)INT,
+     MATRIX   = [n,n]REAL
+</pre>
+
+<p>Notice that the mode declarations have been abbreviated (by
+omitting <code>MODE</code> each time and using commas). In the
+declaration of <code>ROUTINE</code>, notice that no identifier is
+given for the parameter of the procedure. In the last declaration, the
+bounds will be determined at the time of the declaration of any value
+using the mode <code>MATRIX</code>. Here, for example, is a small
+program using <code>MATRIX</code>:</p>
+
+<pre>
+   PROGRAM tt CONTEXT VOID
+   USE standard
+   BEGIN
+   INT n;
+   MODE MATRIX = [n,n]REAL;
+
+   WHILE   
+      print((newline,
+             "Enter an integer ",
+             "followed by a blank:"));
+      read(n);
+      n &gt; 0
+   DO
+      MATRIX m;
+
+      FOR i TO 1 UPB m
+      DO
+         FOR j TO 2 UPB m
+         DO
+            m[i,j]:=random*1000
+         OD
+      OD;
+
+      FOR i TO 1 UPB m
+      DO
+         print((m[i,],newline))
+      OD
+   OD
+   END
+   FINISH
+</pre>
+
+<hr>
+<h2><a name="section00931000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>7.5<a name="ex-vii-v"></a>
+<dd>Declare a mode for a structure containing two fields, one of mode
+<code>REAL</code> and one of mode <code>PROC(REAL)REAL</code>.
+ Ans<a href="node141.html#ans-vii-v"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.6<a name="ex-vii-vi"></a>
+<dd>Declare a mode for a structure which contains three fields, the
+first being the mode of the previous exercise, the second a procedure
+which takes that mode as a parameter and yields <code>VOID</code>, and the third
+being of mode <code>CHAR</code>.
+ Ans<a href="node141.html#ans-vii-vi"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>7.7<a name="ex-vii-vii"></a>
+<dd>What is wrong with these two definitions?
+<pre>
+   MODE AMODE = STRUCT(INT i,BMODE b),
+        BMODE = STRUCT(CHAR c,AMODE a)
+</pre>
+
+Try writing a program containing these declarations, with names
+of modes <code>AMODE</code> and <code>BMODE</code> and finish the program with
+the unit <code>SKIP</code>.   Ans<a href="node141.html#ans-vii-vii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1793"
+  href="node69.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1787"
+  href="node65.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1781"
+  href="node67.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1789"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1791"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1794"
+  href="node69.html">Complex numbers</a>
+<b> Up:</b> <a name="tex2html1788"
+  href="node65.html">Structures</a>
+<b> Previous:</b> <a name="tex2html1782"
+  href="node67.html">Field selection</a>
+ &nbsp; <b>  <a name="tex2html1790"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1792"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

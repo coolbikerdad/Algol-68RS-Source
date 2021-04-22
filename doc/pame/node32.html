@@ -1,0 +1,187 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Printing multiples</title>
+<meta name="description" content="printing multiples">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node33.html">
+<link rel="previous" href="node31.html">
+<link rel="up" href="node28.html">
+<link rel="next" href="node33.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1159"
+  href="node33.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1153"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1147"
+  href="node31.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1155"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1157"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1160"
+  href="node33.html">Operators with multiples</a>
+<b> Up:</b> <a name="tex2html1154"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1148"
+  href="node31.html">Trimming</a>
+ &nbsp; <b>  <a name="tex2html1156"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1158"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1161"
+  href="node32.html#section00541000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00540000000000000000"></a><a name="rep-prmult"></a>
+<br>
+Printing multiples</h1>
+
+<p>We have already used <tt>print</tt><a name="1781"></a> to convert
+plain values to characters displayed on your screen. In fact,
+<code>print</code> can be supplied with a row of values to be
+converted, so it is quite valid to write</p>
+
+<pre>
+   []INT i1 = (2,3,5,7,11,13);  print(i1)
+</pre>
+
+<p>You can also present an actual row-display<a name="1556"></a>.
+Instead of using</p>
+
+<pre>
+   print(2); print(blank); print(3)
+</pre>
+
+<p>you can write <code>print((2,blank,3))</code>. The doubled parentheses are
+necessary: the outer pair are needed by <code>print</code> anyway, and the
+inner pair are part of the row-display. Notice that the modes of the
+elements of the row-display are quite different. We shall learn in
+chapter&nbsp;8 how that can be so.</p>
+
+<p>Here is a program which will print the answers to the last
+exercise.</p>
+
+<pre>
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+    [,]INT i = ((1,-2,3,4),(-5,6,7,8));
+    []REAL r= (1.4,0,-5.4,3.6);
+    []CHAR s= "abcdefghijklmnopqrstuvwxyz"[@ ABS"a"];
+    print(("i=",i,newline,
+           "r=",r,newline,
+           "s=[",s,"]",newline,
+           "2 UPB i + UPB s[@1]=",
+           2 UPB i+UPB s[@1],newline,
+           "r[2:3]=",r[2:3],newline,
+           "i[2,2] - r[3]=",
+           i[2,2] - r[3],newline,
+           "i[2,2:]=",i[2,2:],newline,
+           "s[ABS""p"":ABS""t""]=",
+           s[ABS"p":ABS"t"],
+           newline))
+   END
+   FINISH
+</pre>
+
+<p>As you can see, <tt>print</tt><a name="1782"></a> will quite
+happily take values of modes <code>[]CHAR</code>, <code>[,]INT</code>,
+<code>[]REAL</code> and so on<a name="tex2html7"
+href="footnode.html#foot1783"><sup><span
+class="arabic">4</span>.<span class="arabic">3</span></sup></a>.
+Notice also that in order to get quote symbols in the last line to be
+printed, they are doubled.  A common mistake is to omit a quote symbol
+or a closing comment symbol. If your editor provides lexical
+highlighting (usually called &ldquo;syntax&rdquo; highlighting), an
+omitted quote or comment symbol will cause a large part of your
+program to be highlighted as though it were a <code>[]CHAR</code> or a
+comment. The mistake will be very clear. If your editor does not
+support lexical highlighting, you will get an odd message from the
+compiler (usually to the effect that it has run out of program!).</p>
+
+<hr>
+<h2><a name="section00541000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>3.9<a name="ex-iii-ix"></a>
+<dd>Write short programs to print the answers to all the exercises
+in this chapter from 3.2.1. You should insert multiples of
+<code>CHAR</code> at suitable points, as in the example above, so that you
+can identify the printed answers.  Ans<a href="node137.html#ans-iii-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1159"
+  href="node33.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1153"
+  href="node28.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1147"
+  href="node31.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1155"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1157"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1160"
+  href="node33.html">Operators with multiples</a>
+<b> Up:</b> <a name="tex2html1154"
+  href="node28.html">Repetition</a>
+<b> Previous:</b> <a name="tex2html1148"
+  href="node31.html">Trimming</a>
+ &nbsp; <b>  <a name="tex2html1156"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1158"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Bits, bytes and words</title>
+<meta name="description" content="bits, bytes and words">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node108.html">
+<link rel="previous" href="node106.html">
+<link rel="up" href="node106.html">
+<link rel="next" href="node108.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html2459"
+  href="node108.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2453"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2447"
+  href="node106.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2455"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2457"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2460"
+  href="node108.html">The mode BITS</a>
+<b> Up:</b> <a name="tex2html2454"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2448"
+  href="node106.html">Advanced constructs</a>
+ &nbsp; <b>  <a name="tex2html2456"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2458"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html2461"
+  href="node107.html#section001311000000000000000">Radix arithmetic</a>
+<li><a name="tex2html2462"
+  href="node107.html#section001312000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section001310000000000000000"></a><a name="adv-words"></a>
+Bits, bytes and words</h1>
+
+<p>In our discussion of plain values<a name="7357"></a> (values of
+modes <code>CHAR</code>, <code>INT</code>, <code>REAL</code>, and
+<code>BOOL</code>), we have omitted saying how these values are stored
+in computer memory for one important reason: Algol&nbsp;68 is a
+high-level programming language. A high-level programming language is
+one in which the concepts of computer programming are not expressed in
+terms of a computer, its instructions and its memory, but in terms of
+high-level concepts such as values and modes. Basically, the manner in
+which integers and characters and so on are stored in the computer are
+not our business.  However, since programs written in Algol&nbsp;68
+need to access the operating system, it is useful to know something
+about memory<a name="7358"></a>, whether the main memory of the
+computer or the storage memory found on hard disks and other
+devices.</p>
+
+<p>Computer memory consists of millions of <b>bits</b> (short for
+binary digits) which are grouped together as
+<b>bytes</b><a name="7361"></a> or <b>words</b><a name="7363"></a>.  A
+bit can take two values: 0 and 1.  A word is 16, 24, 32, 36, 60, 64
+or&nbsp;72 bits "wide", and a byte is 6, 8 or&nbsp;9 bits "wide".
+Almost all microcomputers use 8-bit bytes.  Microcomputers using the
+Intel Pentium processor (or compatibles) or later chips, use a 32-bit
+word and an 8-bit byte.  Generally speaking, a byte is used to store a
+character and a word is used to store an integer.  Real numbers are
+much more complicated than integers and we shall not describe how they
+are stored in memory.  Before we can understand about the equivalences
+of values of mode <code>CHAR</code> and bytes, and values of mode
+<code>INT</code> and words, we need to say something about <b>radix
+arithmetic</b><a name="7365"></a>.  If this is something you already
+know, please skip the next section.</p>
+
+<h2><a name="section001311000000000000000"></a><a name="adv-radix"></a>
+Radix arithmetic</h2>
+
+<p>Our ordinary arithmetic uses the ten digits 0, 1, ..., 9 and
+expresses numbers in powers of ten. Thus the number 1896 consists of
+1 thousand, 8 hundreds, 9 tens and 6 units. This could be written</p>
+
+<div align="center" class="mathdisplay">
+1896 = 1&times;1000 + 8&times;100 + 9&times;10 + 6&times;1
+</div>
+
+<p>Remembering that 100 is ten squared
+(<span class="math">10<sup>2</sup></span>) and 1000 is ten cubed
+(<span class="math">10<sup>3</sup></span>), we could rewrite this
+equation as</p>
+
+<pre>
+1896=1&times;10<sup>3</sup>+8&times;10<sup>2</sup>+9&times;10<sup>1</sup>+6&times;10<sup>0</sup>
+</pre>
+
+<p>As you can see, the powers of ten involved are 3, 2, 1 and 0. When
+we write whole numbers, we understand that the digits we use represent
+powers of ten. We say that the base, or <b>radix</b>
+<a name="7370"></a>, of our arithmetic is ten, which is why it is
+frequently referred to as "decimal arithmetic" (decimal
+<a name="7371"></a> is derived from the Latin word for ten).</p>
+
+<p>Now it is quite meaningful to develop an arithmetic having a
+different radix. For example, suppose we use two as the radix. We
+should express our numbers in terms of powers of two and they would be
+written using the digits 0 and 1 only. In an arithmetic of radix two,
+when we write a number, each digit would represent a power of two. For
+example, the number 101 would mean</p>
+
+<div class="mathdisplay">
+101 = 1&times;2<sup>2</sup> +0&times;2<sup>1</sup> +1&times;2<sup>0</sup>
+</div>
+
+<p>in an exactly analogous way to the number 1896 in decimal
+arithmetic.  In fact, the decimal equivalent of 101 would be
+<span class="math">4 + 0 + 1 = 5</span> (in decimal). Here is another
+example:</p>
+
+<div class="mathdisplay">
+1101=1&times;2<sup>3</sup>+1&times;2<sup>2</sup>+0&times;2<sup>1</sup>+1&times;2<sup>0</sup><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=8+4+0+1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=13&nbsp;(<tt>thirteen, in&nbsp;decimal</tt>)
+</div>
+
+<p>We could then construct addition and multiplication tables as
+   follows:</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding=3 border="1">
+<tr><td>+</td><td>0</td><td>1</td></tr>
+<tr><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>1</td><td>1</td><td>10</td></tr>
+</table>
+<p></p>
+<table cellpadding=3 border="1">
+<tr><td>&times;</td><td>0</td><td>1</td></tr>
+<tr><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>1</td><td>0</td><td>1</td></tr>
+</table>
+</div>
+
+<p>As you can see from the addition table, <span class="math">1 + 1 =
+10</span> (take row&nbsp;2 and column&nbsp;2).  When you read this
+equation, you must say "one-zero" for the number after the equals
+symbol. "Ten" means ten<span class="math">+</span>zero units which
+this number definitely is not. The number 10 in radix 2 means
+"two<span class="math">+</span>0 units" which is what you would expect
+for the sum of 1 and&nbsp;1.</p>
+
+<p>Two radices of particular use with computers are sixteen and two.
+Arithmetic with a radix of sixteen is called
+<b>hexadecimal</b><a name="7382"></a> and arithmetic with a radix of
+two is called <b>binary</b><a name="7384"></a>.</p
+
+<p>In hexadecimal arithmetic<a name="7385"></a>, the digits 0 to 9 are
+used, but digits are also required for the numbers ten to fifteen. The
+first six letters of the alphabet are used for the latter six numbers.
+They are commonly written in upper-case, but in Algol&nbsp;68 they are
+written in lower-case for a reason which will become apparent in a
+later section. Thus the "digits" used for hexadecimal arithmetic
+are</p>
+
+<div align="center" class="mathdisplay">
+<code>0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f</code>
+</div>
+
+<p>Addition and multiplication tables could be constructed for
+hexadecimal arithmetic on the same lines as those for radix two
+arithmetic. You should note that when writing a number containing more
+than one digit with a radix other than ten, the radix is commonly
+written (in decimal) as follows:</p>
+
+<div align="center" class="mathdisplay">
+2&times;3 = 12<sub>4</sub>
+</div>
+
+<p>Thus, in hexadecimal arithmetic, we could write</p>
+
+<div align="center" class="mathdisplay">
+7&times;9 = 3f<sub>16</sub>
+</div>
+
+<p>and there are some exercises at the end of this section in which
+you can try your hand at hexadecimal and other arithmetics.  Writing
+numbers in hexadecimal is sometimes called "hexadecimal
+notation<a name="7389"></a>".</p>
+
+<p>A byte consists of eight binary digits and can take any value from
+<span class="math">00000000<sub>2</sub></span> to
+<span class="math">11111111<sub>2</sub></span>.  The equivalent
+decimal value can be obtained by rewriting it as the sum of descending
+powers of two:</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding="0" align="center" width="100%">
+<tr valign="middle"><td nowrap width="50%" align="right">10011011<sub>2</sub></td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">1&times;2<sup>7</sup> +1&times;2<sup>4</sup> +1&times;2<sup>3</sup> +1&times;2<sup>1</sup> +1&times;2<sup>0</sup></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">128 + 16 + 8 + 2 + 1&nbsp;(<i>indecimal</i> )</td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">155<sub>10</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+</table>
+</div>
+
+<p>The exercises at the end of this section will give you some
+practice in this kind of conversion.</p>
+
+<p>If you compare the number of digits used to express the same
+number, you will find that hexadecimal arithmetic uses the least. For
+example, the decimal number 135 can be written</p>
+
+<div align="center" class="mathdisplay">
+<table cellpadding="0" align="center" width="100%">
+<tr valign="middle"><td nowrap width="50%" align="right">135</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">87<sub>16</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">2013<sub>4</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+<tr valign="middle"><td nowrap width="50%" align="right">&nbsp;</td>
+<td width="10" align="center" nowrap>=</td>
+<td align="left" nowrap width="50%">10000111<sub>2</sub></td>
+<td class="eqno" width=10 align="right">
+&nbsp;</td></tr>
+</table>
+</div>
+
+<p>When<a name="7397"></a> converting numbers written in binary to
+hexadecimal, the simplest way is to split the binary number into two
+groups of 4 bits and then convert each group into one hexadecimal
+digit.  Thus <code>00101011</code> can be split into <code>0010</code>
+and <code>1011</code>, and their hexadecimal equivalents are
+<code>2</code> and <code>b</code>.  If you intend accessing machine
+words, it would certainly be a good idea to learn the binary
+equivalents of the 16 hexadecimal digits <code>0-f</code>.  To help
+you, here is the procedure <tt>itostr</tt><a name="7957"></a> which
+converts a positive value of mode <code>INT</code> to a value of mode
+<code>STRING</code> (with minimum width) using any radix from 2 to
+16:</p>
+
+<pre>
+   []CHAR digits="0123456789abcdef"[@0];
+   
+   PROC itostr=(INT n#umber#,r#adix#)STRING:
+   IF n &lt; r
+   THEN digits[n]
+   ELSE itostr(n%r,r)+digits[n MOD r]
+   FI
+</pre>
+
+<p>Notice how its recursive definition simplifies the code.</p>
+
+<hr>
+<h2><a name="section001312000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>11.1<a name="ex-xi-i"></a>
+<dd>Using the procedure <code>itostr</code>, write a program which will
+display the 16 integers between 0 and 15 (decimal) in decimal,
+hexadecimal and binary (the binary equivalent should be displayed as 4
+bits) in three columns.  Ans<a href="node145.html#ans-xi-i"><img
+align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>11.2<a name="ex-xi-ii"></a>
+<dd>For each of the following, rewrite the number in the given radix:
+Ans<a href="node145.html#ans-xi-ii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>
+<span class="math">94<sub>10</sub> => 16</span> 
+<p>
+<dt>(b)
+<dd>
+<span class="math">13<sub>10</sub> => 2</span> 
+<p>
+<dt>(c)
+<dd>
+<span class="math">1111&nbsp;1001<sub>2</sub> => 16</span> 
+<p>
+<dt>(d)
+<dd>
+<span class="math">3e1<sub>16</sub> => 10</span> 
+<p>
+<dt>(e)
+<dd>
+<span class="math">2c<sub>16</sub> => 2</span> 
+<p>
+<dt>(f)
+<dd>
+<span class="math">10101<sub>2</sub> => 10</span> 
+<p>
+</dd>
+</dl>
+<dt>11.3<a name="ex-xi-iii"></a>
+<dd>Express the value of each of the following using the radix of that
+exercise: Ans<a href="node145.html#ans-xi-iii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+
+<dl compact>
+<dt>(a)
+<dd>
+<span class="math">101<sub>2</sub>+110<sub>2</sub></span> 
+<p>
+<dt>(b)
+<dd>
+<span class="math">35<sub>16</sub> + ae<sub>16</sub></span> 
+<p>
+<dt>(c)
+<dd><span class="math">17<sub>8</sub> +37<sub>8</sub></span> 
+<p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html2459"
+  href="node108.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html2453"
+  href="node106.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html2447"
+  href="node106.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html2455"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html2457"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html2460"
+  href="node108.html">The mode BITS</a>
+<b> Up:</b> <a name="tex2html2454"
+  href="node106.html">Advanced constructs</a>
+<b> Previous:</b> <a name="tex2html2448"
+  href="node106.html">Advanced constructs</a>
+ &nbsp; <b>  <a name="tex2html2456"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html2458"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

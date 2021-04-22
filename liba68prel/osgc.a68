@@ -1,0 +1,137 @@
+DECS  osgc  CONTEXT VOID  USE  cif,  oserrors,  usefulops:
+
+{  Id: osgc.a68,v 1.3 1993/11/18 11:21:17 aap Exp $ }
+
+configinfo A68CONFIG "$Id: osgc.a68,v 1.2 2002-02-04 09:26:51 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+
+10:08:93  generic_msg -> global_msg.  DCT
+26:11:93  New version from APP
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  32.002 
+26:08:94  33.002  DJS   ReNameLib Change name of header file for garbage
+                                  collector from a68_library.h to Alibrary.h 
+21:03:95  33.003  DJS   Release   Add null terminator at calls of ALIEN
+                                  gc_param.
+29:03:95  34.004  ELLA  Modcprght Change copyright header
+01:02:02  34.005  SL    Phoenix Engineering change include for Alibrary.h
+??:??:??   ?.???  ????
+COMMENT
+
+{  Public Interfaces to the Garbage Collector in the Algol 68 runtime library
+}
+
+PROC (VECTOR [] CHAR, INT) INT gc_param =
+  ALIEN "A_PARAM"
+        "#include <algol68/Alibrary.h>"
+        "#define A_PARAM(name,value) A_int_INT(Agc_param(A_VC_charptr(name),A_INT_int(value)))";
+
+{
+  Explicitly invoke garbage collector
+}
+PROC VOID garbage_collect = 
+  ALIEN "Agc_collect"  "#include <algol68/Alibrary.h>";
+
+VECTOR [] VECTOR [] CHAR  gc_diag_options = ();
+
+PROC set_gc_diagnostics = (BITS  options) VOID:
+{
+  Set/change the level of diagnostic info provided by garbage collector
+}
+ ( {{ osif message( 100, "set_gc_diagnostics", global_msg ); }} SKIP );
+
+PROC  gc_statistics = (PROC (VECTOR [] CHAR) VOID  line) VOID:
+{
+  Generate a message containing garbage collector statistics.
+}
+  ( osif message( 100, "gc_statistics", global_msg ); SKIP );
+
+MODE GCPARAM = STRUCT( VECTOR [0] CHAR name, INT value );
+
+PROC set_gc_params = (VECTOR [] GCPARAM gcparams, MESSAGEPROC msg ) VOID:
+{
+  Set parameters affecting behaviour of garbage collector.
+}
+FORALL p IN gcparams
+DO
+  IF
+    gc_param("SET " + name OF p + 2r"0",value OF p) /= value OF p
+  THEN
+    osif message( 99, ("set_gc_params",name OF p), msg )
+  FI
+OD;
+
+PROC get_gc_param = (VECTOR [] CHAR name, MESSAGEPROC msg) INT:
+BEGIN
+  INT value = gc_param("GET " + name + 2r"0",0);
+  IF
+    value = -1
+  THEN
+    osif message( 99, ("get_gc_param",name), msg )
+  FI;
+  value
+END;
+
+INT always collect = ALIEN "A_ALWAYS_COLLECT" "#include <algol68/Alibrary.h>";
+INT always grow heap = ALIEN "A_ALWAYS_GROW_HEAP" "#include <algol68/Alibrary.h>";
+INT default policy = ALIEN "A_DEFAULT_POLICY" "#include <algol68/Alibrary.h>";
+
+INT saved policy;
+
+PROC disable_garbage_collector = VOID:
+BEGIN
+  saved policy := get_gc_param("THRESHOLD FUNCTION",global_msg);
+  set_gc_params( GCPARAM("THRESHOLD FUNCTION", always grow heap), global_msg )
+END;
+
+PROC enable_garbage_collector = VOID:
+  set_gc_params( GCPARAM("THRESHOLD FUNCTION", saved policy), global_msg );
+
+SKIP
+
+KEEP
+  garbage_collect,
+  disable_garbage_collector, enable_garbage_collector,
+  always collect, always grow heap, default policy,
+  gc_diag_options, set_gc_diagnostics, 
+  gc_statistics,
+  GCPARAM, set_gc_params, get_gc_param
+
+FINISH
+
+{
+Local Variables:
+eval: (auto-fill-mode 0)
+End:
+}

@@ -1,0 +1,12 @@
+
+This file lists the contents and use of directory
+                   liba68prel/
+
+The file
+    rctr             contains AAAAOSF
+        
+This area depends on:-
+	include/algol68
+	include/algol68/linux
+	library
+	a68config

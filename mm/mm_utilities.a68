@@ -1,0 +1,1344 @@
+DECS mm_utilities CONTEXT VOID USE putstrings, osinterface, basics,
+                                   messageproc,
+                                   commandsyntax, commandreader, command,
+                                   kernelreader, ioprocs, commandcaller,
+                                   mm_basics, mm_oscommands :
+
+configinfo A68CONFIG "$Id: mm_utilities.a68,v 1.3 2002-06-06 13:55:55 sian Exp $";
+
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1984
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+31:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 32.1 
+02:09:94  33.001  DJS    
+08:09:94  33.002  DJS   MMCR001   
+29:03:95  34.003  ELLA  Modcprght Change copyright header
+15:01:00  34.004  SL    Phoenix Engineering: changed help msgs
+COMMENT
+
+PROC try_name = (VECTOR[ ]CHAR n1, n2 )BOOL:
+BEGIN
+	INT top = UPB n1 MIN UPB n2;
+
+	top /= 0 ANDTH ( n1[ : top ] = n2[ : top ] )
+END;
+
+PROC remove_quotes = (REF VECTOR[ ]CHAR str )REF VECTOR[ ]CHAR:
+                                        { removes quotes or delivers parameter }
+BEGIN
+	INT upb = UPB str;
+
+	IF upb > 0 ANDTH str[1] = """"
+	THEN
+		BOOL instr:= TRUE;
+		HEAP VECTOR[ upb ]CHAR  ans;
+		INT i := 0;
+
+      FOR j FROM 2 TO upb
+      DO
+         IF str[j] = """"
+			THEN IF ( instr := NOT instr ) THEN ans[ i PLUSAB 1 ] := """" FI
+			ELSE ans[ i PLUSAB 1 ] := str[j]
+         FI
+        OD;
+        ans[ : i ]
+  ELSE str
+  FI
+END;
+
+BOOL first_directory = TRUE,
+     all_directories = FALSE;
+
+PROC lookup_file = (VECTOR[ ]CHAR name,
+                                  type,
+                    BOOL one_dir,
+                    REF REF VECTOR[ ]CHAR name_found,
+                    REF INT dsize,
+                    MESSAGEPROC msg )BOOL:
+BEGIN
+	BOOL found := FALSE;
+	VECTOR[ bufmax ]CHAR buffer;
+	INT nsize = UPB name, tsize = UPB type;
+	INT bpos := 0, dtop := 0;
+
+   PROC analyse_symbol = (REF SYMBOL sym )VOID:
+   BEGIN
+		REF VECTOR[ ]CHAR text = text OF sym;
+		INT top = UPB text;
+		INT pos := 0, start := 1, mark := top;
+		BOOL subs := FALSE, escape := FALSE;
+		CHAR c;
+
+      PROC insert = (BOOL substitute )VOID:
+      BEGIN
+			IF start < pos
+			THEN
+				IF substitute
+				THEN
+                REF SYMBOL s = findsymbol( text[ start : pos - 1 ] );
+
+                IF s ISNT nilsymbol THEN analyse_symbol( s ) FI
+            ELSE
+               INT size = pos - start;
+
+               buffer[ bpos + 1 : bpos + size ] := text[ start : pos - 1 ];
+               bpos PLUSAB size
+            FI
+         FI;
+            start := pos + 1
+      END;
+
+      WHILE ( pos PLUSAB 1 ) <= top
+      DO
+         c := text[ pos ];
+         IF escape
+			THEN escape := FALSE
+         ELIF c = "'"
+			THEN insert( subs );  subs := NOT subs
+         ELIF c = "\"
+			THEN insert( FALSE );  escape := TRUE
+			FI
+      OD;
+      insert( FALSE )
+   END; #insert#
+
+   PROC try_action = (REF SYMBOL s )BOOL:
+   BEGIN
+      bpos := 0;
+      analyse_symbol( s );
+      dtop := bpos;
+      buffer[ bpos + 1 : bpos + nsize ] := name;
+      bpos PLUSAB nsize;
+
+      IF tsize > 0
+		THEN
+         buffer[ bpos + 1 : bpos + tsize ] := type;
+         bpos PLUSAB tsize
+      FI;
+      found := file_exists( buffer[ : bpos ], msg );
+      IF one_dir THEN FALSE ELSE NOT found FI
+    END; #try_action#
+
+    scansymbols( "dir", try_action );
+    IF found
+	 THEN
+        name_found := MAKERVC buffer[ : bpos ];
+        dsize := dtop
+    FI;
+    found
+END; #lookup_file#
+
+VECTOR[ 19 ]CHAR no_src_file := "has no source file.";
+VECTOR[ 27 ]CHAR file_not_found := "source file not accessible.";
+
+PROC lookup_src_file = (VECTOR[ ]CHAR name,
+                        BOOL one_dir,
+                        REF REF VECTOR[ ]CHAR full_name,
+                        REF INT dsize,
+                        MESSAGEPROC msg )BOOL:
+IF lookup_file( name, a68_type, one_dir, full_name, dsize, msg ) OREL
+	lookup_file( name, sta_type, one_dir, full_name, dsize, msg )
+THEN TRUE
+ELSE
+	full_name := no_src_file;
+	FALSE
+FI; #lookup_src_file#
+	
+PROC check_module_file = (REF MODULE m,
+                          BOOL one_dir,
+                          REF REF VECTOR[ ]CHAR full_name,
+                          MESSAGEPROC msg )BOOL:
+BEGIN
+	BOOL file_found;
+	INT dsize;
+
+   IF UPB filename OF m = 0
+	THEN
+        file_found := lookup_src_file( name OF m, one_dir, full_name,
+                                       dsize, msg );
+        IF file_found THEN filename OF m := full_name[ dsize + 1 : ] FI
+	ELIF NOT( file_found := lookup_file( filename OF m, blankname,
+                                       one_dir, full_name, dsize, msg ))
+	THEN full_name := file_not_found
+   FI;
+   file_found
+END; #check_module_file#
+
+PROC put_module_name = (REF CHANNEL list,
+                        REF MODULE m,
+                        BOOL justify,
+                        MESSAGEPROC msg )BOOL:
+BEGIN
+	INT chno = charnumber( list ) - 1;
+	REF VECTOR[ ]CHAR full_name;
+	INT spcnt := 2;
+	BOOL file_found = check_module_file( m, all_directories, full_name, msg );
+	INT ntop = UPB full_name ;
+
+   put( list, name OF m );
+
+   IF justify THEN spcnt := 2 + max_module_name_size - UPB name OF m FI;
+
+	IF ntop + spcnt > charsleft( list )
+	THEN
+      put( list, newline );
+      spcnt := 0 MAX( chno MIN ( charsleft( list ) - ntop ))
+   FI;
+
+   TO spcnt DO put( list, " " ) OD;
+   put( list, full_name );
+   file_found
+END;
+
+PROC list_compiles = (REF CHANNEL list,
+                      VECTOR[ ]CHAR heading,
+                      MESSAGEPROC msg )BOOL:
+BEGIN
+	BOOL first := TRUE, files_found := TRUE;
+
+   PROC action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+		REF VECTOR[ ]CHAR av;
+
+      IF attribute_marked( m, compile_attribute )
+		THEN
+         IF first
+			THEN
+            first := FALSE;
+            put( list, ( heading, newline ))
+         FI;
+         
+			put( list, "    " );
+         files_found := put_module_name( list, m, TRUE, msg )
+									ANDTH files_found;
+         av := attribute_value( m, compile_attribute );
+
+			IF av /= on_string
+			THEN
+            IF charsleft( list ) < UPB av + 3
+				THEN put( list, ( newline, "     " ))
+            FI;
+				put( list, ( " [", av, "]" ))
+         FI;
+			put( list, newline )
+      FI;
+      TRUE
+   END; #action#
+
+   scanmodules( modules, action );
+   IF first THEN put( list, ( "There are no compiles pending.", newline )) FI;
+   files_found
+END; #list_compiles#
+
+PROC list_links = (REF CHANNEL list, VECTOR[ ]CHAR heading )VOID:
+BEGIN
+	BOOL first := TRUE;
+
+   PROC action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      IF attribute_marked( m, link_attribute )
+		THEN
+			IF first
+			THEN
+            first := FALSE;
+            put( list, ( heading, newline ))
+         FI;
+         put( list, ( "    ", name OF m,
+                      " debug ", attribute_value( m, debug_attribute ),
+                      " exedir ", attribute_value( m, exename_attribute ),
+                      newline ))
+      FI;
+      TRUE
+   END; #action#
+
+   scanmodules( modules, action );
+   IF first THEN put( list, ( "There are no links pending.", newline )) FI
+END; #list_links#
+
+PROC list_attributes = (REF CHANNEL list, INT attribute_number )VOID:
+BEGIN
+	BOOL first := TRUE;
+	VECTOR[ ]CHAR an = attribute_name( attribute_number );
+	VECTOR[ UPB an ]CHAR list_name := an;
+
+   PROC action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      IF attribute_marked( m, attribute_number )
+		THEN
+         IF first
+			THEN
+            first := FALSE;
+            put( list, ( list_name, " modules :-", newline ))
+         FI;
+         put( list, ( "    ", name OF m, newline ))
+      FI;
+		TRUE
+   END; #action#
+
+   scanmodules( modules, action );
+   IF first
+	THEN
+      set_lowercase( list_name );
+      put( list, ( "There are no ", list_name, " modules.", newline ))
+   FI
+END; #list_attributes#
+
+PROC show_symbol_class = ( VECTOR[ ]CHAR class, title )VOID:
+BEGIN
+	INT ttop = UPB title;
+	VECTOR[ ttop + 4 ]CHAR heading;
+	REF CHAR fc = heading[ 1 ];
+	BOOL found := FALSE;
+
+   PROC show_sym = (REF SYMBOL s )BOOL:
+   BEGIN
+      put( screen, ( heading, text OF s, newline ));
+      clear( heading );
+      found := TRUE
+   END; #show_sym#
+
+   heading[ : ttop ] := title;
+   heading[ ttop + 1 : ] := " :- ";
+   fc := REPR( ABS fc - lcbias );
+   scansymbols( class, show_sym );
+   IF NOT found THEN put( screen, ( "No ", title, ".", newline )) FI
+END; #show_symbol_class#
+
+PROC unmark_attribute = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+   IF attribute_marked( m, attribute_number )
+	THEN clear_attribute( m, attribute_number );  TRUE
+	ELSE FALSE
+   FI
+END;
+
+PROC unmark_compile = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+   IF attribute_marked( m, attribute_number )
+	THEN
+      clear_attribute( m, attribute_number );
+      IF NOT attribute_marked( m, link_attribute )
+		THEN
+         clear_attribute( m, debug_attribute );
+         IF NOT permanent_attribute( m, exename_attribute )
+			THEN clear_attribute( m, exename_attribute )
+         FI
+      FI;
+
+      IF attribute_state( m, version_attribute )
+		THEN set_attribute( m, version_attribute, FALSE )
+      FI;
+
+      IF NOT permanent_attribute( m, star_attribute )
+		THEN clear_attribute( m, star_attribute )
+      FI;
+
+      IF NOT permanent_attribute( m, heap_attribute )
+		THEN clear_attribute( m, heap_attribute )
+      FI;
+
+      IF NOT permanent_attribute( m, optimise_attribute )
+		THEN clear_attribute( m, optimise_attribute )
+      FI;
+      TRUE
+   ELSE FALSE
+   FI
+END; #unmark_compile#
+
+PROC unmark_link = (REF MODULE m, INT attribute_number )BOOL:
+BEGIN
+   IF attribute_marked( m, attribute_number )
+	THEN
+      clear_attribute( m, attribute_number );
+      IF NOT attribute_marked( m, compile_attribute )
+		THEN clear_attribute( m, debug_attribute )
+      FI;
+
+      IF NOT permanent_attribute( m, exename_attribute )
+		THEN clear_attribute( m, exename_attribute )
+      FI;
+      TRUE
+   ELSE FALSE
+   FI
+END; #unmark_link#
+
+PROC undo_attribute = (VECTOR[ ]CHAR name,
+                       INT attribute_number,
+                       PROC( REF MODULE, INT )BOOL undo_action,
+                       BOOL all,
+                            warning )VOID:
+BEGIN
+	VECTOR[ ]CHAR an = attribute_name( attribute_number );
+	VECTOR[ UPB an ]CHAR list_name := an;
+
+   set_lowercase( list_name );
+
+   PROC clear_action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      IF all OREL name = name OF m
+		THEN
+         IF undo_action( m, attribute_number )
+			THEN
+            IF warning THEN put( screen, "**** " ) FI;
+            put( screen, ( "Module ", name OF m,
+                           " removed from ", list_name, " list.", newline ))
+         ELIF NOT all
+			THEN
+            put( screen, ( "Module ", name OF m,
+                           " not on the ", list_name, " list.", newline ))
+         FI;
+         all
+      ELSE TRUE
+      FI
+   END; #clear_action#
+
+	REF MODULELIST ml = scanmodules( modules, clear_action );
+
+   IF NOT all ANDTH NOT warning ANDTH ( ml IS nilmodulelist )
+	THEN put( screen, ( not_found( "Module ", name ), newline ))
+   FI
+END; #undo_attribute#
+
+PROC undo_compile = (VECTOR[ ]CHAR name,
+                     BOOL all,
+                          warning )VOID:
+    undo_attribute( name, compile_attribute, unmark_compile, all, warning );
+
+PROC undo_link = (VECTOR[ ]CHAR name,
+                  BOOL all,
+                       warning )VOID:
+    undo_attribute( name, link_attribute, unmark_link, all, warning );
+
+REF SYMBOL modname_symbol := NIL,
+           srcname_symbol := NIL,
+           stars_symbol := NIL,
+           heap_symbol := NIL,
+           optimise_symbol := NIL,
+           prog_symbol := NIL,
+           debug_symbol := NIL,
+           exename_symbol := NIL;
+BITS trcomp_tag = translate_tag OR compile_tag;
+
+PROC execute = (VECTOR[ ]CHAR nodename, MESSAGEPROC msg )VOID:
+BEGIN
+	BOOL offline = UPB nodename /= 0;
+	REF VECTOR[ ]CHAR full_name;
+	BITS action_symbols := 2r0;
+	BOOL sep_trans_from_cc := FALSE, goto_next_stage := TRUE;
+	REF VECTOR[ ]CHAR action_string := compile_string;
+
+   PROC check_for_action = (REF SYMBOL s )BOOL:
+   BEGIN
+      action_symbols := action_symbols OR ( tags OF s AND action_tag );
+      action_symbols /= action_tag
+   END; #check_for_action#
+
+   PROC set_interface_symbols = (REF MODULE m,
+                                 REF VECTOR[ ]CHAR full_name,
+                                                   exe_name )BOOL:
+   BEGIN
+		BOOL debug = attribute_state( m, debug_attribute );
+
+		text OF modname_symbol := name OF m;
+		text OF srcname_symbol := full_name;
+		text OF exename_symbol := exe_name;
+		text OF stars_symbol := attribute_value( m, star_attribute );
+		text OF heap_symbol := attribute_value( m, heap_attribute );
+		text OF optimise_symbol := attribute_value( m, optimise_attribute );
+		text OF prog_symbol :=
+			IF decs OF m THEN false_string ELSE true_string FI;
+		text OF debug_symbol :=
+			IF debug THEN true_string ELSE false_string FI;
+      debug
+   END; #set_interface_symbols#
+
+   PROC check_combined_uses = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      NOT attribute_marked( m, compile_attribute )
+   END; #check_combined_uses#
+
+   PROC check_separate_uses = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      IF attribute_marked( m, compile_attribute )
+		THEN attribute_value( m, compile_attribute ) = cc_string
+      ELSE TRUE
+      FI
+   END; #check_separate_uses#
+
+	PROC (REF MODULE, STAR )BOOL check_uses := check_combined_uses;
+
+   PROC compile_action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+		REF MODULELIST ml;
+		REF VECTOR[ ]CHAR av;
+
+		IF NOT attribute_marked( m, compile_attribute )
+		THEN SKIP
+      ELIF ( av := attribute_value( m, compile_attribute )) = cc_string ANDTH
+           sep_trans_from_cc
+		THEN SKIP
+      ELIF av = failed_string OREL av = trfailed_string
+		THEN
+         put( screen, ( "Module ", name OF m, " is marked with a failure.",
+                        newline ));
+         goto_next_stage := FALSE
+      ELIF (( ml := scanmodules( uses OF m, check_uses ))
+									ISNT
+             nilmodulelist )
+		THEN
+         put( screen, ( "Module ", name OF m,
+                        " needs un-compiled module ", name OF module OF ml,
+                        newline ));
+         goto_next_stage := FALSE
+      ELSE
+			BOOL debug;
+
+			IF NOT check_module_file( m, all_directories, full_name, msg )
+			THEN msg( user, oneline(( "Module ", name OF m, " ", full_name )))
+         FI;
+
+         debug := set_interface_symbols( m, full_name, blankname );
+
+         IF sep_trans_from_cc
+			THEN
+            put( screen, ( "Translate ", name OF m, " from ",  full_name,
+                           newline ));
+
+            IF translate_oscommands( translate_string, msg )
+				THEN
+					IF  av /= tr_string
+					THEN set_attribute( m, compile_attribute, cc_string )
+               ELSE unmark_compile( m, compile_attribute )
+               FI
+            ELSE
+					put( screen, ( "Module ", name OF m,
+                              " has failed to translate.", newline ));
+               IF attribute_value( m, compile_attribute ) = tr_string
+					THEN set_attribute( m, compile_attribute, trfailed_string )
+					ELSE set_attribute( m, compile_attribute, failed_string )
+               FI;
+               goto_next_stage := FALSE
+            FI
+         ELSE
+            put( screen, ( "Compile ", name OF m, " from ",  full_name,
+                           IF debug THEN " with" ELSE " no" FI, " debug",
+                           newline ));
+
+            IF translate_oscommands( action_string, msg )
+				THEN unmark_compile( m, compile_attribute )
+            ELSE
+               put( screen, ( "Module ", name OF m,
+                              " has failed to compile.", newline ));
+               set_attribute( m, compile_attribute, failed_string );
+               goto_next_stage := FALSE
+            FI
+         FI
+      FI;
+      TRUE
+   END; #compile_action#
+
+   PROC cc_action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+		REF MODULELIST ml;
+		REF VECTOR[ ]CHAR av;
+
+		IF NOT attribute_marked( m, compile_attribute )
+		THEN TRUE
+		ELIF ( av := attribute_value( m, compile_attribute );
+			    av = trfailed_string OREL av = ccfailed_string )
+		THEN
+			put( screen, ( "Module ", name OF m, " is marked with a failure.",
+				            newline ));
+			TRUE
+		ELSE
+			BOOL debug = set_interface_symbols( m, blankname, blankname );
+
+			put( screen, ( "Cc ", name OF m, 
+					         IF debug THEN " with" ELSE " no" FI, " debug",
+								newline ));
+
+			IF translate_oscommands( compile_string, msg )
+			THEN
+				unmark_compile( m, compile_attribute );
+				TRUE
+			ELSE
+				put( screen, ( "Module ", name OF m,
+						         " has failed at C compile.", newline ));
+				set_attribute( m, compile_attribute, ccfailed_string );
+				goto_next_stage := FALSE;
+				FALSE
+			FI
+		FI
+	END; #cc_action#
+
+   PROC can_link = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      IF marker OF m = 0
+		THEN
+         marker OF m := 1;
+         NOT attribute_marked( m, compile_attribute ) ANDTH
+         ( scanmodules( uses OF m, can_link ) IS nilmodulelist )
+      ELSE TRUE
+      FI
+   END; #can_link#
+
+   PROC link_action = (REF MODULE m, STAR s )BOOL:
+   BEGIN
+      mark_modules( modules, 0 );
+      IF attribute_marked( m, link_attribute ) ANDTH can_link( m, s )
+		THEN
+			BOOL debug;
+			REF VECTOR[ ]CHAR exe_dir = attribute_value( m, exename_attribute );
+
+			debug := set_interface_symbols( m, blankname, exe_dir );
+			put( screen, ( "Link module ", name OF m, " into ", exe_dir,
+                        IF debug THEN " with" ELSE " no" FI, " debug",
+                        newline ));
+         IF translate_oscommands( link_string, msg )
+			THEN unmark_link( m, link_attribute )
+         ELSE
+				put( screen, ( "Module ", name OF m, " has failed to link.",
+                           newline ))
+         FI
+      FI;
+      TRUE
+   END; #link_action#
+
+   show_symbol_class( "lib", "libraries" );
+   IF offline
+	THEN
+      save_database( database_name, detach_name, database_modified, msg );
+      submit( database_name, nodename, msg )
+   ELSE
+      scansymbols( "", check_for_action );
+      sep_trans_from_cc := ( action_symbols AND trcomp_tag ) = trcomp_tag;
+      IF ( action_symbols AND translate_tag ) /= 2r0
+		THEN
+			action_string := translate_string
+				# Only used if NOT separate translate and compile #
+      FI;
+
+      IF sep_trans_from_cc THEN check_uses := check_separate_uses FI;
+
+      IF diagnose
+		THEN
+         IF sep_trans_from_cc
+			THEN put( screen, ( "Separate translate and compile", newline ))
+         ELSE
+            put( screen, ( "Translate and compile in one pass using symbol ",
+                           action_string, newline ))
+         FI
+      FI;
+      ring_bell := FLAGON bell_flag;
+      scanmodules( modules, compile_action );
+
+      IF goto_next_stage ANDTH sep_trans_from_cc
+		THEN scanmodules( modules, cc_action )
+      FI;
+
+      IF goto_next_stage
+		THEN scanmodules( modules, link_action )
+      FI
+   FI
+END; #execute#
+
+PROC do_update_version = (REF MODULE m,
+                          PROC( VECTOR[ ]CHAR )
+                              REF VECTOR[ ]CHAR get_version_string,
+                          MESSAGEPROC msg )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR name_found;
+
+    IF NOT query( oneline(( "Do you wish to update version module ",
+                            name OF m )),
+                  default_yes, msg ) THEN
+        FALSE
+  ELIF check_module_file( m, all_directories, name_found, msg ) THEN
+    REF VECTOR[ ]CHAR save_name = save_file( filename OF m, msg );
+    FILE infile = open_file( save_name, read_access, msg ),
+        outfile = open_file( filename OF m, write_access, msg );
+    VECTOR[ bufmax ]CHAR buffer;
+    INT buftop, string_pos, string_end;
+    IOSTATUS rr;
+    BOOL change_strings := TRUE;
+
+        PROC find_string = (VECTOR[ ]CHAR test )BOOL:
+        BEGIN
+        INT top = UPB test;
+
+            string_pos := 0;
+            WHILE string_end := string_pos + top;
+                  string_end <= buftop ANDTH
+                  buffer[ string_pos + 1 : string_end ] /= test
+            DO
+                string_pos PLUSAB 1
+            OD;
+            string_end <= buftop
+        END;
+
+        PROC insert_string = (VECTOR[ ]CHAR new )VOID:
+        BEGIN
+        INT top = UPB new;
+        INT string_start := string_end;
+        REF VECTOR[ ]CHAR item_type = buffer[ string_pos + 2 : string_end ];
+
+            WHILE ( string_start PLUSAB 1 ) < buftop ANDTH
+                  buffer[ string_start ] /= """" DO SKIP OD;
+            string_end := buftop + 1;
+            WHILE ( string_end MINUSAB 1 ) > 0 ANDTH
+                  buffer[ string_end ] /= """" DO SKIP OD;
+            string_end MINUSAB 1;
+
+        INT new_end = string_start + top;
+        INT new_top = new_end + buftop - string_end;
+
+            IF new_end /= string_end THEN
+                buffer[ new_end + 1 : new_top ] :=
+                                      buffer[ string_end + 1 : buftop ]
+            FI;
+            buffer[ string_start + 1 : new_end ] := new;
+            buftop := new_top;
+            put( screen, ( "New ", item_type, " = ", new, newline ))
+        END;
+
+        PROC get_number = INT:
+        BEGIN
+        INT v := 0, pos := string_end;
+        CHAR c;
+
+            WHILE ( pos PLUSAB 1 ) < buftop ANDTH
+                  buffer[ pos ] /= """" DO SKIP OD;
+
+            WHILE ( pos PLUSAB 1 ) <= buftop ANDTH
+                  ( c := buffer[ pos ];
+                    c /= """" )
+            DO
+                v TIMESAB 10 PLUSAB ( ABS c - zero )
+            OD;
+            v
+        END;
+
+        PROC libroot = VECTOR[ ]CHAR:
+        BEGIN
+        REF SYMBOL sym = scansymbols( "lib", (REF SYMBOL s)BOOL: FALSE );
+
+            IF sym IS nilsymbol THEN
+                ""
+          ELIF ( text OF sym )[ UPB text OF sym ] = "/" THEN
+                text OF sym
+          ELSE
+                directory OF parse_filename( text OF sym, "", msg )
+            FI
+        END;
+
+        WHILE
+            WHILE rr := read_line( infile, buffer, buftop, msg );
+                  NOT( rr = io_eof ) ANDTH buftop = 0 DO SKIP OD;
+            NOT ( rr = io_eof )
+        DO
+
+            IF find_string( "KEEP" ) THEN
+                change_strings := FALSE
+          ELIF NOT change_strings THEN
+                SKIP
+          ELIF find_string( "_string" ) OREL find_string( "_msg" ) THEN
+                insert_string( remove_quotes(
+                                get_version_string( "Give version string:- " )))
+          ELIF find_string( "_created" ) THEN
+                insert_string( oneline(( libroot, " - ",
+                                         date_time( seconds )[ : 20 ] )) )
+          ELIF find_string( "_date" ) THEN
+                insert_string( date_time( seconds )[ : 20 ] )
+          ELIF find_string( "_number" ) THEN
+                insert_string( intchars( get_number + 1 ))
+            FI;
+            buffer[ buftop PLUSAB 1 ] := newline_char;
+            write_buffer( outfile, buffer[ : buftop ], msg )
+        OD;
+        close_file( infile, msg );
+        close_file( outfile, msg );
+        TRUE
+  ELSE
+        msg( user, not_found( "Source for version module", name OF m ));
+        FALSE
+    FI
+END;
+
+BOOL in_dependencies = TRUE,
+     all_modules = FALSE;
+PROC update_version = (REF MODULELIST list,
+                       BOOL dependent,
+                       PROC( VECTOR[ ]CHAR )
+                           REF VECTOR[ ]CHAR get_version_string,
+                       MESSAGEPROC msg )REF MODULELIST:
+BEGIN
+
+    PROC find_version = (REF MODULE vm, STAR s )BOOL:
+    BEGIN
+        IF attribute_marked( vm, version_attribute ) THEN
+            IF NOT attribute_state( vm, version_attribute ) ANDTH
+               do_update_version( vm, get_version_string, msg ) THEN
+                set_attribute( vm, version_attribute, TRUE );
+                set_attribute( vm, compile_attribute, TRUE );
+                FALSE
+          ELSE
+                NOT dependent
+            FI
+      ELIF dependent THEN
+            scanmodules( uses OF vm, find_version ) IS nilmodulelist
+      ELSE
+            TRUE
+        FI
+    END;
+
+    scanmodules( list, find_version )
+END;
+
+PROC set_link_mark = (REF MODULE m, MESSAGEPROC msg )VOID:
+BEGIN
+    PROC version_string = (VECTOR[ ]CHAR message )REF VECTOR[ ]CHAR:
+    BEGIN
+        IF NOT can_query THEN
+            global_msg( fatal,
+ #Phoenix Engineering (SL) BP21500-01-15 Corrected the help message
+                     "Idirect version update can only be done interactively." )#
+                     "Indirect version update can only be done interactively." )
+        FI;
+        prompt( message )
+    END;
+
+    marker OF m := 4;
+    IF NOT attribute_marked( m, link_attribute ) THEN
+        set_attribute( m, link_attribute, TRUE );
+        IF FLAGON auto_version THEN
+            update_version( uses OF m, in_dependencies, version_string, msg )
+        FI
+    FI
+END;
+
+PROC set_compile_mark = (REF MODULE m,
+                         REF VECTOR[ ]CHAR mode_chars,
+                         MESSAGEPROC msg )VOID:
+BEGIN
+
+    set_attribute( m, compile_attribute, mode_chars );
+    marker OF m := 3;
+    IF NOT decs OF m ANDTH
+       FLAGON auto_link ANDTH
+       mode_chars /= tr_string THEN
+         set_link_mark( m, msg )
+    FI
+END;
+
+PROC are_all_required = (VECTOR[ ]CHAR prompt,
+                         VALUES param_values,
+                         MESSAGEPROC msg )BOOL:
+BEGIN
+    IF is_name( param_values[ 1 ] ) OREL
+       is_string( param_values[ 1 ] ) OREL
+       is_filename( param_values[ 1 ] ) THEN
+        FALSE
+  ELIF UPB prompt <= 0 OREL
+       query( oneline(( prompt, ", is it OK to go ahead" )),
+              default_yes, msg ) THEN
+        TRUE
+  ELSE
+        msg( user, "Repeat with required parameters" );
+        FALSE
+    FI
+END;
+
+PROC prepare_link = (VALUES param_values, MESSAGEPROC msg )VOID:
+BEGIN
+REF MODULELIST ml;
+BOOL have_program := FALSE;
+
+    PROC mark_for_link = (REF MODULE m )VOID:
+    BEGIN
+        IF decs OF m THEN
+            msg( user, oneline(( "Module ", name OF m,
+                                 " is not a program module." )) )
+      ELSE
+            set_link_mark( m, msg )
+        FI
+    END;
+
+    PROC locate_program = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF NOT decs OF m THEN
+            have_program := TRUE;
+            put( screen, ( "Marking module ", name OF m, " to be linked.",
+                           newline ));
+            mark_for_link( m )
+        FI;
+        TRUE
+    END;
+
+    IF NOT is_name( param_values[ 1 ] ) THEN
+        scanmodules( modules, locate_program );
+        IF NOT have_program THEN
+            put( screen, ( "No program modules in the data base.", newline ))
+        FI
+  ELSE
+    REF VECTOR[ ]CHAR name;
+
+        FORALL p IN param_values
+        DO
+            name := get_name( p, msg );
+            set_lowercase( name );
+            ml := findmodule( modules, name );
+            IF ml IS nilmodulelist THEN
+                put( screen, ( mnot_found( name ), newline ))
+          ELSE
+                mark_for_link( module OF ml )
+            FI
+        OD
+    FI
+END;
+
+PROC can_compile = (REF MODULE m,
+                    STAR s,
+                    BOOL report,
+                    MESSAGEPROC msg )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR full_name;
+BOOL have_filename := ( UPB filename OF m > 0 );
+
+    IF NOT have_filename THEN
+        have_filename := check_module_file( m, all_directories, full_name, msg )
+    FI;
+
+    IF have_filename THEN
+        IF check_star( s, attribute_value( m, star_attribute )) THEN
+            TRUE
+      ELIF report THEN
+            put( screen, ( "Module ", name OF m,
+                           " not compilable with current stars.", newline ));
+            FALSE
+      ELSE
+            FALSE
+        FI
+  ELIF report THEN
+        put( screen, ( "Module ", name OF m, " source file not accessible",
+                       newline ));
+        FALSE
+  ELSE
+        FALSE
+    FI
+END;
+
+PROC prepare_compile = (VECTOR[ ]CHAR prompt,
+                        VALUES param_values,
+                        REF VECTOR[ ]CHAR mode_chars,
+                        MESSAGEPROC msg )VOID:
+BEGIN
+BOOL compile_all = are_all_required( prompt, param_values, msg );
+
+    PROC mark_for_compile = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF can_compile( m, s, NOT compile_all, msg ) THEN
+            set_compile_mark( m, mode_chars, msg )
+        FI;
+        TRUE
+    END;
+
+    mark_modules( modules, 0 );
+    IF compile_all THEN
+        scanmodules( modules, mark_for_compile )
+  ELSE
+    REF MODULELIST ml;
+    REF VECTOR[ ]CHAR name;
+
+        FORALL p IN param_values
+        DO
+            name := get_name( p, msg );
+            set_lowercase( name );
+            ml := findmodule( modules, name );
+            IF ml ISNT nilmodulelist THEN
+                mark_for_compile( module OF ml, star OF ml )
+          ELSE
+                put( screen, ( mnot_found( name ), newline ))
+            FI
+        OD
+    FI;
+    SKIP
+END;
+
+PROC remove_attribute = (VECTOR[ ]CHAR prompt,
+                         VALUES param_values,
+                         INT attribute_number,
+                         PROC( REF MODULE, INT )BOOL undo_action,
+                         MESSAGEPROC msg )VOID:
+BEGIN
+    IF are_all_required( prompt, param_values, msg ) THEN
+        undo_attribute( "", attribute_number, undo_action, TRUE, FALSE )
+  ELSE
+    REF VECTOR[ ]CHAR name;
+
+        FORALL p IN param_values
+        DO
+            name := get_name( p, msg );
+            set_lowercase( name );
+            undo_attribute( name, attribute_number,
+                            undo_action, FALSE, FALSE )
+        OD
+    FI
+END;
+
+PROC test_attribute = (INT attribute,
+                       VALUES param_values,
+                       BOOL same_case,
+                       MESSAGEPROC msg )VOID:
+BEGIN
+REF VECTOR[ ]CHAR p1 = get_string( param_values[ 1 ], msg );
+REF VECTOR[ ]CHAR value = IF same_case THEN MAKERVC p1 ELSE p1 FI;
+REF VECTOR[ ]CHAR name;
+
+        set_lowercase( p1 );
+
+BOOL setdefault = try_name( p1, "default" );
+REF MODULELIST ml;
+
+    PROC test_action = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF setdefault THEN clear_attribute( m, attribute )
+                      ELSE set_attribute( m, attribute, value )
+        FI;
+        TRUE
+    END;
+
+    put( screen, ( "Set ", IF permanent_attribute( nilmodule, attribute )
+                           THEN "permanent"
+                           ELSE "temporary"
+                           FI, " attribute ", attribute_name( attribute ),
+                   " to ", value, newline ));
+
+    FORALL p IN param_values[ 2 : ]
+    DO
+        name := get_name( p, msg );
+        set_lowercase( name );
+        ml := findmodule( modules, name );
+        IF ml IS nilmodulelist THEN
+            put( screen, ( mnot_found( name ), newline ))
+      ELSE
+            test_action( module OF ml, star OF ml )
+        FI
+    OD
+END;
+
+PROC link_programs = (REF MODULELIST list, MESSAGEPROC msg )VOID:
+BEGIN
+    PROC do_link_program = (REF MODULE tm, STAR s )BOOL:
+    BEGIN
+        IF marker OF tm < 4 THEN
+            IF decs OF tm THEN
+                marker OF tm := 5;
+                scanmodules( usedby OF tm, do_link_program )
+          ELSE
+                set_link_mark( tm, msg )
+            FI
+        FI;
+        TRUE
+    END;
+
+    PROC link_all_programs = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF marker OF m = 3 THEN do_link_program( m, s ) FI;
+        TRUE
+    END;
+
+    IF FLAGON auto_link THEN scanmodules( list, link_all_programs ) FI
+END;
+
+PROC do_symbol_move = (VALUES param_values, BOOL sense, MESSAGEPROC msg )BOOL:
+BEGIN
+REF VECTOR[ ]CHAR name = IF is_name( param_values[ 1 ] ) THEN
+                             get_name( param_values[ 1 ], msg )
+                       ELSE
+                             blankname
+                         FI;
+
+    set_lowercase( name );
+    IF NOT move_symbol_pointer( name, sense ) THEN
+        put( screen, ( "Warning:- symbol ", name, " does not exist.", newline ))
+    FI;
+    TRUE
+END;
+
+INT optimistic = 1,
+    pessimistic = 2,
+    rebuild = 3;
+PROC do_specchange = (VALUES param_values, INT mode, MESSAGEPROC msg )BOOL:
+BEGIN
+BOOL specchangemode = ( mode <= pessimistic ),
+     pessmode = ( mode = pessimistic ),
+     rebuildmode = ( mode = rebuild );
+REF MODULELIST ml, requested := nilmodulelist;
+BOOL errors := FALSE, first := TRUE, have_action_request := FALSE;
+REF VECTOR[ ]CHAR name;
+REF MODULE program := nilmodule;
+STAR pstar := blank_star;
+
+    PROC find_action = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        have_action_request := attribute_marked( m, compile_attribute ) OREL
+                               attribute_marked( m, link_attribute );
+        NOT have_action_request
+    END;
+
+    PROC find_program = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF decs OF m THEN
+            SKIP
+      ELIF program ISNT nilmodule THEN
+            msg( user,
+                 "More than one program in the database, give a parameter" )
+      ELSE
+            program := m;
+            pstar := s
+        FI;
+        TRUE
+    END;
+
+    PROC mark_for_compile = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF marker OF m = 0 THEN
+            IF can_compile( m, s, FALSE, msg ) THEN
+                marker OF m := 2;
+                IF pessmode THEN
+                    scanmodules( usedby OF m, mark_for_compile )
+              ELIF rebuildmode THEN
+                    scanmodules( uses OF m, mark_for_compile )
+                FI
+          ELSE
+                marker OF m := 5
+            FI
+        FI;
+        TRUE
+    END;
+
+    PROC activate_compiles = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF marker OF m = 2 THEN
+            IF specchangemode THEN
+                IF first THEN
+                    put( screen, ( "The following modules may need editing :-",
+                                   newline ));
+                    first := FALSE
+                FI;
+                put( screen, ( "    ", name OF m, newline ))
+            FI;
+            set_compile_mark( m, on_string, msg )
+        FI;
+        TRUE
+    END;
+
+    scanmodules( modules, find_action );
+    IF have_action_request ANDTH
+       query( "Do you wish to remove all pending compiles and links",
+              default_no, msg ) THEN
+        undo_compile( "", TRUE, TRUE );
+        undo_link( "", TRUE, TRUE )
+    FI;
+    set_levels( text OF default_star_chars, msg );
+    set_modulenumbers;
+
+    mark_modules( modules, 0 );
+    IF is_name( param_values[ 1 ] ) THEN
+        FORALL p IN param_values
+        DO
+            name := get_name( p, msg );
+            set_lowercase( name );
+            ml := findmodule( modules, name );
+            IF ml IS nilmodulelist THEN
+                errors := TRUE;
+                put( screen, ( mnot_found( name ), newline ))
+          ELIF rebuildmode THEN
+                IF NOT can_compile( module OF ml, star OF ml, TRUE, msg ) THEN
+                    errors := TRUE
+              ELSE
+                    mark_for_compile( module OF ml, star OF ml )
+                FI
+          ELSE
+                IF can_compile( module OF ml, star OF ml, TRUE, msg ) ANDTH
+                   query( oneline(( "Do you wish to compile module ", name )),
+                          default_yes, msg ) THEN
+                    marker OF module OF ml := 2
+                     
+                FI;
+                scanmodules( usedby OF module OF ml, mark_for_compile )
+            FI
+        OD
+  ELIF rebuildmode THEN
+        scanmodules( modules, find_program );
+        IF program IS nilmodule THEN
+            msg( user, "No program module in the database" )
+      ELIF can_compile( program, pstar, TRUE, msg ) THEN
+            mark_for_compile( program, pstar )
+      ELSE
+            errors := TRUE
+        FI
+  ELSE
+        put( screen, ( "At least one module name required for spec-change",
+                       newline ));
+        errors := TRUE
+    FI;
+
+    IF NOT errors OREL
+       query( "Errors occured, do you wish to continue",
+              default_no, msg ) THEN
+        scanmodules( modules, activate_compiles );
+        link_programs( modules, msg )
+    FI;
+    TRUE
+END;
+
+PROC do_module_action = (VALUES param_values,
+                         BOOL install,
+                         MESSAGEPROC msg )VOID:
+BEGIN
+
+    PROC analyse_module  = (REF VECTOR[ ]CHAR name,
+                            REF MODULE m,
+                            BOOL show_not_found )BOOL:
+    BEGIN
+    REF VECTOR[ ]CHAR full_name;
+    INT dsize;
+    BOOL found = IF m ISNT nilmodule THEN
+                     check_module_file( m, all_directories, full_name, msg )
+               ELSE
+                     lookup_src_file( name, all_directories, full_name,
+                                      dsize, msg )
+                 FI;
+
+        IF found THEN
+            put( screen, ( "File ", full_name ));
+            read_module( full_name, msg )
+      ELIF show_not_found THEN
+            put( screen, ( fnot_found( name ), newline ));
+            FALSE
+      ELSE
+            FALSE
+        FI
+    END;
+
+    PROC install_module = (REF VECTOR[ ]CHAR name )VOID:
+    BEGIN
+    REF MODULELIST ml = findmodule( modules, name );
+
+        analyse_module( name, IF ml ISNT nilmodulelist THEN module OF ml
+                                                       ELSE nilmodule
+                              FI, TRUE )
+    END;
+
+BOOL found := FALSE, put_heading := TRUE;
+
+    PROC install_uses = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF marker OF m = 1 THEN
+            found := TRUE;
+            marker OF m := 3;
+            analyse_module( IF UPB filename OF m > 0 THEN filename OF m
+                                                     ELSE name OF m
+                            FI, m, FALSE )
+        FI;
+        TRUE
+    END;
+
+    PROC show_unset_modules = (REF MODULE m, STAR s )BOOL:
+    BEGIN
+        IF marker OF m = 3 THEN
+            IF put_heading THEN
+                put_heading := FALSE;
+                put( screen, ( "Warning:- the following modules are used but "
+                               "not installed.", newline ))
+            FI;
+            put( screen, ( "    ", name OF m ));
+            IF mode OF s /= " " THEN
+                put( screen, ( "   {", mode OF s, value OF s, "}" ))
+            FI;
+            put( screen, newline )
+        FI;
+        TRUE
+    END;
+
+REF VECTOR[ ]CHAR name;
+
+    mark_modules( modules, 0 );
+    clear_usedby_lists( modules );
+    FORALL p IN param_values
+    DO
+        name := get_name( p, msg );
+        set_lowercase( name );
+        install_module( name )
+    OD;
+    IF install THEN
+        WHILE
+            found := FALSE;
+            scanmodules( modules, install_uses );
+            found
+        DO SKIP OD;
+        scanmodules( modules, show_unset_modules )
+    FI;
+    set_usedby_lists( modules );
+    set_levels( text OF default_star_chars, msg );
+    set_modulenumbers;
+    SKIP
+END;
+
+PROC initialise_mm_utilities = (MESSAGEPROC msg )REF VECTOR[ ]CHAR:
+BEGIN
+    modname_symbol := define_symbol( "modname", blankname, local_tag );
+    srcname_symbol := define_symbol( "srcname", blankname, local_tag );
+    stars_symbol := define_symbol( "stars", blankname, local_tag );
+    heap_symbol := define_symbol( "heap", blankname, local_tag );
+    optimise_symbol := define_symbol( "optimise", blankname, local_tag );
+    prog_symbol := define_symbol( "prog", blankname, local_tag );
+    debug_symbol := define_symbol( "debug", blankname, local_tag );
+    exename_symbol := define_symbol( "exename", blankname, local_tag );
+    initialise_mm_oscommands( msg )
+END;
+
+    SKIP
+KEEP try_name, are_all_required,
+     prepare_link, prepare_compile, remove_attribute,
+     put_module_name, list_compiles, list_links,
+     list_attributes, test_attribute, link_programs,
+     unmark_attribute, unmark_compile, unmark_link, do_specchange,
+     optimistic, pessimistic, rebuild,
+     undo_attribute, undo_link, undo_compile, lookup_src_file,
+     check_module_file, execute, show_symbol_class, do_module_action,
+     do_symbol_move, mark_modules, set_link_mark, set_compile_mark, can_compile,
+     update_version, in_dependencies, all_modules, remove_quotes,
+     initialise_mm_utilities, first_directory, all_directories
+FINISH

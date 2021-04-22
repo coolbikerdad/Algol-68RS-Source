@@ -1,0 +1,163 @@
+DECS  tracer  CONTEXT VOID  USE
+*L    usefulops,
+      centities, environment, evaluator, identifiers, incimperatives, incmode,
+      idtable, incoperfn, incvalue, modes, values:
+
+configinfo A68CONFIG "$Id: tracer.a68,v 1.1.1.1 2001-05-07 10:16:10 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+25:08:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number 2.5 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+PROC	print = ( VECTOR []VECTOR []CHAR printlist )VOID:
+  FORALL el IN printlist DO list_nonl (el) OD;
+
+PROC	print line = ( VECTOR []VECTOR []CHAR print list )VOID:
+	( print( print list ); list( "" ) { newline } );
+
+INT	indent step = 4;
+
+BITS	{ Trace options }
+	all reg environs    = 16r00100000,
+	full register       = 16r00200000,
+	trace space	    = 16r00400000,
+	trace all levels    = 16r00800000,
+	trace ids	    = 16r01000000,
+	long iddec	    = 16r02000000,
+	trace tree	    = 16r04000000,
+	trace tree after    = 16r08000000,
+	trace regs before   = 16r10000000,
+	trace regs after    = 16r20000000;
+
+PROC	booled = ( BOOL b ) STRUCT 2 CHAR: ( b | " T" | " F" );
+
+PROC	print value tree = ( INT indent, opno, REF VALUE value ) VOID:
+BEGIN
+	REF VALUELIST ops := NIL;
+	TO indent DO print( " " ) OD;
+	print (( whole ( opno, 0 ), ">    " ));
+	IF	VALUETOLONG ( value ) = LONG INT ( SKIP )
+		{ It's SKIP, mustn't CASE on it orelse we get 'unset union' fault }
+	THEN	printline( "SKIP value" )
+	ELSE	CASE extra OF value IN
+	        (TREEOPER o):
+	        BEGIN	printline ( value string ( value, FALSE ) );
+			ops := operands OF o
+	        END
+		OUT	printline ( value string ( value, FALSE ) )
+		ESAC;
+		FOR	opsno
+		WHILE	REF VALUELIST( ops ) ISNT NIL
+		DO	print value tree( indent + indent step, opsno, value OF ops );
+			ops := rest OF ops
+		OD
+	FI
+END;
+
+PROC	print iddec = ( UNION ( TRANSIDDEC, LABDEC ) dec ) VOID:
+BEGIN
+	printline( () ); { newline }
+	print (( "Declaration of " ));
+	IF	trace level flags >= long iddec
+	THEN	CASE	dec  IN 
+		( TRANSIDDEC id ):
+		BEGIN
+			INT lmode =
+			( type OF id = 2 OR type OF id = 5
+			| deref mode ( mode OF id )
+			| mode OF id
+			);
+			printline
+			( ( mode name ( mode OF id ), " ", name OF id )
+			);
+			printline
+			( ( "   dynamic    : ", booled ( dynamic( lmode ))
+			) )
+		END,
+		( LABDEC l ): printline(( "label ", name OF l ))
+		ESAC
+	ELSE	CASE	dec  IN
+		( TRANSIDDEC id ):
+			printline(( mode name( mode OF id ), " ", name OF id )),
+		( LABDEC l ):
+			printline(( "label ", name OF l ))
+		ESAC
+	FI
+END;
+
+PROC	trace =
+( IMPERATIVE current imperative,
+  REF VALUE tree,
+  BOOL after eval
+) VOID:
+IF	line number >= start line
+THEN	IF	trace level flags >= trace ids
+	AND	NOT after eval
+	THEN	CASE current imperative IN
+		( UNION ( TRANSIDDEC, LABDEC ) dec ):
+		BEGIN
+			print iddec( dec );
+			IF	trace level flags >= trace tree
+			THEN	print line( () );  { newline }
+				print line( "Value tree for r. h. s. is " );
+				print value tree( 0, 1, tree )
+			FI
+		END
+		OUT
+		IF	trace level flags >= trace tree THEN
+		print line( () ); { newline }
+		print line(( "Value tree on line ", whole( line number, 0 ) ));
+		print value tree( 0, 1, tree )
+		FI
+		ESAC
+	ELIF	trace level flags >= trace tree
+	AND	NOT after eval THEN
+		print line( () ); { newline }
+		print line(( "Value tree on line ", whole( line number, 0 ) ));
+		print value tree ( 0, 1, tree )
+	ELIF	trace level flags >= trace tree after
+	AND	after eval THEN
+		print line( () ); { newline }
+		printline( "Value after evaluation:" );
+		print value tree( 0, 1, tree )
+	FI
+FI;
+
+SKIP
+
+KEEP
+	call trace, trace
+FINISH

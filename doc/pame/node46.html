@@ -1,0 +1,312 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Multiple choice</title>
+<meta name="description" content="multiple choice">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node47.html">
+<link rel="previous" href="node45.html">
+<link rel="up" href="node40.html">
+<link rel="next" href="node47.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html1375"
+  href="node47.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1369"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1363"
+  href="node45.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1371"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1373"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1376"
+  href="node47.html">Summary</a>
+<b> Up:</b> <a name="tex2html1370"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1364"
+  href="node45.html">Conditional clauses</a>
+ &nbsp; <b>  <a name="tex2html1372"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1374"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+<!--table of child-links-->
+<a name="child_links"><strong>Subsections</strong></a>
+
+<ul class="childlinks">
+<li><a name="tex2html1377"
+  href="node46.html#section00661000000000000000">Exercises</a>
+</ul>
+<!--end of table of child-links-->
+<hr>
+
+<h1><a name="section00660000000000000000"></a><a name="choice-case"></a>
+Multiple choice</h1>
+
+<p>Sometimes the number of choices can be quite large or the different
+choices are related in a simple way. For example, consider the
+following conditional clause:</p>
+
+<pre>
+   IF n = 1
+   THEN action1
+   ELIF n = 2
+   THEN action2
+   ELIF n = 3
+   THEN action3
+   ELIF n = 4
+   THEN action4
+   ELSE action5
+   FI
+</pre>
+
+<p>This sort of choice can be expressed more concisely using the
+<b>case clause</b><a name="2355"></a> in which the boolean enquiry
+clause is replaced by an integer enquiry clause. Here is the above
+conditional clause rewritten using a case clause:</p>
+
+<pre>
+   CASE n
+   IN
+      action1
+         ,
+      action2
+         ,
+      action3
+         ,
+      action4
+   OUT
+      action5
+   ESAC
+</pre>
+
+<p>which<a name="2477"></a> could<a name="2478"></a>
+be<a name="2479"></a>
+abbreviated<a name="2480"></a> as</p>
+
+<pre>
+   (n|action1,action2,action3,action4|action5)
+</pre>
+
+<p>Notice that <code>action1</code>, <code>action2</code>,
+<code>action3</code> and <code>action4</code> are separated by
+commas<a name="2364"></a> (they are not terminators). Each of
+<code>action1</code>, <code>action2</code> and <code>action3</code> is
+a unit, so that if you want more than one phrase for each action, you
+must make it an enclosed clause<a name="2365"></a> by enclosing the
+action in parentheses<a name="2366"></a> (or
+<tt>BEGIN</tt><a name="2481"></a> and
+<tt>END</tt><a name="2482"></a>). If the <code>INT</code> enquiry
+clause<a name="2371"></a> yields&nbsp;<code>1</code>,
+<code>action1</code> is elaborated, <code>2</code>,
+<code>action2</code> is elaborated and so on. If the value yielded is
+negative or zero, or exceeds the number of actions available,
+<code>action5</code> in the <code>OUT</code> part is elaborated.  The
+<code>OUT</code> part is a serial clause<a name="2372"></a> so no
+enclosure is required if there is more than one unit.</p>
+
+<p>In the following case clause, the second unit is a conditional
+clause to show you that any piece of program which happens to be a
+unit can be used for one of the cases:</p>
+
+<pre>
+   CASE i IN 3,(x&gt;3.5|4|-2),6 OUT i+3 ESAC
+</pre>
+
+<p>The first action yields <code>3</code>, the second yields
+<code>4</code> if <code>x</code> exceeds <code>3.5</code> and
+<code>-2</code> otherwise, and the third action
+yields&nbsp;<code>6</code>.</p>
+
+<p>Sometimes the <tt>OUT</tt> clause<a name="2483"></a> consists of
+another case clause. For example,</p>
+
+<pre>
+   CASE n MOD 4
+   IN
+      print("case 1"),
+      print("case 2"),
+      print("case 3")
+   OUT
+      CASE (n-10) MOD 4
+      IN
+         print("case 11"),
+         print("case 12"),
+         print("case 13")
+      OUT
+         print("other case")
+      ESAC
+   ESAC
+</pre>
+
+<p>Just as with <code>ELIF</code> in a conditional clause, <tt>OUT
+CASE</tt><a name="2484"></a> <span class="math">...</span>
+<code>ESAC</code> <code>ESAC</code> can be replaced by
+<tt>OUSE</tt><a name="2485"></a> <span class="math">...</span>
+<code>ESAC</code>. So the above example can be rewritten</p>
+
+<pre>
+   CASE n MOD 4
+   IN
+      print("case 1"),
+      print("case 2"),
+      print("case 3")
+   OUSE (n-10) MOD 4
+   IN
+      print("case 11"),
+      print("case 12"),
+      print("case 13")
+   OUT print("other case")
+   ESAC
+</pre>
+
+<p>Here is a case clause with embedded case clauses:</p>
+
+<pre>
+   CASE command
+   IN
+      action1,
+      action2,
+      (subcommand1
+      |subaction1,subaction2
+      |subaction3)
+   OUSE subcommand2
+   IN subaction4,
+      subaction5,
+      subaction6
+   OUT
+      subaction7
+   ESAC
+</pre>
+
+<p>Calendar computations, which are notoriously difficult, give examples
+of case clauses:</p>
+
+<pre>
+   INT days = CASE month IN
+               31,
+               IF year MOD 4 = 0
+                       &amp;
+                  year MOD 100 /= 0
+                      OR
+                  year MOD 400 = 0
+               THEN 29
+               ELSE 28
+               FI,
+               31,30,31,30,31,31,30,31,30,31
+               OUT -1
+              ESAC
+</pre>
+
+<p>And here is one in dealing cards:</p>
+
+<pre>
+   []CHAR suit=(i|"spades",
+                  "hearts",
+                  "diamonds",
+                  "clubs"
+                 |"")
+</pre>
+
+<p>Like the conditional clause, if you omit the <code>OUT</code>
+part, the compiler assumes that you wrote <tt>OUT
+SKIP</tt><a name="2486"></a>.  In the following example, when
+<code>i</code> is <code>4</code>, nothing gets
+printed:<a name="tex2html11"
+href="footnode.html#foot2487"><sup><span
+class="arabic">5</span>.<span class="arabic">3</span></sup></a></p>
+
+<pre>
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   FOR i TO 5
+   DO
+      print((i MOD 4|"a","g","r"))
+   OD
+   FINISH
+</pre>
+
+<hr>
+<h2><a name="section00661000000000000000">
+Exercises</a>
+</h2>
+
+<dl compact>
+<dt>4.8<a name="ex-iv-viii"></a>
+<dd>What is wrong with the following identity declaration, assuming
+that <code>p</code> has been predeclared as a value of mode <code>BOOL</code>:
+<pre>
+   INT i = (p|1,2,3|4)
+</pre>
+Ans<a href="node138.html#ans-iv-viii"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+<dt>4.9<a name="ex-iv-ix"></a>
+<dd>Write a program consisting solely of a case clause which uses
+the <code>SIGN</code> operator to give three different actions depending on
+the sign of a number of mode <code>REAL</code>.  Ans<a href="node138.html#ans-iv-ix"><img  align="bottom" border="1" alt="[*]" src="answer.png"></a>
+</dd>
+</dl>
+<p></p>
+<hr>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html1375"
+  href="node47.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html1369"
+  href="node40.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html1363"
+  href="node45.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html1371"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html1373"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html1376"
+  href="node47.html">Summary</a>
+<b> Up:</b> <a name="tex2html1370"
+  href="node40.html">Choice</a>
+<b> Previous:</b> <a name="tex2html1364"
+  href="node45.html">Conditional clauses</a>
+ &nbsp; <b>  <a name="tex2html1372"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html1374"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

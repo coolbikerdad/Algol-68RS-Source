@@ -1,0 +1,170 @@
+# Mode for Algol 68
+# Designed and implemented by Sian Leitch <algol68@sleitch.nildram.co.uk>
+
+colorize Algol {
+    SyntaxParser = 'SIMPLE';
+
+    color {
+        { 'Command',     'Editor_Keywords' },# white
+        { 'Tag',         'Editor_Default' }, # grey
+        { 'Number',      'Lang_Number' },    # red
+        { 'Punctuation', 'Lang_Function' },  # cyan
+        { 'String',      'Lang_String' },    # yellow
+        { 'Comment',     'darkRed:bg' },     # dark red
+        { 'Directive',   'Lang_Assembler' }, # blue
+        { 'Special',     'Lang_Regexp' },    # magenta
+        { 'Function',    'Lang_Preprocessor' },# green
+        { 'Symbol',      'Lang_Control' }    # dark cyan
+    };
+    
+    h_state 0 { 'Punctuation' }
+    h_trans {  1, '>', '"', 'String' }
+    h_trans {  2, '>', '$', 'Command' }
+    h_trans {  3, '>', '#', 'Command' }
+    h_trans {  4, '-s', 'A-Z', 'Command' }
+    h_trans {  5, '-s', 'a-z', 'Tag' }
+    h_trans {  6, '-s',  '0-9.', 'Number' }
+    h_trans { 12, '-',  ':', 'Command' }
+    h_trans { 13, 's', "\-+*/^%&~<>\\", 'Special' }
+
+    h_state 1 { 'String' }
+    h_trans { 0, '<', '"', 'String' }
+
+    h_state 2 { 'Special' }
+    h_trans { 0, '<', '$', 'Command' }
+
+    h_state 3 { 'Comment' }
+    h_trans { 0, '<', '#', 'Command' }
+
+    h_state 4 { 'Directive' }
+    h_trans { 15, '<^$', 'COMMENT', 'Command' }
+    h_trans { 15, '<^', 'COMMENT ', 'Command' }
+    h_trans { 15, '<$', 'COMMENT', 'Command' }
+    h_trans { 15, '<',  'COMMENT ', 'Command' }
+    h_trans { 16, '<^$', 'CO', 'Command' }
+    h_trans { 16, '<^', 'CO ', 'Command' }
+    h_trans { 16, '<$', 'CO', 'Command' }
+    h_trans { 16, '<', 'CO ', 'Command' }
+    h_trans { 17, '<^$', 'PRAGMAT', 'Command' }
+    h_trans { 17, '<^', 'PRAGMAT ', 'Command' }
+    h_trans { 17, '<$', 'PRAGMAT', 'Command' }
+    h_trans { 17, '<', 'PRAGMAT ', 'Command' }
+    h_trans { 18, '<^$', 'PR', 'Command' }
+    h_trans { 18, '<^', 'PR ', 'Command' }
+    h_trans { 18, '<$', 'PR', 'Command' }
+    h_trans { 18, '<', 'PR ', 'Command' }
+    h_wtype { 0, 14, 0, "", "A-Z0-9_" }
+    h_words 'Editor_Keywords' {
+	'ALIEN',    'BEGIN',    'BY',      'CASE',    'CODE',
+	'CONTEXT',  'DO',       'ELIF',    'ELSE',    'END',
+	'ESAC',     'EXIT',     'FI',      'FINISH',  'FOR',
+	'FROM',     'GO',       'GOTO',    'IF',      'IN',
+	'IS',       'ISNT',     'KEEP',    'OD',      'OF',
+	'OUSE',     'OUT',      'PAR',     'PROGRAM', 'SKIP',
+	'THEN',     'TO',       'USE',      'WHILE'
+    }
+    h_words 'Lang_Control' {
+	'HEAP', 'LOC'
+    }
+    h_words 'Lang_Regexp' {
+	'ISNT', 'IS'
+    }
+    h_words 'Lang_Number' {
+	'FALSE', 'NIL', 'TRUE'
+    }
+    h_words 'Lang_Preprocessor' {
+	'BITS',   'BOOL',   'CHANNEL', 'CHAR',
+	'COMPL',  'FILE',   'INT',     'REAL',
+	'LONG',   'OP',     'PROC',    'REF',
+	'SHORT',  'STRING', 'STRUCT',  'UNION', 'VOID'
+    }
+
+    h_state 5 { 'Tag' }
+    h_trans { 0, '-S', 'a-z0-9 ', 'Tag' }
+
+    h_state 6 { 'Number' }
+    h_trans {  7, '', '2r', 'Command' }
+    h_trans {  8, '', '4r', 'Command' }
+    h_trans {  9, '', '8r', 'Command' }
+    h_trans { 10, '', '16r', 'Command' }
+    h_trans { 11, '', 'e', 'Number' } # exponent
+    h_trans {  0, '-S', '0-9 .', 'Number' }
+
+    h_state 7 { 'Number' } # binary
+    h_trans { 0, '-S', '01 ', 'Number' }
+
+    h_state 8 { 'Number' }  # quaternary
+    h_trans { 0, '-S', '0-3 ', 'Number' }
+
+    h_state 9 { 'Number' }  # octal
+    h_trans { 0, '-S', '0-7 ', 'Number' }
+    
+    h_state 10 { 'Number' }  # hexadecimal
+    h_trans { 0, '-S', '0-9a-f ', 'Number' }
+    
+    h_state 11 { 'Number' } # real exponent
+    h_trans { 0, '-S', '0-9+- ', 'Number' }
+    
+    h_state 12 { 'Punctuation' }
+    h_wtype { 0, 0, 0, "", ":/=" }
+    h_words 'Lang_Regexp' { ':=:', ':/=:', ':=' }
+    
+    h_state 13 { 'Special' }
+    h_trans { 0, '-S', '+-*/^%&~<>=:','Tag' }
+    
+    h_state 14 { 'Directive' }
+    h_trans { 0, '-S', 'A-Z0-9_', 'Tag' }
+    
+    h_state 15 { 'Comment' }
+    h_trans { 0, '>^$', 'COMMENT', 'Command' }
+    h_trans { 0, '>$', ' COMMENT', 'Command' }
+    h_trans { 0, '>^', 'COMMENT ', 'Command' }
+    h_trans { 0, '>', ' COMMENT ', 'Command' }
+    
+    h_state 16 { 'Comment' }
+    h_trans { 0, '>^$', 'CO', 'Command' }
+    h_trans { 0, '>$', ' CO', 'Command' }
+    h_trans { 0, '>^', 'CO ', 'Command' }
+    h_trans { 0, '>', ' CO ', 'Command' }
+    
+    h_state 17 { 'Comment' }
+    h_trans { 0, '>^$', 'PRAGMAT', 'Command' }
+    h_trans { 0, '>$', ' PRAGMAT', 'Command' }
+    h_trans { 0, '>^', 'PRAGMAT ', 'Command' }
+    h_trans { 0, '>', ' PRAGMAT ', 'Command' }
+    
+    h_state 18 { 'Comment' }
+    h_trans { 0, '>^$', 'PR', 'Command' }
+    h_trans { 0, '>$', ' PR', 'Command' }
+    h_trans { 0, '>^', 'PR ', 'Command' }
+    h_trans { 0, '>', ' PR ', 'Command' }
+}
+
+mode Algol: PLAIN {   # Algol 68 mode
+    TabSize            = 3;
+    BackSpKillTab      = 1;
+    DeleteKillTab      = 1;
+    IndentWithTabs     = 1;
+    CursorThroughTabs  = 0;
+    
+    AddLF              = 1;  # When saving
+    Trim               = 1;
+    AutoSave           = 1000;  # Does this work?
+
+    DefFindOpt         = 'g'; # Search globally
+    
+    FileNameRx         = /\.a68$/;
+    FirstLineRx        = /^PROGRAM /;
+    RoutineRegexp      = /^\s*{PROC}|{OP}|{MODE}/;
+
+    HilitOn            = 1;  # Active
+    Colorizer          = 'Algol';
+    MultiLineHilit     = 1;
+    AutoHilitParen     = 1;
+    IndentMode         = 'PLAIN';
+    MatchCase          = 1;
+
+    SaveFolds          = 2; # End of the line
+    CommentStart       = ' #';
+    CommentEnd         = '#';
+}

@@ -1,0 +1,1108 @@
+<!doctype html public "-//ietf//dtd html i18n//en">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Chapter 9</title>
+<meta name="description" content="chapter 9">
+<meta name="keywords" content="pame">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta name="generator" content="latex2html v2008">
+<meta http-equiv="content-style-type" content="text/css">
+
+<link rel="stylesheet" href="pame.css">
+
+<link rel="next" href="node144.html">
+<link rel="previous" href="node142.html">
+<link rel="up" href="node134.html">
+<link rel="next" href="node144.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html3147"
+  href="node144.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3141"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3135"
+  href="node142.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3143"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3145"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3148"
+  href="node144.html">Chapter 10</a>
+<b> Up:</b> <a name="tex2html3142"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3136"
+  href="node142.html">Chapter 8</a>
+ &nbsp; <b>  <a name="tex2html3144"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3146"
+  href="node147.html">Index</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="section001690000000000000000"></a><a name="app-ix"></a>
+<br>
+Chapter 9
+</h1><dl>
+<dt><strong><a href="node81.html#ex-ix-i"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-i"></a>9.1</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 1 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE f;
+      IF   open(f,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open textbook");
+         exit(1)
+      FI;
+
+      STRING s;
+      WHILE get(f,(s,newline));  UPB s /= 0
+      DO
+         print((s,newline))
+      OD;
+
+      close(f)
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node81.html#ex-ix-ii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-ii"></a>9.2</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 2 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE f;
+
+      IF   open(f,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open textbook");
+         exit(1)
+      FI;
+
+      REAL r, sum:=0, INT n;  get(f,n);
+
+      TO n DO get(f,r); sum+:=r OD;
+      print(sum);  close(f)
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node82.html#ex-ix-iii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-iii"></a>9.3</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 3 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf,outf;
+
+      IF   open(inf,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("cannot open textbook");
+         exit(1)
+      ELIF establish(outf,
+                     "result",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create result");
+         exit(2)
+      FI;
+
+      REAL sum:=0, r, INT n;
+
+      get(inf,n);
+      TO n
+      DO
+         get(inf,r);  sum+:=r
+      OD;
+      put(outf,sum);
+      close(inf);  close(outf)
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node82.html#ex-ix-iv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-iv"></a>9.4</strong></dt>
+<dd>Note that in this answer, you will have to find
+some means of obviating the a68toc<a name="12946"></a> bug
+for the <code>BY</code> construct.
+<pre>
+   PROGRAM ex9 4 CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size = 10 000;
+      [2:size]BOOL flags;
+
+      FOR i
+      FROM LWB flags TO UPB flags
+      DO flags[i]:=TRUE OD;
+
+      FOR i
+      FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k
+            FROM i+i BY --i TO UPB flags
+            DO
+               flags[k]:=FALSE
+            OD
+         FI
+      OD;
+
+      #Now the file is needed#
+      FILE f;
+      IF   establish(f,
+                     "primes",
+                      stand out channel,
+                      0,0,0)/=0
+      THEN
+         print("Cannot create primes");
+         exit(1)
+      FI;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN put(f,(i,newline))
+         FI
+      OD;
+
+      close(f)
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node83.html#ex-ix-v"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-v"></a>9.5</strong></dt>
+<dd>Notice that the
+processing of a line is done entirely within the <code>WHILE</code> clause.
+<pre>
+   PROGRAM ex9 5 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf, outf;
+
+      IF   open(inf,
+                "inbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open inbook");
+         exit(1)
+      ELIF establish(outf,
+                     "outbook",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook");
+         exit(2)
+      FI;
+
+      STRING line;
+
+      WHILE
+         get(inf,(line,newline));
+         put(outf,(line,newline));
+         IF UPB line = 0
+         THEN FALSE
+         ELSE line /= UPB line * blank
+         FI
+      DO SKIP OD;
+
+      close(inf);  close(outf)
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node83.html#ex-ix-vi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-vi"></a>9.6</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 6 CONTEXT VOID
+   USE transput
+   BEGIN
+      FILE inf, outf;
+
+      IF   open(inf,
+                "lines",
+                stand in channel)/=0
+      THEN
+         print("Cannot open book lines");
+         exit(1)
+      ELIF establish(outf,
+                     "words",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create book words");
+         exit(2)
+      FI;
+
+      []CHAR terminators=" *"+cr+lf;
+      make term(inf,terminators);
+
+      STRING word, CHAR ch:=blank;
+
+      WHILE
+         get(inf,word);
+         IF ch/=blank
+         THEN ch PLUSTO word
+         FI;
+
+         WHILE
+            get(inf,ch);
+         CO String terminator,
+            but cr/lf ignored CO
+            ch = blank
+         DO SKIP OD;  #Skip spaces#
+         put(outf,(word,newline));
+         ch /= "*"
+      DO SKIP OD;
+
+      close(inf);  close(outf)
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node84.html#ex-ix-vii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-vii"></a>9.7</strong></dt>
+<dd>If the
+<code>on logical file end</code> procedure yields
+<br>
+<code>FALSE</code>, the standard prelude causes an error message to be
+displayed and the program itself exits with an equivalent error
+number. Here is the code for the program:-
+<pre>
+   PROGRAM ex9 7 CONTEXT VOID
+   USE standard
+   IF FILE inf;
+      STRING line;  INT n,sum:=0;
+      open(inf,
+           "inbook",
+            stand in channel)/=0
+   THEN
+      print(("Cannot open inbook",
+             newline));
+      exit(1)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+         IF FILE ouf;
+            establish(ouf,
+                      "outbook",
+                      stand out channel,
+                      0,0,0)/=0
+         THEN
+            print(("Cannot establish ",
+                   "outbook",newline));
+            exit(2); SKIP
+         ELSE
+            put(ouf,(sum/n,newline));
+            close(ouf);  FALSE
+         FI);
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         n:=i;  sum+:=UPB line
+      OD
+   FI
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node85.html#ex-ix-viii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-viii"></a>9.8</strong></dt>
+<dd>In the following solution, note how
+<tt>skip</tt> <tt>terminators</tt> is called immediately after
+reading the first argument (the full path of the program):-
+<pre>
+   PROGRAM ex9 8 CONTEXT VOID
+   USE standard
+   IF FILE arg, inf, ouf;
+      STRING line, infn, oufn;
+      INT n,sum:=0;
+
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the ",
+           "program arguments",
+           newline));
+        exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Insufficient arguments",
+              newline));
+         stop;  SKIP));
+      get(arg,(LOC STRING,skip terminators,
+               infn,skip terminators,
+                oufn));
+      open(inf,infn,stand in channel)/=0
+   THEN
+      print(("Cannot open ",infn,newline));
+      exit(2)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        IF establish(ouf,
+                     oufn,
+                     stand out channel,
+                     0,0,0)/=0
+        THEN
+           print(("Cannot establish ",
+                  oufn,
+                  newline));
+           exit(3); SKIP
+        ELSE
+           put(ouf,("Average=",sum/n,
+                    newline));
+           close(ouf);
+           FALSE
+        FI);
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         n:=i;  sum+:=UPB line
+      OD
+   FI
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node85.html#ex-ix-ix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-ix"></a>9.9</strong></dt>
+<dd>Notice that the physical file end of the output file has also
+been covered:-
+<pre>
+   PROGRAM ex9 9 CONTEXT VOID
+   USE standard
+   IF FILE arg, inf, ouf;
+      STRING line, infn, oufn;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the arguments",
+           newline));
+      exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Insufficient arguments",
+              newline));  stop;  SKIP));
+      get(arg,(LOC STRING,
+               skip terminators,
+               infn,skip terminators,
+               oufn));
+      open(inf,infn,stand in channel)/=0
+   THEN
+      print(("Cannot open ",infn,newline));
+      exit(2)
+   ELIF
+      establish(ouf,
+                oufn,
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      print(("Cannot establish ",oufn,
+             newline));
+             exit(3)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(ouf);  close(inf);
+         stop;  SKIP));
+      on physical file end(ouf,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Write error on ",idf(ouf),
+              newline));
+         exit(4); SKIP));
+      DO
+         get(inf,(line,newline));
+         FOR i FROM LWB line TO UPB line
+         DO
+            REF CHAR li=line[i];
+            IF li=blank THEN li:="*" FI
+         OD;
+         put(ouf,(line,newline))
+      OD
+   FI
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node86.html#ex-ix-x"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-x"></a>9.10</strong></dt>
+<dd> <pre>
+    PROGRAM ex9 10 CONTEXT VOID
+    USE standard
+    IF FILE env;
+       open(env,"PATH",env channel)=0
+    THEN
+       on logical file end(env,
+        (REF FILE e)BOOL: (stop; SKIP));
+       make term(env,":"+nul ch);
+       STRING s;
+       DO
+          get(env,s);
+          IF UPB s &gt;= LWB s
+          THEN print((s,newline))
+          FI;
+          skip delimiters(env)
+       OD;
+       close(env)
+    FI
+    FINISH
+</pre>
+</dd>
+<dt><strong><a href="node86.html#ex-ix-xi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xi"></a>9.11</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 11 CONTEXT VOID
+   USE standard
+   IF FILE arg;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access arguments",
+           newline));
+      exit(1)
+   ELSE
+      on logical file end(arg,
+       (REF FILE a)BOOL: (stop;  SKIP));
+      get(arg,(LOC STRING,
+               LOC CHAR,
+               skip terminators));
+      DO
+         make term(arg,"/");
+         STRING env name;
+         CHAR terminator:=nul ch;
+         get(arg,
+             (env name,
+              skip terminators,
+              terminator));
+         IF FILE env;
+            open(env,
+                 env name,
+                 env channel)/=0
+         THEN
+            print((env name," undefined",
+                   newline))
+         ELSE
+            make term(env,
+                      terminator+nul ch);
+            STRING s;
+            on logical file end(
+               env,
+               (REF FILE f)BOOL:
+                 (GOTO continue; SKIP));
+            DO
+               get(env,s);
+               IF UPB s &gt;= LWB s
+               THEN print((s,newline))
+               FI;
+               skip terminators(env)
+            OD;
+            continue:
+            close(env)
+         FI;
+         make term(arg,blank);
+         skip terminators(arg)
+      OD
+   FI
+   FINISH
+</pre>
+
+Notice the addition of <code>nul ch</code> to cater for the lack of a
+specific terminator in the environment string.
+</dd>
+<dt><strong><a href="node86.html#ex-ix-xii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xii"></a>9.12</strong></dt>
+<dd> <pre>
+    PROGRAM ex9 12 CONTEXT VOID
+    USE standard
+    IF FILE abc;
+        open(abc,"ABC",env channel)/=0
+    THEN
+        print(("Environment string ABC",
+              "is undefined",newline));
+        stop
+    ELSE
+        INT sum:=0, n;
+        on logical file end(
+         abc,
+         (REF FILE f)BOOL:
+          (close(f);
+           print(("Total=",sum,newline));
+           stop;  SKIP));
+       DO
+          get(abc,n);
+          sum+:=n
+       OD
+    FI
+    FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node87.html#ex-ix-xiii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xiii"></a>9.13</strong></dt>
+<dd>Notice how the size of the month denotation is used to
+ensure that the rainfall is aligned appropriately.
+<pre>
+   PROGRAM ex9 13 CONTEXT VOID
+   USE standard
+   BEGIN
+   []STRING months=
+       ("January","February","March",
+        "April","May","June","July",
+        "August","September",
+        "October","November",
+        "December");
+
+   []REAL rainfall=
+       ( 6.54, 12.3,  10.1,  13.83,
+         5.04, 9.15,  14.34, 16.38,
+         13.84, 10.45, 8.49, 7.57);
+
+   FOR m TO UPB months
+   DO
+      STRING mm=months[m];
+      print((mm,(12-UPB mm)*blank,
+             fixed(rainfall[m],-5,2),
+             newline))
+   OD
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node87.html#ex-ix-xiv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xiv"></a>9.14</strong></dt>
+<dd>The difficult part is calculating which
+number to print at each position.
+<pre>
+   PROGRAM ex9 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(("Table of square roots ",
+             "1 to 100",
+             newline,newline));
+
+      FOR i TO 25
+      DO
+         FOR j TO 4
+         DO
+            INT number = (j-1)*25+i;
+            print((whole(number,-6),
+                   fixed(sqrt(number),
+                         -8,4)))
+         OD;
+         print(newline)
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node87.html#ex-ix-xv"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xv"></a>9.15</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 15 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL pi power:=1;
+      print(("Table of powers of pi",
+             " 1 to 10",
+           newline,newline));
+
+      FOR i TO 10
+      DO
+        pi power*:=pi;
+        print((whole(i,-3),"  ",
+               float(pi power,
+                     12,6,2),
+               newline))
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node88.html#ex-ix-xvi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xvi"></a>9.16</strong></dt>
+<dd>To write this
+program, you need to know how many bytes Algol 68 uses to store an
+integer in a binary book. In the program below, that number is
+presumed to be identified by <code>int bin bytes</code>. You will need to
+write a short program to output a couple of integers to a binary book
+and then see how long it is (and you might find its contents of
+interest).
+<pre>
+   PROGRAM ex9 16 CONTEXT VOID
+   USE standard
+   BEGIN
+   FILE work;
+
+   IF   establish(work,
+                  "ex9 9 1.tmp",
+                  stand back channel,
+                  0,0,0)/=0
+   THEN
+      print("Cannot create workbook");
+      exit(1)
+   FI;
+
+   FOR i TO 1000 DO put bin(work,i) OD;
+
+   INT int bin bytes=?;
+   CO Your value replaces ? CO
+
+   FOR i FROM 17 BY --17 TO 1000
+   DO
+      set(work,0,0,(i-1)*int bin bytes);
+      INT n;  get bin(work,n);
+      print((n,newline))
+   OD;
+
+   close(work)
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node88.html#ex-ix-xvii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xvii"></a>9.17</strong></dt>
+<dd>Reading the words should
+not present any problems to you. The only new bit is the output.
+However, for the sake of completeness, here is the whole program.
+<pre>
+   PROGRAM ex9 17 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf, out1, out2;
+
+      IF open(inf,
+              "inbook",
+              stand in channel)/=0
+      THEN
+         print("Cannot open inbook");
+         exit(1)
+      ELIF establish(out1,
+                     "outbook1",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook1");
+         exit(2)
+      ELIF establish(out2,
+                     "outbook2",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook2");
+         exit(3)
+      FI;
+
+      make term(inf, blank+cr+lf);
+
+      STRING word; CHAR ch:=blank;
+
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(out1);
+         close(out2);
+         close(f);
+         stop;  SKIP));
+
+      DO
+         get(inf,(word,
+                  skip terminators));
+
+         IF UPB word &gt; 0
+         THEN
+            put bin(out2,
+                    (current pos(out1),
+                     UPB word));
+            put bin(out1,word)
+         FI
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node90.html#ex-ix-xviii"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xviii"></a>9.18</strong></dt>
+<dd>A
+useful wrinkle is to end your report with the words
+<code>END OF REPORT</code> so that your reader knows that there are no
+pages of the report which could have been lost. In a professionally
+written program, you would put a page number and the date of the
+report, but we have not yet covered how that can be done (see
+chapter&nbsp;12).
+<pre>
+   PROGRAM ex9 18 CONTEXT VOID
+   USE standard
+   IF []STRING
+        months =
+         ("January","February","March",
+          "April","May","June",
+          "July","August","September",
+          "October","November","December");
+      []REAL
+        rainfall =
+         ( 6.54, 12.30, 10.10, 13,83,
+           5.04,  9.15, 14.34, 16.38,
+          13.84, 10.45, 8.49,   7.57);
+      FILE prn;
+      establish(prn,
+                "rainfall.out",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish rainfall.out",
+           newline));  stop
+   ELSE
+      put(prn,
+          ("Rainfall figures in 1995",
+           newline,newline,
+           "Month",7*blank,
+           "Rainfall in mm",
+           newline));
+
+      FOR m TO UPB months
+      DO
+        STRING mm = months[m];
+        put(prn,
+            (mm,(12-UPB mm)*blank,
+             fixed(rainfall[m],-5,2),
+             newline))
+      OD;
+      put(prn,
+          (newline,
+           "END OF REPORT",
+           newline));
+      close(prn)
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node90.html#ex-ix-xix"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xix"></a>9.19</strong></dt>
+<dd>You will need to get the
+identification of the file from the argument line.
+<pre>
+   PROGRAM ex9 19 CONTEXT VOID
+   USE standard
+   IF STRING in idf;  FILE arg, inf, prn;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access arguments",
+           newline));
+      exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Usage: tt idf",
+              newline));
+         stop;  SKIP));
+      get(arg,(LOC STRING,skip terminators,
+               in idf));
+      close(arg);
+      open(inf,in idf,stand in channel)/=0
+   THEN
+       put(stand error,
+           ("Cannot open ",in idf,
+            newline));
+      exit(2)
+   ELIF
+      establish(prn,"tt.out",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish tt.out",
+           newline));
+      exit(3)
+   ELSE
+      STRING line;
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(f);  close(prn);
+         stop;  SKIP));
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         put(prn,(whole(i,-6),": "));
+         IF UPB line &gt; 0
+         THEN put(prn,line)
+         FI;
+         newline(prn)
+      OD
+   FI
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+<dl>
+<dt><strong><a href="node91.html#ex-ix-xx"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xx"></a>9.20</strong></dt>
+<dd> <pre>
+   PROGRAM ex9 20 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL r;
+
+      WHILE read(r); r/=0.0
+      DO
+         print((float(r,-12,3,-2),newline))
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+<dt><strong><a href="node91.html#ex-ix-xxi"><img  align="bottom" border="1" alt="[*]" src="query.png"></a>Ex
+<a name="ans-ix-xxi"></a>9.21</strong></dt>
+<dd>This program is not
+all that difficult. Take it slowly, step by step.  Although reading
+an employee record only appears once in the program, it is better to
+write it as a procedure so as not to obscure the main logic.
+Likewise, printing each line of the report is also declared as a
+procedure. Notice how the given solution checks for errors.
+<pre>
+   PROGRAM ex9 21 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE arg, emp, prn;
+      STRING emp idf;
+      INT week:=0;
+
+      IF open(arg,"",arg channel)/=0
+      THEN
+        put(stand error,
+           ("Cannot access the arguments",
+            newline));
+        exit(1)
+      ELIF
+        on logical file end(arg,
+         (REF FILE f)BOOL:
+         (put(stand error,
+             ("Usage: tt emp-book week-no",
+              newline));
+          exit(2); SKIP));
+        get(arg,
+           (LOC STRING,LOC CHAR,
+            emp idf,week));
+        week &lt; 1 OR week &gt; 53
+      THEN
+         put(stand error,
+             ("Invalid week number",
+              newline));
+         exit(3)
+      ELIF open(emp,
+                emp idf,
+                stand in channel)/=0
+      THEN
+        put(stand error,
+           ("Cannot open ",emp idf,
+            newline));
+        exit(4)
+      ELIF
+        establish(prn,
+                  "report",
+                  stand out channel,
+                  0,0,0)/=0
+      THEN
+        put(stand error,
+           ("Cannot establish report",
+            newline));
+        exit(5)
+      FI;
+
+      MODE
+        EMPLOYEE=STRUCT(STRING name,
+                        [2]STRING address,
+                        STRING dept,
+                               ni code,
+                               tax code,
+                        REAL basic,
+                             overtime,
+                        [52]REAL
+                           net pay,tax);
+
+      PROC get emp=(REF FILE f,
+                    REF EMPLOYEE e)VOID:
+      BEGIN
+        [80]CHAR s;
+
+        PROC get str=[]CHAR:
+        (
+           INT len;  get bin(f,len);
+           [len]CHAR s;
+           get bin(f,s);
+           s
+        ); \#get str\#
+
+        IF (name OF e:=get str) /= ""
+        THEN
+          FOR i TO UPB address OF e
+          DO
+            (address OF e)[i]:=get str
+          OD;
+          dept OF e:=get str;
+          ni code OF e:=get str;
+          tax code OF e:=get str;
+          get bin(f,(basic OF e,
+                     overtime OF e,
+                     net pay OF e,
+                     tax OF e))
+        FI
+      END #get emp#;
+
+      PROC put emp=(REF FILE f,
+                    REF EMPLOYEE e)VOID:
+        put(f,(name OF e,
+               (40-UPB name OF e)*blank,
+                fixed((net pay OF e)[week],
+                       -8,2),
+                newline));
+
+      INT line:=60, page:=0;
+
+      PROC heading = (REF FILE f)VOID:
+      IF line = 60
+      THEN line:=0; #reset the line count#
+        put(f,
+            (newpage,
+             "Report of net pay for week ",
+             whole(week,0),
+             40*blank,"Page ",
+             whole(page+:=1,0),
+             newline,newline,
+             "Employee name",
+             28*blank,"Net pay",
+             newline,newline))
+      FI #heading#;
+
+      EMPLOYEE employee;
+      REAL total pay:=0; INT n:=0;
+
+      on logical file end(emp,
+       (REF FILE f)BOOL:
+        (put(prn,
+             ("Total net pay for ",
+              whole(n,0),
+              " employees =",
+              fixed(total pay,-11,2),
+              newline,
+              newline,
+              "End of report",newline));
+        close(f);  close(prn);  stop;
+        SKIP));
+
+      DO
+         heading(prn);
+         get emp(emp,employee);
+
+        IF name OF employee /= ""
+        THEN
+           total pay+:=
+            (net pay OF employee)[week];
+           n+:=1;
+           #count of total employees#
+           put emp(prn,employee);
+           line+:=1
+        FI
+      OD
+   END
+   FINISH
+</pre>
+</dd>
+</dl>
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html3147"
+  href="node144.html">
+<img width="37" height="24" align="bottom" border="0" alt="next" src="next.png"></a> 
+<a name="tex2html3141"
+  href="node134.html">
+<img width="26" height="24" align="bottom" border="0" alt="up" src="up.png"></a> 
+<a name="tex2html3135"
+  href="node142.html">
+<img width="63" height="24" align="bottom" border="0" alt="previous" src="prev.png"></a> 
+<a name="tex2html3143"
+  href="node1.html">
+<img width="65" height="24" align="bottom" border="0" alt="contents" src="contents.png"></a> 
+<a name="tex2html3145"
+  href="node147.html">
+<img width="43" height="24" align="bottom" border="0" alt="index" src="index.png"></a> 
+<br>
+<b> Next:</b> <a name="tex2html3148"
+  href="node144.html">Chapter 10</a>
+<b> Up:</b> <a name="tex2html3142"
+  href="node134.html">Answers</a>
+<b> Previous:</b> <a name="tex2html3136"
+  href="node142.html">Chapter 8</a>
+ &nbsp; <b>  <a name="tex2html3144"
+  href="node1.html">Contents</a></b> 
+ &nbsp; <b>  <a name="tex2html3146"
+  href="node147.html">Index</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-19
+</address>
+</body>
+</html>

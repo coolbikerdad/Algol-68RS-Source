@@ -1,0 +1,221 @@
+DECS  oserrors  CONTEXT VOID  USE  cif,  messageproc,  usefulops:
+
+{  Id: oserrors.a68,v 2.6 1993/08/17 16:00:38 aap Exp $ }
+
+configinfo A68CONFIG "$Id: oserrors.a68,v 1.1.1.1 2001-05-07 10:16:12 sian Exp $";
+
+
+COMMENT 
+    ************************************************************************
+    This Program is the property of the Secretary of State for Defence
+    (United Kingdom) acting through the Defence Research Agency (DRA). Use,
+    reproduction, production of amended versions and/or transfer of this
+    Program is permitted provided that:
+
+  (a)  this legend be preserved on any such reproduction and amended version,
+  (b)  any amended version of this Program be clearly marked to show the
+       nature of the amendment and of the name of the amending organisation,
+  and
+  (c)  any recipient  of such reproduction or amended version accept the
+       conditions set out in this legend.
+
+                         Crown Copyright, (c)   1993
+
+                             All rights reserved.
+
+    The Secretary of State for Defence (United Kingdom) acting through his
+    Defence Research Agency (DRA) gives no warranty that any element of the
+    Software is suitable for any purpose and he shall not be liable for any
+    loss or damage including loss or damage resulting in injury or death
+    howsoever caused which results from the use of the Software, or any
+    developments adaptions modifications translations and enhancements
+    thereof.
+
+    The original authors may be contacted via email on ella@dra.hmg.gb or by
+    writing to ELLA Office, DRA, St Andrews Road, Malvern, Worcs WR14 3PS, UK.
+    ************************************************************************
+
+
+10:08:93  generic_msg -> global_msg.  DCT
+09:09:93  "fatal" messages changed to "user" to prevent termination.  DCT
+20:10:93  Made failure more polite by giving reason.  DCT
+13:06:94  33.001  ELLA  NewConFig Entered in new config system previous version
+                                  number  31.008 
+29:03:95  34.002  ELLA  Modcprght Change copyright header
+??:??:??   ?.???  ????
+COMMENT
+
+{
+  Low level operating system interface for reporting errors.
+
+  Low level routines for accessing OS facilities, defined with POSIX.1 in mind.
+  Staredits for deviations from POSIX are:
+    to be supplied.
+}
+
+{
+  ERROR REPORTING
+}
+
+{ ERRNO }
+REF INT errno = ALIEN "errno" "#include <errno.h>";
+
+INT max osif messages = 100;
+
+FACILITY osif facility = (
+  "UNIX interface",
+  LOC VECTOR [max osif messages] MESSAGE,
+  LOC BOOL := FALSE,
+  (
+    { open file }
+    (1, system_class, "'open_file(*)' failed: out of range FILEACCESS(*)"),
+    (2, user_class,  "error opening file ""*"" - *"),
+    { close file }
+    (11, error_class, "error closing file ""*"" - *"),
+    (12, error_class, "'nil_file passed to 'close_file'"),
+    { read buf }
+    (21, user_class, "error reading buffer from file ""*"" - *"),
+    (22, system_class, "'nil_file passed to 'read_buf'"),
+    { read line }
+    (31, user_class, "error readline line from file ""*"" - *"),
+    (32, system_class, "'nil_file passed to 'read_line'"),
+    { write buf }
+    (41, user_class, "error writing to file ""*"" - *"),
+    (42, system_class, "'nil_file passed to 'write_buf'"),
+    { set pos }
+    (51, user_class, "error setting file position in file ""*"" - *"),
+    (52, system_class, "'nil_file passed to 'set_pos'"),
+    { update disk }
+    (61, user_class, "error updating disk for file ""*"" - *"),
+    (62, system_class, "'nil_file passed to 'update_disk'"),
+    { delete file }
+    (71, user_class, "error deleting file ""*"" - *"),
+    { execute os command }
+    (81, error_class, "error executing the command ""*"" - *"),
+
+    { generic -- only to be used during development }
+    (99, error_class, "error in '*' ('*')"),
+    (100, error_class, "'*' not yet implemented")
+  )
+);
+
+PROC osif message = (
+  INT osif event,  { a number identifying the particular failure }
+  VECSTR params,   { variable message text }
+  MESSAGEPROC msg  { as supplied by caller}
+) VOID:
+BEGIN
+  msg(make_msgno(osif event, osif facility),params)
+END;
+
+
+{ errornos and errorstrs a must correspond }
+
+REF REF INT  errornos = ALIEN "(A68_INT*)(errornos)"
+   "static int errornos [] ="
+   "   { E2BIG,       EACCES,       EAGAIN,       EBADF,      EBUSY,"
+   "     ECHILD,      EDEADLK,      EDOM,         EEXIST,     EFAULT,"
+   "     EFBIG,       EINTR,        EINVAL,       EIO,        EISDIR,"
+   "     EMFILE,      EMLINK,       ENAMETOOLONG, ENFILE,     ENODEV,"
+   "     ENOENT,      ENOEXEC,      ENOLCK,       ENOMEM,     ENOSPC,"
+   "     ENOSYS,      ENOTDIR,      ENOTEMPTY,    ENOTTY,     ENXIO,"
+   "     EPERM,       EPIPE,        ERANGE,       EROFS,      ESPIPE,"
+   "     ESRCH,       EXDEV };";
+
+PROC (REF INT) REF INT  inc = ALIEN "INC"  "#define INC(x) x++";
+
+VECSTR  errorstrs =
+( "E2BIG",
+  "search permission is denied",
+  "EAGAIN",
+  "invalid file descriptor",
+  "directory is in use",
+
+  "ECHILD",
+  "EDEADLK",
+  "argument outside permitted domain",
+  "file already exists",
+  "EFAULT",
+
+  "maximum file size exceeded",
+  "interrupted by a signal",
+  "invalid argument",
+  "IO error",
+  "invalid directory operation",
+
+  "too many file descriptors",
+  "too many links",
+  "file name is too long",
+  "too many files are open",
+  "no such device",
+
+  "file or directory does not exist",
+  "unsuitable file for execution",
+  "no locks available",
+  "no memory available",
+  "no space left on disk",
+
+  "ENOSYS",
+  "component of path is not a directory",
+  "directory is not empty",
+  "terminal type file expected",
+  "no such device, or device not ready",
+
+  "operation is not permitted",
+  "write to a pipe without a reader",
+  "result is too large",
+  "read-only file system",
+  "ESPIPE",
+
+  "no such process",
+  "XDEV"
+);
+
+
+{ convert errno to message text (copy to protect from overwrite on next call) }
+PROC errno text = REF VECTOR [] CHAR:
+BEGIN
+  { no strerror in SunOS 4
+  PROC (INT) CSTRING strerror = ALIEN "STRERROR"
+    "#include <string.h>"
+    "#define STRERROR(i) strerror(A_INT_int(i))";
+
+  RVC temp = CSTRINGTORVC strerror(errno);
+  HEAP VECTOR [UPB temp] CHAR := temp
+  }
+
+  REF INT  ptr:= errornos;
+  RVC  ans:= RVC (NIL);
+  FORALL str IN errorstrs  WHILE ans IS RVC (NIL)
+  DO  IF inc(ptr) = errno THEN  ans:= CASTRVC str  FI OD;
+  IF ans IS RVC (NIL)
+  THEN  concat(("failed with ""errno"" = ", whole(errno, 0)))
+  ELSE  ans
+  FI
+END;
+
+
+{ Message PROCs }
+MESSAGEPROC ignore_msg = (MSGNO msgno, VECSTR params) VOID: SKIP;
+
+MESSAGEPROC  global_msg:= ignore_msg;
+
+SKIP
+
+KEEP
+  errno, errno text,
+  osif message,
+  ignore_msg, global_msg,
+  MESSAGEPROC
+FINISH
+
+{
+Local Variables:
+mode:text
+auto-fill-hook:nil
+End:
+}
+
+
+
+
