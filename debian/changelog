@@ -1,3 +1,12 @@
+algol68toc (1.21) unstable; urgency=low
+
+  * Ported to ARM 64-bit architecture (aarch64)
+  * Ported to Intel 64-bit architecture (x86_64)
+  * Included optional Boehm garbage collector (default for 64-bit systems)
+  * Added initial support for macOS (darwin)
+
+ -- Neil Matthew <neil@tilde.co.uk>  Mon, 03 Apr 2021 00:00:00 +0100
+
 algol68toc (1.20) unstable; urgency=low
 
   * Completed addition of envp to main in liba68prel/osshell.a68 and src/a68toc.a68

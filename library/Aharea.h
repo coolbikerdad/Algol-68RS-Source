@@ -129,7 +129,7 @@ TRACINGSTACK;
 #ifndef INIT_STACK
 #define INIT_STACK(stack)                                                                 		 \
 {                                                                                         		 \
-  (stack).bottom = (stack).top = (AREA *) malloc( (size_t)(A_STACKINCR) * sizeof(AREA) ); 			 \
+  (stack).bottom = (stack).top = (AREA *) A_GC_MALLOC( (size_t)(A_STACKINCR) * sizeof(AREA) ); 			 \
   if( (stack).bottom == NIL ) GC_ERROR(no more memory for HEAP tracing stack);            		 \
   (stack).end = (stack).bottom + A_STACKINCR;                                             		 \
 }
@@ -139,7 +139,7 @@ TRACINGSTACK;
 #define FREE_STACK(stack)                                         					 \
 {                                                                 					 \
   ASSERT((stack).top==(stack).bottom,FREE_STACK,stack not empty); 					 \
-  free((char *)(stack).bottom);                                   					 \
+  A_GC_FREE((char *)(stack).bottom);                                   					 \
 }
 #endif
 
@@ -149,7 +149,7 @@ TRACINGSTACK;
   if ( (stack).top == (stack).end )                                                                    	 \
   {                                                                                                    	 \
     int new_size = (SIZE)((stack).end - (stack).bottom) + A_STACKINCR;                                       	 \
-    AREA *new_stack = (AREA *)realloc((stack).bottom, (size_t)(new_size) * sizeof(AREA));         		 \
+    AREA *new_stack = (AREA *)A_GC_REALLOC((stack).bottom, (size_t)(new_size) * sizeof(AREA));         		 \
     if ( new_stack == NIL ) GC_ERROR(no more memory for HEAP tracing stack);                           	 \
     REPORT2(2,"PUSH: growing tracing stack to %d elements, stack at %p\n",new_size,(void *)new_stack); 	 \
     (stack).top = new_stack + (SIZE)((stack).top - (stack).bottom);                                            	 \

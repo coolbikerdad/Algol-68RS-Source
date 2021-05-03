@@ -6,7 +6,7 @@
 algol68_inc := algol68/Aalloc.h algol68/Aassign.h algol68/Acoerce.h \
                algol68/Aconfig.h algol68/Aindex.h algol68/Alibrary.h \
 	       algol68/Amacros.h algol68/Astrings.h algol68/Asupport.h \
-	       algol68/Atypes.h
+	       algol68/Atypes.h algol68/gc.h
 
 linux_inc := algol68/linux/Ahhostgc.h algol68/linux/Ahostenv.h \
              algol68/linux/Ahswitch.h
@@ -20,4 +20,6 @@ all : $(algol68_inc) $(linux_inc)
 install :
 	$(INSTALLDATA) -p $(algol68_inc) $(INCDIR)
 	$(INSTALLDATA) -p $(linux_inc) $(INCDIR)/linux
-
+	$(INSTALLDATA) -p algol68/gc/extra/* $(INCDIR)/gc/extra
+	$(INSTALLDATA) -p algol68/gc/private/* $(INCDIR)/gc/private
+	-$(INSTALLDATA) -p algol68/gc/* $(INCDIR)/gc

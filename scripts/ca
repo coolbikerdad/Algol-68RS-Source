@@ -9,7 +9,7 @@
 #------------ Compiler choice ---------
 
 CC="none"
-ARCH=$(arch)
+ARCH=$(uname -m)
 OS=$(uname -s)
 echo "Architecture is $ARCH, Operating system is $OS"
 
@@ -36,9 +36,15 @@ case $ARCH in
 esac
 echo "Using compiler: $CC"
 
+if [ "$OS" = "Darwin" ]; then
+PROGRAM=/usr/local/bin/a68toc
+ROOT=/usr/local/share/algol68toc
+INCLUDES="-I/usr/local/include/algol68 -I/usr/include"
+else
 PROGRAM=/usr/bin/a68toc
 ROOT=/usr/share/algol68toc
 INCLUDES="-I/usr/include/algol68 -I/usr/include"
+fi
 
 A68DIRS="-dir ${ROOT}"
 CHECK=-DA68_CHECK
@@ -246,8 +252,8 @@ fi
 
 if [ "${TYPE}" == "p" ]
 then # Link the program
-    echo ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -lm -lc
-    ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -lm -lc
+    echo ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
+    ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
     RES=$?
     if [ ${RES} -ne 0 ]
     then exit ${RES}

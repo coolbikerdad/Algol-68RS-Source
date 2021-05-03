@@ -297,7 +297,7 @@ if ((elsize) > sizeof(int) && !WORDALIGNED(elsize)) \
     alloc = min_seg_size;	/* round down size to end of element */ \
     size = (((min_seg_size-(SIZE)sizeof(SEGCTL)) /(elsize))*(elsize))+(SIZE)sizeof(SEGCTL); \
   } \
-  (segctlp_LVALUE) = (SEGCTLPTR)(malloc( (size_t)(alloc) )); \
+  (segctlp_LVALUE) = (SEGCTLPTR)(A_GC_MALLOC( (size_t)(alloc) )); \
   if ( (segctlp_LVALUE) != NIL ) \
   { \
     CLR_AT_GRAB((PTR)(segctlp_LVALUE),elsize,size); /* malloc does not zeroise */ \
@@ -309,7 +309,7 @@ if ((elsize) > sizeof(int) && !WORDALIGNED(elsize)) \
 #endif
 
 #ifndef FREE_SEG
-#define	FREE_SEG( segctlp )	free((PTR)(segctlp))
+#define	FREE_SEG( segctlp )	A_GC_FREE((PTR)(segctlp))
 #endif
 
 #endif

@@ -1156,9 +1156,9 @@ void KDCAOSF(void)   /* initialise DECS osshell */
 static A68_BOOL A_invoked = A68_FALSE;
 
 /* --- Configuration information for this module */
-static char *A_config_arguments[] = {"/home/neil/Algol-68RS/algol68toc-1.20-debian/src/a68toc","-v","-uname","seedfile","-staredit","59LR","-lib","/home/neil/Algol-68RS/algol68toc-1.20-debian/a68config","-dir","/home/neil/Algol-68RS/algol68toc-1.20-debian/a68config","-dir","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel","osshell.a68",""};
-static char *A_config_environment[] = {"A68_LIB=/home/neil/Algol-68RS/algol68toc-1.20-debian/a68config","A68_CDIR=","A68_DIR=","A68_STAREDIT=","A68_NAMESEED=nameseed","CTRANS_NAMESEED=",""};
-static char *A_config_modinfo_files[] = {"/home/neil/Algol-68RS/algol68toc-1.20-debian/a68config/a68config.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/oscommon.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/osfiles.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/usefulops.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/messageproc.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/oserrors.m","/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/cif.m",""};
+static char *A_config_arguments[] = {"/home/neil/Algol-68RS/algol68toc-1.21/src/a68toc","-v","-uname","seedfile","-staredit","59LR","-lib","/home/neil/Algol-68RS/algol68toc-1.21/a68config","-dir","/home/neil/Algol-68RS/algol68toc-1.21/a68config","-dir","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel","osshell.a68",""};
+static char *A_config_environment[] = {"A68_LIB=/home/neil/Algol-68RS/algol68toc-1.21/a68config","A68_CDIR=","A68_DIR=","A68_STAREDIT=","A68_NAMESEED=nameseed","CTRANS_NAMESEED=",""};
+static char *A_config_modinfo_files[] = {"/home/neil/Algol-68RS/algol68toc-1.21/a68config/a68config.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/oscommon.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/osfiles.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/usefulops.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/messageproc.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/oserrors.m","/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/cif.m",""};
 static A_CONFIG_INFO A_config;
 /* --- end of configuration information */
 A68_61  MHCAOSF;  /* avoid structure result */
@@ -1176,11 +1176,11 @@ ZRAAOSF();   /* USE messageproc */
 MCBAOSF();   /* USE oserrors */
 BAAAOSF();   /* USE cif */
 /* --- Initialise configuration information */
-A_config.source_file = "/home/neil/Algol-68RS/algol68toc-1.20-debian/liba68prel/osshell.a68";
-A_config.translation_time = "Wed Apr 21 16:34:02 2021";
+A_config.source_file = "/home/neil/Algol-68RS/algol68toc-1.21/liba68prel/osshell.a68";
+A_config.translation_time = "Mon May  3 00:36:16 2021";
 A_config.ctrans_version = "Ctrans_34.6";
 A_config.name_seed = "JDCAOSF (from seed file) ";
-A_config.spec_change_time = "Wed Apr 21 16:34:02 2021";
+A_config.spec_change_time = "Mon May  3 00:36:16 2021";
 A_config.arguments = A_config_arguments;
 A_config.environment = A_config_environment;
 A_config.modinfo_files = A_config_modinfo_files;

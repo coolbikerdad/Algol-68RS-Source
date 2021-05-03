@@ -33,3 +33,4 @@ clean :
 install :
 	$(INSTALLDATA) -p Afirst.o $(PKGDIR)
 	$(INSTALLDATA) -p liba68.a $(LIBDIR)
+	$(INSTALLDATA) -p liba68gc.a $(LIBDIR)

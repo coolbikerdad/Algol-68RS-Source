@@ -37,6 +37,7 @@
 14:12:94  33.002  DJS   Porting    Abstracted A_GCMRKBASE definition to
                                   Ahostenv.h. 
 29:03:95  34.003  ELLA  Modcprght Change copyright header
+01:05:21  Simplified defaults and added option for BDW gc. NM
 ??:??:??   ?.???  ????
 */
 
@@ -62,33 +63,64 @@
 #include <stdlib.h>
 #include <algol68/Atypes.h>
 
-/* set default configuration */
+/* set defaults */
 
-/* ctrans garbage collector needs attention on 64-bit systems */
+/* The following defines were previously optional, but are no longer observed, so set to default */
+#define A_STRIDE /* Row descriptors contain strides */ 
+#define GC_FIELD /* Use gc field to recognise array descriptors */
 
-#if     defined(__LP64__) || defined(__x86_64__) || defined(__aarch64__)
-/* An option is to run with no garbage collector, so the heap simpy grows through calls to calloc(): */
+/* 
+** One of the following GC options must be set and A_GC_METHOD defined in this include file
+**
+** A_GARBAGE_COLLECT           Garbage collect the heap using ctrans allocator
+** A_BDW_GARBAGE_COLLECT       Garbage collect the heap using Boehm allocator
+** A_NO_GARBAGE_COLLECT        Do not collect the heap, allow it to grow
+**
+** Defaults are set below (Boehm for 64-bit, ctrans for 32-bit), but they can be overridden here.
+** Example, to disable collection:
+*/
 /*
-#       define  A_NO_GARBAGE_COLLECT
+#define A_NO_GARBAGE_COLLECT
+#define A_GC_METHOD none
 */
 
-/* An option is to use the 64-bit patches to the built-in collector provided by Jose Marchesi, not fully tested as yet: */
+/*
+** Note that this a68toc port was orginally created on, and targeted, 32-bit little-endian Linux systems.
+** Dependencies on endianness and word size have been mitigated as far as possible.
+** However, parts of the garbage collector and memory allocator may remain word size dependent.
+** The Boehm collector option has been added particularly for use on 64-bit Linux systems, and macOS.
+**
+*/
 
+/*
+** Default 64-bit systems to Boehm collector
+**
+** An alternative option is to use the 64-bit patches to the built-in collector provided by Jose Marchesi, not fully tested as yet:
+*/
+/*
+#       define  A_GARBAGE_COLLECT
+#       define  A_GC_METHOD A68TOC
 #       define  A_GARBAGE_COLLECT_64
 #       define  A_FUNNY_STEPAREAPTR
+*/
 
-#endif /* 64-bit system specifics */
-
-#if	!defined(A_GARBAGE_COLLECT) && !defined(A_NO_GARBAGE_COLLECT)
-#	define	A_GARBAGE_COLLECT
+#if !defined(A_GC_METHOD)
+#if     defined(__LP64__) || defined(__x86_64__) || defined(__amd64__) || defined(__aarch64__)
+#       define  MAX_CACHE 0                /* disable caching of small allocations, leave to BDW */
+#       define  A_BDW_GARBAGE_COLLECT
+#       define  A_GC_METHOD BDW
+#endif
 #endif
 
-#if	defined(A_GARBAGE_COLLECT) && !defined(A_GC_FIELD) && !defined(A_NO_GC_FIELD)
-#	define	A_GC_FIELD
+/*
+** Default 32-bit systems to built-in collector
+**
+*/
+#if !defined(A_GC_METHOD)
+#if     defined(__i386__) || defined(__i686__) || defined(__arm__)
+#       define A_GARBAGE_COLLECT
+#       define A_GC_METHOD A68TOC
 #endif
-
-#if	defined(A_GARBAGE_COLLECT) && !defined(A_STRIDE) && !defined(A_NO_STRIDE)
-#	define	A_STRIDE
 #endif
 
 
@@ -117,9 +149,19 @@
 			*/
 #endif
 
-
 #define	A_GC_MARK(dimensions)	(A_GCMRKBASE|(dimensions))
 
+
+/*
+** Check we have a GC method selected
+*/
+#if !defined(A_GC_METHOD)
+#error Unable to determine garnage collection method in Aalloc.h
+#endif
+
+/*
+** Definitions for A68TOC garbage collector
+*/
 
 #if defined(A_GARBAGE_COLLECT)
 /* #warning A_GARBAGE_COLLECT configured for standard GC */
@@ -140,17 +182,44 @@
 #define	A_GC_1ALLOC(size)	Agc_1alloc(A_size_t_INT(size))
 #endif
 
-#define	A_GC_NALLOC(size,elems)	((int)size == 4 ? Agc_alloc4(elems) : Agc_nalloc(A_size_t_INT(size),elems))
+#define	A_GC_NALLOC(size,elems)	        ((int)size == 4 ? Agc_alloc4(elems) : Agc_nalloc(A_size_t_INT(size),elems))
+#define A_GC_MALLOC(size)               malloc(size)
+#define A_GC_REALLOC(ptr,size)          realloc(ptr,size)
+#define A_GC_FREE(ptr)                  free(ptr,size)
 
 #define	A_GC_STARTUP(main_param_1)	{Agc_startup((char *) &main_param_1);}
 
-#else /* !A_GARBAGE_COLLECT */
+#endif /* A_GARBAGE_COLLECT */
 
+
+#if defined(A_BDW_GARBAGE_COLLECT)
+/* #warning A_BDW_GARBAGE_COLLECT configured for Boehm GC */
 /*
-** use no garbage collector, just allocate space with calloc
+** use the BDW garbage collector
+** A version is packaged with the source for completeness
 **
 */
-#warning A_NO_GARBAGE_COLLECT configured for no GC
+#define GC_DEBUG
+#include "gc.h"
+#define	A_GC_SETMARK(desc,dims) (0)
+/* #define	A_GC_SETMARK(desc,dims)	((desc).gc = A_GC_MARK(dims)) */
+
+#define	A_GC_NALLOC(size,elems)	         GC_debug_malloc((elems)*( (size) <= 0 ? 1 : (size) ),"",0)
+#define	A_GC_1ALLOC(size)	         GC_debug_malloc(size,"",0)
+#define A_GC_MALLOC(size)                GC_debug_malloc(size,"",0)
+#define A_GC_REALLOC(ptr,size)           GC_debug_realloc(ptr,size,"",0)
+#define A_GC_FREE(ptr)                   GC_debug_free(ptr)
+
+#define	A_GC_STARTUP(main_param_1)       {GC_init();}
+
+#endif /* BDW_GARBAGE_COLLECT */
+
+#if defined(A_NO_GARBAGE_COLLECT)
+/*
+** use no garbage collector, just allocate space with malloc and friends
+**
+*/
+/* #warning A_NO_GARBAGE_COLLECT configured for no GC */
 
 #define	A_GC_SETMARK(desc,dims) (0)
 
@@ -162,12 +231,16 @@
 ** +++ This should be tested for, but we don't have a temporary variable to use.
 */
 
-#define	A_GC_NALLOC(size,elems)	calloc(elems,( (size) <= 0 ? 1 : (size) ))
-#define	A_GC_1ALLOC(size)	calloc(size,1)
+#define	A_GC_NALLOC(size,elems)	        calloc(elems,( (size) <= 0 ? 1 : (size) ))
+#define	A_GC_1ALLOC(size)	        calloc(size,1)
+#define A_GC_MALLOC(size)               malloc(size)
+#define A_GC_REALLOC(ptr,size)          realloc(ptr,size)
+#define A_GC_FREE(ptr)                  free(ptr)
 
 #define	A_GC_STARTUP(main_param1) /* initialise GC here with main_param1 */
 
 #endif
+
 /*
 ** Interfaces usable by CTRANS below
 */

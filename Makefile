@@ -1,10 +1,8 @@
 #!/usr/bin/make
 
 #------------ Compiler choice ---------
-#--- Allow for different flags if required ---
-
 CC="none"
-ARCH="$(shell arch)"
+ARCH="$(shell uname -m)"
 OS="$(shell uname -s)"
 
 ifeq ($(ARCH), "i386")
@@ -17,6 +15,9 @@ endif
 
 ifeq ($(ARCH), "x86_64")
 CC=gcc
+ifeq ($(OS), "Darwin")
+CC=gcc -Wno-parentheses-equality -Wno-unused-value -Wno-parentheses -Wno-empty-body
+endif
 endif
 
 ifeq ($(ARCH), "armv7l")
@@ -46,6 +47,18 @@ MANDIR=$(DESTDIR)/usr/share/man/man1
 INCDIR=$(DESTDIR)/usr/include/algol68
 APPDIR=$(DESTDIR)/usr/share/applications
 
+#------------ macOS values -------------
+ifeq ($(OS), "Darwin")
+PKGDIR=$(DESTDIR)/usr/local/share/algol68toc
+DOCDIR=$(DESTDIR)/usr/local/share/doc/algol68toc
+BINDIR=$(DESTDIR)/usr/local/bin
+LIBDIR=$(DESTDIR)/usr/local/lib
+INFODIR=$(DESTDIR)/usr/local/share/info
+MANDIR=$(DESTDIR)/usr/local/share/man/man1
+INCDIR=$(DESTDIR)/usr/local/include/algol68
+APPDIR=$(DESTDIR)/usr/local/share/applications
+endif
+
 #------------- Absolute directories ------------
 TOP:=$(shell pwd)
 VPATH:=$(TOP)/include
@@ -60,6 +73,7 @@ EXD=$(TOP)/examples
 LBD=$(TOP)/library
 LPD=$(TOP)/liba68prel
 QAD=$(TOP)/qad
+GCD=$(TOP)/bdwgc
 
 ADIRS=a68config liba68prel src qad
 CDIRS=library a68config liba68prel src
@@ -86,9 +100,11 @@ QADFLAGS=-v -s -uname seedfile -staredit $(QADSTAR)
 
 #------------ Programs -----------
 ALGOL=$(CTD)/a68toc
-
 SHELL=/bin/sh
 INSTALL=$(shell which install) -g root -o root
+ifeq ($(OS), "Darwin")
+INSTALL=$(shell which install) -g wheel -o root
+endif
 INSTALLDATA=$(INSTALL) -m 644
 INSTALLPROG=$(INSTALL) -m 555
 
@@ -99,8 +115,8 @@ export
 .PHONY : clean info uninstall
 
 #-----Don't remake the documentation all the time----
-#all : c-stamp q-stamp d-stamp
-all : c-stamp q-stamp
+#all : g-stamp c-stamp q-stamp d-stamp
+all : g-stamp c-stamp q-stamp
 
 remove :
 	for d in $(ADIRS); do $(RM) $$d/*.c $$d/*.m; done
@@ -108,7 +124,17 @@ remove :
 Translate : remove nameseed
 	-for d in $(ADIRS); do $(MAKE) -C $$d Translate; done
 
-c-stamp:
+g-stamp: $(GCD)/gc.a
+	-mkdir -p include/gc
+	cp -r $(GCD)/include/* include/algol68/gc
+	cp $(GCD)/gc.a library/liba68gc.a
+	touch g-stamp
+
+$(GCD)/gc.a:
+	tar zxvf bdwgc.tar.gz
+	-$(MAKE) -C $(GCD) -f Makefile.direct check
+
+c-stamp: g-stamp
 	-for d in $(CDIRS); do $(MAKE) -C $$d; done
 	touch c-stamp
 
@@ -121,15 +147,20 @@ d-stamp :
 	touch d-stamp
 
 #install : c-stamp q-stamp d-stamp
-install : c-stamp q-stamp
+install : g-stamp c-stamp q-stamp
 	$(INSTALL) -m 755 -d $(PKGDIR)
 	$(INSTALL) -m 755 -d $(INCDIR)
 	$(INSTALL) -m 755 -d $(INCDIR)/linux
+	$(INSTALL) -m 755 -d $(INCDIR)/gc
+	$(INSTALL) -m 755 -d $(INCDIR)/gc/extra
+	$(INSTALL) -m 755 -d $(INCDIR)/gc/private
 	$(INSTALL) -m 755 -d $(BINDIR)
 	$(INSTALL) -m 755 -d $(LIBDIR)
 	$(INSTALL) -m 755 -d $(INFODIR)
 	$(INSTALL) -m 755 -d $(DOCDIR)
 	$(INSTALL) -m 755 -d $(DOCDIR)/examples
+	$(INSTALL) -m 755 -d $(DOCDIR)/examples/logic
+	$(INSTALL) -m 755 -d $(DOCDIR)/examples/tests
 	$(INSTALL) -m 755 -d $(DOCDIR)/pame
 	$(INSTALL) -m 755 -d $(APPDIR)
 	$(INSTALL) -m 755 -d $(MANDIR)
@@ -142,13 +173,14 @@ info :
 uninstall :
 	-$(RM) $(BINDIR)/a68toc $(BINDIR)/resetseed $(BINDIR)/ca
 	-install-info --quiet --remove $(INFODIR)/ctrans.info.gz $(INFODIR)/dir
-	-$(RM) -r $(PKGDIR) $(DOCDIR)
-	-$(RM) $(INFODIR)/ctrans.info.gz $(LIBDIR)/liba68.a $(LIBDIR)/liba68s.a \
+	-$(RM) -rf $(PKGDIR) $(DOCDIR) $(INCDIR)
+	-$(RM) $(INFODIR)/ctrans.info.gz $(LIBDIR)/liba68.a $(LIBDIR)/liba68s.a $(LIBDIR)/liba68gc.a \
 		$(MANDIR)/a68toc.1.gz $(MANDIR)/ca.1.gz
 
 dist-clean: clean
-	-$(RM) -v c-stamp q-stamp d-stamp
+	-$(RM) -v c-stamp q-stamp d-stamp g-stamp
 	-$(RM) -r debian/tmp debian/algol68toc
+	-$(RM) -rf bdwgc
 
 nameseed : a68config/rctr liba68prel/rctr src/rctr qad/rctr
 	for d in $(ADIRS); do cp $$d/rctr $$d/nameseed; done
@@ -163,14 +195,15 @@ clean:
 	find $(TOP) \( -name '*~' -o -name '*.asv' -o -name '*##' \) \
 		-exec $(RM) -v '{}' ';'
 	-for d in $(ADIRS) $(DDIRS) library; do $(MAKE) -C $$d clean; done
+	-$(MAKE) -C $(GCD) -f Makefile.direct clean
 
 realclean:
 	find $(TOP) \( -name '*~' -o -name '*.asv' -o -name '*##' \) \
 		-exec $(RM) -v '{}' ';'
 	-for d in $(ADIRS) $(DDIRS) library; do $(MAKE) -C $$d realclean; done
 
-# Revision 1.20  2021/04/21 Neil Matthew
-# Port to 64-bit and ARM architectures
+vars:
+	echo "NOR is $(NOR)"
 
 # $Log: Makefile,v $
 # Revision 1.12  2012/01/04 17:18:45  sian

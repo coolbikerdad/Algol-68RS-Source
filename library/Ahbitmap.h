@@ -193,8 +193,8 @@ extern char *   alloca();
 #define BMAP_ALLOC(bitmap_LVALUE,n)     ((bitmap_LVALUE) = (BITMAPPTR)alloca((size_t)(n)))
 #define BMAP_FREE(n)
 #else
-#define BMAP_ALLOC(bitmap_LVALUE,n)     ((bitmap_LVALUE) = (BITMAPPTR)malloc((size_t)(n)))
-#define BMAP_FREE(n)    free(n)
+#define BMAP_ALLOC(bitmap_LVALUE,n)     ((bitmap_LVALUE) = (BITMAPPTR)A_GC_MALLOC((size_t)(n)))
+#define BMAP_FREE(n)    A_GC_FREE(n)
 #endif
 
 #ifndef GRAB_BITMAP

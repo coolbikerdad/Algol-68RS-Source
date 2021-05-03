@@ -21,7 +21,7 @@ a68toc_o := $(patsubst %.a68,%.o,$(a68toc_a))
 include $(TOP)/Algol68.mk
 
 A68_DIRS=-dir $(A68_ROOT) -dir $(LPD) -dir .
-A68_LIBS=-L$(LPD) -la68prel -L$(LBD) -la68
+A68_LIBS=-L$(LPD) -la68prel -L$(LBD) -la68 -la68gc
 
 #------------ Rules --------------
 .PHONY : install clean
