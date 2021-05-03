@@ -1,0 +1,308 @@
+DECS utf8 CONTEXT VOID
+
+USE standard, bytes:
+
+{ Basic UTF-8 library for Algol 68RS.
+
+This is less elegant than https://rosettacode.org/wiki/Unicode_strings#ALGOL_68
+but deals with errors and better probably requires less computation. I did not
+look in Rosetta Code before I started, because who would write a Unicode library
+for a fifty year old language! 
+
+MODE UTF8
+
+    { An array of bytes containing a UTF-8 encoded string. }
+
+MODE ENCODABLE = UNION(CHAR, INT, BITS, STRING, []INT, []BITS, UTF8);
+
+    { The various types of data that can be encoded as UTF-8.
+      CHAR and STRING are expected to in the Latin-1 character set.
+      INT and BITS are expected the contain Unicode codepoint numbers. }
+             
+PROC utf8 = ([]ENCODABLE substrings) UTF8
+
+    { Encode one or more items as a UTF-8 string. }
+    { This can also be used for concatenation. }
+
+OP VALID = (UTF8 u) BOOL
+
+    { Test if a UTF-8 string is correctly encoded. }
+
+PROC count codepoints (UTF8 u) INT
+
+    { The rough length of a UTF-8 string. }
+    { (This is not aware of combining characters etc.) }
+
+PROC unpack utf8 = (UTF8 u) []INT
+
+    { Unpack a UTF-8 string into an array of codepoints. }
+
+PROC utf8 to raw = (UTF8 u) STRING
+
+    { Convert UTF-8 bytes to characters, for writing or saving UTF-8 text. }
+
+OP REPR = (UTF8 string) STRING
+
+    { Synonym for the above. }
+
+PROC raw to utf8 = (STRING string) UTF8
+
+    { Convert characters directly into UTF-8 bytes, for reading UTF-8 text. }
+
+OP U = (STRING string) UTF8
+
+    { synonym for the above }
+
+    { Use U to include UTF-8 constants in an Algol program, e.g. U"×÷≤≥".
+      This works because a68toc allows any character in a string constant. }
+
+OP + = (UTF8 u, UTF8 v) UTF8
+OP +:= = (REF UTF8 u, UTF8 v) VOID
+
+    { Some basic operators for UTF-8. }
+}
+
+
+{ UTF-8 encoded Unicode string. }
+
+MODE UTF8 = FLEX [1:0] BYTE;
+
+
+{ Algol 68 types that can be converted to Unicode characters. }
+
+MODE ENCODABLE = UNION(UTF8, CHAR, INT, BITS, STRING, []INT, []BITS);
+
+
+{
+    UTF-8 encoding:
+
+    Unicode range     byte 1    byte 2    byte 3    byte 4
+    ----------------  --------  --------  --------  --------
+    U+0000  U+007F    0aaaaaaa	
+    U+0080  U+07FF    110bbbbb  10eeeeee	
+    U+0800  U+FFFF    1110cccc  10ffffff  10eeeeee	 
+    U+10000 U+10FFFF  11110ddd  10gggggg  10ffffff  10eeeeee
+
+   bits        range  These are the bits of Unicode "codepoint" numbers.
+   ------- ---------
+   aaaaaaa   6 ..  0
+   bbbbb    10 ..  6
+   cccc     15 .. 12 
+   ddd      20 .. 18
+   eeeeee    5 ..  0
+   ffffff   11 ..  6
+   gggggg   17 .. 12
+}
+
+{ Identify a UTF-8 byte by its prefix bits. }
+
+PROC is byte a = (BYTE byte) BOOL: (BIN byte AND 2r 1 0000000) = 2r 0 0000000;
+PROC is byte b = (BYTE byte) BOOL: (BIN byte AND 2r 111 00000) = 2r 110 00000;
+PROC is byte c = (BYTE byte) BOOL: (BIN byte AND 2r 1111 0000) = 2r 1110 0000;
+PROC is byte d = (BYTE byte) BOOL: (BIN byte AND 2r 11111 000) = 2r 11110 000;
+PROC is byte e = (BYTE byte) BOOL: (BIN byte AND 2r 11 000000) = 2r 10 000000;
+PROC is byte f = (BYTE byte) BOOL: (BIN byte AND 2r 11 000000) = 2r 10 000000;
+PROC is byte g = (BYTE byte) BOOL: (BIN byte AND 2r 11 000000) = 2r 10 000000;
+
+{ The bits from a UTF-8 byte, shifted into their codepoint positions. }
+
+PROC word a = (BYTE byte) BITS: BIN byte;
+PROC word b = (BYTE byte) BITS: (BIN byte AND 2r 000 11111) SHL 6;
+PROC word c = (BYTE byte) BITS: (BIN byte AND 2r 0000 1111) SHL 12;
+PROC word d = (BYTE byte) BITS: (BIN byte AND 2r 00000 111) SHL 18;
+PROC word e = (BYTE byte) BITS: (BIN byte AND 2r 00 111111);
+PROC word f = (BYTE byte) BITS: (BIN byte AND 2r 00 111111) SHL 6;
+PROC word g = (BYTE byte) BITS: (BIN byte AND 2r 00 111111) SHL 12;
+
+{ Encode ranges of bits from Unicode codepoints as UTF-8 bytes. }
+
+PROC byte a = (INT codepoint) BYTE: BITE codepoint;
+PROC byte b = (INT codepoint) BYTE: BITE (2r 110 00000 OR BIN codepoint SHR 6  AND 2r 000 11111);
+PROC byte c = (INT codepoint) BYTE: BITE (2r 1110 0000 OR BIN codepoint SHR 12 AND 2r 0000 1111);
+PROC byte d = (INT codepoint) BYTE: BITE (2r 11110 000 OR BIN codepoint SHR 18 AND 2r 00000 111);
+PROC byte e = (INT codepoint) BYTE: BITE (2r 10 000000 OR BIN codepoint        AND 2r 00 111111);
+PROC byte f = (INT codepoint) BYTE: BITE (2r 10 000000 OR BIN codepoint SHR 6  AND 2r 00 111111);
+PROC byte g = (INT codepoint) BYTE: BITE (2r 10 000000 OR BIN codepoint SHR 12 AND 2r 00 111111);
+
+
+INT replacement character = ABS 16r fffd;  { the Unicode error symbol "�" } 
+
+
+PROC count codepoints and validate = (UTF8 u, REF INT length, REF BOOL valid) VOID:
+BEGIN
+    valid := TRUE;
+    length := 0;
+    INT i := LWB u;
+    WHILE i <= UPB u DO
+        IF is byte a(u[i]) THEN
+            i +:= 1
+        ELIF is byte b(u[i]) ANDTH i+1 <= UPB u ANDTH is byte e(u[i+1]) THEN
+            i +:= 2
+        ELIF is byte c(u[i]) ANDTH i+2 <= UPB u ANDTH is byte f(u[i+1]) ANDTH is byte e(u[i+2]) THEN
+            i +:= 3
+        ELIF is byte d(u[i]) ANDTH i+3 <= UPB u ANDTH is byte g(u[i+1]) ANDTH is byte f(u[i+2]) ANDTH is byte e(u[i+3]) THEN
+            i +:= 4
+        ELSE
+            valid := FALSE;  
+            i +:= 1
+        FI;
+        length +:= 1
+    OD
+END;
+
+
+PROC count codepoints = (UTF8 u) INT:  (INT i; BOOL v; count codepoints and validate(u, i, v); i);
+
+
+OP VALID = (UTF8 u) BOOL: (INT i; BOOL v; count codepoints and validate(u, i, v); v);
+
+
+PROC unpack utf8 = (UTF8 u) []INT:
+BEGIN
+    INT length = count codepoints (u);
+    [1 : length] INT codepoints;
+    INT i := 1;
+    INT j := 1;
+    FOR j FROM 1 TO length DO
+        IF is byte a(u[i]) THEN
+            codepoints[j] := ABS word a(u[i]);
+            i +:= 1
+        ELIF is byte b(u[i]) THEN
+            codepoints[j] := ABS (word b(u[i]) OR word e(u[i+1]));
+            i +:= 2
+        ELIF is byte c(u[i]) THEN
+            codepoints[j] := ABS (word c(u[i]) OR word f(u[i+1]) OR word e(u[i+2]));
+            i +:= 3
+        ELIF is byte d(u[i]) THEN
+            codepoints[j] := ABS (word d(u[i]) OR word g(u[i+1]) OR word f(u[i+2]) OR word e(u[i+3]));
+            i +:= 4
+        ELSE  { error } 
+            codepoints[j] := ABS replacement character;
+            i +:= 1
+        FI
+    OD;
+    codepoints
+END;
+
+
+PROC utf8 = ([]ENCODABLE substrings) UTF8:
+BEGIN
+
+    INT utf8 buffer size = (
+        INT n := 0;
+        PROC inc = (INT c) VOID:
+           n +:= (  c <= -1             | 3 { replacement character }
+                 |: c <= ABS 16r     7f | 1
+                 |: c <= ABS 16r    7ff | 2
+                 |: c <= ABS 16r   ffff | 3
+                 |: c <= ABS 16r 10ffff | 4
+                                        | 3 { replacement character } );
+        FORALL substring IN substrings DO
+            CASE substring IN
+                (UTF8 bytes):    n +:= UPB bytes,
+                (CHAR char):     inc(ABS char),
+                (STRING latin1): FORALL c IN latin1 DO inc(ABS c) OD,
+                (INT code):      inc(code),
+                (BITS code):     inc(ABS code),
+                ([]BITS codes):  FORALL c IN codes DO inc(ABS c) OD,
+                ([]INT codes):   FORALL c IN codes DO inc(c) OD    
+            ESAC
+        OD;
+        n );
+
+    FLEX [1 : utf8 buffer size] BYTE u;
+    INT i := 1;  { buffer position for next byte }
+
+    PROC append = (INT c) VOID:
+    BEGIN
+        IF c < 0 THEN
+           u[i]   := byte c(replacement character);
+           u[i+1] := byte f(replacement character);
+           u[i+2] := byte e(replacement character);
+           i +:= 3
+        ELIF c <= ABS 16r 7f THEN
+           u[i] := byte a(c);
+           i +:= 1
+        ELIF c <= ABS 16r 7ff THEN
+           u[i]   := byte b(c);
+           u[i+1] := byte e(c);
+           i +:= 2
+        ELIF c <= ABS 16r ffff THEN
+           u[i]   := byte c(c);
+           u[i+1] := byte f(c);
+           u[i+2] := byte e(c);
+           i +:= 3
+        ELIF c <= ABS 16r 10ffff THEN 
+           u[i]   := byte d(c);
+           u[i+1] := byte g(c);
+           u[i+2] := byte f(c);
+           u[i+3] := byte e(c);
+           i +:= 4
+        ELSE
+           u[i]   := byte c(replacement character);
+           u[i+1] := byte f(replacement character);
+           u[i+2] := byte e(replacement character);
+           i +:= 3
+        FI
+    END;
+
+    FORALL substring IN substrings DO
+        CASE substring IN
+            (UTF8 bytes):     (u[i : i + UPB bytes - 1] := bytes; i +:= UPB bytes),
+            (CHAR character): append(ABS character),
+            (STRING latin1):  FORALL c IN latin1 DO append(ABS c) OD,
+            (INT code):       append(code),
+            (BITS code):      append(ABS code),
+            ([]BITS codes):   FORALL w IN codes DO append(ABS w) OD,
+            ([]INT codes):    FORALL i IN codes DO append(i) OD
+        ESAC
+    OD;
+    u
+END; { utf8 }
+
+
+{ Raw representations for UTF-8 aware printers and files. }
+{ I.e. bytes encoded as characters. }
+
+PROC utf8 to raw = (UTF8 u) STRING:
+BEGIN
+    FLEX [1 : UPB u] CHAR string;
+    FOR i FROM 1 TO UPB u DO string[i] := REPR u[i] OD;
+    string
+END;
+
+
+PROC raw to utf8 = (STRING string) UTF8:
+BEGIN
+    FLEX [1 : UPB string] BYTE u;
+    FOR i FROM 1 TO UPB string DO u[i] := BITE string[i] OD;
+    u
+END;
+
+
+OP REPR = (UTF8 string) STRING: utf8 to raw (string);
+
+
+OP U = (STRING string) UTF8: raw to utf8 (string);
+
+
+OP + = (UTF8 u, UTF8 v) UTF8: utf8 ((u, v));
+
+
+OP +:= = (REF UTF8 u, UTF8 v) VOID: u := utf8 ((u, v))
+
+
+KEEP
+    UTF8,
+    utf8,
+    count codepoints,
+    unpack utf8,
+    raw to utf8,
+    utf8 to raw,
+    U (STRING),
+    REPR (UTF8), 
+    VALID (UTF8),
+    + (UTF8, UTF8),
+    +:= (REF UTF8, UTF8)
+
+FINISH

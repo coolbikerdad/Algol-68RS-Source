@@ -1,0 +1,99 @@
+PROGRAM tests CONTEXT VOID
+
+USE standard, utf8, printf, bytes
+
+BEGIN
+
+
+UTF8 u = utf8((-1, 16r0, 16r7f, 16rff, U"AÿB", ABS 16rffff, 16r10000, 16r10ffff, 16r1100000));
+
+FORALL b IN u DO
+   printf("%08b\n", BIN b)
+OD;
+
+
+FORALL cp IN unpack utf8 (u) DO
+    UTF8 bytes = utf8(cp);
+    printf("%10d %06x %s", (cp, cp, REPR bytes));
+    FORALL b IN bytes DO printf(" %08b", ABS b) OD;
+    print(newline)
+OD;
+
+
+
+PROC test = (STRING template, []FORMATABLE items, STRING expected) VOID:
+BEGIN
+   print(("""", template, """, (", items, ") "));
+   STRING actual = sprintf(template, items);
+   print((" = """, actual, """"));
+   IF actual = expected THEN
+      print(newline)
+   ELSE
+      print((" /= """, expected, """", newline));
+      exit(1)
+   FI
+END;
+
+test("hello", "", "hello");
+test("", "", "");
+test("%%", "", "%");
+    
+test("%d", -1, "-1");
+test("%d", 0, "0");
+test("%d", 1, "1");
+test("%d", 1337, "1337");
+test("%d", -1337, "-1337");
+test("%d",   2147483647,  "2147483647");
+test("%d",  -2147483648, "-2147483648");
+test("%d",  16r7fffffff,  "2147483647");
+test("%d",  16rffffffff,  "4294967295");
+
+test("%6d", 1337, "  1337");
+test("%-6d", 1337, "1337  ");
+test("%06d", 1337, "001337");
+test("%06d", -1337, "-01337");
+
+test("%x", 0, "0");
+test("%x", 1, "1");
+test("%08x", 16rabcdef, "00abcdef");
+test("%x", 16rffffffff, "ffffffff");
+test("%x", 16rffffffff, "ffffffff");
+
+test("%b", 16rffffffff, "11111111111111111111111111111111");
+test("%b", 0, "0");
+test("%b", 1, "1");
+test("%b", 16r33, "110011");
+test("%08b", 16r33, "00110011");
+test("%8b", 16r33, "  110011");
+
+test("%05x", 16r1234, "01234");
+test("%05x", 0, "00000");
+test("%05x", 16r1ee7, "01ee7");
+test("%05x", 16rdead1ee7, "dead1ee7");
+test("%x", 16rdead1ee7, "dead1ee7");
+
+test("%s", "hello", "hello");
+test("%10s", "hello", "     hello");
+test("%-10s", "hello", "hello     ");
+test("%-2s", "hello", "hello");
+test("%2s", "hello", "hello");
+test("%s", 123, "123");
+test("%s", 16r102a, "102a");
+
+CHAR a = "A";
+test("%c", a, "A");
+test("%c", "A", "A");
+test("%c", 16r41, "A");
+test("%c", 65, "A");
+test("%c", FALSE, "0");
+
+
+test("%c", "a", "a");
+test("%4c", "a", "   a");
+test("%-4c", "a", "a   ");
+
+test("int: %d, bits: %04x, bool: %b\n", (10, 16r1337, TRUE), "int: 10, bits: 1337, bool: 1" + REPR 10)
+
+END
+
+FINISH

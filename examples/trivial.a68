@@ -1,0 +1,10 @@
+PROGRAM trivial CONTEXT VOID
+USE standard
+BEGIN
+ LONG INT n;
+ REAL r;
+ FOR i FROM 1 TO 10 
+	DO n := LENG i; r := 1.0/i; print((whole(i,6), whole(n,6), float(r,15,2,-2), newline)) OD
+END
+FINISH
+

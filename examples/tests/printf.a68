@@ -1,0 +1,131 @@
+DECS printf CONTEXT VOID USE standard:
+
+{
+   This is a simple implementation of C's sprintf function in Algol 68.
+   It formats INT, CHAR, BOOL, BITS and  STRING.
+   It also converts some C escapes. This is the accepted grammar: 
+
+   % [-] [0] [width] (d | x | b | c | s)
+   % %
+   \ n
+   \ f
+   \ \
+
+   Algol 68 printf isn't fussy about the modes of its arguments:
+   - in 'd' format BITS are printed in decimal;
+   - in 'x' format INTS are printed in hexadecimal;
+   - in 'b' format INTS and BITS are printed in binary;
+   - in 'c' format INTs and BITS are seen as Latin-1 characters codes;
+   - BOOLs are always printed as a '0' or '1';
+   - STRINGs are always printed in the 's' format.
+}
+
+
+MODE FORMATABLE = UNION(INT, CHAR, BOOL, BITS, STRING);
+
+
+PROC sprintf = (STRING format, []FORMATABLE items) STRING:
+BEGIN
+   INT default base = 0;
+   INT as a character = -1;
+
+   PROC format item = (FORMATABLE item,
+                       CHAR       filler,
+                       INT        width,
+                       INT        base) STRING:
+   BEGIN
+      []CHAR digits = "0123456789abcdef"[@0];
+   
+      PROC utoa = (LONG INT n, INT b) STRING:
+         ( n < LENG b
+         | digits[SHORTEN n]
+         | utoa (n OVER LENG b, b) + digits[SHORTEN (n MOD LENG b)] );
+   
+      PROC pad = (STRING s, INT w) STRING:
+         (STRING padding = filler * (ABS w - UPB s); ( w < 0 | s + padding | padding + s ));
+   
+      BOOL negative := FALSE;
+      STRING content =
+         ( base = as a character
+         |  CASE item IN
+               (CHAR c):   c,
+               (STRING s): s,
+               (BOOL b):   (b | "1" | "0"),
+               (BITS x):   REPR ABS x,
+               (INT i):    REPR ( i >= 0 | i | 256 - i )
+            ESAC
+         | CASE item IN
+               (CHAR c):   utoa (LENG ABS c, 10),
+               (STRING s): s,
+               (BOOL b):   (b | "1" | "0"),
+               (BITS x):   utoa (ABS LENG x, ( base = default base | 16 | base )),
+               (INT i):    ( negative := i < 0; 
+                             utoa (ABS LENG i, ( base = default base | 10 | base )) )
+           ESAC
+         );
+      (  negative AND filler = "0" | "-" + pad (content, width - 1)
+      |: negative | pad ("-" + content, width)
+      |  pad (content, width) )
+   END; {format item}
+
+   STRING output := "";
+   INT i := LWB format;
+   INT j := LWB items;
+   CHAR next;
+   
+   PROC advance = VOID:
+      ( i > UPB format | next := REPR 0 | next := format[i]; i +:= 1 );
+      
+   PROC match = (CHAR c) BOOL:
+      ( next = c | advance; TRUE | FALSE );
+
+   advance;
+   WHILE NOT match(REPR 0) DO
+      IF match ("%") THEN
+         IF match("%") THEN
+            output +:= "%"
+         ELIF j <= UPB items THEN
+            BOOL right = match("-");
+            CHAR filler = ( match("0") | "0" | " " );
+            INT width := 0;
+            WHILE next >= "0" AND next <= "9" DO
+               width := width * 10 + (ABS next - ABS "0");
+               advance
+            OD;
+            IF right THEN width := -width FI;
+            INT base = (  match ("d") | 10
+                       |: match ("x") | 16
+                       |: match ("b") | 2
+                       |: match ("s") | default base
+                       |: match ("c") | as a character
+                                      | advance; default base );  { error }
+            output +:= format item (items[j], filler, width, base);
+            j +:= 1
+         ELSE
+            output +:= "%"  { error }
+         FI
+      ELIF match ("\") THEN
+         IF   match ("n") THEN output +:= REPR 10
+         ELIF match ("t") THEN output +:= REPR 8
+         ELIF match ("\") THEN output +:= "\"
+         ELSE output +:= "\" + next; advance  { error }
+         FI
+      ELSE
+         output +:= next;
+         advance
+      FI
+      OD;
+   output
+END;
+
+
+PROC printf = (STRING format, []FORMATABLE items) VOID:
+   print(sprintf(format, items))
+
+
+KEEP
+   printf,
+   sprintf,
+   FORMATABLE
+
+FINISH

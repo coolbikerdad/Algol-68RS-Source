@@ -1,0 +1,25 @@
+DECS bytes CONTEXT VOID USE standard:
+
+{ BYTE is an alias for SHORT SHORT BITS. }
+{ These transfer operators make them less awkward to handle. }
+
+MODE BYTE = SHORT SHORT BITS;
+
+OP BIN  = (BYTE b) BITS: LENG LENG b;
+OP ABS  = (BYTE b) INT:  ABS BIN b;
+OP REPR = (BYTE b) CHAR: REPR ABS b;
+
+OP BITE = (BITS b) BYTE: SHORTEN SHORTEN b; { bite off a byte! }
+OP BITE = (INT  i) BYTE: BITE BIN i;
+OP BITE = (CHAR c) BYTE: BITE ABS c
+
+KEEP
+    BYTE,
+    BIN(BYTE),
+    ABS(BYTE),
+    REPR(BYTE),
+    BITE(BITS),
+    BITE(INT),
+    BITE(CHAR)    
+
+FINISH

@@ -1,0 +1,33 @@
+PROGRAM conform CONTEXT VOID
+USE standard
+BEGIN
+	PROC conform = 
+		(UNION(LONG INT, INT, SHORT INT) x) VOID:
+	CASE x IN
+		(LONG INT x):
+			print(("LONG INT: ",x,newline)),
+		(UNION(INT, SHORT INT) x):
+			print(("SHORTER INT: ",x,newline))
+	ESAC;
+
+	PROC conform2 = 
+		(UNION(LONG INT, INT, SHORT INT) x) VOID:
+	CASE x IN
+		(LONG INT x):
+			print(("LONG INT: ",x,newline)),
+		(INT x):
+			print(("INT: ",x,newline)),
+		(SHORT INT x):
+			print(("SHORT INT: ",x,newline))
+	ESAC;
+
+	conform(LONG 99999999999);
+	conform(9999);
+
+	conform2(LONG 99999999999);
+	conform2(9999);
+	conform2(SHORTEN 99)
+
+END
+FINISH
+
