@@ -11,7 +11,7 @@
 CC="none"
 ARCH=$(uname -m)
 OS=$(uname -s)
-echo "Architecture is $ARCH, Operating system is $OS"
+ECHO=":"
 
 case $ARCH in
     "i386")
@@ -34,7 +34,6 @@ case $ARCH in
 	exit 1
 	;;
 esac
-echo "Using compiler: $CC"
 
 if [ "$OS" = "Darwin" ]; then
 PROGRAM=/usr/local/bin/a68toc
@@ -51,39 +50,42 @@ CHECK=-DA68_CHECK
 DEBUG=n
 DESTDIR=${HOME}/lib
 LIBRARIES=-L${DESTDIR}
+MUNGE=n
 UNAME="-uname seedfile"
 WEBDIR="-w${DESTDIR}"
 
 usage() {
     echo "Usage:"
-    echo "    ca [-c] [-C c-flag] [-d m-files-dir] [-g] [-h|--help] "
-	 echo "       [-I inc-dir] [-L link-dir] [-l link-lib]"
+    echo "    ca [-c] [-C c-flag] [-d m-files-dir] [-g] [-G] [-h|--help] "
+    echo "       [-I inc-dir] [-L link-dir] [-l link-lib]"
     echo "       [-M lib-dir] [-m mod-lib]"
-    echo "       [-u uname] [-w web68-dirs] module-path[.a68|.w68]"
-	 echo
-	 echo "  -c   Omit array bound checking in the compiled program"
-	 echo "  -C   Specify a flag for the C compiler (may be repeated)"
-         echo "  -d   Specify a directory to be searched for .m files"
-	 echo "  -g   Switch on debugging"
-	 echo "  -h --help Print this help message"
-	 echo "  -I   Specify an include directory for C header files"
-	 echo "         May be repeated"
-	 echo "  -L   Specify a directory to search for linking libraries"
-	 echo "         May be repeated"
-	 echo "  -l   Specify a library to be searched for functions"
-	 echo "         The directory can be specified immediately following"
-	 echo "         the -l or separated by a space. May be repeated"
-	 echo "  -M   Specify a directory for a module library"
-	 echo "  -m   Specify a module library. The .a and leading lib can"
-	 echo "         be omitted"
-	 echo "  -u   Specify where the compiler will get its seed for unique"
-	 echo "         names. Possible values are: seedfile, cfile, or seven"
-	 echo "         uppercase letters. Default is seedfile"
-	 echo "  -w   Specify additional directories for tang to search for"
-	 echo "         include files (may be repeated). The directory can be"
-	 echo "         specified immediately following the -w or separated by"
-	 echo "         a space"
-	 echo
+    echo "       [-u uname] [-v] [-w web68-dirs] module-path[.a68|.w68]"
+    echo
+    echo "  -c   Omit array bound checking in the compiled program"
+    echo "  -C   Specify a flag for the C compiler (may be repeated)"
+    echo "  -d   Specify a directory to be searched for .m files"
+    echo "  -g   Switch on debugging"
+    echo "  -G   Preserve .a68 file line numbers for debugging"
+    echo "  -h --help Print this help message"
+    echo "  -I   Specify an include directory for C header files"
+    echo "         May be repeated"
+    echo "  -L   Specify a directory to search for linking libraries"
+    echo "         May be repeated"
+    echo "  -l   Specify a library to be searched for functions"
+    echo "         The directory can be specified immediately following"
+    echo "         the -l or separated by a space. May be repeated"
+    echo "  -M   Specify a directory for a module library"
+    echo "  -m   Specify a module library. The .a and leading lib can"
+    echo "         be omitted"
+    echo "  -u   Specify where the compiler will get its seed for unique"
+    echo "         names. Possible values are: seedfile, cfile, or seven"
+    echo "         uppercase letters. Default is seedfile"
+    echo "  -v   Verbose. Echo command lines for each compilation step"
+    echo "  -w   Specify additional directories for tang to search for"
+    echo "         include files (may be repeated). The directory can be"
+    echo "         specified immediately following the -w or separated by"
+    echo "         a space"
+    echo
     echo "Defaults:"
     echo "   A68DIRS  =${A68DIRS}"
     echo "            Use -d to add to this"
@@ -139,10 +141,10 @@ do
       -c) CHECK=""
           shift 1
           ;;
-		-C)
-			 add_to CFLAGS $2
-			 shift 2
-			 ;;
+      -C)
+	  add_to CFLAGS $2
+	  shift 2
+	  ;;
       -d)
           add_to A68DIRS $2
           shift 2
@@ -153,6 +155,10 @@ do
           DEBUG=y
           shift 1
           ;;
+      -G)
+	  MUNGE=y
+	  shift 1
+	  ;;
       -h|--help)
           usage
          ;;
@@ -169,9 +175,9 @@ do
          shift 2
          ;;
       -l*)
-			add_to LIBRARY ${1#-l}
-	 		shift 1
-			;;
+	  add_to LIBRARY ${1#-l}
+	  shift 1
+	  ;;
       -m)
          add_to DESTLIB $2
          shift 2
@@ -184,14 +190,18 @@ do
          UNAME="-uname $2"
          shift 2
          ;;
+      -v)
+         ECHO="echo"
+         shift 1
+         ;;
       -w)
          add_to WEBDIR $2
          shift 2
          ;;
-		-w*)
-			add_to WEBDIR ${1#-w}
-			shift 1
-			;;
+      -w*)
+	  add_to WEBDIR ${1#-w}
+	  shift 1
+	  ;;
       -*|+*)
          echo "ca: Unknown option $1"
          exit 1
@@ -203,6 +213,9 @@ do
          ;;
   esac
 done
+
+${ECHO} "Architecture is $ARCH, Operating system is $OS"
+${ECHO} "Using compiler: $CC"
 
 # Check the filename and run tang if required
 if [ "${FILE}" != "${W68S}" ]
@@ -233,13 +246,19 @@ else
 fi
 
 # Translate to C and compile
-echo ${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
-${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
+${ECHO} ${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
+        ${PROGRAM} -s -v -lib ${ROOT} ${A68DIRS} ${UNAME} ${A68S}.a68
 RES=$?
 
 if [ ${RES} -eq 0 ]
 then
-    echo ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
+    if [ "${MUNGE}" == "y" ]
+    then
+	mv ${A68S}.c .${A68S}.c
+	${ECHO} sed -E "s/ \/\* line ([0-9]+): \*\//#line \1 \"${A68S}.a68\"/" ${A68S}.c
+	        sed -E "s/ \/\* line ([0-9]+): \*\//#line \1 \"${A68S}.a68\"/" < .${A68S}.c >${A68S}.c
+    fi
+    ${ECHO} ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
     ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
     RES=$?
     if [ ${RES} -ne 0 ]
@@ -252,7 +271,7 @@ fi
 
 if [ "${TYPE}" == "p" ]
 then # Link the program
-    echo ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
+    ${ECHO} ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
     ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
     RES=$?
     if [ ${RES} -ne 0 ]
