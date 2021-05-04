@@ -102,9 +102,6 @@ $ dpkg-buildpackage -F
 
 NOTE
 ----
-The example programs server{1,2} and client{1,2} that communicate using sockets do not currently work,
-either in the original i386 build or the ported architectures. I haven't figured this out yet.
-
 Glyn Webster has kindly contributed:
  - An excellent example program that enumerates truth tables for boolean logic expression (examples/logic)
  - An example of building Algol68-RS libraries and using separate compilation (examples/tests), which includes
