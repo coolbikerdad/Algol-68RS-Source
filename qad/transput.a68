@@ -1178,7 +1178,10 @@ THEN
 
    IF (sysfile OF f:=bsd socket(p,sock stream,0))=-1
    THEN errno
-   ELIF bsd bind(sysfile OF f,sock addr,sock addr un sz)=-1
+   ELIF
+	state OF f:=(FALSE, FALSE, TRUE, FALSE, TRUE, -1, 0,
+                     new filebuffer(c), zero pos);
+        bsd bind(sysfile OF f,sock addr,sock addr un sz)=-1
    THEN errno
    ELIF bsd listen(sysfile OF f,backlog queue size)=-1
    THEN errno
@@ -1192,6 +1195,8 @@ ELIF (sysfile OF f:=bsd socket(p,sock stream,0))=-1
 THEN errno
 ELIF
    []CHAR htos=FLATB SHORTEN BIN l; #port#
+   state OF f:=(FALSE, FALSE, TRUE, FALSE, TRUE, -1, 0,
+                new filebuffer(c), zero pos);
    sock addr[3]:=htos[2];  sock addr[4]:=htos[1]; #Internet order#
    sock addr[5:8]:=FLATB inet addr; #Internet order#
    bsd bind(sysfile OF f,sock addr,sock addr in sz)=-1
