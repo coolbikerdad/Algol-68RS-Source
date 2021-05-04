@@ -47,7 +47,7 @@ fi
 
 A68DIRS="-dir ${ROOT}"
 CHECK=-DA68_CHECK
-DEBUG=n
+DEBUG=
 DESTDIR=${HOME}/lib
 LIBRARIES=-L${DESTDIR}
 MUNGE=n
@@ -152,7 +152,7 @@ do
       -g)
           LIBRARIES="${LIBRARIES} -lg"
           CFLAGS="-g"
-          DEBUG=y
+          DEBUG="-g"
           shift 1
           ;;
       -G)
@@ -259,7 +259,7 @@ then
 	        sed -E "s/ \/\* line ([0-9]+): \*\//#line \1 \"${A68S}.a68\"/" < .${A68S}.c >${A68S}.c
     fi
     ${ECHO} ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
-    ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
+            ${CC} -O0 ${CHECK} ${CFLAGS} ${INCLUDES} -o ${A68S}.o -c ${A68S}.c
     RES=$?
     if [ ${RES} -ne 0 ]
     then exit ${RES}
@@ -271,8 +271,8 @@ fi
 
 if [ "${TYPE}" == "p" ]
 then # Link the program
-    ${ECHO} ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
-    ${CC} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
+    ${ECHO} ${CC} ${DEBUG} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
+            ${CC} ${DEBUG} -o ${A68S} ${ROOT}/Afirst.o ${A68S}.o ${LIBRARIES} -la68s -la68 -la68gc -lm -lc
     RES=$?
     if [ ${RES} -ne 0 ]
     then exit ${RES}
