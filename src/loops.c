@@ -1085,13 +1085,13 @@ A_PROC_ENTRY(evaluatetoorbypart);
 { 
 A_CALLPROC(NWQACTR_evaluate,(Part),(Part,(NWQACTR_evaluate).nonlocals));
  /* line 93: */
- /* line 94: */
 IDABCTR = !LVPACTR_isconstant(Part);
 if ( IDABCTR )
 {IDABCTR = !IWPACTR_istemp(Part);
 }
+ /* line 94: */
  /* line 96: */
-if ( IDABCTR )
+if ( (!Topart|IDABCTR) )
 { 
  /* line 97: */
  /* line 98: */
@@ -2600,10 +2600,10 @@ IKAAOSF();   /* USE usefulops */
 THAACTR();   /* USE centities */
 /* --- Initialise configuration information */
 A_config.source_file = "/home/neil/Algol-68RS/algol68toc-1.21/src/loops.a68";
-A_config.translation_time = "Mon May  3 00:36:17 2021";
+A_config.translation_time = "Wed May  5 17:39:00 2021";
 A_config.ctrans_version = "Ctrans_34.6";
 A_config.name_seed = "ACABCTR (from seed file) ";
-A_config.spec_change_time = "Mon May  3 00:36:17 2021";
+A_config.spec_change_time = "Wed May  5 17:39:00 2021";
 A_config.arguments = A_config_arguments;
 A_config.environment = A_config_environment;
 A_config.modinfo_files = A_config_modinfo_files;

@@ -4563,7 +4563,7 @@ CSCAOSF();   /* USE osif */
 IKAAOSF();   /* USE usefulops */
 /* --- Initialise configuration information */
 A_config.source_file = "/home/neil/Algol-68RS/algol68toc-1.21/src/a68toc.a68";
-A_config.translation_time = "Mon May  3 00:36:17 2021";
+A_config.translation_time = "Wed May  5 17:39:00 2021";
 A_config.ctrans_version = "Ctrans_34.6";
 A_config.name_seed = "NTBBCTR (from seed file) ";
 A_config.spec_change_time = "no spec";

@@ -1096,10 +1096,10 @@ UAAACTR();   /* USE incimperatives */
 HPIACTR();   /* USE environment */
 /* --- Initialise configuration information */
 A_config.source_file = "/home/neil/Algol-68RS/algol68toc-1.21/src/oper.a68";
-A_config.translation_time = "Mon May  3 00:36:17 2021";
+A_config.translation_time = "Wed May  5 17:38:59 2021";
 A_config.ctrans_version = "Ctrans_34.6";
 A_config.name_seed = "BPQACTR (from seed file) ";
-A_config.spec_change_time = "Mon May  3 00:36:17 2021";
+A_config.spec_change_time = "Wed May  5 17:38:59 2021";
 A_config.arguments = A_config_arguments;
 A_config.environment = A_config_environment;
 A_config.modinfo_files = A_config_modinfo_files;

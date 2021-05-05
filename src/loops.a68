@@ -90,7 +90,7 @@ BEGIN
 	}                               
 	BEGIN
 		evaluate( part );
-		IF NOT ISCONSTANT part ANDTH NOT ISTEMP part
+		IF NOT to part OR (NOT ISCONSTANT part ANDTH NOT ISTEMP part)
 		THEN
 			TEMPORARY temp = 
 				declare c temporary( 
