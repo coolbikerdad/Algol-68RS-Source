@@ -1,0 +1,466 @@
+\input webmac
+% This program is copyright (c) BP65 Phoenix Engineering
+\def\Algol{\textbf{Algol 68}}
+\def\Web{\textbf{Web68}}
+
+@Introduction.
+
+@ banner = "$Id: params.w68,v 1.4 2003/12/20 11:47:07 sian Exp $"
+
+@@Compiler prelude@
+@Modes in the outer reach@
+@!NIL!s in the outer reach@
+@Names in the outer reach@
+@Operators in the outer reach@
+@Procedures in the outer reach@
+SKIP
+@Compiler postlude@
+
+
+\M1. The local compiler requires a special prelude.
+
+\Y\P$\4\X1:\X\S$\6
+\4\\{DECS}\\{params}\\{CONTEXT}\\{VOID}\\{USE}\\{standard}: \37\par
+\fi
+
+\M2. And a special postlude. All the public tags go here.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\\{KEEP}\X15:Public tags\X\\{FINISH}\\{Tokens}.\\{The}\\{basic}\\{mode} \6
+\&{for} $\\{tokens}\\{is}\|a\\{structure}\\{which}\\{contains}\\{the}%
+\\{characters}$ \1\&{of} $\\{the}\\{token}\W\\{the}!\\{ty}!\\{field}\\{which}%
+\\{determines}\\{the}$ \6
+\4\&{type} \&{of} $\\{the}\\{token}.\X1:\X=\\{MODE}\\{PARTOK}=\\{STRUCT}(%
+\\{STRING}\|v,\39\\{INT}\\{ty})$;\par
+\fi
+
+\M3. Here is the !NIL! declaration.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{REF}\\{PARTOK}\\{no}\\{tok}=\\{NIL}$; $\\{Lexical}\\{scanning}.\\{The}%
+\\{routine}!\\{get}\\{par}\\{tok}!\\{scans}\\{the}\\{stream}$ \&{of} $%
+\\{characters}\\{containing}\\{the}\\{parameters}\W\\{yields}\\{the}\\{next}%
+\\{token}$ \&{of} $\\{mode}!\\{REF}\\{PARTOK}!,\39\V!\\{no}\\{par}!$  \6
+\&{if} $\\{there}\\{are}\\{no}\\{more}\\{parameters}\V\|a\\{lexical}\\{error}%
+\\{has}\\{occurred}.$ \6
+\&{end} \6
+\4$\\{tok}=0\\{open}\\{tok}=1\W\\{also}\\{tok}=2\\{close}\\{tok}=3\\{string}%
+\\{tok}=4\\{numb}\\{tok}=5\\{prog}\\{tok}=6\X1:\X=\\{PROC}\\{get}\\{par}%
+\\{tok}=(\\{REF}\\{FILE}\|f)\\{REF}\\{PARTOK}$: \37$\\{BEGIN}\\{HEAP}\\{PARTOK}%
+\\{hp}\K($$\.{""},\39$$\6
+\&{end}\\{tok}$ ) ;\5
+\\{CHAR}\\{ch};\5
+\\{INT}\|p; \\{on}\\{logical} \&{file}  \6
+\&{end} $(\|f,\39(\\{REF}\\{FILE}\\{ff})\\{BOOL}:(\\{GOTO}\\{eof};\,\35%
+\\{SKIP}))$;\5
+$\X4:Skip blanks and tab characters\X\\{CASE}\\{IF}\\{char}\in\\{string}(%
+\\{ch},\39\|p,\39\.{""}\.{"(,)"})\\{THEN}\|p\\{ELSE}0\\{FI}\\{IN}\#\.{"\#\ \ \
+@<Get\ a\ string\ denotation@>,}\#(\#\\{hp}\K(\\{ch},\39\\{open}\\{tok}),\39\#,%
+\39\#\\{hp}\K(\\{ch},\39\W\\{also}\\{tok}),\39\#)\#\\{hp}\K(\\{ch},\39\\{close}%
+\\{tok})\\{OUT}\\{IF}\\{ch}\G\.{"a"}&\\{ch}\L\.{"z"}\\{OR}\\{ch}\G\.{"A"}&%
+\\{ch}\L\.{"Z"}\\{OR}\\{char}\in\\{string}(\\{ch},\39\\{LOC}\\{INT},\39\.{"/.%
+\~"})\\{THEN}\X6:Process a program identification\X\\{ELIF}\\{ch}\G\.{"0"}&%
+\\{ch}\L\.{"9"}\\{OR}\\{ch}=\.{"-"}\\{OR}\\{ch}=\.{"+"}\\{THEN}\X7:Process a
+number\X\\{ELIF}\\{ch}=\\{nul}\\{ch}\\{THEN}\\{hp}\\{ELSE}\\{backspace}(\|f)$;\6
+\4\\{no}\\{tok}\\{FI}\\{ESAC}\\{EXIT}\\{eof}: \37\\{hp}\\{END};\5
+$\#\\{get}\\{par}\\{tok}\#$\par
+\fi
+
+\M4. Blanks and tab characters are skipped.
+
+\Y\P$\4\X4:Skip blanks and tab characters\X\S$\6
+$\\{WHILE}\\{get}(\|f,\39\\{ch})$;\5
+$\\{ch}=\\{blank}\\{OR}\\{ch}=\\{tab}\\{ch}\\{DO}\\{SKIP}\\{OD}$;\par
+\U3.\fi
+
+\M5. String denotations can contain embedded doubled string quotes. A
+single quote should be inserted if so.
+
+quote = """"
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{BEGIN}\\{make}\\{term}(\|f,\39\\{quote})$;\5
+\\{WHILE}\\{STRING}\|s;\5
+$\\{get}(\|f,\39(\|s,\39\\{LOC}\\{CHAR},\39\\{ch}))$;\5
+$\|v\\{OF}\\{hp}+\K\|s$;\5
+$\\{ch}=\\{quote}\\{DO}\|v\\{OF}\\{hp}+\K\\{quote}\\{OD}$;\5
+$\\{backspace}(\|f)$;\5
+$\\{ty}\\{OF}\\{hp}\K\\{string}\\{tok}$;\5
+\\{hp}\\{END}\par
+\fi
+
+\M6. A program identification will usually look like an identifier, but
+it could be the path to a program. We need to strip whitespace
+(blanks and tab characters) from it. In fact any sequence of
+characters starting with a lower case letter or a !"/"! or a !"."!
+but excluding one of the terminators is acceptable.
+
+\Y\P$\4\X6:Process a program identification\X\S$\6
+$\\{WHILE}\\{NOT}\\{char}\in\\{string}(\\{ch},\39\\{LOC}\\{INT},\39\.{"(,)"}+%
+\\{nul}\\{ch})\\{DO}\\{IF}\\{ch}/=\\{blank}&\\{ch}/=\\{tab}\\{ch}\\{THEN}\|v%
+\\{OF}\\{hp}+\K\\{ch}\\{FI}$;\5
+$\\{get}(\|f,\39\\{ch})\\{OD}$;\5
+$\\{ty}\\{OF}\\{hp}\K\\{prog}\\{tok}$;\5
+$\\{backspace}(\|f)$;\5
+\\{hp}\par
+\U3.\fi
+
+\M7. We do not try to distinguish between integers and reals, but simply
+try to read a real after backspacing once.
+
+\Y\P$\4\X7:Process a number\X\S$\6
+$\\{WHILE}\\{char}\in\\{string}(\\{ch},\39\\{LOC}\\{INT},\39\\{tab}\\{ch}+\.{"\
+0123456789-+.e"})\\{DO}\\{IF}\\{ch}/=\\{blank}&\\{ch}/=\\{tab}\\{ch}\J\\{THEN}%
+\|v\\{OF}\\{hp}+\K\\{ch}\J\\{FI}$;\5
+$\\{get}(\|f,\39\\{ch})\\{OD}$;\5
+$\\{ty}\\{OF}\\{hp}\K\\{numb}\\{tok}$;\5
+$\\{backspace}(\|f)$; \\{hp}\\{Syntactic}\\{analysis}.\\{Parameters}\\{may}%
+\\{consist} \&{of} \\{one} \&{of} \6
+\4\\{the}\\{following}: $-\$ \6
+\&{begin} \37\C{enumerate}\6
+$\\\{item}\|A\\{string}\\{denotation}.\\\{item}\|A\\{number}.\\\{item}\|A%
+\\{syntactic}\\{token}.\\\{item}\|A$ \6
+\4\&{program}\1\  \37$\\{identification}\\{followed}\\{by}\|a\\{parameter}%
+\\{pack}.\$ \6
+\&{end} \C{enumerate}\6
+\|A \6
+\4\&{program} \1\  \\{identification}\\{may}\\{start} \6
+\&{with} $\|a\\{lower}-$ \6
+\&{case} $\\{letter}\V\|a\\{stroke}\V\|a\\{dot}\W\\{may}\\{be}\\{followed}%
+\\{by}\\{any}\\{number}$ \1\&{of} $\\{other}\\{characters}\\{other}\\{than}%
+\\{an}\\{open}\\{parenthesis}\V\|a\\{comma}\V\|a\\{closing}\\{parenthesis}.\|A%
+\\{parameter}\\{pack}\\{consists}$ \&{of} \6
+\4$\\{one}\V\\{more}\\{parameters}\\{separated}\\{by}\\{commas}\W\\{surrounded}%
+\\{by}\\{parentheses}.\\{For}\\{example}$: \37$-\$\1\6
+\&{begin} \37\C{center}\6
+$\\\{texttt}$\C{grep("params",ls(-1,"*.c"))}\6
+$\$\6
+\&{end}\C{center}\2\6
+\\{which}\\{contains}\\{the} \6
+\4\&{program} \1\  $\\{identification}\\\{verb}+\\{grep}+\\{followed}\\{by}\|a%
+\\{parameter}\\{pack}$ \6
+\&{with} $\\{two}\\{parameters}.\\{The}\\{first}\\{is}\|a\\{string}%
+\\{denotation}.\\{The}\\{second}\\{consists}$ \1\&{of} \\{another} \6
+\4\&{program} \1\  $\\{identification}\\\{verb}+\\{ls}+\\{followed}\\{by}\|a%
+\\{parameter}\\{pack}$ \6
+\&{with} $\\{two}\\{parameters}:\\{an}\\{integer}\W\|a\\{string}\\{denotation}.%
+\\{Here}\\{are}\\{some}\\{modes}\\{which}\\{describe}\\{this}\\{structure}.\X1:%
+\X=\\{MODE}\\{PARAM},\39\\{VAL}=\\{UNION}(\\{STRING},\39\\{INT},\39\\{REAL},\39%
+\\{VOID},\39\\{REF}\\{PARAM}),\39\\{PARAM}=\\{STRUCT}(\\{STRING}\\{prog},\39%
+\\{REF}[\,]\\{VAL}\\{val})$;\par
+\U3.\fi
+
+\M8. The high-level routine for getting parameters is !get param! which
+returns a value of mode !VAL!. This will be !no param! if there are
+no parameters.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{REF}\\{PARAM}\\{no}\\{param}=\\{NIL}$;\par
+\fi
+
+\M9. The previous !VAL! is held globally.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{VAL}\\{prev}\\{val}\K\\{no}\\{param}$;\par
+\fi
+
+\M10. Normally, all parameters will be preceded by the identification of
+the program or routine.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\4$\\{PROC}\\{get}\\{param}=(\\{REF}\\{FILE}\|f)\\{VAL}$: \37$\\{IF}\\{REF}%
+\\{PARTOK}\\{rp}=\\{get}\\{par}\\{tok}(\|f)$;\5
+$\\{rp}\\{IS}\\{no}\\{tok}\\{THEN}\\{no}\\{param}\\{ELSE}\\{CASE}\\{ty}\\{OF}%
+\\{rp}\\{IN}\#(\#\\{get}\\{param}(\|f),\39\#,\39\#(\\{prev}\\{val}(\\{REF}%
+\\{PARAM}):\\{EMPTY}\\{get}\\{param}(\|f)),\39\#)\#\\{EMPTY},\39\#\\{str}\#%
+\\{prev}\\{val}\K\|v\\{OF}\\{rp},\39\#\\{nmb}\#\X13:Get a number\X,\39\#\\{prg}%
+\#(\X11:Get a program identification plus parameters\X)\\{OUT}\#$ \6
+\&{end} $\#\\{no}\\{param}\\{ESAC}\\{FI}$;\5
+$\#\\{get}\\{param}\#$\par
+\fi
+
+\M11. A program identification can be followed by arguments.
+
+\Y\P$\4\X11:Get a program identification plus parameters\X\S$\6
+$\\{HEAP}\\{PARAM}\\{hp}\K(\|v\\{OF}\\{rp},\39\\{HEAP}[1:0]\\{VAL})$;\5
+$\\{prev}\\{val}\K\\{hp}$;\5
+$\\{WHILE}\\{VAL}\|v\K\\{get}\\{param}(\|f)$;\6
+\4$\\{CASE}\|v\\{IN}(\\{UNION}(\\{INT},\39\\{REAL},\39\\{STRING})\|u)$: \37$(%
+\\{hp}+\K\\{VAL}(\|u);\,\35\\{TRUE}),\39(\\{VOID})$: \37$\\{FALSE},\39(\\{REF}%
+\\{PARAM}\|p)$: \37$(\|p\\{IS}\\{no}\\{param}\\{FALSE}\\{hp}+\K\\{VAL}(\|p);\,%
+\35\\{TRUE})\\{ESAC}\\{DO}\\{SKIP}\\{OD}$;\5
+\\{hp}\par
+\U10.\fi
+
+\M12. We need to define the operator !+:=! for modes !REF PARAM! and
+!VAL!.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\4$\\{OP}+\K=(\\{REF}\\{PARAM}\\{rp},\39\\{VAL}\|v)\\{VOID}$: ( $\\{HEAP}[1+%
+\\{UPB}\\{val}\\{OF}\\{rp}]\\{VAL}\\{hv};\,\35\\{IF}\\{UPB}\\{hv}=1\\{THEN}%
+\\{hv}[1]\K\|v\\{ELSE}\\{hv}$ [ : $\\{UPB}\\{hv}-1$ ] $\K\\{val}\\{OF}\\{rp}$;\5
+$\\{hv}[\\{UPB}\\{hv}]\K\|v\\{FI}$;\5
+$\\{val}\\{OF}\\{rp}\K\\{hv}$ ) ;\par
+\fi
+
+\M13. For the sake of portability, we shall use the !stand back! file to
+convert a string to a binary integer or real.
+
+\Y\P$\4\X13:Get a number\X\S$\6
+$\\{IF}\\{STRING}\|s=\|v\\{OF}\\{rp}$;\5
+$\\{char}\in\\{string}(\.{"."},\39\\{LOC}\\{INT},\39\|s)\\{OR}\\{char}\in%
+\\{string}(\.{"e"},\39\\{LOC}\\{INT},\39\|s)\\{THEN}\#\\{Process}\|a!\\{REAL}!%
+\#\\{REAL}\|r$; \X14:Create a work file and output the string\X\\{on}%
+\\{logical} \&{file}  \6
+\&{end} $(\\{stand}\\{back},\39(\\{REF}\\{FILE}\|f)\\{BOOL}:(\|r\K0.0;\,\35%
+\\{GOTO}\\{eofr};\,\35\\{SKIP}))$;\5
+$\\{get}(\\{stand}\\{back},\39\|r)$;\6
+\4\\{eofr}: \37$\\{scratch}(\\{stand}\\{back})$;\5
+$\\{prev}\\{val}\K\|r\\{ELIF}\\{BOOL}\\{dig}\K\\{FALSE}$;\5
+$\\{FOR}\|i\\{FROM}\\{LWB}\|s\\{TO}\\{UPB}\|s\\{WHILE}\\{NOT}(\\{dig}\K\|s[\|i]%
+\G\.{"0"}&\|s[\|i]\L\.{"9"})\\{DO}\\{SKIP}\\{OD}$;\5
+$\\{NOT}\\{dig}\\{THEN}\#\\{No}\\{digits}\in\\{the}\\{string},\39\\{so}\R\|a%
+\\{number}\#\\{prev}\\{val}\K\|s\\{ELSE}\#\\{Process}\\{an}!\\{INT}!\#\\{INT}%
+\|n$; \X14:Create a work file and output the string\X\\{on}\\{logical} \&{file}
+ \6
+\&{end} $(\\{stand}\\{back},\39(\\{REF}\\{FILE}\|f)\\{BOOL}:(\|n\K0;\,\35%
+\\{GOTO}\\{eofi};\,\35\\{SKIP}))$;\5
+$\\{get}(\\{stand}\\{back},\39\|n)$;\6
+\4\\{eofi}: \37$\\{scratch}(\\{stand}\\{back})$;\5
+$\\{prev}\\{val}\K\|n\\{FI}$\par
+\U10.\fi
+
+\M14. We create a work file using !stand back! and !stand back channel!.
+
+\Y\P$\4\X14:Create a work file and output the string\X\S$\6
+$\\{create}(\\{stand}\\{back},\39\\{stand}\\{back}\\{channel})$;\5
+$\\{put}(\\{stand}\\{back},\39(\|s,\39\.{"A"}))$;\5
+$\\{reset}(\\{stand}\\{back})$;\par
+\Us13\ET13.\fi
+
+\M15. Here are the public tags.
+
+\Y\P$\4\X15:Public tags\X\S$\6
+$+\K(\\{REF}\\{PARAM},\39\\{VAL}),\39\\{PARAM},\39\\{VAL},\39\\{get}\\{param},%
+\39\\{no}\\{param}\\{System}\\{dependencies}.\\{Check}\\{these}$  \6
+\&{if} $\\{you}\\{are}\\{porting}\\{this}$ \6
+\4\&{program}\1\  \37$\mathrel{\&{to}}\\{another}\\{platform}.$\par
+
+\U2.\fi
+
+
+\inx
+\:\\{also}, 3.
+\:\\{an}, 7, 13.
+\:\\{analysis}, 7.
+\:\\{another}, 7, 15.
+\:\\{any}, 7.
+\:\\{are}, 3, 7, 15.
+\:\\{back}, 13, 14.
+\:\\{backspace}, 3, 5, 6, 7.
+\:\\{basic}, 2.
+\:\\{be}, 7.
+\:\\{BEGIN}, 3, 5.
+\:\\{blank}, 4, 6, 7.
+\:\\{BOOL}, 3, 13.
+\:\\{by}, 7.
+\:\\{CASE}, 3, 10, 11.
+\:\\{ch}, \[3], 4, 5, 6, 7.
+\:\\{channel}, 14.
+\:\\{CHAR}, 3, 5.
+\:\\{char}, 3, 6, 7, 13.
+\:\\{characters}, 2, 3, 7.
+\:\\{Check}, 15.
+\:\\{close}, 3.
+\:\\{closing}, 7.
+\:\\{comma}, 7.
+\:\\{commas}, 7.
+\:\\{consist}, 7.
+\:\\{consists}, 7.
+\:\\{containing}, 3.
+\:\\{contains}, 2, 7.
+\:\\{CONTEXT}, 1.
+\:\\{create}, 14.
+\:\\{DECS}, 1.
+\:\\{denotation}, 7.
+\:\\{dependencies}, 15.
+\:\\{describe}, 7.
+\:\\{determines}, 2.
+\:\\{dig}, \[13].
+\:\\{digits}, 13.
+\:\\{DO}, 4, 5, 6, 7, 11, 13.
+\:\\{dot}, 7.
+\:\\{ELIF}, 3, 13.
+\:\\{ELSE}, 3, 10, 12, 13.
+\:\\{EMPTY}, 10.
+\:\\{END}, 3, 5.
+\:\\{eof}, 3.
+\:\\{eofi}, 13.
+\:\\{eofr}, 13.
+\:\\{error}, 3.
+\:\\{ESAC}, 3, 10, 11.
+\:\\{example}, 7.
+\:\\{EXIT}, 3.
+\:\|{f}, \[3], \[13].
+\:\\{FALSE}, 11, 13.
+\:\\{ff}, \[3].
+\:\\{FI}, 3, 6, 7, 10, 12, 13.
+\:\\{field}, 2.
+\:\\{FILE}, 3, 10, 13.
+\:\\{FINISH}, 2.
+\:\\{first}, 7.
+\:\\{followed}, 7.
+\:\\{following}, 7.
+\:\\{FOR}, 13.
+\:\\{For}, 7.
+\:\\{FROM}, 13.
+\:\\{get}, 3, 4, 5, 6, 7, 10, 11, 13, 15.
+\:\\{GOTO}, 3, 13.
+\:\\{grep}, 7.
+\:\\{has}, 3.
+\:\\{HEAP}, 3, 11, 12.
+\:\\{Here}, 7.
+\:\\{hp}, \[3], 5, 6, 7, \[11].
+\:\\{hv}, \[12].
+\:\\{identification}, \[7].
+\:\\{IF}, 3, 6, 7, 10, 12, 13.
+\:\\{IN}, 3, 10, 11.
+\:\\{INT}, 2, 3, 6, 7, 11, 13.
+\:\\{integer}, 7.
+\:\\{is}, 2, 7.
+\:\\{IS}, 10, 11.
+\:\\{item}, 7.
+\:\\{KEEP}, 2.
+\:\\{letter}, 7.
+\:\\{lexical}, 3.
+\:\\{Lexical}, 3.
+\:\\{LOC}, 3, 5, 6, 7, 13.
+\:\\{logical}, 3, 13.
+\:\\{lower}, 7.
+\:\\{ls}, 7.
+\:\\{LWB}, 13.
+\:\\{make}, 5.
+\:\\{may}, 7.
+\:\\{mode}, 2, 3.
+\:\\{MODE}, 2, 7.
+\:\\{modes}, 7.
+\:\\{more}, 3, 7.
+\:\|{n}, \[13].
+\:\\{next}, 3.
+\:\\{NIL}, 3, 8.
+\:\\{nmb}, 10.
+\:\\{no}, \[3], \[8], \[9], 10, 11, 15.
+\:\\{No}, 13.
+\:\\{NOT}, 6, 13.
+\:\\{nul}, 3, 6.
+\:\\{numb}, 3, 7.
+\:\\{number}, 7, 13.
+\:\\{occurred}, 3.
+\:\\{OD}, 4, 5, 6, 7, 11, 13.
+\:\\{OF}, 5, 6, 7, 10, 11, 12, 13.
+\:\\{on}, 3, 13.
+\:\\{one}, 7.
+\:\\{OP}, 12.
+\:\\{open}, 3, 7.
+\:\\{OR}, 3, 4, 13.
+\:\\{other}, 7.
+\:\\{OUT}, 3, 10.
+\:\|{p}, \[3], \[11].
+\:\\{pack}, 7.
+\:\\{par}, 3, 10.
+\:\\{param}, 8, 9, 10, 11, 15.
+\:\\{PARAM}, \[7], 8, 10, 11, 12, 15.
+\:\\{parameter}, 7.
+\:\\{parameters}, 3, 7.
+\:\\{Parameters}, 7.
+\:\\{params}, 1.
+\:\\{parentheses}, 7.
+\:\\{parenthesis}, 7.
+\:\\{PARTOK}, 2, 3, 10.
+\:\\{platform}, 15.
+\:\\{porting}, 15.
+\:\\{prev}, \[9], 10, 11, 13.
+\:\\{prg}, 10.
+\:\\{PROC}, 3, 10.
+\:\\{Process}, 13.
+\:\\{prog}, 3, 6, 7.
+\:\\{put}, 14.
+\:\\{quote}, 5.
+\:\|{r}, \[13].
+\:\\{REAL}, 7, 11, 13.
+\:\\{REF}, 3, 7, 8, 10, 11, 12, 13, 15.
+\:\\{reset}, 14.
+\:\\{routine}, 3.
+\:\\{rp}, \[10], 11, \[12], 13.
+\:\|{s}, \[13].
+\:\\{scanning}, 3.
+\:\\{scans}, 3.
+\:\\{scratch}, 13.
+\:\\{second}, 7.
+\:\\{separated}, 7.
+\:\\{SKIP}, 3, 4, 11, 13.
+\:\\{so}, 13.
+\:\\{some}, 7.
+\:\\{stand}, 13, 14.
+\:\\{standard}, 1.
+\:\\{start}, 7.
+\:\\{str}, 10.
+\:\\{stream}, 3.
+\:\\{STRING}, 2, 5, 7, 11, 13.
+\:\\{string}, 3, 5, 6, 7, 13.
+\:\\{stroke}, 7.
+\:\\{STRUCT}, 2, 7.
+\:\\{structure}, 2, 7.
+\:\\{surrounded}, 7.
+\:\\{Syntactic}, 7.
+\:\\{syntactic}, 7.
+\:\\{System}, 15.
+\:{system dependencies}, 1, 2.
+\:\\{tab}, 4, 6, 7.
+\:\\{term}, 5.
+\:\\{texttt}, 7.
+\:\\{than}, 7.
+\:\\{the}, 2, 3, 7, 13.
+\:\\{The}, 2, 3, 7.
+\:\\{THEN}, 3, 6, 7, 10, 12, 13.
+\:\\{there}, 3.
+\:\\{these}, 15.
+\:\\{this}, 7, 15.
+\:\&{to}, \[15].
+\:\\{TO}, 13.
+\:\\{tok}, 3, 5, 6, 7, 10.
+\:\\{token}, 2, 3, 7.
+\:\\{Tokens}, 2.
+\:\\{tokens}, 2.
+\:\\{TRUE}, 11.
+\:\\{two}, 7.
+\:\\{ty}, 2, 5, 6, 7, 10.
+\:\|{u}, \[11].
+\:\\{UNION}, 7, 11.
+\:\\{UPB}, 12, 13.
+\:\\{USE}, 1.
+\:\|{v}, \[11], \[12].
+\:\\{val}, 7, 9, 10, 11, 12, 13.
+\:\\{VAL}, \[7], 9, 10, 11, 12, 15.
+\:\\{verb}, 7.
+\:\\{VOID}, 1, 7, 11, 12.
+\:\\{which}, 2, 7.
+\:\\{WHILE}, 4, 5, 6, 7, 11, 13.
+\:\\{yields}, 3.
+\:\\{you}, 15.
+\fin
+\:\X14:Create a work file and output the string\X
+\Us13\ET13.
+\:\X13:Get a number\X
+\U10.
+\:\X11:Get a program identification plus parameters\X
+\U10.
+\:\X7:Process a number\X
+\U3.
+\:\X6:Process a program identification\X
+\U3.
+\:\X15:Public tags\X
+\U2.
+\:\X4:Skip blanks and tab characters\X
+\U3.
+\con

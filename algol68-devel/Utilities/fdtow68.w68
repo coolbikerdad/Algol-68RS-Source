@@ -1,0 +1,2717 @@
+@1Introduction.
+This program is a language filter for \.{fdesign} accepting Form
+Definition files with a magic number of 13000 only.
+
+@m magic = "14000"
+
+@<Plain values in the outer reach@>=
+[]CHAR cvs fdtow68 = "$Id: fdtow68.w68,v 1.12 2006/11/12 11:40:23 sian Exp $";
+
+@ The program has the following structure.
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<!NIL!s in the outer reach@>
+@<Names in the outer reach@>
+@<Plain values...@>
+@<Other values in the outer reach@>
+@<Operators in the outer reach@>
+@<Procedures in the outer reach@>
+@<Assign object emission procedures@>
+@<Top-level logic@>
+END
+@<Postlude@>
+
+@ The local Algol 68 compiler requires a module header comprising:-
+\begin{enumerate}
+\item The module type.
+\item The module identifier.
+\item The context of the module (always !VOID!).
+\item Any preludes used by the module.
+\end{enumerate}
+The parts are given one to a line.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM fdtow68
+CONTEXT VOID
+USE @<Library preludes@>
+
+@ The local compiler also requires a postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@ The parameter processing module will be used as well as the standard prelude.
+
+@<Library...@>=
+params, standard
+
+@1Included files.
+Various operators will be needed from the system prelude.
+
+@isysprelude.w@>
+
+@1Preliminary processing.
+The usage message shows what parameters are available.
+
+@ @<Plain...@>=
+[]CHAR usage = "Usage: fdtow68 (h|v|f(file[.fd]))";
+
+@ The input filename is read from the program's arguments.
+
+@<Top...@>=
+open(argf,"",arg channel);
+
+CASE get param(argf)
+IN
+   (REF PARAM p1):
+      IF p1 IS no param
+      THEN emsg(usage)
+      ELIF UPB val OF p1 > 1
+      THEN emsg("Only one parameter allowed."+lf+usage)
+      ELSE
+         CASE (val OF p1)[1]
+         IN
+            (REF PARAM p2):
+               IF p2 IS NIL
+               THEN emsg(usage)
+               ELIF UPB prog OF p2/=1
+               THEN emsg(usage)
+               ELIF @<Identify the parameter and process it@>
+            ,
+            (STRING s):     infn:=s
+         OUT emsg("Wrong kind of parameter."+lf+usage)
+         ESAC
+      FI
+OUT emsg(usage)
+ESAC;
+
+@ The parameter can be one of the following:-
+\begin{itemize}
+\item !"f"! followed by the filename in the parameter pack.
+\item !"h"! to give the usage message.
+\item !"v"! to give the version of the program.
+\end{itemize}
+
+@<Identify the parameter...@>=
+   INT p; char in string((prog OF p2)[1],p,"fhv")
+THEN
+   CASE p IN
+      IF UPB val OF p2/=1
+        THEN emsg(usage)
+        ELSE
+           CASE (val OF p2)[1]
+           IN
+              (REF PARAM p3):
+                IF p3 IS NIL
+                 THEN emsg(usage)
+                 ELIF prog OF p3=""
+               THEN emsg(usage)
+               ELSE infn:=prog OF p3
+                 FI
+            ,
+            (STRING s3):
+               IF s3=""
+               THEN emsg(usage)
+               ELSE infn:=s3
+               FI
+         OUT emsg("Wrong kind of parameter."+lf+usage)
+         ESAC
+      FI
+      ,
+      emsg(usage)
+      ,
+      emsg((cvs fdtow68 AFTER blank UPTO ".")+cvs fdtow68 AFTER blank AFTER blank UPTO blank)
+   ESAC
+ELSE emsg("Unrecognised parameter: "+prog OF p2+lf+usage)
+FI
+
+@ If the filename does not end with the characters !".fd"!, then append them.
+
+@<Top...@>=
+IF IF UPB infn<4
+   THEN TRUE
+   ELSE infn[UPB infn-2:]/=".fd"
+   FI
+THEN infn+:=".fd"
+FI;
+
+@ Some global names are required. All the !REF FILE! names are defined here.
+
+@<Names...@>=
+FILE argf, inf, outf;
+STRING infn, outfn;
+
+@ The procedure !emsg! terminates the program with a non-zero yield.
+
+@<Proc...@>=
+PROC emsg = ([]CHAR msg)VOID:
+BEGIN
+   put(stand error,(msg,newline));
+   exit(1)
+END; #emsg#
+
+@ The input filename ends with !".fd"!, so we need to remove that and
+any directory to get the basename. The output file name consists of
+the input basename plus !"fd.a68"! tacked onto the end. The
+name of the module is the input basename plus !" fd"! tacked
+onto the end.
+
+@m colon = ":"
+@m dot = "."
+@m stroke = "/"
+
+@<Top...@>=
+prog idf:=REVERSE(REVERSE infn AFTER dot UPTO stroke)+" fd";
+outfn:=REVERSE(REVERSE infn AFTER dot)+"fd.w68";
+
+@ @<Names...@>=
+STRING prog idf;
+
+@ The input file can now be opened, the output file established and
+the preliminary part of the generated program output.
+
+@<Top...@>=
+IF open(inf,infn,stand in channel)/=0
+THEN emsg("Cannot open file "+infn)
+ELIF establish(outf,outfn,stand out channel,0,0,0)/=0
+THEN emsg("Cannot establish file "+outfn)
+ELSE
+   on logical file end(inf,
+      (REF FILE f)BOOL:
+         (close (f);  close(outf);
+          emsg("Unexpected EOF on file "+infn);  SKIP));
+   @<Emit the preliminary text@>
+FI;
+
+@ Both !REVERSE! and !AFTER! come from \.{gprelude.w}.
+
+@<Include...@>=
+macro gp op after;
+macro gp op reverse;
+
+@ The preliminary text contains the general structure of the
+generated program.
+
+@<Emit the prelim...@>=
+put(outf,(
+   "@@1Global structure.",newline,
+   "This file was generated by \.{fdtow68} on ",
+   ctime(LOC INT:=posix time(NIL)),
+   "from file ",infn,dot,newline,newline,
+   "@@aDECS ",prog idf," CONTEXT VOID",newline,
+   "USE standard:",newline,
+   "@@<Included declarations@@>",newline,
+   "@@<Modes in the outer reach@@>",newline,
+   "@@<Callback names in the outer reach@@>",newline,
+   "@@<Handler names in the outer reach@@>",newline,
+   "@@<Form creation routines@@>",newline,
+   "SKIP",newline,"KEEP",newline,
+   "@@<Public tags@@>",newline,"FINISH",newline,newline,
+   "@@ Included file.",newline,
+   "This file contains all the macros for the Xforms library procedures.",
+   newline,newline,
+   "@@iforms.w@@>",newline,newline,
+   "@@1The forms.",newline,
+   "Each of the following sections contains declarations for all
+   the forms.",newline,newline,
+   "@@2Modes.",newline,
+   "Each form has its own mode so that all the objects on the",
+   newline,
+   "form can be accessed easily.",newline,newline))
+
+@ !UPTO! comes from \.{gprelude.w} and !ctime! comes from
+\.{sysprelude.w}.
+
+@<Oper...@>=
+macro gp op upto;
+macro ctime;
+
+@1Modes.
+Because some of the data acquired for a form definition can be used by other
+forms, all the data of a form must be acquired before emitting the appropriate
+\Web\ source. Thus, three kinds of data storage are required:-
+\begin{itemize}
+\item Modes for the storage of a form and its objects.
+\item Modes for retaining identifiers for later emission.
+\item Modes for identifying tags.
+\item Modes for default values.
+\end{itemize}
+
+@2Form storage.
+Most of the data given for a form and its objects can be held as the original
+characters because no validity checking is performed on them. so ![]STRING! can
+be used to accommodate them. Macros are defined to identify the individual
+elements of each such row.
+
+The object specific attributes are kept in one large structure which is the union
+of all possible attributes. A separate mode is used to contain menu and choice
+entries because they are usually repeated.
+
+@m entry content = 1
+@m entry mode = 2
+@m entry shortcut = 3
+
+@m upb eval = entry shortcut
+
+@<Modes...@>=
+MODE ENTRY = STRUCT([upb eval]STRING eval,REF ENTRY next);
+
+@ Now for the other specific attributes. Firstly, the macros which enable access
+to a specific attribute are defined.
+
+@m spec min = 1
+@m spec max = 2
+@m spec prec = 3
+@m spec ldelta = 4
+@m spec rdelta = 5
+@m spec value = 6
+@m spec slsize = 7
+@m spec step = 8
+@m spec h pref = 9
+@m spec v pref = 10
+@m spec sstep = 11
+@m spec lstep = 12
+@m spec xmin = 13
+@m spec xmax = 14
+@m spec ymin = 15
+@m spec ymax = 16
+@m spec xvalue = 17
+@m spec yvalue = 18
+@m spec xstep = 19
+@m spec ystep = 20
+@m spec thetai = 21
+@m spec thetaf = 22
+@m spec init val = 23
+@m spec file = 24
+@m spec focus file = 25
+@m spec handler = 26
+@m spec data = 27
+@m spec focus data = 28
+@m spec fullpath = 29
+@m spec width = 30
+@m spec height = 31
+@m spec helper = 32
+@m spec align = 33
+@m spec new menuapi = 34
+@m spec global scope = 35
+@m spec show focus = 36
+@m spec x major = 37
+@m spec x minor = 38
+@m spec y major = 39
+@m spec y minor = 40
+@m spec x scale = 41
+@m spec x base = 42
+@m spec y scale = 43
+@m spec y base = 44
+@m spec x grid = 45
+@m spec y grid = 46
+@m spec grid linestyle = 47
+@m spec mark active = 48
+@m spec direction = 49
+@m spec how return = 50
+
+@m upb sval = spec how return
+
+@<Modes...@>=
+MODE SPEC = STRUCT([upb sval]STRING sval,REF ENTRY first,last);
+
+@ An object contains generic attributes. The field of mode !BITS! has a bit set
+for each field which contains a non-default value.
+
+Some more macros are needed to access them. !gen col1! and !gen col2! are defined
+in the next section as having mode !INT!.
+
+@m gen class = 1
+@m gen type = 2
+@m gen x = 3
+@m gen y = 4
+@m gen w = 5
+@m gen h = 6
+@m gen boxtype = 7
+@m gen align = 10
+@m gen style = 11
+@m gen size = 12
+@m gen lcol = 13
+@m gen label = 14
+@m gen shortcut = 15
+@m gen resize = 16
+@m gen nw = 17
+@m gen se = 18
+@m gen name = 19
+@m gen callback = 20
+@m gen argument = 21
+
+@m upb oval = gen argument
+
+@<Modes...@>=
+MODE OBJECT = STRUCT([upb oval]STRING oval,BITS def,REF SPEC spec);
+
+@ @<Plain...@>=
+INT gen col1 = 8;
+INT gen col2 = 9;
+
+@ The mode for a form can now be specified. The number of objects in each form is
+specified in the input file. Again a few macros are needed.
+
+@m form name = 1
+@m form width = 2
+@m form height = 3
+
+@m upb fval = form height
+
+@<Modes...@>=
+MODE FORM = STRUCT([upb fval]STRING fval,REF[]OBJECT obj);
+
+@ A few !NIL!s are required.
+
+@<!NIL!s...@>=
+REF FORM no form = NIL;
+REF OBJECT no object = NIL;
+REF SPEC no spec = NIL;
+REF ENTRY no entry = NIL;
+
+@2Identifier storage.
+The following needs to be stored:-
+\begin{enumerate}
+\item Xforms library macros.\\
+Only the procedure identifier need be stored because
+the macro identifier is obtained by the consistent prefixing of the
+the word \textit{macro}. Alphabetical ordering is preferred for easy
+lookup.
+\item Callback procedure identifiers.\\
+These will be emitted twice in alphabetic order:-
+   \begin{enumerate}
+   \item As declarations of names of mode !REF PROC(REF OBJECT,INT)VOID!.
+   \item As public tags.
+   \end{enumerate}
+\item Handler procedure identifiers.\\
+These will be emitted twice in alphabetic order:-
+   \begin{enumerate}
+   \item As declarations of names of mode !FLHANDLER!.
+   \item As public tags.
+   \end{enumerate}
+\item Object identifiers which use an indexer.\\
+They need to be kept for each form so that the biggest indexer can be
+determined.
+\item The form modes.\\
+These will be emitted as an alphabetically ordered list of public
+tags.
+\end{enumerate}
+The mode !REF[]CHAR! is used for all of them except the object identifiers, which
+also need the upper bound and a flag to indicate whether the identifier has been
+emitted.
+
+@<Modes...@>=
+MODE OBJID = STRUCT(REF[]CHAR id,INT ub,BOOL emitted);
+
+@ Here is the relevant !NIL!.
+
+@<!NIL!...@>=
+REF OBJID no id = NIL;
+
+@ The name for the object identifiers can be initialised at declaration.
+
+@<Names...@>=
+REF[]REF OBJID obj ids:=HEAP[0]REF OBJID;
+
+@ The tables for callback identifiers, form procedures, handlers, macros and mode
+indicants are set to zero length.
+
+@<Names...@>=
+REF[]REF[]CHAR
+   callbacks:=HEAP[0]REF[]CHAR,
+   form procs:=HEAP[0]REF[]CHAR,
+   handlers:=HEAP[0]REF[]CHAR,
+   macros:=HEAP[0]REF[]CHAR,
+   modes:=HEAP[0]REF[]CHAR;
+
+@ The binary chop is used to search for a suitable insertion
+position. It caters for an empty table. Duplicates are ignored. The
+yield is the original string so that the procedure call (or the
+macros) can be used as a parameter of another procedure.
+
+The macros define synonyms of the procedure for particular cases.
+
+@m add callback(cb) = add string(callbacks,cb)
+@m add form proc(p) = add string(form procs,p)
+@m add handler(h) = add string(handlers,h)
+@m add macro(mc) = add string(macros,mc)
+@m add mode(md) = add string(modes,md)
+
+@<Proc...@>=
+PROC add string = (REF REF[]REF[]CHAR table,[]CHAR s)[]CHAR:
+IF REF[]CHAR ss=HEAP[LWB s:UPB s]CHAR:=s;
+   UPB table = 0
+THEN
+   table:=HEAP[1]REF[]CHAR;
+   table[1]:=ss
+ELIF
+   INT index;
+   INT res=binary chop(REF[]REF[]CHAR(table),s,table,index);
+   res<LWB table
+THEN @<Add a new string to the table@>
+ELSE s
+FI;
+
+@ The new string will be added to the beginning, the end or the
+middle of !table!, depending on the sub-value of !index!.
+
+@<Add a new string...@>=
+HEAP[1+UPB table]REF[]CHAR loc tab;
+IF index < LWB table
+THEN
+   loc tab[1]:=ss;
+   loc tab[2:]:=table
+ELIF index > UPB table
+THEN
+   loc tab[:UPB table]:=table;
+   loc tab[UPB loc tab]:=ss
+ELSE
+   loc tab[:index]:=table[:index];
+   loc tab[index+1]:=ss;
+   loc tab[index+2:]:=table[index+1:]
+FI;
+table:=loc tab;
+s #yield#
+
+@ Object identifiers which use a subscript must be added using a
+different procedure (only the mode is different).
+
+@<Proc...@>=
+PROC add obj id = (REF REF[]REF OBJID table,[]CHAR s)VOID:
+IF []CHAR id=s UPTO "[";
+   REF[]CHAR lid=HEAP[LWB id:UPB id]CHAR:=id;
+   INT u= IF id=s
+          THEN 0
+          ELSE ABS(s AFTER "[" UPTO "]")
+          FI;
+   UPB table = 0
+THEN
+   table:=HEAP[1]REF OBJID;
+   table[1]:=HEAP OBJID:=(lid,u,FALSE)
+ELIF
+   INT index;
+   INT res=binary chop(REF[]REF OBJID(table),id,id OF table,index);
+   res<LWB table
+THEN @<Add a new !OBJID! to the table@>
+ELSE @<Increase the stored upper bound@>
+FI;
+
+@ If the indexer exceeds the value in the table, store it.
+
+@<Increase the stored...@>=
+IF u > ub OF obj ids[res]
+THEN ub OF obj ids[res]:=u
+FI
+
+@ The new object identifier will be added to the beginning, the end
+or the middle of !table!, depending on the sub-value of !index!.
+
+@<Add a new !OBJID!...@>=
+HEAP[1+UPB table]REF OBJID loc tab;
+IF index < LWB table
+THEN
+   loc tab[1]:=HEAP OBJID:=(lid,u,FALSE);
+   loc tab[2:]:=table
+ELIF index > UPB table
+THEN
+   loc tab[:UPB table]:=table;
+   loc tab[UPB loc tab]:=HEAP OBJID:=(lid,u,FALSE)
+ELSE
+   loc tab[:index]:=table[:index];
+   loc tab[index+1]:=HEAP OBJID:=(lid,u,FALSE);
+   loc tab[index+2:]:=table[index+1:]
+FI;
+table:=loc tab
+
+@2Tag tables.
+Field tags will need to be identified as well as object classes, so a mode is
+needed to contain the value of the tag and the index into its associated table.
+
+@<Modes...@>=
+MODE TAG = STRUCT(STRING tag,FLEX[1:0]INT ix);
+
+@ This procedure uses a binary chop to search a tag table. It yields the index of
+!tag! in !table!. If !tag! is not found in !table!, an appropriate value should
+be yielded.
+
+
+@<Proc...@>=
+PROC identify = ([]TAG table,STRING tag)INT:
+IF   INT index;
+   INT res=binary chop(table,tag,tag OF table,index);
+   res>=LWB table & res<=UPB table
+THEN res
+ELSE 0
+FI; #identify#
+
+@ The class table has a different mode and so needs a different
+identifying procedure.
+
+@<Proc...@>=
+PROC identify class = (STRING tag)INT:
+IF INT index;
+   INT res=binary chop(class table,tag,tag OF class table,index);
+   res>=LWB class table
+THEN res
+ELSE 0
+FI; #identify class#
+
+@ These tables are used to identify field tags. They have to be in alphabetical
+order so that the binary chop will work in !identify!. The form header has its
+own wee table.
+
+@<Other val...@>=
+[]TAG form table = (
+   ("Height",form height),
+   ("Name",form name),
+   ("Width",form width)
+);
+
+@ This is a small table for the entry attributes.
+
+@<Other val...@>=
+[]TAG entry table = (
+   ("content",entry content),
+   ("mode",entry mode),
+   ("shortcut",entry shortcut)
+);
+
+@ This table is for the object specific attributes.
+
+@<Other val...@>=
+[]TAG spec table = (
+   ("align",spec align),
+   ("angles",(spec thetai,spec thetaf)),
+   ("bounds",(spec min,spec max)),
+   ("data",spec data),
+   ("dir",spec direction),
+   ("file",spec file),
+   ("focus",spec showfocus),
+   ("focus_data",spec focus data),
+   ("focus_file",spec focus file),
+   ("fullpath",spec fullpath),
+   ("global",spec global scope),
+   ("grid",(spec xgrid,spec ygrid)),
+   ("gridstyle",spec grid linestyle),
+   ("h_pref",spec h pref),
+   ("handler",spec handler),
+   ("height",spec height),
+   ("helper",spec helper),
+   ("increment",(spec ldelta,spec rdelta)),
+   ("initial_val",spec init val),
+   ("lstep",spec lstep),
+   ("markactive",spec mark active),
+   ("precision",spec prec),
+   ("return",spec how return),
+   ("slsize",spec slsize),
+   ("sstep",spec sstep),
+   ("step",spec step),
+   ("struct",spec new menuapi),
+   ("v_pref",spec v pref),
+   ("value",spec value),
+   ("width",spec width),
+   ("xbounds",(spec xmin,spec xmax)),
+   ("xscale",(spec xscale,spec xbase)),
+   ("xstep",spec xstep),
+   ("xtics",(spec xmajor,spec xminor)),
+   ("xvalue",spec xvalue),
+   ("ybounds",(spec ymin,spec ymax)),
+   ("yscale",(spec yscale,spec ybase)),
+   ("ystep",spec ystep),
+   ("ytics",(spec ymajor,spec yminor)),
+   ("yvalue",spec yvalue)
+);
+
+@ This table is for the object generic attributes.
+
+@<Other val...@>=
+[]TAG generic table = (
+   ("alignment",gen align),
+   ("argument",gen argument),
+   ("box",(gen x,gen y,gen w,gen h)),
+   ("boxtype",gen boxtype),
+   ("callback",gen callback),
+   ("class",gen class),
+   ("colors",(gen col1,gen col2)),
+   ("gravity",(gen nw,gen se)),
+   ("label",gen label),
+   ("lcol",gen lcol),
+   ("name",gen name),
+   ("resize",gen resize),
+   ("shortcut",gen shortcut),
+   ("size",gen size),
+   ("style",gen style),
+   ("type",gen type)
+);
+
+@ When emitting \Web\ source for the objects, it will be convenient to put all
+the code relevant to a particular class into its own procedure.
+
+@<Modes...@>=
+MODE CLASS = STRUCT(STRING tag,REF PROC(REF OBJECT)VOID proc);
+
+@ Because the local compiler is single pass, the identifiers of the object
+emission procedures must be declared before applying them in !class table!.
+Therefore, declare all the procedures as names.@^system dependencies@>
+
+@<Names...@>=
+PROC(REF OBJECT)VOID
+   emit begin group:=SKIP,
+   emit bitmap:=SKIP,
+   emit bitmapbutton:=SKIP,
+   emit box:=SKIP,
+   emit browser:=SKIP,
+   emit button:=SKIP,
+   emit canvas:=SKIP,
+   emit chart:=SKIP,
+   emit checkbutton:=SKIP,
+   emit choice:=SKIP,
+   emit clock:=SKIP,
+#   emit colorwheel:=SKIP,#
+#   emit combobox:=SKIP,#
+   emit counter:=SKIP,
+   emit dial:=SKIP,
+   emit end group:=SKIP,
+   emit formbrowser:=SKIP,
+   emit frame:=SKIP,
+   emit free:=SKIP,
+#   emit glcanvas:=SKIP,#
+#   emit imagecanvas:=SKIP,#
+   emit input:=SKIP,
+   emit labelbutton:=SKIP,
+   emit labelframe:=SKIP,
+   emit lightbutton:=SKIP,
+   emit menu:=SKIP,
+#   emit menubar:=SKIP,#
+   emit pixmap:=SKIP,
+   emit pixmapbutton:=SKIP,
+   emit positioner:=SKIP,
+   emit round3dbutton:=SKIP,
+   emit roundbutton:=SKIP,
+   emit scrollbar:=SKIP,
+   emit scrollbutton:=SKIP,
+   emit slider:=SKIP,
+   emit tabfolder:=SKIP,
+   emit text:=SKIP,
+#   emit textbox:=SKIP,#
+   emit thumbwheel:=SKIP,
+   emit timer:=SKIP,
+   emit valslider:=SKIP,
+   emit xyplot:=SKIP;
+
+@ The class table can now be declared.
+
+@<Other val...@>=
+[]CLASS class table = (
+   ("FL_BEGIN_GROUP",emit begin group),
+   ("FL_BITMAP",emit bitmap),
+   ("FL_BITMAPBUTTON",emit bitmapbutton),
+   ("FL_BOX",emit box),
+   ("FL_BROWSER",emit browser),
+   ("FL_BUTTON",emit button),
+   ("FL_CANVAS",emit canvas),
+   ("FL_CHART",emit chart),
+   ("FL_CHECKBUTTON",emit checkbutton),
+   ("FL_CHOICE",emit choice),
+   ("FL_CLOCK",emit clock),
+   ("FL_COUNTER",emit counter),
+   ("FL_DIAL",emit dial),
+   ("FL_END_GROUP",emit end group),
+   ("FL_FORMBROWSER",emit formbrowser),
+   ("FL_FRAME",emit frame),
+   ("FL_FREE",emit free),
+   ("FL_INPUT",emit input),
+   ("FL_LABELBUTTON",emit labelbutton),
+   ("FL_LABELFRAME",emit labelframe),
+   ("FL_LIGHTBUTTON",emit lightbutton),
+   ("FL_MENU",emit menu),
+   ("FL_PIXMAP",emit pixmap),
+   ("FL_PIXMAPBUTTON",emit pixmapbutton),
+   ("FL_POSITIONER",emit positioner),
+   ("FL_ROUND3DBUTTON",emit round3dbutton),
+   ("FL_ROUNDBUTTON",emit roundbutton),
+   ("FL_SCROLLBAR",emit scrollbar),
+   ("FL_SCROLLBUTTON",emit scrollbutton),
+   ("FL_SLIDER",emit slider),
+   ("FL_TABFOLDER",emit tabfolder),
+   ("FL_TEXT",emit text),
+   ("FL_THUMBWHEEL",emit thumbwheel),
+   ("FL_TIMER",emit timer),
+   ("FL_VALSLIDER",emit valslider),
+   ("FL_XYPLOT",emit xyplot)
+);
+
+@2Default values.
+Each class can have different default values, but there are always 21
+generic atributes. So for each class, there is a structure containing
+default values.
+
+@<Modes...@>=
+MODE DEFAULT = [upb oval]STRING;
+
+@ Each object has !upb oval! generic attributes which are always specified in the
+input file. However, calls to attribute changing procedures will only be issued
+when a specified generic attribute differs from the default. Accordingly, each
+class of object has a set of default values which are declared in the following
+sections.
+
+The following declarations provide those defaults common to many
+objects.
+
+@<Plain...@>=
+STRING
+   def aln = "FL_ALIGN_CENTER",
+   def arg = "0",
+   def baln = "FL_ALIGN_BOTTOM",
+   def caln = "FL_ALIGN_CENTER",
+   def blab = "button",
+   def blue = "FL_BLUE",
+   def box = "FL_NO_BOX",
+   def butt = "PUSH_BUTTON",
+   def col = "FL_BLACK",
+   def col1 = "FL_COL1",
+   def col2 = "FL_COL2",
+   def down box = "FL_DOWN_BOX",
+   def flat box = "FL_FLAT_BOX",
+   def frame = "ENGRAVED_FRAME",
+   def grv = "FL_NoGravity",
+   def laln = "FL_ALIGN_LEFT",
+   def mcol = "FL_MCOL",
+   def norbutt = "NORMAL_BUTTON",
+   def red = "FL_RED",
+   def resz = "FL_RESIZE_ALL",
+   def slid = "HOR_BROWSER_SLIDER",
+   def sty = "FL_NORMAL_STYLE",
+   def sz = "FL_DEFAULT_SIZE",
+   def tiny sz = "FL_TINY_SIZE",
+   def tlaln = "FL_ALIGN_TOP_LEFT",
+   def up box = "FL_UP_BOX",
+   def yell = "FL_YELLOW";
+
+@ The strings in the !DEFAULT! structure are declared in the order
+given by the macros !gen class! to !gen argument!. Here are the box
+and button declarations.
+
+@<Other val...@>=
+DEFAULT
+   default box =
+   ("FL_BOX","NO_BOX","","","","",def up box,def col1,def col2,
+    def aln,def sty,def sz,def col,"","",def resz,def grv,def grv,
+    "","",def arg),
+
+   default button =
+   ("FL_BUTTON","NORMAL_BUTTON","","","","",def up box,
+    def col1,def col1,def aln,def sty,def sz,def col,
+    def blab,"",def resz,def grv,def grv,
+    "def_button","",def arg),
+
+   default round button =
+   ("FL_ROUNDBUTTON",def butt,"0","0","0","0",def box,
+    def mcol,def yell,def aln,def sty,def sz,def col,
+    def blab,"",def resz,def grv,def grv,
+    "def_round_button","",def arg),
+
+   default round 3d button =
+   ("FL_ROUND3DBUTTON",def butt,"0","0","0","0",
+    def box,def col1,def col,def aln,def sty,def sz,def col,
+    def blab,"",def resz,def grv,def grv,
+    "def_round_3d_button","",def arg),
+
+   default check button =
+   ("FL_CHECKBUTTON",def butt,"0","0","0","0",def box,
+    def col1,def yell,def aln,def sty,def sz,def col,
+    def blab,"",def resz,def grv,def grv,
+    "def_check_button","",def arg),
+
+   default light button =
+   ("FL_LIGHTBUTTON",def butt,"0","0","0","0",
+    def up box,def col1,def yell,def aln,def sty,
+    def sz,def col,def blab,"",def resz,def grv,def grv,
+    "def_light_button","",def arg),
+
+   default scroll button =
+   ("FL_SCROLLBUTTON","TOUCH_BUTTON","0","0","0","0",
+    def up box,def col1,def col1,def aln,def sty,def sz,
+    def col1,"","",def resz,def grv,def grv,
+    "def_scroll_button","",def arg),
+
+   default bitmap button =
+   ("FL_BITMAPBUTTON",def norbutt,"0","0","0","0",
+    def up box,def col1,"FL_BLUE",def baln,
+    def sty, def sz,def col,"","",def resz,
+    def grv,def grv,"","",def arg),
+
+   default pixmap button =
+   ("FL_PIXMAPBUTTON",def norbutt,"0","0","0","0",
+    def up box,def col1,def yell,def baln,
+    def sty,def sz,def col,"","",def resz,def grv,def grv,
+    "def_pixmap_button","",def arg),
+
+   default label button =
+   ("FL_LABELBUTTON",def norbutt,"0","0","0","0",
+    def flat box,def red,"FL_BLUE",def aln,def sty,
+    def sz,def col,"","",def resz,def grv,def grv,
+    "def_label_button","",def arg);
+
+@ Here are the other static objects.
+
+@<Other val...@>=
+DEFAULT
+   default frame =
+   ("FL_FRAME",def frame,"0","0","0","0",
+    def box,def col,def col1,def aln,def sty,def sz,
+    def col,"","",def resz,def grv,def grv,"def_frame",
+    "",def arg),
+
+    default label frame =
+   ("FL_LABELFRAME",def frame,"0","0","0","0",
+    def box,def col,def col1,def tlaln,def sty,
+    def sz,def col,"frame","",def resz,def grv,def grv,
+    "def_label_frame","",def arg),
+
+   default text =
+   ("FL_TEXT","NORMAL_TEXT","0","0","0","0",
+    def flat box,def col1,def mcol,def laln,
+    def sty,def sz,def col,"text","",def resz,def grv,def grv,
+    "def_text","",def arg),
+
+   default bitmap =
+   ("FL_BITMAP","NORMAL_BITMAP","0","0","0","0",def box,
+    def col1,def col1,def baln,def sty,def sz,def col,
+    "","",def resz,def grv,def grv,"def_bitmap","",def arg),
+
+   default pixmap =
+   ("FL_PIXMAP","NORMAL_PIXMAP","0","0","0","0",def box,
+    def col1,def col1,def baln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_pixmap","",def arg),
+
+   default chart =
+   ("FL_CHART","BAR_CHART","0","0","0","0","FL_BORDER_BOX",
+    def col1,def col1,def baln,def sty,def sz,def col,
+    "","",def resz,def grv,def grv,"def_chart","",def arg),
+
+   default clock =
+   ("FL_CLOCK","ANALOG_CLOCK","0","0","0","0",def up box,
+    "FL_INACTIVE","FL_BOTTOM_BCOL",def baln,def sty,def sz,
+    def col,"","",def resz,def grv,def grv,"def_clock",
+    "",def arg);
+
+@ Here are the other active objects except for menu-like objects.
+
+@<Other val...@>=
+DEFAULT
+   default slider =
+   ("FL_SLIDER",def slid,"0","0","0","0",
+    def down box,def col1,def col1,def baln,def sty,
+    def tiny sz,def col,"","",def resz,def grv,def grv,
+    "def_slider","",def arg),
+
+   default valslider =
+   ("FL_VALSLIDER",def slid,"0","0","0","0",def down box,
+    def col1,def col1,def baln,def sty,def tiny sz,def col,
+    "","",def resz,def grv,def grv,"def_valslider","",def arg),
+
+   default scrollbar =
+   ("FL_SCROLLBAR","HOR_SCROLLBAR","0","0","0","0",def down box,
+    def col1,def col1,def baln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_scrollbar","",def arg),
+
+   default dial =
+   ("FL_DIAL","NORMAL_DIAL","0","0","0","0",def flat box,
+    def col1,"FL_RIGHT_BCOL",def baln,def sty,def sz,def col,
+    "","",def resz,def grv,def grv,"def_dial","",def arg),
+
+   default positioner =
+   ("FL_POSITIONER","NORMAL_POSITIONER","0","0","0","0",
+    def down box,def col1,def red,def baln,def sty,def sz,
+    def grv,def grv,"def_positioner","",def arg),
+
+   default thumbwheel =
+   ("FL_THUMBWHEEL","HOR_THUMBWHEEL","0","0","0","0",
+    "FL_BORDER_BOX",def col1,def col1,def baln,def sty,def sz,
+    def col,"","",def resz,def grv,def grv,"def_thumbwheel",
+    "",def arg),
+
+   default timer =
+   ("FL_TIMER","NORMAL_TIMER","0","0","0","0",def down box,
+    def col1, def red,def caln,def sty,def sz,def col,
+    "timer","",def resz,def grv,def grv,"def_timer","",def arg),
+
+   default counter =
+   ("FL_COUNTER","NORMAL_COUNTER","0","0","0","0",def up box,
+    def col1,def blue,def baln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_counter","",def arg);
+
+@ Here are the input and menu-like objects.
+
+@<Other val...@>=
+DEFAULT
+   default input =
+   ("FL_INPUT","NORMAL_INPUT","0","0","0","0",def down box,
+    def col1,def mcol,def laln,def sty,def sz,def col,
+    "Input","",def resz,def grv,def grv,"def_input","",def arg),
+
+   default menu =
+   ("FL_MENU","PULLDOWN_MENU","0","0","0","0",def flat box,
+    def col1,def mcol,def caln,"FL_BOLD_STYLE",def sz,
+    def col,"Menu","",def resz,def grv,def grv,"def_menu","",def arg),
+
+   default choice =
+   ("FL_CHOICE","NORMAL_CHOICE2","0","0","0","0",def up box,
+    def col1,def col,def laln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_choice","",def arg),
+
+   default xyplot =
+   ("FL_XYPLOT","NORMAL_XYPLOT","0","0","0","0",def flat box,
+    def col1,def col,def baln,def sty,def tiny sz,def col,
+    "","",def resz,def grv,def grv,"def_xyplot","",def arg);
+
+@ Here are the browser and other complex objects.
+
+@<Other val...@>=
+DEFAULT
+   default browser =
+   ("FL_BROWSER","NORMAL_BROWSER","0","0","0","0",def down box,
+    def col1,def yell,def baln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_browser","",def arg),
+
+   default canvas =
+   ("FL_CANVAS","NORMAL_CANVAS","0","0","0","0",def down box,
+    "FL_NoColor",def col,def caln,def sty,def sz,def col,
+    "","",def resz,def grv,def grv,"def_canvas","",def arg),
+
+   default tab folder =
+   ("FL_TABFOLDER","TOP_TABFOLDER","0","0","0","0",def up box,
+    def col1,def col1,def tlaln,def sty,def sz,def col,"","",
+    def resz,def grv,def grv,"def_tabfolder","",def arg),
+
+   default form browser =
+   ("FL_FORMBROWSER","NORMAL_FORMBROWSER","0","0","0","0",
+    def down box,def col1,def col1,def baln,def sty,def sz,
+    def col,"","","FL_RESIZE_NONE",def grv,def grv,
+    "def_formbrowser","",def arg),
+
+   default free =
+   ("FL_FREE","NORMAL_FREE","0","0","0","0",def flat box,
+    def col1,def mcol,def caln,def sty, def sz,def col,
+    "","",def resz,def grv,def grv,"def_freeobject","",def arg);
+
+@ Now !default table!, which contains the default values in the same order as
+!class table!, can be declared.
+
+@<Other val...@>=
+[]DEFAULT default table = (
+   SKIP,default bitmap,default bitmap button,default box,
+   default browser, default button,default canvas,default chart,
+   default check button,default choice,default clock,
+   default counter,default dial,SKIP,default form browser,
+   default frame,default free,default input,default label button,
+   default label frame,default light button,default menu,
+   default pixmap,default pixmap button,default positioner,
+   default round 3d button,default round button,
+   default scrollbar, default scrollbutton,default slider,
+   default tabfolder,default text,default thumbwheel,
+   default timer,default valslider,default xyplot);
+
+@ By subdividing the \.{Procedures} module, the principal procedures can be
+declared in a top-down manner.
+
+@<Proc...@>=
+@<Other procedures in the outer reach@>
+@<Object processing procedures@>
+@<Form processing procedures@>
+
+@1Reading lines from the input.
+Because, generally speaking, each line in the form definition file consists of a
+field tag terminated by a colon and optional values, each preceded by a space,
+each line will be read in its entirety and then !UPTO! and !AFTER! wil be used to
+split the line. The complete line must be put somewhere.
+
+@<Names...@>=
+STRING line;
+
+@ The next procedure splits !line! into a !tag! and a !value!. If the
+line is empty, both !tag! and !value! are set likewise. The procedure
+yields the value of !tag!.
+
+@<Other proc...@>=
+PROC get a field tag = (REF STRING t,v)[]CHAR:
+IF get(inf,(line,newline));  line=""
+THEN t:=v:=line
+ELSE
+   v:=TRIM(line AFTER colon);
+   t:=line UPTO colon
+FI; #get a field tag#
+
+@ @<Oper...@>=
+macro gp op trim;
+
+@ The next procedure takes both a !STRING! and a !REF STRING! parameter and
+yields the first blank-terminated string which is removed from the second
+parameter.
+
+@<Other proc...@>=
+PROC get a field value = (STRING tag,REF STRING val)[]CHAR:
+IF tag = "label"
+THEN []CHAR v=val; val:=""; v
+ELIF STRING v;  INT pos;  char in string(blank,pos,val)
+THEN v:=val[:pos-1];  val:=val[pos+1:];  v
+ELSE v:=val; val:="";  v
+FI; #get a field value#
+
+@ Before storing a string, any \verb|@@|-symbols in
+it should be doubled.
+
+@<Oper...@>=
+OP DAT = ([]CHAR s)[]CHAR:
+BEGIN
+   [2*(UPB s-LWB s+1)]CHAR ss;
+   []CHAR ls=s[:];
+   INT ss pos:=LWB ss-1;
+
+   FOR i FROM LWB ls TO UPB ls
+   DO
+      IF ls[i]="@@"
+      THEN ss[ss pos+1]:=ss[ss pos+2]:="@@";
+         ss pos+:=2
+      ELSE ss[ss pos+:=1]:=ls[i]
+      FI
+   OD;
+   ss[:ss pos]
+END; #DAT#
+
+@ Finally, here is a simple routine which converts a ![]CHAR! into
+a binary integer. It stops converting when either the end of the
+parameter is reached or a non-digit is found.
+
+@<Oper...@>=
+OP ABS = ([]CHAR s)INT:
+BEGIN
+   INT r:=0;
+
+   FOR i FROM LWB s TO UPB s
+   WHILE CHAR si=s[i];  si>="0" & si<="9"
+   DO r*:=10+:=(ABS si-ABS "0") OD;
+
+   r
+END; #ABS#
+
+@1Processing the input file.
+The structure of a form definition file is as follows:
+\begin{enumerate}
+\item The header section.
+\item for each form, preceded by a line containing
+\.{=============== FORM ===============}, the following sections:
+   \begin{enumerate}
+   \item The form header section.
+   \item A section for each object consisting of:
+      \begin{enumerate}
+      \item A line containing 20 dashes.
+      \item A part containing generic attributes which are always the
+            same.
+      \item Following the \.{argument} field, an optional part
+            containing specific attributes not all of which will be
+            present.
+      \end{enumerate}
+   \end{enumerate}
+\item A final section containing a line of 30 equal symbols followed
+by the line\\
+\.{create_the_forms}
+\end{enumerate}
+The header section, form header section and each object section are
+followed by an empty line.
+
+Each section contains lines consisting of a field tag which
+identifies the data, a terminator (a colon) and, if present, one or
+more values each preceded by a blank.
+
+Each value, if a symbolic constant or combination thereof, starts
+with the characters \.{FD_} except for the \.{type} field which omits
+it. Only the values of the \.{Number of forms} and \.{Number of
+Objects} fields need be converted to binary. All the other values may
+be left as strings.
+
+No verification of the values is performed, it being presumed that
+the structure of the file and the values themselves are correct.
+
+@2Processing the header section.
+Only four fields are required in this section:
+\begin{enumerate}
+\item Magic\\
+This should have the value !13000! and determines the structure of
+the forms definition file.
+\item Number of forms\\
+Specifies the number of form definitions in the file. It should be
+stored as an !INT!.
+\item Unit of measure\\
+If it is not \.{FL_COORD_PIXEL}, each form creation routine will
+start and end with special code to set the coordinate units and
+restore the old ones.
+\item Border Width\\
+Specifies the width of the border of the form. If it is not
+\.{FL_BOUND_WIDTH}, each form creation routine will start and end
+with special code to set the border width and restore the width
+specified by the system or by the user.
+\end{enumerate}
+There may be other fields, but they can be ignored. Zero length lines
+will be ignored until the \.{Number of forms} field has been read.
+
+@<Top...@>=
+IF get a field tag(tag,value)/="Magic"
+THEN emsg("File "+infn+" does not start with a Magic field")
+ELIF value/=magic
+THEN emsg("File "+infn+" has the wrong magic number. "+magic+" expected")
+ELSE
+   WHILE BOOL q=get a field tag(tag,value)/="";
+      IF UPB forms < 1 THEN TRUE
+      ELSE q
+      FI
+   DO
+      IF tag = "Number of forms"
+      THEN forms:=HEAP[ABS value]REF FORM
+      ELIF tag = "Unit of measure"
+      THEN units:=value
+      ELIF tag = "Border Width"
+      THEN border width:=value
+      FI
+   OD
+FI;
+
+@ Somewhere will be needed to hold the current line or tag and the values global
+to all the forms.
+
+@<Names...@>=
+STRING tag, value, units, border width;
+
+@2Processing forms.
+For each form, there is an identifying line followed by a header
+section, followed by a section for each object. The header section
+contains the following four fields.
+\begin{enumerate}
+\item Name\\
+This is the identifier of the form and will be used to construct
+various identifiers associated with the form.
+\item Width\\
+The width of the form in coordinate units.
+\item Height\\
+The height of the form in coordinate units.
+\item Number of Objects\\
+The number of objects in the form.
+\end{enumerate}
+All the processing of a form is put into !process a form! which fills
+!fm!. Note that the table !obj ids! is reset for each form.
+
+@<Form proc...@>=
+PROC process a form = REF FORM:
+BEGIN
+   HEAP FORM fm:=(HEAP[upb fval]STRING,HEAP[1:0]OBJECT);
+   obj ids:=HEAP[0]REF OBJID;
+
+   WHILE get a field tag(tag,value)/=""
+   DO
+      IF tag = "Number of Objects"
+      THEN obj OF fm:=HEAP[ABS value]OBJECT
+      ELIF tag = "=============== FORM ==============="
+      THEN SKIP
+      ELIF INT ift=identify(form table,tag);  ift=0
+      THEN emsg("Unknown form field: "+tag)
+      ELSE (fval OF fm)[(ix OF form table[ift])[1]]:=value
+      FI
+   OD;
+
+   FOR i TO UPB obj OF fm
+   DO
+      add an object(fm,i);
+      process an object((obj OF fm)[i])
+   OD;
+   fm
+END; #process a form#
+
+@ @<Object proc...@>=
+PROC add an object = (REF FORM fm,INT ob)VOID:
+   (obj OF fm)[ob]:=(HEAP[upb oval]STRING,2r0,no spec);
+
+@2Processing objects.
+Firstly, the class, type and box fields are read, followed by the generic
+attributes. For each field which contains more than one value, all its members
+need to be accessed. The specific attributes, if present, follow the generic
+attributes.
+
+As soon as the class is identified, compare the value of each generic attribute
+with the default value and set the appropriate bit in !def OF obj! if they
+differ.
+
+The callback identifier must be stored in the callback table and the name of the
+object (its identifier) should be stored in the object table.
+
+@m begin group class = 1
+@m end group class = 14
+
+@<Object proc...@>=
+PROC process an object = (REF OBJECT obj)VOID:
+BEGIN
+   INT cl:=0; #class#
+   get(inf,newline);   #skip the opening line of dashes#
+
+   WHILE
+      get a field tag(tag,value);
+      IF INT igt=identify(generic table,tag);  igt = 0
+      THEN emsg("Unknown generic tag: "+tag)
+      ELIF
+         []INT t = ix OF generic table[igt];
+
+         FOR i TO UPB t
+         DO
+            INT ti=t[i];
+            REF STRING ov=(oval OF obj)[ti];
+             ov:=DAT get a field value(tag,value);
+            IF cl/=0 & cl/=begin group class & cl/=end group class
+            THEN @<Check the default value@>
+            FI
+         OD;
+         STRING ot1=(oval OF obj)[t[1]];
+
+         tag = "callback" & ot1/=""
+      THEN add callback(CA ot1)
+      ELIF tag = "name" & ot1/=""
+      THEN add obj id(obj ids,CA ot1)
+      ELIF tag = "class"
+      THEN cl:=identify class(ot1)
+      FI;
+
+      tag/="argument"
+   DO SKIP OD;
+   @<Process specific attributes@>
+END; #process an object#
+
+@ The default value is determined by both the class and the generic
+attribute.
+
+@<Check the default...@>=
+DEFAULT df=default table[cl];
+IF df[ti]/=ov
+THEN def OF obj SETAB ti
+FI
+
+@ The operator !SETAB! sets the $n^{\textrm{th}}$ bit of its left
+operand.
+
+@<Oper...@>=
+OP SETAB = (REF BITS b,INT n)REF BITS:
+   b:=b OR ELEM n;
+
+@ Specific attributes should be processed until a blank line is read, so the loop
+can depend on the yield of !get a field tag!.
+
+@<Process specific...@>=
+WHILE get a field tag(tag,value)/=""
+DO
+   tag:=TRIM tag;
+   IF  spec OF obj IS no spec
+   THEN spec OF obj:=HEAP SPEC:=(HEAP[upb sval]STRING,no entry,no entry)
+   FI;
+
+   IF  tag = "content"
+   THEN add an entry(spec OF obj);
+      (eval OF last OF spec OF obj)[entry content]:=DAT value
+   ELIF  tag = "mode" OR tag = "shortcut"
+   THEN (eval OF last OF spec OF obj)@/
+            [identify(entry table,tag)]:=DAT value
+   ELIF tag = "align"
+   THEN @<Remove a possible !"|FL_ALIGN_INSIDE"!@>
+   ELSE
+      IF tag = "handler"
+      THEN add handler(CA value)
+      FI;
+      []INT t = ix OF spec table[identify(spec table,tag)];
+      FOR i TO UPB t
+      DO
+         (sval OF spec OF obj)[t[i]]:=DAT get a field value(tag,value)
+      OD
+   FI
+OD
+
+@ If !"FL_ALIGN_INSIDE"! is specified in the !"align"! field, it will
+always be last. If the "|" is absent, the operator !UPTO! will yield
+the whole of its left operand.
+
+@<Remove a poss...@>=
+(sval OF spec OF obj)[spec align]:=DAT value UPTO "|"
+
+@ The procedure !add an entry! adds room for an entry to the !SPEC!
+field of an !OBJECT!. Of course, the fields !first! and !last! of the
+!SPEC! must be adjusted to refer to their respective values. The
+field !next! of the !ENTRY! also has to be set so that the entries
+are linked. The procedure is put into \.{Other procedures} to ensure
+that its declaration precedes its use.@^system dependencies@>
+
+@<Other proc...@>=
+PROC add an entry = (REF SPEC sp)VOID:
+last OF sp:=IF first OF sp IS no entry
+            THEN first OF sp
+            ELSE next OF last OF sp
+            FI:=HEAP ENTRY:=(HEAP[upb eval]STRING,no entry);
+
+@ When each form has been processed, its creation procedure and mode
+can be emitted.
+
+@<Top...@>=
+FOR i TO UPB forms
+DO
+   forms[i]:=process a form;
+   emit form(forms[i])
+OD;
+close(inf);
+
+@ Here is !forms!.
+
+@<Names...@>=
+REF[]REF FORM forms:=HEAP[1:0]REF FORM;
+
+@1Emitting the \Web\ source.
+For each form, a mode needs to be constructed which will contain all the named
+objects on the form as well as the form itself. All the callback and handler
+routines will be emitted as procedure names during the processing at the end, as
+will all the macros. The form creation routines provide the bulk of this section.
+
+This section consists of the following sub-sections:-
+\begin{enumerate}
+\item Construct the form modes.
+\item Emit the form modes.
+\item Emit the macro calls.
+\item Emit the callback identifiers.
+\item Emit the form creation procedures.
+\end{enumerate}
+
+@<Top...@>=
+@<Emit the macro calls@>
+@<Emit the callback and handler identifier declarations@>
+@<Emit the public callback and handler identifiers@>
+@<Emit the form creation routine identifiers@>
+@<Emit the form mode indicants@>
+
+@ The procedure !emit form! consists of several parts, which are
+defined in the following sections.
+
+@<Form proc...@>=
+PROC emit form = (REF FORM fm)VOID:
+BEGIN
+   @<Declare local procedures@>
+   @<Emit the mode of the form@>
+   @<Emit the creation procedure@>
+END; #emit form#
+
+@2Construct the form modes.
+Each mode indicant should consist of the uppercase equivalent of the form
+identifier preceded by \.{FD}. A routine is needed which will convert an Algol~68
+identifier into a mode indicant: each letter in the identifier should be
+converted to its upper-case equivalent and all spaces and underline characters
+should be omitted. The !UC! operator defined in \.{gprelude.w} is used to convert
+to upper-case.
+
+@<Other proc...@>=
+PROC id to indicant = ([]CHAR id)[]CHAR:
+BEGIN
+   INT count:=0;
+
+   @<Count the number of spaces and underlines in !id!@>
+
+   [UPB id-LWB id+1-count]CHAR s;
+
+   @<Transfer the characters@>
+
+   "FD"+UC s
+END; #id to indicant#
+
+@ @<Oper...@>=
+macro gp op uc row char;
+
+@ @<Count the number...@>=
+FOR i FROM LWB id TO UPB id
+DO
+   CHAR idi=id[i];
+   count+:=ABS(idi=blank OR idi="_")
+OD;
+
+@ Now that !count! has been used to declare !s!, we can use it again to
+keep track of the current character in !s!.
+
+@<Transfer the char...@>=
+count:=0;
+
+FOR i FROM LWB id TO UPB id
+DO
+   CHAR idi=id[i];
+
+   IF idi/=blank & idi/="_"
+   THEN s[count+:=1]:=idi
+   FI
+OD;
+
+@2Emitting the form mode.
+Only the object identifiers which use a subscript appear in the !obj
+ids! table which is reset for each form.
+
+Firstly, the name of the form is extracted and then converted to a mode
+indicant.
+
+@<Emit the mode...@>=
+[]CHAR form id = CA (fval OF fm)[form name];
+[]CHAR form md = id to indicant(form id);
+add mode(form md);
+
+@ Now the first part of the mode, which only depends on the name of the form, can
+be emitted.
+
+@m indent = "   "  # equivalent to !3*blank! #
+
+@<Emit the mode...@>=
+put(outf,
+    ("@@ This is the mode declaration for form !",form id,"!.",
+     newline,newline,
+     "@@<Modes...@@>=",newline,
+     "MODE ",form md," = STRUCT(",newline,
+     indent,"REF FLFORM ",form id,",",newline,
+     indent,"REF[]INT vdata,",newline,
+     indent,"REF[]CHAR cdata,",newline,
+     indent,"BITS ldata"));
+@<Emit the object table@>
+
+@ The first part of each line consists of the following:-
+\begin{enumerate}
+\item The indent.
+\item A possible indexer indicating a multiple.
+\item The mode indicant !REF FLOBJECT!.
+\item A space.
+\item The identifier.
+\end{enumerate}
+A line for an object is only output if the object name is present. Also, every
+line but the last should be followed by a comma. So the object names are
+extracted and placed in a table.
+
+@<Emit the obj...@>=
+REF[]REF[]CHAR otab:=HEAP[0]REF[]CHAR;
+
+@ Now iterate through the objects, adding their names to !otab!.
+
+@<Emit the obj...@>=
+FOR i FROM LWB obj OF fm TO UPB obj OF fm
+DO
+   REF OBJECT obi=(obj OF fm)[i];
+   []CHAR obid=(oval OF obi)[gen name];
+   IF obid/=""
+   THEN add string(otab,CA(obid UPTO "["))
+   FI
+OD;
+
+@ Now that the number of identifiers is known, there are (!UPB otab!),
+all but the last can be followed by a comma, unless, of course, there are
+none at all.
+
+@<Emit the obj...@>=
+IF UPB otab/=0
+THEN
+   put(outf,(",",newline));
+   FOR i FROM LWB otab TO UPB otab-1
+   DO
+      put(outf,(indent,indexer(otab[i]),
+                 "REF FLOBJECT ",otab[i],",",newline))
+   OD;
+   put(outf,(indent,indexer(otab[UPB otab]),
+              "REF FLOBJECT ",otab[UPB otab],");",
+              newline,newline))
+ELSE put(outf,(");",newline,newline))
+FI;
+
+@ The !indexer! procedure searches !obj ids! using a linear search
+because there will never be many indexed object identifiers in one
+form.
+
+@<Declare local...@>=
+PROC indexer = ([]CHAR ob id)[]CHAR:
+IF INT fd:=LWB obj ids-1;
+   FOR i FROM LWB obj ids TO UPB obj ids WHILE fd<LWB obj ids
+   DO
+      IF ob id = id OF obj ids[i] THEN fd:=i FI
+   OD;
+   fd < LWB obj ids
+THEN ""
+ELIF ub OF obj ids[fd]=0
+THEN ""
+ELSE "["+whole(ub OF obj ids[fd],0)+"]"
+FI;
+
+@2Emitting the macro identifiers.
+The macro calls are in their own table.
+
+@<Emit the macro ca...@>=
+put(outf,(
+   "@@2Macro calls.",newline,
+   "Here are all the Xforms macro calls in alphabetical order.",
+   newline,newline,
+   "@@<Include...@@>=",newline));
+@<Emit the macro identifiers@>
+
+@ The table !macros! contains the macros in alphabetical order.
+
+@<Emit the macro ident...@>=
+FOR i FROM LWB macros TO UPB macros
+DO
+   put(outf,("macro ",macros[i],";",newline))
+OD;
+
+@2Emitting the callback and handler identifiers.
+The identifiers of the callback and handler procedures are in their own tables.
+
+@<Emit the callback and...@>=
+IF UPB callbacks/=0
+THEN
+   put(outf,(newline,
+       "@@2Callback procedures.",newline,
+       "All the callback procedures are declared as names.",
+       newline,newline,
+       "@@<Callback names...@@>=",newline,
+       "PROC(REF FLOBJECT,INT)VOID",newline));
+   FOR i FROM LWB callbacks TO UPB callbacks-1
+   DO
+      put(outf,(indent,callbacks[i],",",newline))
+   OD;
+
+   put(outf,(indent,callbacks[UPB callbacks],";",newline,newline))
+FI;
+
+@ If any handlers have been defined, their identifiers must be emitted with all
+but the last followed by a comma. The last should be followed by a semicolon.
+
+@<Emit the callback and...@>=
+IF UPB handlers /= 0
+THEN 
+   put(outf,(
+       "@@2Handler procedures.",newline,
+       "All the handler procedures are declared as names.",
+       newline,newline,
+       "@@<Handler names...@@>=",newline,
+       "FLHANDLER",newline));
+   FOR i FROM LWB handlers TO UPB handlers-1
+   DO
+      put(outf,(indent,handlers[i],",",newline))
+   OD;
+   put(outf,(indent,handlers[UPB handlers],";",newline,newline))
+FI;
+
+@ The public tags must be supplemented by the callback and handler routines, if
+any.
+
+@<Emit the public callback...@>=
+IF UPB callbacks/=0
+THEN
+   put(outf,
+       ("@@ Now for the callback procedure identifiers in the public tags.",
+        newline,newline,
+        "@@<Public...@@>=",newline));
+   @<Emit the public cb tags@>
+FI;
+
+@ The callback tags are emitted again, each one followed by a comma.
+
+@<Emit the public cb...@>=
+FOR i FROM LWB callbacks TO UPB callbacks
+DO
+   put(outf,(callbacks[i],",",newline))
+OD
+
+@ Likewise for the handler identifiers.
+
+@<Emit the public callback...@>=
+IF UPB handlers/=0
+THEN
+   put(outf,
+       (newline,
+        "@@ Now for the handler procedure identifiers in the public tags.",
+        newline,newline,
+        "@@<Public...@@>=",newline));
+   FOR i FROM LWB handlers TO UPB handlers
+   DO
+      put(outf,(handlers[i],",",newline))
+   OD
+FI;
+
+@ The last items to emit for the public tag section are the form mode
+indicants which have been added to !modes!. They should all be
+terminated by a comma except the last.
+
+@<Emit the form mode...@>=
+FOR i FROM LWB modes TO UPB modes-1
+DO
+   put(outf,(modes[i],",",newline))
+OD;
+put(outf,(modes[UPB modes],newline));
+
+@2Emitting the form creation procedure.
+This section gives the beginning of the framework of a form creation
+procedure.
+
+@<Emit the creation...@>=
+put(outf,
+   ("@@ This procedure creates form !",form id,"!.",newline,newline,
+    "@@<Form creation...@@>=",newline,
+    "PROC create form ",form id," = REF ",form md,":",newline,
+    "BEGIN",newline,
+    indent,"REF FLOBJECT obj;",newline,
+    indent,"REF ",form md," fdui:=HEAP ",form md,";",newline,
+    indent,"OP(REF ",form md,")CBPTR TOCBPTR = BIOP 99;",
+    newline,
+    indent,"INT old bw=fl get border width;",newline,
+    newline,
+    indent,"fl set border width(",border width,");",newline,
+    indent,form id," OF fdui:=fl start form(fl no box,",
+    (fval OF fm)[form width],",",(fval OF fm)[form height],");",
+    newline));
+
+@ The following calls add some Xforms library macros to !macros!.
+
+@<Emit the creation...@>=
+add macro("fl get border width");
+add macro("fl set border width");
+add macro("fl start form");
+
+@ Each object is emitted by its own emission procedure.
+
+@<Emit the creation...@>=
+FOR ob FROM LWB obj OF fm TO UPB obj OF fm
+DO
+   REF OBJECT l obj=(obj OF fm)[ob];
+   INT cl=identify class((oval OF l obj)[gen class]);
+   IF cl=0
+   THEN emsg("Unknown class: "+(oval OF l obj)[gen class])
+   ELSE (proc OF class table[cl])(l obj)
+   FI
+OD;
+
+@ And, finally, the remainder of the form creation procedure.
+
+@<Emit the creation...@>=
+put(outf,
+    (indent,"fl finish form;",newline,
+     indent,"fl adjust form size(",form id," OF fdui);",newline,
+     indent,"fdui OF ",form id," OF fdui:=TOCBPTR fdui;",
+     newline,
+     indent,"fl set border width(old bw);",newline,
+     indent,"fdui",newline,
+     "END; #create form ",form id,"#",newline,newline));
+add form proc("create form "+form id);
+
+@ Some more macros to be added to !macros!.
+
+@<Emit the creation...@>=
+add macro("fl finish form");
+add macro("fl adjust form size")
+
+@ The identifiers of the procedures which create the forms need to be
+output as public tags.
+
+@<Emit the form creation...@>=
+put(outf,(newline,
+   "@@ Here the identifiers of the form creation procedures are",
+   newline,
+   "added to the public tags.",newline,newline,
+   "@@<Public...@@>=",newline));
+FOR i FROM LWB form procs TO UPB form procs
+DO
+   put(outf,(form procs[i],",",newline))
+OD;
+
+@ Now output the last piece of code.
+
+@<Top...@>=
+put(outf,(newline,
+    "@@1System dependencies.",newline,
+    "The whole of the Xforms system is dependent on the X Window System.",
+    newline));
+close(outf)
+
+@2Object emission procedures.
+Although these procedures were declared with mode !REF PROC(REF
+OBJECT)VOID!, the names have yet to be provided with actual values.
+Two forms were created:-
+\begin{enumerate}
+\item A form containing one of every class of object with all its
+properties altered (well, almost all).
+\item A form containing one of every class of object with default
+properties.
+\end{enumerate}
+The resulting \.{.fd} and C source files provided all the data for
+this section.
+
+A number of routines are required by more than one emission
+procedure, so the assignment module is divided into parts.
+
+@<Assign...@>=
+@<Generic routines@>
+@<Emission assignments@>
+
+@3Generic routines.
+This operator checks an identifier for a subscript. If found, the
+output string has the form !(id OF fdui)[index]! instead of !id OF
+fdui!.
+
+@<Oper...@>=
+OP FDUID = ([]CHAR id)[]CHAR:
+IF INT p;  char in string("[",p,id)
+THEN "("+id[:p-1]+" OF fdui)"+id[p:]
+ELSE id+" OF fdui"
+FI; #FDUID#
+
+@ This operator changes a C macro identifier expression to its Algol~68
+equivalent. The following operations are performed:-
+\begin{enumerate}
+\item Upper-case letters are converted to lower case.
+\item Underline characters are converted to spaces.
+\item Vertical bars are converted to \verb*| OR |.
+\end{enumerate}
+
+@<Oper...@>=
+OP CA = ([]CHAR id)[]CHAR:
+BEGIN
+   [LWB id:UPB id]CHAR ls:=LC id;
+   STRING s;
+
+   FOR i FROM LWB ls TO UPB ls
+   DO
+      REF CHAR lsi=ls[i];
+      (lsi="_"|lsi:=blank)
+   OD;
+
+   s:=ls;
+
+   WHILE INT p; char in string("|",p,s)
+   DO
+      s:=s[:p-1]+" OR "+s[p+1:]
+   OD;
+
+   s
+END; #CA#
+
+@ This operator scans a string and replaces all underlines with spaces unless
+the underline is preceded by a backstroke, in which case, the backstroke is
+simply omitted. Likewise, double backstrokes are replaced by single ones.
+
+@<Oper...@>=
+OP SCA = ([]CHAR s)[]CHAR:
+BEGIN
+   []CHAR ss=s[@@1];
+   [2*(UPB ss-LWB ss+1)]CHAR ls;
+   INT lsx:=LWB ls-1;
+   BOOL stroke read:=FALSE;
+   
+   FOR i TO UPB ss
+   DO
+      CHAR si=ss[i];
+      IF stroke read
+      THEN ls[lsx+:=1]:=si;@& stroke read:=FALSE
+      ELIF si="\"
+      THEN stroke read:=TRUE
+      ELSE ls[lsx+:=1]:=(si="_"|blank|si)
+      FI
+   OD;
+   
+   ls[:lsx]
+END; #SCA#
+
+@ The operator !LC! comes from \.{gprelude}.
+
+@<Include...@>=
+macro gp op lc row char;
+
+@ Here is a procedure to convert a class string into the add object
+procedure.
+
+@<Generic...@>=
+PROC class to add proc = ([]CHAR class)[]CHAR:
+   CA("FL_ADD_"+(class AFTER "_"));
+
+@ Strings are not stored with quote symbols, so when a string is to be emitted
+with them, this operator is used.
+
+@m qu = """"
+
+@<Oper...@>=
+OP Q = ([]CHAR s)[]CHAR: qu+s+qu;
+
+@ The Xforms procedure to add an object uses the following elements
+of !oval OF obj!:-
+\begin{itemize}
+\item !gen class!
+\item !gen type!
+\item !gen x!, !gen y!, !gen w! and !gen h!
+\item !gen label!
+\end{itemize}
+!gen name! must also be eliminated.
+
+This macro defines a value which will remove those bits from !def OF
+obj!.
+
+@m def mask = NOT 16rfc04 2000
+
+@ The next procedure emits a routine call for every non-default
+generic attribute. The macros provide shorthand for accessing the
+fields of the object.
+
+@m ovl(fd) = ((oval OF obj)[fd])
+@m ovd(fd) = IF ovl(fd)/=""
+             THEN ovl(fd)
+             ELSE default table[identify class(ovl(gen class))][fd]
+             FI
+
+@<Generic...@>=
+PROC emit generic = (REF OBJECT obj,BOOL button)VOID:
+BEGIN
+   BITS defs=def OF obj AND def mask;
+   []CHAR
+      k1=(ovl(gen name)/=""|FDUID CA ovl(gen name)+":="|""),
+      k2=(defs/=2r0 OR (spec OF obj ISNT no spec)|"obj:="|"");
+   INT bt:=gen boxtype;
+   @<Output the add object procedure call@>;
+   WHILE bt < upb oval
+   DO
+      IF bt ELEM defs
+      THEN put(outf,(2*indent,
+                     @<Create the non-default attribute string@>,
+                     ");",newline))
+      ELSE bt+:=1
+      FI
+   OD
+END;  #emit generic#
+
+@ @<Output the add object...@>=
+put(outf,(indent,k1,k2,add macro(class to add proc(ovl(gen class))),
+          "(",CA("FL_"+ovl(gen type)),
+          ",",ovl(gen x),",",ovl(gen y),
+          ",",ovl(gen w),",",ovl(gen h),
+          ",",Q ovl(gen label),");",newline))
+
+@ A !CASE! clause is used to choose the generic attribute changing
+procedure. However, the greater part of the procedure identifier can
+be specified outwith that clause.
+
+@<Create the non-default...@>=
+CASE bt-(gen boxtype-1)
+IN
+   (bt+:=1; add macro("fl set object boxtype")+"(obj,"+CA ovl(gen boxtype)),
+   (bt+:=2;
+    add macro("fl set object color")+"(obj,"+CA ovl(gen col1)+","+CA ovd(gen col2)),
+   (bt+:=1;
+    add macro("fl set object color")+"(obj,"+CA ovd(gen col1)+","+CA ovl(gen col2)),
+   (bt+:=1; add macro("fl set object lalign")+"(obj,"+CA ovl(gen align)),
+   (bt+:=1; add macro("fl set object lstyle")+"(obj,"+CA ovl(gen style)),
+   (bt+:=1; add macro("fl set object lsize")+"(obj,"+CA ovl(gen size)),
+   (bt+:=1; add macro("fl set object lcol")+"(obj,"+CA ovl(gen lcol)),
+   SKIP, #gen label#
+   (bt+:=1;
+    add macro("fl set "+(button|"button"|"object")+" shortcut")
+       +"(obj,"+Q ovl(gen shortcut)+",1"),
+   (bt+:=1; add macro("fl set object resize")+"(obj,"+CA ovl(gen resize)),
+   (bt+:=2;
+    add macro("fl set object gravity")+"(obj,"+CA ovl(gen nw)+","+CA ovd(gen se)),
+   (bt+:=1;
+    add macro("fl set object gravity")+"(obj,"+CA ovd(gen nw)+","+CA ovl(gen se)),
+   SKIP, #gen name#
+   (bt+:=2;
+    add macro("fl set object callback")+"(obj,"+CA ovl(gen callback)
+               +","+ovl(gen argument))
+OUT ""
+ESAC
+
+@3Groups.
+Only two procedures are involved, neither of which have any attributes.
+
+@<Emission...@>=
+emit begin group:=(REF OBJECT obj)VOID:
+(
+   put(outf,(indent,
+             IF ovl(gen name)/=""
+             THEN FDUID CA ovl(gen name)+":="
+             ELSE ""
+             FI,
+             "fl start group;",newline));
+   add macro("fl start group")
+);
+
+@ Likewise for !emit end group!.
+
+@<Emission...@>=
+emit end group:=(REF OBJECT obj)VOID:
+(
+   put(outf,(indent,"fl finish group;",newline));
+   add macro("fl finish group")
+);
+
+@3Static objects.
+The have no interaction with the user.
+
+@ Boxes have generic attributes only.
+
+@<Emission...@>=
+emit box:=(REF OBJECT obj)VOID: emit generic(obj,FALSE);
+
+@ Frames have generic attributes only.
+
+@<Emission...@>=
+emit frame:=emit box;
+
+@ Labelframes have the label \textit{on} the frame.
+
+@<Emission...@>=
+emit labelframe:=emit box;
+
+@ Text has generic attributes only.
+
+@<Emission...@>=
+emit text:=emit box;
+
+@ Bitmaps require a file to be loaded at run-time because the bitmap
+format is incompatible with Algol~68 and so cannot be included in the
+source.
+
+@m svl(fd)=(sval OF spec OF obj)[fd]
+
+@<Emission...@>=
+emit bitmap:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec fullpath)/="" & svl(spec file)/=""
+   THEN put(outf,(2*indent,add macro("fl set bitmap file"),
+                  "(obj,",Q svl(spec file),");",newline))
+   FI
+FI;
+
+@ Pixmaps also require a file to be loaded at run-time. The following
+specific attributes can be set:-
+\begin{itemize}
+\item for \textbf{align}: !spec align!
+\item for \textbf{file}: !spec file!
+\item for \textbf{fullpath}: !spec fullpath!
+\end{itemize}
+
+@<Emission...@>=
+emit pixmap:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec file)/="" & svl(spec fullpath)/=""
+   THEN put(outf,(2*indent,add macro("fl set pixmap file"),
+                  "(obj,",Q svl(spec file),");",newline))
+   FI;
+   IF svl(spec align)/=""
+   THEN put(outf,(2*indent,add macro("fl set pixmap align"),
+                  "(obj,",CA svl(spec align),",3,3);",
+                  newline))
+   FI
+FI;
+
+@ Clocks have generic attributes only.
+
+@<Emission...@>=
+emit clock:=emit box;
+
+@ Charts have generic attributes only. Any values to be displayed
+must be added after the object has been created.
+
+@<Emission...@>=
+emit chart:=emit box;
+
+@3Button-like objects.
+All these objects are interactive and some have specific attributes.
+
+@ Plain buttons have only generic attributes.
+
+@<Emission...@>=
+emit button:=(REF OBJECT obj)VOID: emit generic(obj,TRUE);
+
+@ Lightbuttons can be set on creation.
+
+@<Emission...@>=
+emit lightbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,add macro("fl set button"),
+                  "(obj,1);",newline))
+   FI
+FI;
+
+@ Round buttons can be set on creation.
+
+@<Emission...@>=
+emit roundbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,add macro("fl set button"),
+                  "(obj,1);",newline))
+   FI
+FI;
+
+
+@ Round 3d buttons likewise.
+
+@<Emission...@>=
+emit round3dbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,add macro("fl set button"),
+                  "(obj,1);",newline))
+   FI
+FI;
+
+@ Check buttons likewise.
+
+@<Emission...@>=
+emit checkbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,add macro("fl set button"),
+                  "(obj,1);",newline))
+   FI
+FI;
+
+@ Bitmap buttons can have the following specific attributes set:-
+\begin{itemize}
+\item for \textbf{file}: !spec file!
+\item for \textbf{fullpath}: !spec fullpath!
+\item for \textbf{helper}: !spec helper!
+\end{itemize}
+
+@<Emission...@>=
+emit bitmapbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec file)/="" & svl(spec fullpath)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set bitmapbutton file"),
+                  "(obj,",Q svl(spec file),");",newline))
+   FI;
+   IF svl(spec helper)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set object helper"),
+                  "(obj,",SCA Q svl(spec helper),");",newline))
+   FI
+FI;
+
+@ Pixmap buttons are like bitmap buttons, but the following specific
+attributes may be set:-
+\begin{itemize}
+\item !spec align!
+\item !spec file!
+\item !spec focus file!
+\item !spec helper!
+\end{itemize}
+
+@<Emission...@>=
+emit pixmapbutton:=(REF OBJECT obj)VOID:
+IF emit generic(obj,TRUE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec fullpath)/=""
+   THEN
+      IF svl(spec file)/=""
+      THEN put(outf,(2*indent,
+                     add macro("fl set pixmapbutton file"),
+                     "(obj,",Q svl(spec file),");",newline))
+      FI;
+      IF svl(spec focus file)/=""
+      THEN put(outf,(2*indent,
+                     add macro("fl set pixmapbutton focus file"),
+                     "(obj,",Q svl(spec focus file),");",newline))
+      FI
+   FI;
+   IF svl(spec helper)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set object helper"),
+                  "(obj,",SCA Q svl(spec helper),");",newline))
+   FI;
+   IF svl(spec align)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set pixmapbutton align"),
+                  "(obj,",CA svl(spec align),");",newline))
+   FI
+FI;
+
+@ Labelbuttons have generic attributes only.
+
+@<Emission...@>=
+emit labelbutton:=emit button;
+
+@ Scrollbuttons also have generic attributes only.
+
+@<Emission...@>=
+emit scrollbutton:=emit button;
+
+@3Valuator objects.
+These include sliders, scrollbars, and dials.
+
+@ Sliders come in various flavours. The following specific attributes
+can be set:-
+\begin{itemize}
+\item for \textbf{bounds}: !spec min!, !spec max!
+\item for \textbf{increment}: !spec ldelta!, !spec rdelta!
+\item for \textbf{precision}: !spec prec!
+\item for \textbf{return}: !spec how return!
+\item for \textbf{slsize}: !spec slsize!
+\item for \textbf{step}: !spec step!
+\item for \textbf{value}: !spec value!
+\end{itemize}
+Note that the precision only applies to the val slider (see the next
+section).
+
+@<Emission...@>=
+emit slider:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider return"),
+                  "(obj,",CA svl(spec how return),");",newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider value"),
+                  "(obj,",CA svl(spec value),");",newline))
+   FI;
+   IF svl(spec min)/="" AND svl(spec max)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider bounds"),
+                  "(obj,",svl(spec min),",",svl(spec max),
+                  ");",newline))
+   FI;
+   IF svl(spec ldelta)/="" AND svl(spec rdelta)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider increment"),
+                  "(obj,",svl(spec ldelta),",",svl(spec rdelta),
+                  ");",newline))
+   FI;
+   IF svl(spec step)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider step"),
+                  "(obj,",svl(spec step),");",newline))
+   FI;
+   IF svl(spec slsize)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider size"),
+                  "(obj,",svl(spec slsize),");",newline))
+   FI;
+   IF svl(spec prec)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set slider precision"),
+                  "(obj,",svl(spec prec),");",newline))
+   FI
+FI;
+
+@ Valsliders display a value, but otherwise have all the attributes
+of sliders.
+
+@<Emission...@>=
+emit valslider:=emit slider;
+
+@ Scrollbars can set the following specific attributes:-
+\begin{itemize}
+\item for \textbf{bounds}: !spec min! and !spec max!
+\item for \textbf{increment}: !spec ldelta! and !spec rdelta!
+\item for \textbf{return}: !spec how return!
+\item for \textbf{slsize}: !spec slsize!
+\item for \textbf{step}: !spec step!
+\item for \textbf{value}: !spec value!
+\end{itemize}
+
+@<Emission...@>=
+emit scrollbar:=(REF OBJECT obj)VOID:
+IF   emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec min)/="" & svl(spec max)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar bounds"),
+                  "(obj,",svl(spec min),",",svl(spec max),
+                  ");",newline))
+   FI;
+   IF svl(spec ldelta)/="" AND svl(spec rdelta)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar increment"),
+                  "(obj,",svl(spec ldelta),",",svl(spec rdelta),
+                  ");",newline))
+   FI;
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar return"),
+                  "(obj,",CA svl(spec how return),");",
+                  newline))
+   FI;
+   IF svl(spec slsize)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar size"),
+                  "(obj,",svl(spec slsize),");",newline))
+   FI;
+   IF svl(spec step)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar step"),
+                  "(obj,",svl(spec step),");",newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set scrollbar value"),
+                  "(obj,",svl(spec value),");",newline))
+   FI
+FI;
+
+@ Dials can set the following specific attributes:-
+\begin{itemize}
+\item for \textbf{angles}: !spec thetai! and !spec thetaf!
+\item for \textbf{bounds}: !spec min! and !spec max!
+\item for \textbf{dir}: !spec direction!
+\item for \textbf{return}: !spec how return!
+\item for \textbf{step}: !spec step!
+\item for \textbf{value}: !spec value!
+\end{itemize}
+
+@<Emission...@>=
+emit dial:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec thetai)/="" AND svl(spec thetaf)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial angles"),
+                  "(obj,",svl(spec thetai),",",
+                  svl(spec thetaf),");",newline))
+   FI;
+   IF svl(spec min)/="" AND svl(spec max)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial bounds"),
+                  "(obj,",svl(spec min),",",
+                  svl(spec max),");",newline))
+   FI;
+   IF svl(spec direction)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial direction"),
+                  "(obj,",CA svl(spec direction),
+                  ");",newline))
+   FI;
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial return"),
+                  "(obj,",CA svl(spec how return),
+                  ");",newline))
+   FI;
+   IF svl(spec step)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial step"),
+                  "(obj,",svl(spec step),");",newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set dial value"),
+                  "(obj,",svl(spec value),");",newline))
+   FI
+FI;
+
+@ Positioners can set the following specific attributes:-
+\begin{itemize}
+\item for \textbf{return}: !spec how return!
+\item for \textbf{xbounds}: !spec xmin! and !spec xmax!
+\item for \textbf{xstep}: !spec xstep!
+\item for \textbf{xvalue}: !spec xvalue!
+\item for \textbf{ybounds}: !spec ymin! and !spec ymax!
+\item for \textbf{ystep}: !spec ystep!
+\item for \textbf{yvalue}: !spec yvalue!
+\end{itemize}
+
+
+@<Emission...@>=
+emit positioner:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner return"),
+                  "(obj,",CA svl(spec how return),");",
+                  newline))
+   FI;
+   IF svl(spec xmin)/="" AND svl(spec xmax)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner xbounds"),
+                  "(obj,",svl(spec xmin),",",
+                  svl(spec xmax),");",newline))
+   FI;
+   IF svl(spec ymin)/="" AND svl(spec ymax)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner ybounds"),
+                  "(obj,",svl(spec ymin),",",
+                  svl(spec ymax),");",newline))
+   FI;
+   IF svl(spec xstep)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner xstep"),
+                  "(obj,",svl(spec xstep),");",newline))
+   FI;
+   IF svl(spec ystep)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner ystep"),
+                  "(obj,",svl(spec ystep),");",newline))
+   FI;
+   IF svl(spec xvalue)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner xvalue"),
+                  "(obj,",svl(spec xvalue),");",newline))
+   FI;
+   IF svl(spec yvalue)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set positioner yvalue"),
+                  "(obj,",svl(spec yvalue),");",newline))
+   FI
+FI;
+
+@ Counters can set the following specific attributes:-
+\begin{itemize}
+\item for \textbf{bounds}: !spec min! and !spec max!
+\item for \textbf{precision}: !spec prec!
+\item for \textbf{value}: !spec value!
+\item for \textbf{sstep}: !spec sstep!
+\item for \textbf{return}: !spec how return!
+\end{itemize}
+
+@<Emission...@>=
+emit counter:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec min)/="" AND svl(spec max)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set counter bounds"),
+                  "(obj,",svl(spec min),",",
+                  svl(spec max),");",newline))
+   FI;
+   IF svl(spec prec)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set counter precision"),
+                  "(obj,",svl(spec prec),");",newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set counter value"),
+                  "(obj,",svl(spec value),");",newline))
+   FI;
+   IF svl(spec sstep)/="" OR svl(spec lstep)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set counter step"),
+                  "(obj,",
+                  (svl(spec sstep)/=""|svl(spec sstep)|"0.1"),
+                  ",",
+                  (svl(spec lstep)/=""|svl(spec lstep)|"1"),
+                  ");",newline))
+   FI;
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set counter return"),
+                  "(obj,",CA svl(spec how return),
+                  ");",newline))
+   FI
+FI;
+
+@ Thumbwheels can set the following specific attributes:-
+\begin{itemize}
+\item for \textbf{bounds}: !spec min! and !spec max!
+\item for \textbf{value}: !spec value!
+\item for \textbf{return}: !spec how return!
+\end{itemize}
+
+@<Emission...@>=
+emit thumbwheel:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec min)/="" AND svl(spec max)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set thumbwheel bounds"),
+                  "(obj,",svl(spec min),",",
+                  svl(spec max),");",newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set thumbwheel value"),
+                  "(obj,",svl(spec value),");",newline))
+   FI;
+   IF svl(spec how return)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set thumbwheel return"),
+                  "(obj,",CA svl(spec how return),
+                  ");",newline))
+   FI
+FI;
+
+@3Input objects.
+This consists of the input field only, but it has a considerable
+number of attributes. However, the \.{fdesign} program only sets
+generic attributes.
+
+@<Emission...@>=
+emit input:=emit box;
+
+@3Choice objects.
+This comprises menu, choice and browser.
+
+@ Menus can have the specific attribute of \textbf{global} set which
+corresponds to !spec global scope!. However, we do not use a menu
+structure. Instead, we use a series of calls to the appropriate menu
+procedures. Each of the entries appears in an !ENTRY! structure whose
+presence can be determined by checking the value of !first OF spec OF
+obj!.
+
+@m evl(fd) = (eval OF lre)[fd]
+
+@<Emission...@>=
+emit menu:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF first OF spec OF obj ISNT no entry
+   THEN
+      REF ENTRY lre:=first OF spec OF obj;
+      FOR i WHILE lre ISNT no entry
+      DO
+         IF evl(entry content)/=""
+         THEN put(outf,(2*indent,
+                        add macro("fl addto menu"),
+                        "(obj,",Q evl(entry content),
+                        ");",newline))
+         FI;
+         IF evl(entry mode)/=""
+         THEN put(outf,(2*indent,
+                        add macro("fl set menu item mode"),
+                        "(obj,",whole(i,0),",",CA evl(entry mode),
+                        ");",newline))
+         FI;
+         IF evl(entry shortcut)/=""
+         THEN put(outf,(2*indent,
+                        add macro("fl set menu item shortcut"),
+                        "(obj,",whole(i,0),",",Q evl(entry shortcut),
+                        ");",newline))
+         FI;
+         lre:=next OF lre
+      OD
+   FI
+FI;
+
+@ Choice items resemble menu entries in that they can have a number
+of entries defined.
+
+@<Emission...@>=
+emit choice:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec align)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set choice align"),
+                  "(obj,",CA svl(spec align),");",
+                  newline))
+   FI;
+   IF svl(spec value)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set choice"),
+                  "(obj,",svl(spec value),");",newline))
+   FI;
+   IF first OF spec OF obj ISNT no entry
+   THEN
+      REF ENTRY lre:=first OF spec OF obj;
+      FOR i WHILE lre ISNT no entry
+      DO
+         IF evl(entry content)/=""
+         THEN put(outf,(2*indent,
+                  add macro("fl addto choice"),
+                  "(obj,",SCA Q evl(entry content),
+                  ");",newline))
+         FI;
+         IF evl(entry mode)/=""
+         THEN put(outf,(2*indent,
+                        add macro("fl set choice item mode"),
+                        "(obj,",whole(i,0),",",CA evl(entry mode),
+                        ");",newline))
+         FI;
+         IF evl(entry shortcut)/=""
+         THEN put(outf,(2*indent,
+                        add macro("fl set choice item shortcut"),
+                        "(obj,",whole(i,0),",",Q evl(entry shortcut),
+                        ");",newline))
+         FI;
+         lre:=next OF lre
+      OD
+   FI
+FI;
+
+@ Browsers contain generic attributes and entry attributes only.
+
+@<Emission...@>=
+emit browser:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec h pref)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set browser hscrollbar"),
+                  "(obj,",CA svl(spec h pref),");",newline))
+   FI;
+   IF svl(spec v pref)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set browser vscrollbar"),
+                  "(obj,",CA svl(spec v pref),");",newline))
+   FI;
+   IF first OF spec OF obj ISNT no entry
+   THEN
+      REF ENTRY lre:=first OF spec OF obj;
+      FOR i WHILE lre ISNT no entry
+      DO
+         IF evl(entry content)/=""
+         THEN put(outf,(2*indent,
+                  add macro("fl add browser line"),
+                  "(obj,",SCA Q evl(entry content),");",
+                  newline))
+         FI;
+         lre:=next OF lre
+      OD
+   FI
+FI;
+
+@3Container objects.
+The program \.{fdesign} sets generic attributes only for the tabfolder.
+
+@<Emission...@>=
+emit tabfolder:=(REF OBJECT obj)VOID: emit generic(obj,FALSE);
+
+@ Likewise the formbrowser.
+
+@<Emission...@>=
+emit formbrowser:=emit tabfolder;
+
+@3Other objects.
+Timers have generic attributes only.
+
+@<Emission...@>=
+emit timer:=emit box;
+
+@ The program \.{fdesign} can set the following attributes for
+xyplots:-
+\begin{itemize}
+\item for \textbf{xtics}: !spec xmajor! and !spec xminor!
+\item for \textbf{ytics}: !spec ymajor! and !spec yminor!
+\item for \textbf{grid}: !spec xgrid! and !spec ygrid!
+\item for \textbf{gridstyle}: !spec grid linestyle!
+\item for \textbf{xscale}: !spec xscale! and !spec xbase!
+\item for \textbf{yscale}: !spec yscale! and !spec ybase!
+\end{itemize}
+
+@<Emission...@>=
+emit xyplot:=(REF OBJECT obj)VOID:
+IF emit generic(obj,FALSE);
+   spec OF obj ISNT no spec
+THEN
+   IF svl(spec xmajor)/="" AND svl(spec xminor)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot xtics"),
+                  "(obj,",svl(spec xmajor),",",
+                  svl(spec xminor),");",newline))
+   FI;
+   IF svl(spec ymajor)/="" AND svl(spec yminor)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot ytics"),
+                  "(obj,",svl(spec ymajor),",",
+                  svl(spec yminor),");",newline))
+   FI;
+   IF svl(spec xgrid)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot xgrid"),
+                  "(obj,",CA svl(spec xgrid),");",
+                  newline))
+   FI;
+   IF svl(spec ygrid)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot ygrid"),
+                  "(obj,",CA svl(spec ygrid),");",
+                  newline))
+   FI;
+   IF svl(spec grid linestyle)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot grid linestyle"),
+                  "(obj,",CA svl(spec grid linestyle),",",
+                  newline))
+   FI;
+   IF svl(spec xscale)/="" OR svl(spec xbase)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot xscale"),
+                  "(obj,",CA svl(spec xscale),",",
+                  IF svl(spec xscale)="FL_LINEAR"
+                  THEN "0"
+                  ELSE svl(spec xbase)
+                  FI,");",newline))
+   FI;
+   IF svl(spec yscale)/="" OR svl(spec ybase)/=""
+   THEN put(outf,(2*indent,
+                  add macro("fl set xyplot yscale"),
+                  "(obj,",CA svl(spec yscale),",",
+                  IF svl(spec yscale)="FL_LINEAR"
+                  THEN "0"
+                  ELSE svl(spec ybase)
+                  FI,");",newline))
+   FI
+FI;
+
+@ The canvas has only generic attributes set.
+
+@<Emission...@>=
+emit canvas:=emit box;
+
+@ A free object has a handler which must be specified at the end of the
+parameters for creating it.
+
+@<Emission...@>=
+emit free:=(REF OBJECT obj)VOID:
+BEGIN
+   BOOL button=FALSE;
+   BITS defs=def OF obj AND def mask;
+   []CHAR
+      k1=(ovl(gen name)/=""|FDUID CA ovl(gen name)+":="|""),
+      k2=(defs/=2r0 OR (spec OF obj ISNT no spec)|"obj:="|""),
+      k3=(spec OF obj ISNT no spec|CA svl(spec handler)|"NIL");
+   INT bt:=gen boxtype;
+   put(outf,(indent,k1,k2,add macro(class to add proc(ovl(gen class))),
+             "(",CA("FL_"+ovl(gen type)),
+             ",",ovl(gen x),",",ovl(gen y),
+             ",",ovl(gen w),",",ovl(gen h),
+             ",",Q ovl(gen label),
+             ",",k3,");",newline));
+   WHILE bt < upb oval
+   DO
+      IF bt ELEM defs
+      THEN put(outf,(2*indent,
+                     @<Create the non-default...@>,
+                     ");",newline))
+      ELSE bt+:=1
+      FI
+   OD
+END; #emit free#
+
+@1System dependencies.
+The whole of the Xforms library is system dependent.

@@ -1,0 +1,159 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Level sections</title>
+<meta name="description" content="Level sections">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node17.html">
+<link rel="previous" href="node15.html">
+<link rel="up" href="node15.html">
+<link rel="next" href="node17.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html258"
+  href="node17.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html254"
+  href="node15.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html248"
+  href="node15.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html256"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html259"
+  href="node17.html">Plain sections</a>
+<b> Up:</b> <a name="tex2html255"
+  href="node15.html">Sections</a>
+<b> Previous:</b> <a name="tex2html249"
+  href="node15.html">Sections</a>
+ &nbsp; <b>  <a name="tex2html257"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h3><a name="SECTION00045100000000000000"></a><a name="subsubsec:level"></a>
+<br>
+Level sections
+</h3>
+
+<p>
+A level section command specifies the section header for HTML as well
+as the section level. The command should be followed by the section
+heading followed by a full-stop. The full-stop will be omitted from
+the heading when it is formatted by <tt>weav</tt>. The heading will
+appear both in the table of contents and as a running-header at the
+top of each page containing part of that section or sub-section so you
+should be careful about what to put into such a header.</p>
+
+<p>
+The following table shows the Web 68 code in the
+first column and the code output by weav in the second column:-</p>
+
+<table cellpadding=3 border="1">
+<tr>
+  <td align="LEFT">Web 68 code</td>
+  <td align="LEFT">Output HTML code</td>
+</tr>
+<tr>
+<td>@1Heading 1.</td>
+<td>&lt;h1&gt;Heading 1&lt;/h1&gt;</td>
+</tr>
+<tr>
+  <td>@2Heading 2.</td>
+  <td>&lt;h2&gt;Heading 2&lt;/h2&gt;</td>
+</tr>
+<tr>
+  <td>@3Heading 3.</td>
+  <td>&lt;h3&gt;Heading 3&lt;/h3&gt;</td>
+</tr>
+</table>
+
+<p>
+The text for the section should follow on the next line, not preceded
+by any spaces.</p>
+
+<p>For example:-</p>
+<pre>
+@1 Introduction.
+This program ...
+</pre>
+
+<p>
+Level sections introduce major parts of the program. Level 1 sections
+are disallowed in included files to ensure the integrity of the indexes
+output by weav.</p>
+
+<p>
+When tang and weav meet a level sectioning command, they
+both output the current section to the console in the form
+<div align="CENTER">
+[section.subsection.subsubsection.paragraph]
+</div>
+unless the current file is an included file when the current section
+will appear as
+<div align="CENTER">
+[Ifile number.subsection.subsubsection.paragraph]
+</div>
+So the second subsection of the third section will appear on the console
+as <code>[3.2.1.1]</code>.</p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html258"
+  href="node17.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html254"
+  href="node15.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html248"
+  href="node15.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html256"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html259"
+  href="node17.html">Plain sections</a>
+<b> Up:</b> <a name="tex2html255"
+  href="node15.html">Sections</a>
+<b> Previous:</b> <a name="tex2html249"
+  href="node15.html">Sections</a>
+ &nbsp; <b>  <a name="tex2html257"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

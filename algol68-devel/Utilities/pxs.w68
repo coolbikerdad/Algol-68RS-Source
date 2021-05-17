@@ -1,0 +1,854 @@
+% This program is copyright (c) BP66 Phoenix Engineering
+@1Introduction.
+Somebody developed a program called \.{zenity} which provided a number
+of simple dialogues to be used in shell scripts. Because the parameters
+were long and the dialogues did not use Xforms, here is a version which
+uses short parameters and the Xforms library.
+
+$Log: pxs.w68,v $
+Revision 1.7  2005/09/16 14:59:35  sian
+Altered the processing of the prompt for 'input data'
+
+Revision 1.6  2005/09/14 14:54:05  sian
+Rewrote the input and display text procedures
+
+
+@m cvs pxs = "$Id: pxs.w68,v 1.7 2005/09/16 14:59:35 sian Exp $"
+@m help fn = TC "~/.px/pxs.help"
+@m history fn = TC "~/.px/pxs.history"
+@m pxs rc fn = TC "~/.px/pxsrc"
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<Names in the outer reach@>
+@<Plain values in the outer reach@>
+@<Operators in the outer reach@>
+@<Procedures in the outer reach@>
+@<Logic in the outer reach@>
+END
+@<Postlude@>
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM pxs CONTEXT VOID
+USE @<Library preludes@>
+
+@ And a special postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@ The system, general and Xforms preludes will be needed.
+
+@isysprelude.w@>
+@iforms.w@>
+
+@ The program needs the pre-defined forms already declared and the new
+file selector as well as the regular expression library and the
+standard prelude.
+
+@<Library...@>=
+fds, pxsfd, regex, standard
+
+@1Initialisation and parameter processing.
+The initial logic consists of:-
+\begin{enumerate}
+\item Opening the !arg channel! to initialise !argc! and !argv!.
+\item Initialising the Xforms library.
+\item Setting the size and style of the font for the goodies.
+\item Setting the border width to a nice value.
+\item Reading the history file.
+\item Setting the termination procedure for this program.
+\end{enumerate}
+
+@<Logic...@>=
+open(argf,"",arg channel);
+fl initialise(argc,argv,"PXS",NIL,0);
+fl set border width(-2);
+fl set goodies font(fl bold style,fl medium size);
+@<Read the history file@>
+at exit(output the history file);
+
+@ @<Names...@>=
+FILE argf,hf;
+
+@ The subsidiary parameters also need to be stored somewhere.
+
+@<Names...@>=
+STRING window title, prompt, entry text,selected;
+
+@1History.
+History lines are stored in memory with a sequence number equal to their
+position in the history file.
+
+@m hist max = 256
+
+@<Modes...@>=
+MODE HISTORY = STRUCT(INT seq,STRING h);
+
+@ The history is kept here.
+
+@<Names...@>=
+[hist max]HISTORY history;
+INT hist used;
+
+@2Reading the history file.
+The sequence number is obtained from the line number.
+
+@<Read the hist...@>=
+IF open(hf,history fn,stand in channel)/=0
+THEN @<History: initialise it@>
+ELSE
+   on logical file end(hf,(REF FILE f)BOOL: (GOTO eof; SKIP));
+	@<History: read each line@>
+eof:
+	close(hf)
+FI;
+
+@ No history, so initialise all the values.
+
+@<History: init...@>=
+FOR i TO hist max
+DO
+	history[i]:=(0,"")
+OD;
+hist used:=0
+
+@ @<History: read...@>=
+FOR i
+DO
+	REF HISTORY hi=history[i];
+	get(hf,(h OF hi,newline));
+	seq OF hi:=hist used:=i
+OD;
+
+@ Now sort the history lines into alphabetic order using the shell sort.
+
+@<Read the hist...@>=
+IF hist used > 1
+THEN
+	[]INT hist ix=shell sort(LWB history,hist used,
+                         (INT i,j)BOOL: h OF history[i]<h OF history[j]);
+	[hist used]HISTORY lh;
+	FOR i TO UPB lh
+	DO
+		lh[i]:=history[hist ix[i]]
+	OD;
+	history[:UPB lh]:=lh
+FI;
+
+@2Adding to the history.
+The binary chop is used to find the insertion point.
+
+@<Oper...@>=
+PROC add hist=(REF[]HISTORY ht,REF INT hu,[]CHAR s)VOID:
+CASE hu+1
+IN
+	#0#ht[1]:=(hu+:=1,s),
+	#1#IF s < h OF ht[1]
+		THEN ht[2]:=ht[1];
+			ht[1]:=(hu+:=1,s)
+		ELIF s > h OF ht[1]
+		THEN ht[2]:=(hu+:=1,s)
+		FI
+OUT
+	INT pos;
+	REF[]HISTORY htu=ht[:hu];
+	INT r=binary chop(htu,s,h OF htu,pos);
+	IF r < LWB ht
+	THEN #new history line to be inserted at !pos!#
+		[hu+:=1]HISTORY lht;
+		IF pos>0
+		THEN
+			lht[:pos-1]:=ht[:pos-1];
+			lht[pos]:=(hu,s); #note new sequence number#
+			lht[pos+1:]:=ht[pos:hu-1]
+		ELSE #insert before the first line#
+			lht[1]:=(hu,s);
+			lht[2:]:=ht[:hu-1]
+		FI;
+		ht[:UPB lht]:=lht
+	FI
+ESAC; #add hist#
+
+@2Writing out the history file.
+Firstly, sort into the order of the sequence numbers.
+
+@<Proc...@>=
+PROC output the history file = VOID:
+IF hist used > 0
+THEN
+	[]INT oindex=shell sort(1,hist used,
+	                        (INT i,j)BOOL: seq OF history[i]<seq OF history[j]);
+	establish(hf,history fn,stand out channel,0,0,0);
+	FOR i TO hist max MIN hist used
+	DO
+		IF []CHAR l=h OF history[oindex[i]];
+			l/=""
+		THEN put(hf,(l,newline))
+		FI
+	OD;
+	close(hf)
+FI; #output the history file#
+
+@1Utility routines.
+On occasion, it will be necessary to replace underline characters in a
+string with blanks.
+
+@m underline = "_"
+
+@<Oper...@>=
+OP RUB = ([]CHAR s)[]CHAR: replace(s,"_",blank);
+
+@1Command line parameters.
+The principal functions are as follows:-
+\begin{description}
+\item[\.{-Cmsg,b1,b2,...}] Choose an option with buttons $b_i$.
+\item[\.{-Ddef,rx1,rx2}] Select a directory with !def! as the default
+with !rx1!, $\ldots$ as regular expressions for searching.
+\item[\.{-Fdef,rx1,rx2}] Select a file with !def! as the default
+directory with !rx1!, $\ldots$ as regular expressions for searching.
+\item[\.{-I}prompt,len] Wait for general input with prompt \.{prompt}
+and input length \.{len}.
+\item[\.{-T}msg] Display the message !msg! and wait for \.{Ok}. If
+!msg! starts with !@@!, regard !msg! less the first character as the
+name of a file and display the contents of a file and wait for \.{Ok}.
+\end{description}
+Subsidiary parameters define options:-
+\begin{description}
+\item[\.{-h}] Display help.
+\item[\.{-w}title] Define the window title.
+\end{description}
+
+@<Logic...@>=
+FOR argi FROM 2 TO argc
+DO
+   []CHAR argv i=CSTRTORVC argv[arg i];
+   IF argv i[LWB argv i]/="-"
+   THEN err("All parameters start with a dash")
+   ELIF UPB argv i=1
+   THEN err(err unk par+"-")
+   ELIF INT p; char in string(argv i[LWB argv i+1],p,"CDFhITw")
+   THEN @<Act according to the parameter@>
+   ELSE err(err unk par+argv i)
+   FI
+OD
+
+@ @<Plain...@>=
+[]CHAR err unk par="Unknown parameter: ";
+
+@ The !help! procedure must give sufficient data to operate the
+program. The help information is in !help fn!.
+
+@<Proc...@>=
+PROC help = (INT ext)VOID:
+IF []CHAR hfn=help fn;
+   REF FDPXSHELP form pxs help=create form pxs help;
+   open(hf,hfn,stand in channel)/=0
+THEN
+   fl show alert("Cannot find "+hfn,"","Program abort",1);
+   fl finish;
+   exit(3)
+ELSE
+   close(hf);
+   fl load browser(help brow OF form pxs help,hfn);
+   help exit:=ext;
+   fl show form(pxs help OF form pxs help,
+                fl place center OR fl free size,
+                fl fullborder,
+                "PXS Help");
+   fl do forms;
+	fl hide form(pxs help OF form pxs help);
+   fl finish;
+   exit(help exit)
+FI; #help#
+
+@ @<Names...@>=
+INT help exit:=1;
+
+@ When a wrong parameter is given or help is required, the following
+message is displayed.
+
+@<Proc...@>=
+PROC err = ([]CHAR msg)VOID:
+IF msg=""
+THEN help(1)
+ELSE
+   fl show alert(msg,"","Press Dismiss to display the help",1);
+   help(2)
+FI;
+
+@ The main function selector.
+
+@<Act according...@>=
+CASE p
+IN
+   choose(argvi[3:])
+   ,
+   select a directory(argvi[3:])
+   ,
+   select a file(argvi[3:])
+   ,
+   help(0)
+   ,
+   input data(argvi[3:])
+   ,
+   display text(argvi[3:])
+   ,
+   window title:=RUB argvi[2+LWB argvi:]
+ESAC
+
+@1Principal procedures.
+Utility procedures are used by one or more principal procedures.
+
+@<Proc...@>=
+@<Utility procedures@>
+@<Principal procedures@>
+
+@ The file or directory selector takes the following parameters:-
+\begin{itemize}
+\item[![]CHAR!] \.{start}\newline
+The default directory.
+\item[![]CHAR!] \.{title}\newline
+The window title.
+\item[!BOOL!] \.{dir}\newline
+!TRUE! if a directory is to be selected, !FALSE! if a file is to be
+selected.
+\item[!INT!] \.{bk col}\newline
+The background colour of a selection and the input fields.
+\item[![][]CHAR!] \.{dirs}\newline
+A list of directories to start from.
+\item[![][]CHAR!] \.{filters}\newline
+A list of filters to use.
+\end{itemize}
+
+The file and directory selector parameters have the same format, so
+this procedure will do for both. The parameter !param! has the format
+\begin{center}
+default,regex1,regex2 $\ldots$
+\end{center}
+with both the default directory and regular expressions being optional.
+If the default directory is not given, then the current working
+directory is used instead. Regular expressions can only be specified if
+the default directory is also given. The default regular expression is
+!".*"!.
+
+@<Utility...@>=
+PROC get selector params = (STRING param)FDSPAR:
+IF param=""
+THEN (get cwd,TC STRING("~")+"|"+get cwd,".*")
+ELSE (param UPTO ",",param UPTO ",",replace(param AFTER ",",",","|"))
+FI; #get selector params#
+
+@ The mode !FDSPAR! is a structure containing the required parameters.
+
+@<Modes...@>=
+MODE FDSPAR = STRUCT(STRING st,dirs,flt);
+
+@ For directory selection, the fields from the !FDSPAR! structure
+yielded by !get selector params! must be extracted.
+
+@<Principal...@>=
+PROC select a directory = (STRING par)VOID:
+BEGIN
+   IF window title=""
+	THEN window title:="Select a directory"
+	FI;
+   FDSPAR fp=get selector params(par);
+   print((px fds(st OF fp,
+                 window title,
+                 TRUE,
+                 dirs OF fp,
+                 flt OF fp),newline));
+   fl finish;
+   stop
+END; #select a directory#
+
+@ For file selection, we need to extract the fields from the
+!FDSPAR! structure yielded by !get selector params!.
+
+@<Principal...@>=
+PROC select a file = (STRING par)VOID:
+BEGIN
+   IF window title=""
+   THEN window title:="Select a file"
+	FI;
+   FDSPAR fp=get selector params(par);
+   print((px fds(st OF fp,
+                 window title,
+                 FALSE,
+                 dirs OF fp,
+                 flt OF fp),newline));
+   fl finish;
+   stop
+END; #select a file#
+
+@2Choice.
+The choice parameter consists of the text to be displayed followed by
+buttons delimited by commas. The principal processing consists
+of calculating the size of the window and the positions of the buttons.
+If no buttons are specified, two default buttons of \.{Yes} and \.{No}
+are provided. No text means nothing output.
+
+@<Principal...@>=
+PROC choose = (STRING par)VOID:
+IF par=""
+THEN
+   fl finish;
+   stop
+ELSE
+   @<Ch: declare local names@>
+   @<Ch: declare the callback routines@>
+   @<Ch: create the text object@>
+   @<Ch: extract the button labels@>
+   @<Ch: compute the size of the form@>
+   @<Ch: construct the form@>
+   fl show form(fm,
+                fl place mouse OR fl free size,
+                fl fullborder,
+                window title);
+   fl do forms
+FI; #choose#
+
+@3Choice names.
+Somewhere is needed for the text and the remainder of the parameter which
+contains the button labels. Space will also be needed for the text height and
+width, the form height and width and the button heights (which are all the
+same). Lastly, a !REF REF FLOBJECT! is needed to hold the text box reference.
+
+@<Ch: declare local...@>=
+STRING text,lp;
+INT
+   fw,fh,   #form width and height#
+   tw,th,   #text width and height#
+   bh;      #button height#
+REF FLOBJECT text box;
+
+@3Creating the text object.
+If no buttons are specified, two default buttons are created.
+
+@m comma = ","
+
+@<Ch: create the...@>=
+lp:=
+	IF (text:=par UPTO comma)=par
+	THEN "Yes,No,"
+	ELSE par AFTER comma+comma
+	FI;
+
+@ Any underlines in !text! are replaced by spaces.
+
+@<Ch: create the...@>=
+text:=RUB text;
+
+@ The height of the text is computed first. The size of the text box
+should be such that the text is surrounded by two pixels on each side.
+The size of the text box is stored in !tw! and !th!.
+
+@m sb #side bearing# = 2
+
+@<Ch: create the text...@>=
+th:=fl get char height(fl times style,fl medium size,LOC INT,LOC INT);
+tw:=fl get string width(fl times style,fl medium size,text);
+text box:=fl create text(fl normal text,
+                         0,0,
+                         tw:=sb+tw+sb,
+                         th:=sb+th+sb,
+                         text);
+
+@3Creating the buttons.
+The number of commas determines how many buttons are defined. Previously, it was
+ensured that the parameter string ended with a comma, so initialise !buttons! to
+zero.
+
+@<Ch: extract...@>=
+INT buttons:=0;
+
+FOR i FROM LWB lp TO UPB lp
+DO
+   buttons+:=ABS(lp[i]=comma)
+OD;
+
+@ A structure is used to hold the labels which contains a reference to the
+created button as well as the button width.
+
+@<Ch: declare local...@>=
+MODE BUTTONDATA=STRUCT(STRING lab,INT bw,REF FLOBJECT obj);
+
+@ !buttons! data structures are needed.
+
+@<Ch: extract...@>=
+[buttons]BUTTONDATA button;
+
+@ Each button label can be put into the structure for each button, removing the
+label from the parameter. It is also possible to get the button width using !fl
+get string width! because each button label is displayed in !fl normal style!
+and at !fl small size!. In the call to !fl get char height!, the parameters for
+the talls and deeps are anonymous names because they are not needed. The button
+is created using !fl create button! rather than !fl add button!. Lastly, the
+form width can be computed from the width of the buttons.
+
+@m bbs #between button space# = 5
+
+@<Ch: extract...@>=
+fw:=bbs;
+
+FOR i WHILE lp/=""
+DO
+   REF BUTTONDATA bi=button[i];
+   lab OF bi:=RUB(lp UPTO comma);
+   lp:=lp AFTER comma;
+   bw OF bi:=fl get string width(fl normal style,fl small size,lab OF bi);
+   bh:=fl get char height(fl normal style,fl small size,LOC INT,LOC INT);
+   obj OF bi:=fl create button(fl normal button,
+                               fw,th,
+                               bw OF bi:=sb+bw OF bi+sb,
+                               bh:=sb+bh+sb,
+                               lab OF bi);
+   fw+:=sb+bw OF bi+sb+bbs
+OD;
+
+@ After the last button, we need to reduce !fw! by !bbs!.
+
+@<Ch: extract...@>=
+fw-:=bbs;
+
+@ The form width is the maximum of the text box width and the width of the
+buttons. The form height is the sum of the text box height and the height of the
+buttons.
+
+@<Ch: compute...@>=
+fw:=fw MAX tw;
+fh:=th+bh;
+
+@3The button callback routines.
+These are all the same: they write the button label to !stand out! and
+then finish the program.
+
+@<Ch: declare the call...@>=
+PROC button cb = (REF FLOBJECT obj,INT data)VOID:
+BEGIN
+   print((fl get object label(obj),newline));
+   fl finish;
+   stop
+END; #button cb#
+
+@3Constructing the choice form.
+Now the form can be constructed.
+
+@<Ch: constr...@>=
+REF FLFORM fm=fl start form(fl up box,fw,fh);
+fl add object(fm,text box);
+FOR i FROM LWB button TO UPB button
+DO
+   REF BUTTONDATA bi=button[i];
+   fl set object lalign(obj OF bi,fl align center);
+   fl set object lstyle(obj OF bi,fl normal style);
+   fl set object lsize(obj OF bi,fl small size);
+   fl set object callback(obj OF bi,button cb,0);
+   fl add object(fm,obj OF bi)
+OD;
+fl finish form;
+fl adjust form size(fm);
+
+@2Inputting data.
+The only special character is the bang which asks the program to search
+backwards for a line containing the current input string regarded as a regular
+expression.
+
+On pressing the return button, the input string is printed to !stand out! and
+the program terminates.
+
+If the input length is not specified, the following is used as the default.
+
+@m default prompt = "Input"
+@m default input length = 80
+@m ret butt wd = 30
+@m ret butt ht = 33
+@m bang = "!"
+
+@<Principal...@>=
+PROC input data = ([]CHAR par)VOID:
+BEGIN
+	MODE FDINPFORM=STRUCT(
+		REF FLFORM inp form,
+		REF FLOBJECT inp obj,ret obj);
+	FDINPFORM input form;
+   INT len:=default input length,
+		 fh:=sb+ret butt ht+sb; # form height #
+   STRING prompt:=@<In: get the prompt and input length@>
+   prompt+:=":";
+   INT iw=fl get string width(fl normal style,fl normal size,len*"n"),
+       pw=fl get string width(fl times style,fl normal size,prompt);
+	INT fw=sb+pw+iw+sb+ret butt wd+sb;
+   @<In: declare the routines !input cb! and !accept cb!@>
+	@<In: construct the form@>
+   fl show form(inp form OF input form,
+                fl place mouse OR fl free size,
+                fl fullborder,
+                window title);
+   fl do forms
+END; #input data#
+
+@ The form contains an input field and a return button.
+
+@<In: construct...@>=
+inp form OF input form:=fl start form(fl no box,fw,fh);
+fl add box(fl up box,0,0,fw,fh,"");
+REF FLOBJECT obj:=inp obj OF input form:=
+	fl add input(fl normal input,
+	             sb+pw,       #x#
+					 sb,          #y#
+					 iw,          #w#
+					 ret butt ht, #h#
+					 prompt);
+   fl set object lstyle(obj,fl times style);
+   fl set object lsize(obj,fl normal size);
+   fl set input return(obj,fl return always);
+   fl set input maxchars(obj,len);
+   fl set input color(obj,fl black,fl slate blue);
+   fl set object callback(obj,input cb,0);
+obj:=ret obj OF input form:=
+	fl add button(fl normal button,
+	              sb+pw+iw+sb,    #x#
+					  sb,              #y#
+					  ret butt wd,      #w#
+					  ret butt ht,      #h#
+					  "@@returnarrow");
+	fl set object callback(obj,accept cb,0);
+fl finish form;
+
+@ The input length, if present, is separated from the prompt by a
+comma.
+
+@<In: get the prompt...@>=
+IF par=""
+THEN default prompt
+ELIF INT pos;
+	char in string(comma,pos,par)
+THEN # Either the prompt or the input length or both is specified #
+   IF pos < UPB par
+   THEN @<In: get the input length@>
+   FI;
+	IF pos > LWB par
+	THEN RUB par[:pos-1]
+	ELSE default prompt
+	FI
+ELSE RUB par
+FI;
+
+@ The input length should be given as a number. If the characters given
+are not numeric, then !len! will retain its value of !default input
+length!.
+
+@<In: get the input...@>=
+FILE mf;
+open(mf,MAKERVC((par AFTER comma)+comma),mem channel);
+make term(mf,comma);
+get(mf,len);
+close(mf)
+
+@ The callback routine is invoked on each key depression. The global
+name !inp str! is used to hold the input string. If the string ends
+with a backstroke, use the string to search the history, minus the
+backstroke.
+
+@<In: declare...@>=
+PROC input cb = (REF FLOBJECT obj,INT data)VOID:
+IF STRING inp:=fl get input(obj);
+	INT pos;
+	inp=""
+THEN SKIP
+ELIF inp[UPB inp]="\"
+THEN inp:=inp[:UPB inp-1];
+	@<In: use !inp! to search the history@>
+ELSE inp str:=inp
+FI; #input cb#
+
+@ !inp str! has to be declared globally.
+
+@<Names...@>=
+STRING inp str;
+
+@3Searching the history.
+The procedure !search! yields the required history line if the string
+!s! is a valid regular expression and matches one of the lines in the
+history.
+
+@<Util...@>=
+PROC search = (REF[]HISTORY hist,[]CHAR s)[]CHAR:
+IF REF REGEX rx=rx compile(s);
+   rx IS no regex
+THEN ""
+ELIF UPB hist=0
+THEN ""
+ELSE STRING found:=""; 
+	FOR i FROM UPB hist BY ---1 TO LWB hist
+	DO
+		IF rx match(rx,h OF history[i],LOC SUBEXP)
+		THEN found:=h OF history[i]; GOTO got it
+		FI
+	OD;
+got it:
+	found
+FI; #search#
+
+@ If !search! yields a non-null string, we assign it to !inp str! and
+set the string of the input object.
+
+@<In: use !inp!...@>=
+IF []CHAR s=search(history[:hist used],inp);
+   s/=""
+THEN fl set input(obj,inp str:=s)
+FI
+
+@3The return button.
+This button actually causes the value to be returned.
+
+@<In: declare...@>=
+PROC accept cb = (REF FLOBJECT obj,INT data)VOID:
+BEGIN
+	add hist(history,hist used,inp str);
+	print((inp str,newline));
+	fl finish;
+	stop
+END; #accept cb#
+
+@2Displaying text.
+The parameter either contains a text to be displayed or is the name of a file
+containing the text. In the former case, use a goody. In the latter, use a
+browser and two buttons with \.{Finish} and \.{Cancel} as the labels.
+
+@<Principal...@>=
+PROC display text = ([]CHAR par)VOID:
+IF par[LWB par]/="@@"
+THEN
+	fl show messages(RUB par);
+	fl finish;
+	stop
+ELSE
+	MODE FDTEXT=STRUCT(
+		REF FLFORM disp form,
+		REF FLOBJECT txt,             #browser#
+		             finish, cancel); #buttons#
+
+	FDTEXT text form;
+   STRING tfn:=TC par[1+LWB par:],text;
+	[]CHAR k fin = "Finish",k can = "Cancel";
+	INT
+   	finw=fl get string width(fl normal style,fl normal size,k fin),
+   	canw=fl get string width(fl normal style,fl normal size,k can),
+		txtw=fl get string width(fl normal style,fl normal size,80*"n");
+	INT fw=sb+txtw+sb,
+	    fh=sb+txtw+sb+ret butt ht+sb;
+	@<Dis: declare the callback procedures@>
+
+	@<Dis: construct the form@>;
+	fl show form(disp form OF text form,
+   	          fl place mouse OR fl free size,
+   	          fl fullborder,
+   	          window title);
+	fl do forms
+FI; #display text#
+
+@3The text callback procedures.
+The \.{Finish} button yields the selected text or !"Ok"! if no text is selected.
+
+@<Dis: declare...@>=
+PROC finish cb = (REF FLOBJECT obj,INT data)VOID:
+BEGIN
+   print(((selected=""|"Ok"|selected),newline));
+   fl finish;
+   stop
+END; #finish cb#
+
+@ The \.{Cancel} button yields just a newline.
+
+@<Dis: declare...@>=
+PROC cancel cb = (REF FLOBJECT obj,INT data)VOID:
+BEGIN
+   print(newline);
+   fl finish;
+   stop
+END; #cancel cb#
+
+@ The browser callback procedure sets !selected! to the selected line.
+
+@<Dis: declare...@>=
+PROC browser cb = (REF FLOBJECT obj,INT data)VOID:
+	selected:=fl get browser line(obj,fl get browser(obj));
+
+@3The text form.
+The form contains a browser and two buttons.
+
+@<Dis: construct...@>=
+disp form OF text form:=fl start form(fl no box,fw,fh);
+fl add box(fl up box,0,0,fw,fh,"");
+REF FLOBJECT obj:=txt OF text form:=
+   fl add browser(fl hold browser,sb,sb,txtw,txtw,window title);
+   fl set object callback(obj,browser cb,0);
+   fl set browser fontstyle(obj,fl fixed style);
+	fl load browser(obj,tfn);
+obj:=fl add button(fl normal button,sb,sb+txtw+sb,finw+4,30,k fin);
+   fl set object callback(obj,finish cb,0);
+	fl set object gravity(obj,fl northwest,fl southeast);
+obj:=fl add button(fl normal button,
+                   sb+finw+4+sb,sb+txtw+sb,canw+4,30,k can);
+   fl set object callback(obj,cancel cb,0);
+	fl set object gravity(obj,fl northwest,fl southeast);
+fl finish form
+
+@ Here are all the macro calls.
+
+@<Include...@>=
+macro fl add box;
+macro fl add browser;
+macro fl add button;
+macro fl add input;
+macro fl add object;
+macro fl add text;
+macro fl adjust form size;
+macro fl create button;
+macro fl create text;
+macro fl do forms;
+macro fl finish form;
+macro fl finish;
+macro fl get browser;
+macro fl get browser line;
+macro fl get char height;
+macro fl get input;
+macro fl get object label;
+macro fl get string width;
+macro fl hide form;
+macro fl initialise;
+macro fl load browser;
+macro fl set border width;
+macro fl set browser fontstyle;
+macro fl set goodies font;
+macro fl set input;
+macro fl set input color;
+macro fl set input maxchars;
+macro fl set input return;
+macro fl set object callback;
+macro fl set object color;
+macro fl set object gravity;
+macro fl set object lalign;
+macro fl set object lsize;
+macro fl set object lstyle;
+macro fl show alert;
+macro fl show form;
+macro fl show messages;
+macro fl start form;
+macro get cwd;
+macro gp op after;
+macro gp op upto;
+macro gp replace;
+macro gp shell sort;
+macro op tc;
+
+@1System dependencies.
+Check these if you are porting this program to another platform.
+

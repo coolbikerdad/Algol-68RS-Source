@@ -1,0 +1,2728 @@
+% This program is copyright (C) BP64,BP65,BP66,BP67 Phoenix Engineering.
+\documentclass[a4paper]{article}
+\def\bang{!}
+\def\title{Web 68}
+\def\contentspagenumber{123} % should be odd
+\pageno=\contentspagenumber \advance\pageno by 1
+
+@1Introduction.
+The program converts a Web 68 file to an Algol 68 file. It is based on
+the program \.{tangle} written by D. E. Knuth in September, 1981 to
+convert a WEB file to a Pascal file. It was written in Algol 68 by
+Sian Leitch in 2001. Since this program describes itself, a
+bootstrapping process involving hand-translation had to be used to
+get started.
+
+For large Web 68 files one should have a large memory, since
+tang keeps all the Algol 68 text in memory (in an abbreviated
+form). The program uses a few features of the local Algol 68 compiler
+that may need to be changed in other installations.
+System-dependent portions of tang can be identified by looking
+at the entries for `system dependencies' in the index.
+@^system dependencies@>
+
+Modules have been written according to this pattern:-
+\begin{itemize}
+\item Routine declarations are followed with a !;!.
+\item All other modules have no following !;!.
+\item All module references are followed by a !;! where necessary.
+\end{itemize}
+The ``banner line'' defined here should be changed whenever tang 
+is modified.
+
+@<Plain values in the outer reach@>=
+STRING cvs tang ="$Id: tang.w68,v 1.10 2005/01/21 15:34:16 sian Exp $";
+
+@ The program starts in the usual way except that the local compiler
+needs directives which precede the initial !BEGIN!.
+
+@a
+@<Compiler prelude@>
+BEGIN
+@<Modes in the outer reach@>@;
+@<Plain values...@>@;
+@<Other values in the outer reach@>@;
+@<Names in the outer reach@>@;
+@<Debug routines@>@;
+@<Error handling routines@>@;
+@<Operators in the outer reach@>@;
+@<Procedures in the outer reach@>@;
+@<Input procedures in the outer reach@>
+
+@ The local Algol 68 compiler uses special directives to specify the
+identification of a program quite apart from the filename and to
+specify preludes. The standard prelude is not included unless
+specifically requested.@^system dependencies@>
+
+@<Compiler pre...@>=
+PROGRAM tang CONTEXT VOID
+USE @<Library preludes@> standard
+
+@ It also uses a special phrase at the end of the program.
+
+@<Compiler postlude@>=
+FINISH
+
+@ We shall be needing the !get param! routine to parse the command
+line.
+
+@<Library...@>=
+params,
+
+@1Included Web68 files.
+A number of operators and procedures are predefined in the system and
+general preludes, the latter being called by the former.
+
+@isysprelude.w@>
+
+@1Debugging tang.
+During the development of tang, it became necessary to print the
+tokens obtained by !get tok! and the textual items processed by
+!process module!. Originally, a mechanism similar to that employed by
+Donald Knuth in \.{tangle} was used. That mechanism was unsatisfactory
+mainly because it required recompilation to be switched on or off. It
+has now been replaced by a typically Algol 68 solution.
+
+The command line argument \.{d} is given when debugging is required. Its
+presence merely sets !debug! to refer to !TRUE!.
+
+@<Names...@>=
+BOOL debug:=FALSE; # by default #
+
+@ An Algol 68 program can declare names which can refer to procedures.
+!debug print token! and !debug print text! are initialised to dummy
+routines.
+
+@<Names...@>=
+PROC(STRING,TOKEN)VOID debug print token:=@/
+@+(STRING @!s, TOKEN @!t)VOID: SKIP;@#
+PROC(STRING,TEXT)VOID debug print text:=@/
+@+(STRING @!s, TEXT @!t)VOID: SKIP;@#
+PROC(STRING,STRING)VOID debug print string:=@/
+@h&nbsp;&nbsp;@>(STRING @!s,@!t)VOID: SKIP;
+
+@ Here are the declarations of the monitor routines.
+
+@<Debug...@>=
+macro monitor;
+macro start monitor;
+
+@ We need to output the constituent mode of the !TOKEN! and a string
+identifying it. In the case of bold symbols, we output the actual bold
+symbol if the !TOKEN! is a negative integer.
+
+@<Debug...@>=
+PROC monitor print token = (STRING @!s, TOKEN @!t)VOID:
+  monitor(
+     (s,
+     CASE t
+      IN
+        (INT @!n):
+           "INT("+IF n<0
+               THEN bold sym[ABS n]+"["+whole(ABS n,0)+"]"
+               ELSE whole(n,0)
+               FI+")",
+        (CONTROL @!c): "CONTROL("+cs OF c+")",
+        (STRING st): "STRING("+st+")",
+        (VOID): "VOID",
+        (REF TAG rt): "REF TAG("+s OF rt+")"
+      ESAC,newline));
+
+@ When printing objects of mode !TEXT!, again we need to output the
+underlying ![]CHAR! to identify the object.
+
+@<Debug...@>=
+PROC monitor print text = (STRING @!s, TEXT @!t)VOID:
+  monitor(
+     (s,(@{text OF t|
+       (INT @!n): "INT("+(n<0|bold sym[ABS n]|whole(n,0))+")",
+       ([]INT @!r): "[]INT("
+                +whole(r[1],0)
+                +"."+whole(r[2],0)
+                +"."+whole(r[3],0)
+                +"."+whole(r[4],0)+")",
+       (STRING st):   "STRING("+st+")",
+       (REF TAG tg):   "REF TAG("+s OF tg+")",
+       (REF MACRO mc): "REF MACRO("+s OF id OF mc+")",
+       (REF MODULE md):"REF MODULE("+id OF md+")",
+       (VOID):      "VOID",
+       (CONTROL @!c):  "CONTROL("+cs OF c+")"),newline))@};
+
+@ Occasionally, we simply want to output a debug message.
+
+@<Debug...@>=
+PROC monitor print string = (STRING s,t)VOID: monitor((s,t,newline));
+
+@1Reporting errors to the user.
+The history of the program execution is kept in !history! which is
+initialised to !spotless!.
+
+@m spotless = 0
+@m warnings = 1
+@m errors = 2
+
+@<Names...@>=
+INT history:=spotless;
+
+@ All console output is handled by the procedure !print out! so that
+some check can be kept on the length of the output line. It uses the
+global name !console pos!.
+
+@m print nl = print(newline); @&console pos:=0
+
+@<Names...@>=
+INT console pos:=0;
+
+@ We use !EMPTY! in a call to !print out! when we want a newline
+because we cannot test for !p = newline! with the current compiler. The
+procedure is classed with the error routines because it is used by
+them. We shall ensure that output lines are no larger than the
+following.
+
+@m max output line leng = 80
+
+@<Error...@>=
+PROC print out=([]UNION(STRING,CHAR,INT,VOID) @!s)VOID:
+FOR i FROM LWB s TO UPB s
+DO
+  STRING outs=@{CASE s[i]
+          IN
+            (STRING si): si,
+            (CHAR ci):  ci,
+            (INT ni):   whole(ni,0),
+            (VOID):    (print nl; "")
+          ESAC@};
+  IF console pos + UPB outs > max output line leng
+  THEN print nl
+  FI;
+  print(outs); console pos+:=UPB outs
+OD;
+
+@ The tang processor operates in two phases: firstly it inputs the
+source file and stores a reduced representation of the program, then it
+produces the Algol 68 output from that representation.
+
+The global name !phase one! indicates whether we are in Phase I.
+
+@<Names...@>=
+BOOL phase one:=TRUE; #!TRUE! in Phase I, !FALSE! in Phase II#
+
+@ During the first phase, syntax errors are reported to the user by
+saying !err print("message")!.
+
+This will print the error message followed by an indication of where
+the error was spotted in the source file. Note that no full stop
+follows the error message, since the error routine will automatically
+supply one.
+
+Errors that are noticed during the second phase are reported to the
+user in the same fashion, but the error message will be followed by an
+indication of where the error was spotted in the output file.
+
+The actual error indications are provided by the procedure !error!.
+
+@m err print(msg)=(print nl;
+             print out(("! Error: ",msg));
+             error(errors))
+
+@<Error handling...@>=
+PROC error=(INT status)VOID: #prints !"."! and location of the error#
+IF  IF history < status @&THEN history:=status @&FI;
+   phase one
+THEN @<Print input buffer error location@>
+ELSE @<Print output buffer error location@>
+FI;
+
+@ The error locations during Phase I can be indicated using the
+!STREAM! for !web!. Note the use of !EMPTY! for a newline in the
+output. Firstly the current line number is printed, then all the
+characters read so far followed, on a separate line, by all the
+characters yet to be read offset by the characters read so that the
+error point can be seen easily.
+
+@<Print input buffer...@>=
+print out((". (",idf(f OF web),", l.",n OF web,")",EMPTY));
+
+FOR k TO loc OF web
+DO
+  print out((CHAR bk=(b OF web)[k]; bk=tab ch|blank|bk))
+OD;
+
+print out((EMPTY,loc OF web*blank,
+       (loc OF web<upb OF web|(b OF web)[loc OF web+1:upb OF web]|"")));
+print out(blank) #this space separates the message from future output#
+
+@ The position of errors detected during the output phase can be
+indicated by outputting the partially filled output buffer.
+
+@<Print output buffer...@>=
+print out((". (l.",n OF output,")",EMPTY,
+       (b OF output)[upb OF output],"... ",EMPTY))
+
+@ The !fatal error! macro terminates the program unequivocally. It is
+used when no recovery from a particular error has been provided.
+@^system dependencies@>
+
+@m fatal error(err)=(print out((EMPTY,err));
+              error(errors);
+              close(f OF output);
+              exit(-1))
+
+@ Before the files have been opened, we shall need a simpler error routine.
+@^system dependencies@>
+
+@<Error handling...@>=
+PROC simple error=(STRING @!s,INT halt)VOID:
+  (print((newline,"! Error: ",s)); exit(halt));
+
+@ Occasionally, non-fatal situations can arise about which the user
+needs to be warned.
+
+@m warn print(msg) = (print nl; print out(msg); error(warnings))
+
+@1Processing the command line.
+Input is from a Web 68 file. Output is to a source Algol 68 file.
+Because we shall need to know the number of the current line being
+processed in each file, as well as a buffer for that file, it is
+convenient to define a mode which gathers all this data together.
+
+Because it is possible to include a subsidiary web file using
+\.{@@i}filename\.{@@>}, we need a reference to a !STREAM! to create a
+linked list of included files; this will then cater for nested
+includes. The number of each file is part of the structure so that
+sections in that file can be properly numbered.
+
+The buffer is declared as a ![]CHAR! for the sake of efficiency.
+
+@m str buff sz = 256
+
+@<Modes...@>=
+MODE STREAM=STRUCT(REF FILE f,
+             BOOL ended,      #!TRUE! at EOF#
+             INT @{fnum,      #file number#
+               n,          #current line number#
+               loc,        #current position in the current line#
+               upb,@}        #upper bound of used !b!#
+             [4]INT sec,      #current section number#
+             [str buff sz]CHAR b,#current line#
+             REF STREAM next);  #including file (if any)#
+
+@ We shall need a declaration for a null stream.
+
+@<Other values...@>=
+REF STREAM no stream = NIL;
+
+@ Every include file has to be added to the included file tree.
+
+@<Input...@>=
+PROC add file to tree = (REF REF INCLUDED tr,STRING fn)VOID:
+IF tr IS no inc
+THEN tr:=HEAP INCLUDED:=(fn,no inc,no inc)
+ELIF fn < s OF tr
+THEN add file to tree(left OF tr,fn)
+ELIF fn > s OF tr
+THEN add file to tree(right OF tr,fn)
+ELSE warn print("file "+fn+" has already been read")
+FI; #add file to tree#
+
+@ When an include file has been specified, we need to push the !REF
+STREAM! for the included file on the front of the linked list referred
+to by !web!. The following procedure yields !FALSE! if the included
+file cannot be found.
+
+@<Input...@>=
+PROC add include file = (REF REF STREAM web, STRING inc fn)BOOL:
+IF HEAP FILE inc f;
+  open(inc f,inc fn,stand in channel)=0
+THEN@/
+  file number+:=1;
+  @<Assign !HEAP STREAM! to web@>
+  add file to tree(inc tree,inc fn);
+  TRUE
+ELSE @<Look for the file on the include pathlist@>
+FI; #add include file#
+
+@ The !HEAP STREAM! must itself be initialised.
+
+@<Assign !HEAP STREAM!...@>=
+web:=HEAP STREAM:=@/
+  (inc f,FALSE,file number,0,0,0,
+   (file number,0,0,0),str buff sz*blank,web);
+
+@ The name !file number! is declared globally.
+
+@<Names...@>=
+INT file number:=0;
+
+@ Include files are searched in the standard system paths specified
+by !include paths!. Each path is followed by a \.{:} so we can use
+that as a terminator. The system include path is always the last
+path.
+
+@<Look for the file...@>=
+FILE pf;
+STRING path;
+open(pf,MAKERVC include paths,mem channel);
+make term(pf,":");
+on logical file end(pf,(REF FILE f)BOOL: (close(f); @&GOTO eof; SKIP));
+DO
+  get(pf,(skip terminators,path));
+  IF path[UPB path]/="/" @&THEN path+:="/" @&FI;
+  IF open(inc f,path+inc fn,stand in channel)=0
+  THEN@/
+    file number+:=1;
+    @<Assign !HEAP STREAM!...@>
+    close(pf);
+   add file to tree(inc tree,inc fn);
+    GOTO found
+  ELSE debug print string("looking for include file ",path+inc fn)
+  FI
+OD;
+eof:
+FALSE EXIT
+found: TRUE
+
+@ Before adding the include file to the linked list of include files,
+we need to check whether the file has been included before. If a piece
+of text needs to occur in more than one place in a program, it should
+either be defined as a module and referred to by its tag, or be
+defined as a macro and referred to by its macro identifier. Web 68 
+regards the inclusion of an already included file as an
+error. However, because it is not a serious error, the user is only
+warned.
+
+We need a procedure which will scan the tree of included files to
+determine whether it has already been included. It yields !TRUE! if the
+file has already appeared.
+
+@<Procedures...@>=
+PROC scan included tree = (REF REF INCLUDED tr, STRING fn)BOOL:
+IF tr IS no inc
+THEN FALSE
+ELIF fn = s OF tr
+THEN TRUE
+ELIF fn < s OF tr
+THEN scan included tree(left OF tr,fn)
+ELSE scan included tree(right OF tr,fn)
+FI; #scan included tree#
+
+@ Here is the mode !INCLUDED!.
+
+@<Modes...@>=
+MODE INCLUDED = STRUCT(STRING s,REF INCLUDED left,right);
+
+@ And its !NIL!.
+
+@<Other val...@>=
+REF INCLUDED no inc = NIL;
+
+@ And the tree itself.
+
+@<Names...@>=
+REF INCLUDED inc tree:=no inc;
+
+@ What happens when the end of an included file is reached? The
+!STREAM! for that file is popped off the beginning of the !STREAM!
+linked list (after the file has been closed) and input is continued
+with the previous !STREAM!.
+
+@<Check if included file@>=
+IF next OF web ISNT no stream
+THEN close(f OF web);
+  web:=next OF web
+FI
+
+@ Here are the names for both the input stream and the output stream.
+The macro is a convenient short cut for testing the end of all input.
+
+@m input ended = ended OF web
+
+@<Names...@>=
+REF STREAM web:=HEAP STREAM:=@/
+  (HEAP FILE, FALSE,0,0,0,0,(0,0,0,0),str buff sz*blank, no stream);
+STREAM output:=@/
+  (HEAP FILE,FALSE,0,0,0,0,(0,0,0,0),str buff sz*blank,no stream);
+
+@2Program arguments.
+The command line will always be in the form of an Algol 68 call. The
+following cases must be considered:-
+\begin{enumerate}
+\item No parameters.\newline
+This is regarded as a request for help.
+\item A program parameter containing "h". A suitable help message
+will be given.
+\item A program parameter containing "d". Debugging information will
+be written to the file \.{tang.dbg}.
+\item A program parameter containing "w". It should be followed by a
+parameter pack containing one or more program parameters containing
+directory names, or string denotations, each containing a directory
+name.\newline
+
+Included files (using the !@@i! directive) will always be looked for in
+\.{$HOME/lib} as well as any paths given by this option.%\$
+
+\item A program parameter containing "v".\newline
+The version of the program extracted from the CVS identification is
+output and the program terminated.
+\item A program parameter containing "f" followed by the filename of
+the tang file is given.
+\end{enumerate}
+We shall need somewhere to store the tang filename.
+
+@<Names...@>=
+STRING tang fn;
+
+@ The program arguments are accessed via the !arg channel!. We need a
+name of mode !REF FILE!.
+
+@<Names...@>=
+FILE argf;
+
+@ Here is the code to process command line options.@^system dependencies@>
+
+@a
+@<Args: get the HOME directory@>
+@<Args: access the program arguments@>
+@<Args: process program options@>
+
+@ The home directory is specified by the environment string identified
+by \.{HOME}. The following macros give meaningful identifiers to
+program yields.
+
+@m help status = 1
+@m no web file status = 2
+@m no output file status = 3
+@m invalid include path status = 4
+@m error status = 5
+
+@<Args: get the HOME...@>=
+IF FILE hf; open(hf,"HOME",env channel)/=0
+THEN simple error("HOME undefined",error status)
+  #@.Error: HOME undefined@>#
+ELSE get(hf, home dir);@& close(hf)
+FI;
+
+@ We shall need the global name !home dir!.
+
+@<Names...@>=
+STRING home dir;
+
+@ The program arguments are accessed using the !arg channel! provided
+by the standard prelude.
+
+@<Args: access the program...@>=
+IF open(argf,"",arg channel)/=0
+THEN simple error("program's arguments inaccessible",error status)
+  #@.Error: program's arguments...@>#
+ELSE
+  on logical file end(argf,
+    (REF FILE f)BOOL:@/
+      (close(f);
+       usage;
+       TRUE))
+FI;
+
+@ All Algol 68 programs now have parameters in the form of an Algol
+68 call and are processed using the routine !get param!. The mode
+!REF PARAM! should always occur because the call for the program
+should be \.{tang(params)}.
+
+@<Args: process program...@>=
+CASE get param(argf)
+IN
+  (REF PARAM rp):
+    IF IF rp IS no param
+      THEN TRUE
+      ELSE UPB val OF rp = 0
+      FI
+    THEN usage
+    ELSE @<Args: process the program arguments@>
+    FI
+OUT simple error("unknown parameter format",error status)
+  #@.Error: unknown parameter...@>#
+ESAC;
+
+@ Program arguments will contain the principal options.
+
+@<Args: process the program...@>=
+FOR i FROM LWB val OF rp TO UPB val OF rp
+DO
+  CASE (val OF rp)[i]
+  IN
+    (REF PARAM rp1):
+      IF IF rp1 IS no param
+        THEN TRUE
+        ELSE prog OF rp1=""
+        FI
+      THEN simple error("missing parameter",error status)
+        #@.Error: missing parameter@>#
+      ELIF
+        INT p;
+        char in string((prog OF rp1)[LWB prog OF rp1],p,"dfhvw")
+      THEN
+        CASE p
+        IN
+#d#        debug:=TRUE
+          ,
+#f#        @<Args: process a file name pack@>
+          ,
+#h#        usage
+          ,
+#v#        (
+            INT vpos = "v" FIND cvs tang;
+            put(stand error,@/
+               ("This is tang, version ",
+               (cvs tang[vpos+2:]) UPTO blank,
+                " (C) BP64,65,66,67 Phoenix Engineering",newline));
+            exit(help status)
+          )
+          ,
+#w#        @<Args: process nested include file paths@>
+        ESAC
+      ELSE simple error("unknown parameter",error status)
+      FI
+    ,
+    (STRING @!s):
+      IF s=""
+      THEN simple error("missing filename",error status)
+        #@.Error: missing filename@>#
+      ELSE tang fn:=s
+      FI
+  OUT simple error("unknown parameter format",error status)
+    #@.Error: unknown parameter form...@>#
+  ESAC
+OD
+
+@ The operators !FIND! and !UPTO! were included from the general
+prelude.
+
+@<Operators...@>=
+macro gp op find char row char;
+macro gp op upto;
+
+@ Here is the usage message.
+
+@<Proc...@>=
+PROC usage = VOID:
+BEGIN
+  put(stand error,
+     ("Usage: tang (d,h,v,w(paths),f(tang-file))",newline,
+     " d: output debugging data to tang.dbg",newline,
+     " f: (input file)",newline,
+     " h: this message",newline,
+     " v: version",newline,
+     " w: comma-separated include path(s) to be",newline,
+     "     added to /usr/share/algol68toc",newline));
+  #@.Usage:...@>#
+  exit(help status)
+END; #usage#
+
+@ The filename pack will contain the filename either as a program
+parameter or as a string denotation.
+
+@<Args: process a file...@>=
+IF UPB val OF rp1 /= 1
+THEN simple error("wrong number of filenames",error status)
+  #@.Error: wrong number of file...@>#
+ELSE
+  CASE (val OF rp1)[LWB val OF rp1]
+  IN
+    (REF PARAM rp2):
+      IF IF rp2 IS no param
+        THEN TRUE
+        ELSE prog OF rp2=""
+        FI
+      THEN simple error("missing filename",error status)
+        #@.Error: missing filename@>#
+      ELSE tang fn:=prog OF rp2
+      FI
+    ,
+    (STRING fn): tang fn:=fn
+  OUT simple error("unknown parameter format",error status)
+    #@.Error: unknown parameter form...@>#
+  ESAC
+FI
+
+@ Web 68 files can be included using the !@@i...@@>! directive. Unless
+a filename relative to the current directory is given (starting with
+\.{../} or containing a \.{/}), the file is assumed to be somewhere
+in the path specified by the following global name.
+
+@<Names...@>=
+STRING include paths:="/usr/share/algol68toc:";
+
+@ The option \.{w} should be followed by a parameter pack containing
+at least one path.
+
+@<Args: process nested...@>=
+IF UPB val OF rp1 = 0
+THEN simple error("missing path",error status)
+  #@.Error: missing path@>#
+ELSE
+  FOR j FROM LWB val OF rp1 TO UPB val OF rp1
+  DO
+    CASE (val OF rp1)[j]
+    IN
+      (REF PARAM rp2):
+        IF IF rp2 IS no param
+          THEN TRUE
+          ELSE prog OF rp2=""
+          FI
+        THEN simple error("missing path",error status)
+          #@.Error: missing path@>#
+        ELSE
+          STRING path:=prog OF rp2;
+          @<Args: check for a tilde and expand it@>;
+          @<Args: add the directory to !include paths!@>
+        FI
+      ,
+      (STRING dir):
+        BEGIN
+          STRING path;
+          @<Args: check for a tilde...@>;
+          @<Args: add the dir...@>
+        END
+    OUT simple error("unknown parameter format",error status)
+      #@.Error: unknown parameter form...@>#
+    ESAC
+  OD
+FI
+
+@ It is appropriate to expand !"~"! here to the
+\.{HOME} directory.
+
+@<Args: check for a tilde...@>=
+WHILE INT pos; char in string("~",pos,path)
+DO
+  path:=path[:pos-1]+home dir+path[pos+1:]
+OD
+
+@ We use the colon to delimit paths.
+
+@<Args: add the dir...@>=
+(path+":") PLUSTO include paths
+
+@2Filename processing.
+Here are the filename extensions.@^system dependencies@>
+
+@<Plain values...@>=
+[]CHAR web ext=".w68",out ext=".a68";
+
+@ We shall assume that if the last 4 characters of the filename are not
+\.{.w68}, then they were intended and so we shall append them. Firstly, we
+process the web file name and open the file.@^system dependencies@>
+
+@a
+IF
+  IF UPB tang fn>=5
+  THEN
+    IF tang fn[UPB tang fn-UPB web ext+1:]/=web ext
+    THEN tang fn+:=web ext
+    FI
+  ELSE tang fn+:=web ext
+  FI;
+  open(f OF web,tang fn,stand in channel)/=0
+THEN simple error("cannot open web 68 file "+tang fn,no web file status)
+  #@.Error: cannot open web...@>#
+FI;
+
+@ Now we need to construct the identification of the output file from
+that of the web file and then use it to establish the file.
+@^system dependencies@>
+
+@a arg:=(tang fn UPTO ".")+out ext;
+IF establish(f OF output,arg,stand out channel,0,0,0)/=0
+THEN@/
+   simple error("cannot establish the output file "+arg,no output file status)
+   #@.Error: cannot establish...@>#
+ELSE
+  on physical file end(f OF output,
+    (REF FILE f)BOOL:
+      (err print("output medium full"); @&exit(-1); @&TRUE));
+      #@.Error: output medium full@>#
+  n OF output:=1; loc OF output:=0
+FI;
+
+@ Here is !arg!.
+
+@<Names...@>=
+STRING arg;
+
+@ If !debug! refers to !TRUE!, we must replace the dummy routines by the
+debug routines.
+
+@a IF debug
+THEN@/
+  start monitor("tang.dbg");
+  debug print token:=monitor print token;
+  debug print text:=monitor print text;
+  debug print string:=monitor print string
+FI;
+
+@1High-level input parsing.
+This section provides all the high-level code for parsing the input text. The
+details can be found in the big !CASE! module.
+
+The getting of the input can be in a number of moods which determine
+the action of the parser. They are:-
+\medskip{%
+\settabs\+\indentt&macro header mood\quad&\cr
+\+&limbo mood&at the start of the !web! file.\cr
+\+&tex mood&before macro definitions in a section.\cr
+\+&macro id mood&after the \.{@@m} defining a macro.\cr
+\+&macro header mood&upto the beginning of the macro body.\cr
+\+&macro body mood&until the start of a module or next section.\cr
+\+&module body mood&during the input of a module body.\cr
+}\medskip\noindent
+The current mood is kept in a global name.
+
+@m limbo mood = 0
+@m html mood = 1
+@m macro id mood = 2
+@m macro header mood = 3
+@m macro body mood = 4
+@m module body mood = 5
+
+@<Names...@>=
+INT cur mood:=limbo mood;
+
+@ The program always starts off in !limbo mood!. Only when the first
+\.{@@\ }, \.{@@1}, \.{@@2} or \.{@@3} is read does the mood
+change. All text in !html mood! is also skipped at high speed. The
+only control sequences allowed in limbo mood are \.{@@=...@@>} and
+\.{@@\backslash}. Neither Web 68 control sequences nor \.{@@} symbols
+are allowed in the former sequence.
+
+The macro backspaces the input provided that the buffer pointer is
+not at the beginning of the line.
+
+@m backspace input = (loc OF web>=LWB b OF web|loc OF web-:=1)
+@m bksp2 = (NOT input ended|TO 2 DO backspace input OD)
+
+@a @<Scan the limbo text@>;
+cur mood:=html mood; bksp2;
+
+DO
+  IF cur mood = html mood
+  THEN skip to cs(" 123<ADFIM"); @&bksp2
+  FI;
+
+  HEAP TOKEN cur tok:=get tok;
+
+  @<The big !CASE! handling tokens and moods@>
+OD
+END
+@<Compiler post...@>
+
+@ Limbo text usually contains \LaTeX commands and comments, but can
+also contain two Web 68 control sequences which directly ouput code
+before the first section number comment. The only control sequences
+which are allowed are:-
+\begin{description}
+\item[\.{@@=}] Output all text upto the following \.{@@>}.
+\item[\.{@@\backslash}] Output a newline.
+\end{description}
+No Web 68 control seuqnces are allowed between \.{@@=} and \.{@@>},
+not even a single \.{@@}.
+
+@<Scan the limbo...@>=
+WHILE skip to cs("=\ *123");@& backspace input;
+  CHAR ch=next char;
+  NOT char in string(ch,LOC INT," *123")
+DO
+  IF ch="\"
+  THEN put out(output,0) #empties the buffer and emits a nl#
+  ELIF@/
+    STRING @!s; gather to char(s,"@@");
+    next char/=">"
+  THEN err print("no control sequences allowed in @@=...@@>")
+    #@.Error: no control sequnces allowed...@>#
+    #@.Error: no control seq...@>#
+  ELSE put out(output,s[:UPB s-1]) #omit the !@@!#
+  FI
+OD;
+
+bksp2
+
+@ We can tangle the reduced text and output it.
+
+@<Phase II processing@>=
+IF history > warnings
+THEN
+  print((newline,"! Did we find something wrong?",newline));
+  @<Close the output file@>;
+  exit(error status)
+ELSE print(newline)
+FI;
+@#
+phase one:=FALSE;
+@#
+@<tangle the parsed text@>;
+@<Close the...@>;
+exit(0)
+
+@2Tokens.
+The raw input is regarded as a stream of characters arbitrarily broken
+up into lines. In order to process the text, the character stream is
+broken up into sets of lexically related characters. For example,
+Algol 68 contains a number of ``reserved words'' all of which consist of
+a sequence of upper-case letters (in the reference language).
+Traditionally, Algol 68 is typeset with all upper-case letters shown as
+bold-face lower-case letters and all lower-case letters shown as
+italic-face lower-case letters. The ``reserved words'' are known,
+therefore, as ``bold symbols''.
+
+It is straightforward to scan the input stream and divide it into sets
+of related characters. For the purposes of tang, there are only
+5 such sets, which can be expressed as regular expressions:
+\smallskip
+{\settabs\+\indent&(5)\ &control sequences\enskip&\cr % Sample line
+\+&(1)&bold tags&\.{[A-Z][A-Z0-9\_]}*\cr
+&(2)&tags&\.{[a-z][a-z0-9\ ]}*\cr
+&(3)&module tags&\.{@@<[^@@]+@@>=?}\cr
+&(4)&control sequences&\.{@@[@@\*adfti<>\{\}\&=\\^.:!?,/\|&+;]}\cr
+&(5)&miscellaneous&all other sequences\cr
+}
+
+As can be seen, many of the sets are regarded as ``tags'' of one form or
+another. Because the bold symbols are known at the beginning of every
+program, it is convenient and efficient to recognise them separately.
+They are represented in tang as the index into the !HEAP[]STRING
+boldsym! which was constructed using the GNU perfect hash function
+generator \.{gperf}. The command-line call was ``gperf -k1,2,\$$ boldtags''.
+The maximum key range is 314 and there are no duplicates.
+
+@m total keywords = 109 #unused#
+@m min word length = 2
+@m max word length = 7
+@m min hash value = 2  #unused#
+@m max hash value = 315
+
+@<Names...@>=
+HEAP[0:max hash value]STRING bold sym:=[]STRING
+(
+    "","","LE","","ELSE","LEVEL","","","","ELIF",
+    "","FLEX","EQ","","","","","","","",
+    "","EXIT","","","","","","","","KEEP",
+    "","","LT","","","","","","","ESAC",
+    "","","","","SKIP","","","RE","HEAP","REAL",
+    "","STRUCT","","REF","UP","","","","","FILE",
+    "","","IF","","TRUE","","","PRAGMAT","","PROC",
+    "USE","CHANNEL","","","","","","","","SHORT",
+    "","","IS","","ISNT","","","OP","","",
+    "","PLUSTO","PR","","REPR","","EDOC","OF","","WHILE",
+#100# "","PLUSAB","","","","FINISH","","FI","LOC","CODE",
+    "COMPL","FORMAT","","CHAR","","","","","","",
+    "","","GE","FALSE","LENG","","ELEM","COMMENT","","NE",
+    "","FIND","SEMA","","PRIO","","","CASE","FOR","CONJ",
+    "","OUSE","","","OUTTYPE","AT","","","LWB","",
+    "UPB","","GT","","OVER","OUT","STRING","","","",
+    "","PAR","","","BITS","","","TIMESAB","AFTER","",
+    "","","","","PROGRAM","","FROM","OR","ENTIER","",
+    "NIL","VOID","","INTYPE","BOOL","BYTES","","TO","","",
+    "THEN","","CO","SHORTEN","","INT","SIGN","EMPTY","","",
+#200# "","","END","","","","OVERAB","ROUND","","LONG",
+    "","MODE","","","","","","","","",
+    "","","DIVAB","","","","ABS","BEGIN","","",
+    "NOT","OD","ODD","","","","","BY","","",
+    "","","","","DO","ALIEN","","","","",
+    "","","","","","","","","","",
+    "","","","","","","","","","",
+    "","","","","MINUSAB","BIN","","","","",
+    "","ARG","MOD","","","","","","DOWN","",
+    "","","GO","","GOTO","","IM","","","",
+#300# "","","","","","","IN","MODAB","","",
+    "","UNION","","","","AND"
+);
+
+@ Bold tags are either bold symbols (the ``reserved words'' of the
+language), or mode indicants or operator symbols defined by the
+engineer. The bold symbols can be looked up in !bold sym! using the
+!LOOKUP! operator. Other bold tags will be searched in the binary tree
+whose root is !tag root! and inserted therein if not found. The
+following code is translated from the C code produced by gperf version
+2.7.1 (19981006 egcs).
+
+@<Operators...@>=
+OP LOOKUP = (STRING str)INT:
+IF UPB str >= min word length & UPB str <= max word length
+THEN
+  PROC hash = (STRING @!s)INT:
+  (
+   []INT asso values = []INT
+   (316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+#40# 316, 113, 95, 20, 72,  0,  5, 120,
+     44, 50, 30, 25,  0, 122, 127, 85,
+     0,  5, 45, 15, 15, 52, 20, 50,
+     2, 70, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316,
+    316, 316, 316, 316, 316, 316, 316, 316)[@@0];
+@#
+   UPB s + asso values[ABS s[1+LWB s]] +
+   asso values[ABS s[LWB s]] + asso values[ABS s[UPB s]]
+  );
+@#
+  INT key=hash(str);
+
+  IF key < 0 OR key > max hash value
+  THEN 0
+  ELIF bold sym[key]=str
+  THEN key
+  ELSE 0
+  FI
+ELSE 0
+FI;
+
+@ Although control sequences such as \.{@@<} can be regarded as tags, it
+is convenient to allocate a special mode for them so that they can be
+recognised more efficiently. Only the character following the at-symbol
+is required and most of them are eliminated from the text because they
+act as delimiters.
+
+@<Modes...@>=
+MODE CONTROL = STRUCT(CHAR cs);
+
+@ The bold symbols are a subset of the set of bold tags, so we need some
+means of recognising other bold tags. The number of other bold tags is
+relatively small compared to the number of tags in set (2) above which
+comprise identifiers and macro identifiers, so they are stored and
+recognised together with the latter using the mode !TAG!. For efficient
+look-up, the tags are held in binary trees, so we shall need ``left''
+and ``right'' references to the subtrees of each node.
+
+@<Modes...@>=
+MODE TAG = STRUCT(STRING s, REF TAG left, right);
+
+@ The procedure !get tok!, which is a lexical analyser, yields a !TOKEN!
+which may be a !TAG!, a !CONTROL!, a bold symbol, a string denotation or
+a collection of miscellaneous characters. We use the mode !TOKEN! as a
+!UNION! of the required modes. Unfortunately, the local compiler does
+not permit recursive mode definition without first defining one of the
+modes as a stub. @^system dependencies@>
+
+@<Modes...@>=
+MODE TOKEN, MACRO, MODULE,
+
+@ Both macros and modules have a !STRING! which identifies them and some
+text which is their ``replacement text''. The latter is kept as a
+linked-list of !TEXT!.
+
+@<Modes...@>=
+@!TEXT = STRUCT(UNION(TOKEN,REF MACRO,REF MODULE) text, REF TEXT next),
+
+@ Modules need to be kept on a separate binary tree for look-up
+purposes, so the mode !MODULE! has !left! and !right! fields, the same
+as for !TAG!. Its identification is stored as a !STRING! because the
+search rules differ from those for a !TAG!. Because it is highly likely
+that we shall be wanting to add text to an already existing module, it
+would be convenient, and efficient, not to have to chase down the linked
+list of !TEXT! so we have a reference to the !REF REF TEXT! at the end
+of the list.
+
+@<Modes...@>=
+@!MODULE = STRUCT(STRING id,@/
+            REF REF TEXT text beg, text end,@/
+            REF MODULE left, right),
+
+@ A macro, on the other hand, has a parameter list, which can be !NIL!,
+as well as a replacement text. We cannot use the !REF TAG! fields in the
+!TAG! mode because they are used in the binary tree in which tags are
+stored, so we need a new structure for the parameter list.
+
+One-off macros have bit 32 of the !flags! field set and bit 31 set when
+they have been called once.
+
+Macros are also kept on a binary tree, so the mode !MACRO! also needs
+!left! and !right! fields.
+
+@<Modes...@>=
+@!WPARAM = STRUCT(REF TAG par, REF WPARAM next),
+@!MACRO = STRUCT(REF TAG id,
+           BITS flags,
+           REF WPARAM param,           #formal parameters#
+           REF REF TEXT text beg, text end, #replacement text#
+           REF MACRO left, right),
+
+@ Control sequences are recognised by !get tok!. They are then actioned
+or ignored, but otherwise are not stored in the parsed text. The only
+control required is forcing a new line in the output file. Since bold
+tags are stored as minus their index in !bold sym! and since section
+numbers start at 1, we shall use the value of zero to represent a forced
+newline.
+
+@m force newline = 0
+
+@ We can now give the full declaration of the mode !TOKEN!. Its
+constituent modes are as follows:-
+\begin{enumerate}
+\item !INT!: if zero, a forced newline. If negative, an index
+into !bold sym!.
+\item ![]INT!: a section number.
+\item !CONTROL!: a control sequence.
+\item !STRING!: a string denotation or a collection of miscellaneous
+characters.
+\item !VOID!: used to denote the end of the input.
+\item !REF TAG!: identifiers, macro identifiers and other bold indicants.
+\end{enumerate}
+
+@<Modes...@>=
+@!TOKEN = UNION(INT, []INT, CONTROL, STRING, VOID, REF TAG);
+
+@3Token housekeeping.
+The high-level action is to add a token to the text of the unnamed
+module which will eventually constitute the program. That text contains
+modules whose text will contain other modules, and so on.
+
+The process of getting a token may involve the definition of a macro
+(after \.{@@m}) and adding it to the binary tree of macros. Or, it may
+involve the definition of a module (after \.{@@<}) which would be added to
+the module binary tree.
+
+The following sections describe the procedures which manage the binary
+trees and other structures which are used to store identifiers, macro
+identifiers, module identification tags and the replacement texts of macros
+and modules.
+
+Each time a control sequence of \.{@@1}, \.{@@2} or \.{@@3} is
+read, all section numbers with a greater index are reset to one and
+the section number with the relevant index is incremented by one. For
+a control sequence of \.{@@\ }, the lowest level section number is
+incremented by one.
+
+This routine increments the value of !sec OF web! according to its
+integer parameter.
+
+@<Procedures...@>=
+PROC inc cur sec = (INT level)VOID:
+IF level>=1 & level<=3
+THEN
+  (sec OF web)[level]+:=1;
+  FOR i FROM level+1 TO UPB (sec OF web)
+  DO
+    (sec OF web)[i]:=1
+  OD
+ELIF level=4
+THEN (sec OF web)[level]+:=1
+FI; #inc cur sec#
+
+@ The next routine prints the current section number. For included
+files, we print out the file number preceded by !"I"!.
+
+@<Procedures...@>=
+PROC print cur sec = VOID:
+print out
+  (("[",
+   (fnum OF web>0|"I"+whole(fnum OF web,0)|(sec OF web)[1]),
+   ".",(sec OF web)[2],
+   ".",(sec OF web)[3],
+   ".",(sec OF web)[4],
+   "]"));
+
+@ We need a procedure which sets the current section number when it is
+being added to a module because, if the current file is an included
+file, the section number should be made equal to the negated file
+number so that it can be elucidated when it comes to outputting section
+numbers in the tangled program. This procedure takes the current section
+number and checks the current file in !web!.
+
+@<Procedures...@>=
+PROC make text = ([]INT cur sec)TEXT:
+BEGIN
+  [4]INT cs:=cur sec;
+  IF next OF web ISNT no stream
+  THEN cs[1]:=-fnum OF web
+  FI;
+  TEXT(cs,no text)
+END; #make text#
+
+@ These !NIL!s make the code easier to understand.
+
+@<Other...@>=
+REF MACRO no mac = NIL;
+REF MODULE no mod = NIL;
+REF WPARAM no wparam = NIL;
+REF TAG no tag = NIL;
+REF TEXT no text = NIL;
+
+@ We shall need one binary tree each for macros and modules, but several
+binary trees for identifiers and other tags. The number of identifiers
+is unlikely to be excessive with the current trend to separate
+compilation, but a simple hash function can give 16 trees which should
+cater for the largest of programs. If this seems excessive, we should
+bear in mind that binary trees are not B-trees so that the minimal number
+of searches is rarely achieved.
+
+@<Names...@>=
+REF MACRO macro root:=no mac;
+REF MODULE module root:=no mod;
+[0:15]REF TAG tag root;
+
+FOR i FROM LWB tag root TO UPB tag root
+DO
+  tag root[i]:=no tag
+OD;
+
+@ Module identification tags can be the full tag or a prefix followed by
+\.{...} in which case it is an error if it cannot be found in the module
+tree. The logic of searching the tree is identical to adding a new tag,
+so the procedure has an extra parameter !adding! to control whether a unique
+tag should be added, and a parameter specifying whether the module tag is a
+prefix. We assume that the lower bound of !s! is 1.
+
+Given a tag $\alpha$, if a node is found of which $\alpha$ is a prefix,
+then if there any other nodes of which $\alpha$ is a prefix, they will
+be in the left or right sub-trees of the found node.
+
+The following results are possible:
+\begin{enumerate}
+\item The tag is a prefix:
+\begin{enumerate}
+\item The prefix is not in the tree, so yield !NIL!.
+\item The prefix is unique, so yield !REF MODULE!.
+\item The prefix is a duplicate, so yield !NIL!.
+\end{enumerate}
+\item The tag is complete:
+\begin{enumerate}
+\item The tag is not in the tree, so add it if adding and yield
+!REF MODULE! else yield !NIL!.
+\item The tag is in the tree, so yield !REF MODULE!.
+\end{enumerate}
+\end{enumerate}
+
+@m b add = TRUE
+@m b prefix = TRUE
+@f b add = TRUE
+@f b prefix = TRUE
+
+@ After creating the new !HEAP MODULE!, the assignment ensures that both
+!text beg! and !text end! refer to the same !REF REF TEXT!.
+
+@<Procedures...@>=
+PROC add module tag = (REF REF MODULE root,
+               STRING @!s,
+               BOOL adding, prefix)REF MODULE:
+IF root IS no mod
+THEN
+  IF prefix THEN no mod
+  ELIF adding
+  THEN
+    root:=HEAP MODULE:=(s,
+                 HEAP REF TEXT:=no text,
+                 HEAP REF TEXT:=no text,
+                 no mod, no mod);
+    text end OF root:=text beg OF root;
+    root
+  ELSE no mod #not adding, so not found#
+  FI
+ELIF UPB s > UPB id OF root
+THEN #Cannot be equal#
+  IF s < id OF root
+  THEN add module tag(left OF root,s,adding,prefix)
+  ELSE add module tag(right OF root,s,adding,prefix)
+  FI
+ELIF prefix
+THEN
+  IF STRING pref = (id OF root)[:UPB s]; s=pref
+  THEN #see the note above about duplicates#
+    IF (add module tag(left OF root,s,NOT b add,prefix) IS no mod)
+                  AND
+      (add module tag(right OF root,s,NOT b add,prefix) IS no mod)
+    THEN root  #unique#
+    ELSE no mod #ambiguous#
+    FI
+  ELIF s < pref
+  THEN add module tag(left OF root,s,adding,prefix)
+  ELSE add module tag(right OF root,s,adding,prefix)
+  FI
+ELIF s=id OF root
+THEN root
+ELIF s < id OF root
+THEN add module tag(left OF root,s,adding,prefix)
+ELSE add module tag(right OF root,s,adding,prefix)
+FI; #add module tag#
+
+@ Tags are added to one of the tag trees using a simple hash function.
+
+@<Procedures...@>=
+PROC add tag=(REF[]REF TAG root, REF TAG tag)REF TAG:
+BEGIN
+  OP HASH = (STRING s)INT:
+    (ABS s[LWB s]+2*ABS s[UPB s]) MOD (1+UPB tag root);
+  PROC loc add tag=(REF REF TAG r,REF TAG t)REF TAG:
+  IF r IS no tag
+  THEN r:=t
+  ELIF s OF t = s OF r
+  THEN r
+  ELIF s OF t < s OF r
+  THEN loc add tag(left OF r, t)
+  ELSE loc add tag(right OF r, t)
+  FI;
+  loc add tag(root[HASH s OF tag],tag)
+END;
+
+@ Macro identifiers may be bold tags or lower-case tags and are stored in
+the identifier tree, so the following procedure should be called with the
+yield of the procedure !add tag! for its second parameter. A macro
+cannot be declared twice, so if a macro identifier is already in the
+macro tree, this is an error.
+
+Once-off macros have !once! set to !TRUE!.
+
+@<Procedures...@>=
+PROC add macro id = (REF REF MACRO root, REF TAG tag, BOOL once)REF MACRO:
+IF root IS no mac
+THEN
+  root:=HEAP MACRO:=(tag,BIN ABS once , no wparam,
+               HEAP REF TEXT:=no text,
+               HEAP REF TEXT:=no text,
+               no mac, no mac);
+  text end OF root:=text beg OF root;
+  root
+ELIF s OF tag = s OF id OF root
+THEN no mac
+ELIF s OF tag < s OF id OF root
+THEN add macro id(left OF root, tag, once)
+ELSE add macro id(right OF root, tag, once)
+FI;
+
+@ If the current macro definition follows an \.{@@d} control, then we need some
+indication that the macro is the one-off version. This global name stores the
+current macro version.
+
+@<Names...@>=
+BOOL one off macro:=FALSE;
+
+@ Macro formal parameters must be unique for obvious reasons. We yield
+!FALSE! if a macro parameter is not unique for this macro.
+
+@<Procedures...@>=
+PROC add macro par=(REF MACRO rm, REF TAG par)BOOL:
+IF param OF rm IS no wparam
+THEN param OF rm:=HEAP WPARAM:=(par, no wparam);
+  TRUE
+ELIF
+  REF REF WPARAM loc par:=param OF rm;
+  WHILE
+    IF loc par ISNT no wparam
+    THEN s OF par /= s OF par OF loc par
+    ELSE FALSE
+    FI
+  DO
+    loc par:=next OF loc par
+  OD;
+  loc par IS no wparam
+THEN
+  REF REF WPARAM(loc par):=HEAP WPARAM:=(par, no wparam);
+  TRUE
+ELSE FALSE
+FI;
+
+@ Adding text to macro and module bodies is the main activity in the first
+pass.
+
+@<Procedures...@>=
+PROC add mac text=(REF MACRO rmc, TEXT @!t)VOID:
+(
+  REF REF TEXT
+    (text beg OF rmc:=:no text|text beg OF rmc|text end OF rmc):=HEAP TEXT:=t;
+  text end OF rmc:=next OF text end OF rmc
+);
+
+@ @<Procedures...@>=
+PROC add mod text=(REF MODULE rmd, TEXT @!t)VOID:
+(
+  REF REF TEXT
+    (text beg OF rmd:=:no text|text beg OF rmd|text end OF rmd):=HEAP TEXT:=t;
+  text end OF rmd:=next OF text end OF rmd
+);
+
+@1Input phase.
+There are three main input routines. The most interesting is the one
+that gets the next token of an Algol 68 \ text; the other two are used to
+scan rapidly past \TeX\ text in the tang source code. One of the
+latter routines will jump to the next token that starts with `@@', and
+the other skips to the end of an Algol 68 comment.
+
+But first we need to consider the low-level routines that take care of reading
+lines from the input file. The !input ln! procedure brings the next line of
+input from the specified file into its associated buffer and returns TRUE
+unless the file has ended when it returns !FALSE!. The procedure is called
+when !loc OF web >= upb OF web!; it puts the next line of input into the
+buffer and updates the stream appropriately.@^system dependencies@>
+
+@<Input...@>=
+PROC input ln=(REF STREAM inp)BOOL:
+BEGIN
+  CHAR ch;
+  upb OF inp:=0; #Ensure that !b OF inp! will be null for non-reads#
+  loc OF inp:=0; #Start with an empty line#
+  on logical file end(f OF inp,
+    (REF FILE f)BOOL: (ended OF inp:=TRUE; GOTO lab1; SKIP));
+
+  WHILE get bin(f OF inp,ch); ch/=lf
+  DO
+    (b OF inp)[upb OF inp+:=1]:=ch
+  OD;
+
+  IF upb OF inp > 0
+  THEN
+    []CHAR trimmed b=(TRIM(b OF inp)[:upb OF inp])[@@1];
+    upb OF inp:=UPB trimmed b;
+    (b OF inp)[:upb OF inp]:=trimmed b
+  FI;
+
+  n OF inp+:=1; #Increment the line number#
+  TRUE EXIT
+lab1:
+  FALSE
+END;
+
+@ The !TRIM! operator is in the general prelude.
+
+@<Operators...@>=
+macro gp op trim;
+
+@ Tokens are either identifiers, bold symbols, control sequences, section
+numbers or miscellaneous characters. The following declarations define
+the character ranges used in the lexical analyser. The characters are in
+strict ASCII sequence so that the !CHOP! operator can search them
+efficiently.
+
+The !-! operator used here is in the general prelude.
+
+@<Plain...@>=
+macro gp op minus char;
+[]CHAR bold range=("0"-"9")+("A"-"Z"),
+     id range=blank+("0"-"9")+"_"+("a"-"z");
+
+@ The !CHOP! operator uses the binary chop to search a ![]CHAR! whose
+members are in strict ASCII sequence.
+
+@m div2 = (bot+top)OVER 2
+
+@<Operators...@>=
+PRIO CHOP=7;
+OP CHOP=(CHAR @!c,[]CHAR @!s)INT:
+BEGIN
+  INT bot:=LWB s,
+     top:=UPB s;
+  INT @!i:=div2;
+  WHILE CHAR si; (bot<=top|(si:=s[i])/=c|FALSE)
+  DO
+    (c<si|top:=i-1|bot:=i+1);
+    i:=div2
+  OD;
+  (bot<=top|i|LWB s-1)
+END;
+
+@ On many occasions, we shall want to examine the next character in the
+current input buffer. Since the current position might be at the end of
+the current line, we need a procedure which will input another line if
+necessary, and go on inputting lines until a non-empty line has been
+read. If we are at the end of the line, yield a !blank! after the next
+line has been read. This ensures that the end of a line is equivalent to
+a blank so that the word at the end of one line will be separate from a
+word at the beginning of the next. The included file mechanism ensures
+that the input is a stream of bytes.
+
+@<Input...@>=
+PROC next char = CHAR:
+IF input ended
+THEN @<Check if included...@>; blank
+ELIF loc OF web < upb OF web
+THEN (b OF web)[loc OF web+:=1]
+ELSE
+  WHILE input ln(web) & upb OF web = 0 DO SKIP OD;
+  IF input ended THEN @<Check if included...@> FI;
+  blank
+FI;
+
+@ The current macro and module are held globally because successive calls
+to !get tok! may well yield tokens for them. In each case, the name must
+have a !REF REF! mode. We shall also need a !REF MODULE! for the unnamed
+module. The assignment after the declaration of !unnamed module! ensures
+that the !REF REF REF TEXT! fields both refer to the same !REF REF TEXT!
+value.
+
+@<Names...@>=
+REF MACRO cur mac:=no mac;
+REF MODULE cur mod:=no mod;
+MODULE unnamed module:=("",
+                HEAP REF TEXT:=no text,
+                HEAP REF TEXT:=no text,
+                no mod, no mod);
+text end OF unnamed module:=text beg OF unnamed module;
+
+@ Here is a scanning procedure used by !get tok!. The string !s! is
+used to gather the characters.
+
+@<Input...@>=
+PROC gather to char = (REF STRING @!s,CHAR @!c)VOID:
+IF CHAR ch;
+  WHILE ch:=next char; NOT input ended & ch/=c DO s+:=ch OD;
+  input ended
+THEN err print("input ended while gathering to "+c)
+  #@.Error: input ended while gather...@>#
+ELSE s+:=ch
+FI;
+
+@ This procedure is used to skip quoted strings.
+
+@<Input...@>=
+PROC skip to char = (CHAR @!c)VOID:
+BEGIN
+  CHAR ch;
+  WHILE ch:=next char; NOT input ended & ch/=c DO SKIP OD;
+  IF input ended
+  THEN err print("input ended while skipping to "+c)
+    #@.Error: input ended while skip...@>#
+  FI
+END;
+
+@ In the text part, it is often necessary to put pieces of text between
+exclamation marks. Because it is easy to omit such a mark, we need a
+routine which will check for control sequences other than \.{@@@@} so
+that we can tell the user of a missing bang when one such occurs.
+We shall yield !FALSE! in such an event and !TRUE! otherwise.
+
+@<Input...@>=
+PROC skip to bang = BOOL:
+BEGIN
+  CHAR ch;
+  WHILE
+    WHILE ch:=next char; NOT input ended & ch/="!" & ch/="@@"
+    DO SKIP OD;
+    IF input ended OR ch="!"
+    THEN FALSE
+    ELIF (ch:=next char)/="@@"
+    THEN #@.Error: control sequence in...@>#
+      err print("control sequence inside !...!");
+      backspace input; backspace input;
+      GOTO err
+    ELSE #@@@@ is acceptable# TRUE
+    FI
+  DO SKIP OD;
+  TRUE EXIT
+err:
+  FALSE
+END;
+
+@ We shall need a procedure which will skip input text until one of a
+specified set of control sequences is read. The procedure needs to take
+care with matched pairs of braces, pairs of quotes and pairs of exclamation
+marks. Note that the procedure reads the particular control sequence
+so the calling code should backspace if the particular sequence needs
+to be identified.
+
+@<Input...@>=
+PROC skip to cs = ([]CHAR cset)VOID:
+WHILE
+  IF input ended
+  THEN FALSE
+  ELSE
+    CHAR ch:=next char;
+    CASE ch FIND """!{%@@"
+    IN
+      (skip to char(ch); TRUE),
+  #!#  skip to bang,
+      (@<Search for a closing brace@>; TRUE),
+      (loc OF web:=upb OF web; TRUE),
+     #%:ignore the remainder of the line#
+      NOT char in string(UC next char,LOC INT,cset)
+    OUT TRUE
+    ESAC
+  FI
+DO SKIP OD;
+
+@ The operator !UC! is defined in the general prelude.
+
+@<Oper...@>=
+macro gp op uc char;
+
+@ Since, in !html mood!, braces can enclose more braces, we need to keep
+track of the amount of nesting. We use the integer name !bal! for this
+purpose.
+
+@<Search for a closing...@>=
+INT bal:=1;
+WHILE ch:=next char; NOT(ch="}" & bal = 1)
+DO
+  IF ch="{" THEN bal+:=1
+  ELIF ch="}" THEN bal-:=1
+  FI
+OD
+
+@ Here is the code for !get tok!.
+
+@m is upper(ch) = (ch>="A" & ch<="Z")
+@m is lower(ch) = (ch>="a" & ch<="z" OR ch="_")
+@m is digit(ch) = (ch>="0" & ch<="9" OR ch=".")
+
+@<Input...@>=
+PROC get tok = TOKEN:
+BEGIN
+  TOKEN @!t;@& STRING @!s;@& BOOL valid:=TRUE;
+  WHILE
+    CHAR ch:=next char;
+    IF input ended THEN t:=EMPTY; FALSE
+    ELIF ch = blank OR ch = tab ch THEN TRUE #ignore#
+    ELIF is upper(ch) THEN @<Get bold tag@>
+    ELIF is lower(ch) THEN @<Get identifier tag@>
+    ELIF is digit(ch) THEN @<Get number@>
+    ELIF ch="@@" THEN @<Get control sequence@>
+    ELSE @<Get miscellaneous characters@>
+    FI
+  DO SKIP OD;
+  debug print token(
+    "(l."+whole(n OF web,0)+
+    ",c."+whole(loc OF web,0)+") get tok: ",t);
+  t
+END;
+
+@ Bold tags contain upper-case letters and digits and are terminated by
+white-space including the end of a line. This section accumulates bold
+tag characters and checks whether the sequence was terminated by the
+end of a line. If not, the input is backspaced.
+
+@<Get bold...@>=
+s:=ch; #Character already found#
+WHILE
+  IF loc OF web = upb OF web
+  THEN FALSE #end of line#
+  ELSE valid:=(ch:=next char) CHOP bold range >= LWB bold range
+  FI
+DO
+  s+:=ch
+OD;
+
+IF NOT valid # That is, the bold tag was not terminated by a new line #
+THEN backspace input
+FI;
+
+@ Having obtained a bold symbol, we need to check whether it is a
+predefined symbol to be found in !bold sym! or an engineer-defined mode
+or operator indicant, If it is unrecognised, we yield it immediately.
+
+If it is recognised, it is convenient to check here for comments
+delimited by !CO...CO! or !COMMENT...COMMENT!. Because such comments
+are delimited by tokens, we shall call !get tok! recursively to search
+for the closing delimiter.
+
+Remember that this code should yield !TRUE! if !get tok! should go on
+gathering symbols and !FALSE! if a symbol has been found.
+
+@m brief comment symbol = 192
+@m comment symbol = 127
+
+@<Get bold...@>=
+IF INT bs = LOOKUP s; bs = 0
+THEN # !s! is unrecognised #
+  t:=HEAP TAG:=(s,no tag,no tag); FALSE
+ELIF # !s! is identified #
+  bs /= brief comment symbol & bs /= comment symbol
+THEN t:=-bs; FALSE
+ELIF in comment/=0
+THEN # This is part of a recursive call so yield the token anyway #
+  t:=-bs; FALSE
+ELIF # This is a comment opener #
+  @<Skip input upto the comment closer@>
+  input ended
+THEN #@.Error: input ended while search...@>#
+  err print("input ended while searching for "
+         +(in comment=comment symbol|"COMMENT"|"CO"));
+  t:=EMPTY; FALSE
+ELSE TRUE # Look for the next token #
+FI
+
+@ The simplest way of skipping input is to call !get tok! recursively.
+We set !in comment! at the start and reset it at the finish. We assign
+!-bs! to !in comment! because the yield of !get tok! if a bold tag has
+been read is a negative integer.
+
+@<Skip input upto...@>=
+in comment:=-bs;
+
+WHILE
+  CASE get tok
+  IN
+    (INT n): n/=in comment
+    ,
+    (VOID): FALSE
+  OUT TRUE
+  ESAC
+DO SKIP OD;
+in comment:=0;
+
+@ We shall need a global name to tell us when we are searching for a
+closing comment token. We initialise it to !0! because we start off
+outwith a comment.
+
+@<Names...@>=
+INT in comment:=0;
+
+@ Identifiers can also be macro tags (see later for their processing).
+To avoid the occasional omission of spaces, we need to !COMPACT! the
+found tag.
+
+@<Operators...@>=
+OP COMPACT = ([]CHAR tag)[]CHAR:
+BEGIN
+  [LWB tag:UPB tag]CHAR loc tag;
+  INT @!n:=LWB tag-1;
+@#
+  FOR i FROM LWB tag TO UPB tag
+  DO
+    IF CHAR ti=tag[i]; ti/=blank
+    THEN loc tag[n+:=1]:=ti
+    FI
+  OD;
+@#
+  loc tag[:n]
+END;
+
+@ Now we can process the identifier. We yield a !REF TAG! to differentiate
+it from a !STRING! of miscellaneous characters.
+
+@<Get id...@>=
+s:=ch; #Character already found#
+WHILE
+  IF input ended
+  THEN FALSE
+  ELSE valid:=(ch:=next char) CHOP id range >= LWB id range
+  FI
+DO
+  s+:=ch
+OD;
+IF NOT valid THEN backspace input FI;
+t:=HEAP TAG:=(COMPACT s,no tag,no tag);
+FALSE
+
+@ Numbers must start with a digit or a decimal point and cannot be followed
+by an identifier or label, so any lower case letters in the string must be
+part of a !BITS! denotation.
+
+@<Get number...@>=
+s:=ch;
+WHILE
+  IF ch:=next char; input ended
+  THEN FALSE
+  ELSE ch>="0" & ch<="9" OR ch CHOP " .abcdefr" > 0
+  FI
+DO s+:=ch OD;
+backspace input; t:=COMPACT STRING(s); FALSE
+
+@ For control sequences, having read the \.{@@} character, we only need to
+read the following character.
+
+@<Get control...@>=
+t:=IF ch:=next char; input ended
+  THEN EMPTY
+  ELSE HEAP CONTROL h; cs OF h:=ch; h
+  FI;
+FALSE
+
+@ Miscellaneous characters are grouped together as a !STRING!, but string
+denotations are treated as distinct entities.
+
+Note that "~" has been removed from !op chars! because it is not a valid
+character for the local compiler.@^system dependencies@>
+
+Remember that a !FALSE! yield means that a token has been found.
+
+@m misc chars = "$(),;=?[\]{|}"
+@m op chars = "%&*+-/:<=>^"
+
+@<Get misc...@>=
+IF ch = """"
+THEN @<Get a string denotation@>
+ELIF ch = "#"
+THEN skip to char(ch); TRUE #comment#
+ELIF ch CHOP misc chars > 0
+THEN t:=STRING(ch); FALSE #single character#
+ELIF ch=":"
+THEN #Check for assignation symbol or operators#
+  s:=ch;
+  WHILE char in string(ch:=next char,LOC INT,op chars)
+  DO
+    s+:=ch
+  OD;
+  backspace input; t:=s;
+  FALSE
+ELIF #Check for operation chars#
+  ch CHOP op chars = 0
+THEN t:=STRING(ch); FALSE #Unknown character#
+ELSE
+  WHILE s+:=ch; ch:=next char; ch CHOP op chars > 0 DO SKIP OD;
+  backspace input;
+  t:=STRING(s); FALSE
+FI
+
+@ String denotations are easy to deal with since even embedded quote
+symbols must be doubled.
+
+@<Get a string...@>=
+s:=ch; #First quote symbol#
+WHILE gather to char(s,ch); (ch:=next char) = """"
+DO
+  s+:=ch
+OD;
+backspace input;
+@<Convert @@@@ to @@@>
+
+@ The occurrence of a single !@@!-symbol in a string denotation is an
+error. Firstly, we compute the number of !@@!-symbols in the string and
+signal an error if the number is odd. Since the string denotation will
+have been read at this point, we can safely yield !TRUE! so that !get
+tok! will loop to scan for the next token. Only if the string is
+error-free do we assign it to !t! and yield !FALSE!.
+
+@<Convert @@@@...@>=
+INT n at:=0; BOOL err:=FALSE;
+@#
+FOR i FROM LWB s TO UPB s
+DO
+  n at+:=ABS(s[i]="@@")
+OD;
+@#
+IF ODD n at
+THEN err print("odd number of @@-symbols in a string")
+  #@.Error: odd number of @@-symbols@>#
+ELIF n at > 0
+THEN
+  [LWB s:UPB s-n at%2]CHAR ss;
+  INT pss:=LWB ss-1;
+  BOOL @!at read:=FALSE;
+
+  FOR i FROM LWB s TO UPB s WHILE NOT err
+  DO
+    CHAR si=s[i];
+    IF si = "@@"
+    THEN
+      IF at read
+      THEN ss[pss+:=1]:=si; at read:=FALSE
+      ELSE at read:=TRUE
+      FI
+    ELIF at read
+    THEN err print("single @@-symbol in a string");
+      #@.Error: single @@-symbol in a string@>#
+      at read:=FALSE; err:=TRUE
+    ELSE ss[pss+:=1]:=si
+    FI
+  OD;
+  s:=(err|""|ss)
+FI;
+(err|TRUE|t:=s;@& FALSE)
+
+@2Parsing the input.
+All the principal text structures, such as macros and modules, are
+introduced by control sequences. It makes sense, therefore, to influence
+the input of tokens by the occurrence of control sequences. The
+sequences divide into five sets:-
+\begin{enumerate}
+\item Those that introduce a new text structure:-
+\begin{tabbing}
+\indent\=\.{@@\ }, \.{@@1}\=new section\\
+\>\.{@@m}\>new multi-use macro\\
+\>\.{@@d}\>new one-off macro\\
+\>\.{@@a}\>chunk of the unnamed module\\
+\>\.{@@<}\>module identification\\
+\>\.{@@=}\>chunk of verbatim Algol 68 \\
+\>.{@@i}\>included filename\\
+\>\.{@@$\backslash$}\>force a newline in the output
+\end{tabbing}
+\item Those that can be ignored:-
+  \begin{itemize}
+  \item \.{@@!}, \.{@@#}, \.{@@+}, \.{@@-}, \.{@@,}, \.{@@/}, \.{@@;},%#
+  \.{@@?}, !@@{! !@@|!, !@@}!, !@@&!
+  \end{itemize}
+\item Those that can be ignored, but which are followed by
+text to be ignored until the following \.{@@>}:-
+  \begin{itemize}
+  \item \.{@@\^}, \.{@@.}, \.{@@:}, \.{@@h}
+  \end{itemize}
+\item Those that can be ignored together with following text
+upto the next control sequence, but which delimit a preceding
+structure:-
+  \begin{itemize}
+  \item \.{@@f}
+  \end{itemize}
+\item \.{@@@@} which generates the !@@! character which is
+part of the miscellaneous set of characters.
+\end{enumerate}
+
+@ Some control sequences are followed by characters which are needed.
+The following procedure will accumulate them. The procedure exits when
+the required control sequence has been read with the buffer pointer
+just after the character following the !@@!. Note also that the
+procedure ignores multiple spaces or tab characters.
+
+@<Input...@>=
+PROC gather to cs = (CHAR @!c)STRING:
+BEGIN
+  STRING @!s; CHAR ch; BOOL sp:=FALSE;
+  WHILE
+    IF ch:=next char; input ended
+    THEN err print("EOF while gathering to @@"+c); FALSE
+      #@.Error: EOF while gathering...@>#
+    ELIF ch="@@"
+    THEN
+      IF (ch:=next char) = c
+      THEN FALSE
+      ELSE s+:="@@"+ch; TRUE
+      FI
+    ELIF ch=blank OR ch=tab ch
+    THEN
+      IF NOT sp
+      THEN s+:=ch; sp:=TRUE
+      ELSE TRUE #Ignore the character#
+      FI
+    ELSE s+:=ch; NOT(sp:=FALSE)
+    FI
+  DO
+    SKIP
+  OD;
+  s
+END;
+
+@ A lower case word has different meanings depending on the mood, the
+latter reflecting its syntactic position. For example, after \.{@@m},
+a word is a macro identifier.
+
+@<The big !CASE!...@>=
+CASE curtok
+IN
+  (INT bs): @<Process a predefined bold symbol according to the current mood@>,
+  (CONTROL co): @<Process a control sequence and possibly change the mood@>,
+  (STRING s): @<Process a miscellaneous string according to the current mood@>,
+  (REF TAG tag): @<Process a tag according to the current mood@>
+OUT add mod text(unnamed module,TEXT(curtok,no text)); #add the !VOID! token#
+  @<Phase II...@>
+ESAC
+
+@ The syntax of a macro definition has been relaxed so that bold tags can be used
+as a macro identifier. This will ease the use of macros to represent modes.
+However, formal parameters must be identifiers.
+
+@<Process a predefined...@>=
+CASE cur mood
+IN
+  SKIP #tex, so ignore#
+  ,
+  BEGIN #macro id.#
+    err print("a macro identifier cannot be a recognised bold tag");
+    #@.Error: a macro identifier cannot...@>#
+    cur mood:=html mood
+  END
+  ,
+  BEGIN #macro header#
+    err print("a macro formal parameter must be an identifier");
+    #@.Error: a macro formal parameter...@>#
+     cur mood:=html mood
+  END
+  ,
+  add mac text(cur mac, TEXT(cur tok, no text)),
+  add mod text(cur mod, TEXT(cur tok, no text))
+ESAC
+
+@ Miscellaneous character sequences include single characters which are
+used as delimiters.
+
+@<Process a misc...@>=
+CASE cur mood
+IN
+  SKIP, #tex#
+  #macro id#
+  IF s="("
+  THEN @<Macro id delimiter for a macro with parameters@>
+  ELIF s="="
+  THEN @<Macro id delimiter for a parameterless macro@>
+  ELSE
+    err print("unexpected string in macro id");
+    #@.Error: unexpected string in macro id@>#
+    cur mood:=html mood
+  FI,
+  #macro header#
+  IF s="," OR s=")"
+  THEN SKIP #formal parameter delimiter#
+  ELIF s="="
+  THEN cur mood:=macro body mood
+  ELSE
+    err print("unexpected string in macro header");
+    #@.Error: unexpected string in macro head...@>#
+    cur mood:=html mood
+  FI,
+  #macro body#
+  add mac text(cur mac, TEXT(cur tok, no text)),
+  #module body#
+  add mod text(cur mod, TEXT(cur tok, no text))
+ESAC
+
+@ @<Macro id delimiter for a macro...@>=
+IF IF cur mac IS no mac
+  THEN TRUE   #a macro id. should have been read#
+  ELIF param OF cur mac ISNT no wparam
+  THEN TRUE   #a formal parameter has already been read#
+  ELSE cur mood:=macro header mood; FALSE
+  FI
+THEN
+  err print("macro id. delimiter unexpected");
+  #@.Error: macro id. delimiter unexp...@>#
+  cur mood:=html mood
+FI
+
+@ @<Macro id delimiter for a par...@>=
+IF cur mac IS no mac
+THEN err print("missing macro id"); cur mood:=html mood
+  #@.Error: missing macro id.@>#
+ELSE cur mood:=macro body mood
+FI
+
+@ A tag is an identifier or an engineer-defined bold indicant. Both
+may be used as a macro identifier. If such an identifier occurs in
+either a macro body or a module body (a macro call), we shall need
+to store the correct !REF MACRO! so that it can be expanded correctly in
+the second phase. The procedure !search macro! finds a !REF MACRO! if
+the tag is a macro identifier.
+
+@<Procedures...@>=
+PROC search macro=(REF REF MACRO root, REF TAG t)REF MACRO:
+IF root IS no mac
+THEN no mac
+ELIF s OF t = s OF id OF root
+THEN root
+ELIF s OF t < s OF id OF root
+THEN search macro(left OF root,t)
+ELSE search macro(right OF root,t)
+FI;
+
+@ The code for !macro body mood! and !module body mood! checks to see
+whether a tag is a macro identifier and, if so, adds the macro call to
+the current macro or module body.
+
+@<Process a tag...@>=
+CASE cur mood
+IN
+  SKIP, #tex#
+  #macro id#
+  IF cur mac IS no mac
+  THEN
+    IF (@{cur mac:=@/
+       add macro id(macro root, add tag(tag root, tag),one off macro))
+       @+IS no mac@}
+    THEN
+      err print("macro id. already defined");
+      #@.Error: macro id. already def...@>#
+      cur mood:=html mood
+    FI
+  ELSE err print("macro id. already read"); cur mood:=html mood
+    #@.Error: macro id. already read@>#
+  FI,
+  #macro header#
+  IF NOT add macro par(cur mac, add tag(tag root, tag))
+  THEN
+    err print("duplicate macro formal parameter");
+    #@.Error: duplicate macro formal...@>#
+    cur mood:=html mood
+  FI,
+  #macro body#
+  BEGIN
+    REF TAG stored tag=add tag(tag root, tag);
+    REF MACRO rm=search macro(macro root, stored tag);
+    add mac text(cur mac,TEXT((rm:=:no mac|stored tag|rm), no text))
+  END,
+  #module body#
+  BEGIN
+    REF TAG stored tag=add tag(tag root, tag);
+    REF MACRO rm=search macro(macro root, stored tag);
+    add mod text(cur mod,TEXT((rm:=:no mac|stored tag|rm), no text))
+  END
+ESAC
+
+@2Processing control sequences.
+Control sequences are numerous, but are divided into a number of groups,
+so we use the operator !MULTICASE! to select an action for each group.
+
+@<Operators...@>=
+OP MULTICASE = (CHAR @!c, []STRING @!s)INT:
+BEGIN
+  INT @!j:=LWB s-1;
+
+  FOR i FROM LWB s TO UPB s WHILE j < LWB s
+  DO
+    IF STRING si=s[i]; c CHOP si>=LWB si
+    THEN j:=i
+    FI
+  OD;
+
+  j
+END;
+
+@ Here is the top-level !CASE! for processing control sequences.
+
+@<Process a control...@>=
+CASE UC cs OF co MULTICASE
+  []STRING("!#&+,-/;?{|}",".:H^",tab ch+blank,"=")
+IN
+  SKIP #ignore#
+  ,
+  skip to cs(">") #ignore to \.{@@>}#
+  ,
+  #new section#
+  (inc cur sec(4); cur mood:=html mood)
+  ,
+  IF cur mood = macro body mood
+  THEN add mac text(cur mac, TEXT(gather to cs(">"),no text))
+  ELIF cur mood = module body mood
+  THEN add mod text(cur mod, TEXT(gather to cs(">"),no text))
+  ELSE
+    err print("@@= not in macro/module body");
+    #@.Error: @@= not in macro...@>#
+    skip to cs(">") #***Replace this with !cur mood:=html mood!***#
+  FI
+OUSE UC cs OF co CHOP "123<@@ADFIM\"
+IN @<Process section or sub-section control sequences@>
+OUT
+  err print("unknown control sequence");
+  #@.Error: unknown control seq...@>#
+  cur mood:=html mood
+ESAC
+
+@ These control sequences introduce a new section or a sub-section.
+
+@<Process section or sub...@>=
+#1#IF next OF web ISNT no stream
+  THEN err print("level-1 sections are disallowed in included files")
+    #@.Error: level-1 sections are dis...@>#
+  ELSE@/
+    inc cur sec(1);
+    print cur sec;
+    cur mood:=html mood
+  FI,
+#2#(inc cur sec(2); print cur sec; cur mood:=html mood),
+#3#(inc cur sec(3); print cur sec; cur mood:=html mood),
+#<# @<Process a module tag@>,
+#@@#@<Add the symbol as a string@>,
+#a#BEGIN
+    cur mod:=unnamed module; cur mood:=module body mood;
+     add mod text(cur mod, make text((sec OF web)))
+  END,
+#d#BEGIN
+    cur mac:=no mac;
+    one off macro:=TRUE;
+    cur mood:=macro id mood
+  END,
+#f#IF cur mood /= html mood & cur mood /= macro body mood
+  THEN
+    err print("unexpected control sequence");
+    #@.Error: unexpected control seq...@>#
+    cur mood:=html mood
+  ELSE cur mac:=no mac; cur mood:=html mood
+  FI,
+#i# @<Process included filename@>,
+#m#BEGIN
+    cur mac:=no mac;
+    one off macro:=FALSE;
+    cur mood:=macro id mood
+  END,
+#\#IF cur mood = macro body mood
+  THEN add mac text(cur mac, TEXT(force newline,no text))
+  ELIF cur mood = module body mood
+  THEN add mod text(cur mod, TEXT(force newline,no text))
+  FI # else ignore #
+
+@ An \.{@@} symbol is regarded as a string.
+
+@<Add the symbol as...@>=
+IF cur mood=macro body mood
+THEN add mac text(cur mac, TEXT(STRING("@@"),no text))
+ELIF cur mood=module body mood
+THEN add mod text(cur mod, TEXT(STRING("@@"),no text))
+FI #else ignore#
+
+@ A module tag can either be a reference to a module whose body is defined
+elsewhere, or it can be immediately followed by \.{=} meaning that the
+initial, or a subsequent body text follows. Multiple spaces or tabs
+and preceding or following spaces are removed from the tag.
+
+@<Process a module...@>=
+CASE
+  STRING mtag:=TRIM gather to cs(">");
+  CHAR ch=next char;
+  cur mood
+IN
+#tex# IF ch = "="
+    THEN @<Switch to !module body mood! and process a module tag@>
+    ELSE backspace input #module reference, so ignore#
+    FI,
+#macro id#
+    (IF ch/="=" THEN backspace input FI;
+     err print("unexpected module tag after a macro identifier")),
+     #@.Error: unexpected module tag after...@>#
+#macro header#
+    (IF ch/="=" THEN backspace input FI;
+     err print("unexpected module tag in a macro header")),
+     #@.Error: unexpected module tag in a...@>#
+#macro body#
+    IF ch="="
+    THEN @<Switch to !module body mood!...@>
+    ELIF backspace input; @<Process a reference to a module@>
+    FI,
+#module body#
+    IF ch="="
+    THEN err print("unexpected module tag in a module body")
+      #@.Error: unexpected module tag in a mod...@>#
+    ELIF backspace input; @<Process a reference...@>
+    FI
+ESAC
+
+@ The text of a module body needs to be added to a new or existing
+module. We assign !rm! to !cur mod! because it is the new module to
+which we are going to add text.
+
+@<Switch to...@>=
+IF UPB mtag > 3
+THEN
+  IF mtag[UPB mtag-2:]="..."
+  THEN #this is a prefix#
+    IF REF MODULE rm=add module tag(module root,@/
+                            mtag[:UPB mtag-3],@/
+                            NOT b add, b prefix);
+      rm IS no mod
+    THEN err print("unknown or duplicate module prefix")
+      #@.Error: unknown or duplicate mod...@>#
+    ELSE
+      cur mood:=module body mood;
+      add mod text(cur mod:=rm,make text((sec OF web)))
+    FI
+  ELSE @<Add the section number to the current module@>
+  FI
+ELSE @<Add the section...@>
+FI
+
+@ The module is not a prefix, so !add module tag! is bound to return
+a reference to an existing or a new module. The reference is assigned
+to !cur mod!.
+
+@<Add the section...@>=
+cur mood:=module body mood;
+add mod text(cur mod:=add module tag(module root, mtag, b add, NOT b prefix),
+         make text((sec OF web)))
+
+@ Because a module reference can occur in a macro body, it is quite
+possible that no module will have been defined when this part is
+reached. We have to ensure that !cur mod! refers to a valid module.
+
+@<Process a reference...@>=
+@h&nbsp;&nbsp;@>UPB mtag > 3
+THEN
+  IF mtag[UPB mtag-2:]="..."
+  THEN #this is a prefix#
+    IF REF MODULE rm=add module tag(module root,mtag[:UPB mtag-3],@/
+                           NOT b add, b prefix);
+      rm IS no mod
+    THEN err print("unknown or duplicate module prefix")
+      #@.Error: unknown or duplicate mod...@>#
+    ELSE add mod text(cur mod,TEXT(rm,no text))
+    FI
+  ELIF @<Check the current mood and add the module tag appropriately@>
+  FI
+ELIF @<Check the current mood...@>
+
+@ We must check whether the current mood is !macro body mood! or
+!module body mood!.
+
+@<Check the current mood...@>=
+@h&nbsp;&nbsp;@>cur mood = module body mood
+THEN add mod text(cur mod,
+             TEXT(add module tag(module root, mtag, b add, NOT b prefix),
+                 no text))
+ELIF cur mood = macro body mood
+THEN add mac text(cur mac,
+            TEXT(add module tag(module root, mtag, b add, NOT b prefix),
+                 no text))
+ELSE err print("module tag occurs in mood "+whole(cur mood,0))
+  #@.Error: module tag occurs in mood ...@>#
+
+@ An included filename, introduced by \.{@@i}, has to be checked to
+see whether its file has already been included. If so, the \.{@@i}
+control sequence is flagged as a warning and the file ignored.
+
+@<Process included...@>=
+IF STRING inc fn = gather to cs(">");
+  scan included tree(inc tree, inc fn)
+THEN warn print("! Warning: included file "+inc fn+" already included")
+ELIF NOT add include file(web, inc fn)
+THEN err print("cannot find the included file "+inc fn)
+  #@.Error: cannot find the inc...@>#
+FI
+
+@1Outputting the tangled program.
+When outputting the tangled program, we need to keep track of which
+tokens are being output because, although strictly speaking, an
+Algol 68 compiler can cope with the phrase !INTint!, it would be better
+to interpose a blank between the mode indicant and the identifier.
+We use a global name to remember when a tag (whether a bold symbol or
+an identifier) has been output.
+
+@<Names...@>=
+BOOL tag output:=FALSE;
+
+@ The !put out! procedure is used to output a !STRING!, a positive
+integer representing a section number, a zero representing a newline
+in the output, a negative integer representing a bold symbol, or a
+tag. All the details of the output buffer are held in !output!, (of
+mode !REF STREAM!) declared previously. The procedure simply fills a
+line and outputs it when the next bit of output would make it exceed
+!max output line leng!. However, because the local compiler
+(\.{a68toc}) uses a \verb|*| or a \verb|%| at the start of the line
+to mean a staredit character.@^system dependencies@>
+
+@<Procedures...@>=
+PROC put out = (REF STREAM st,@/
+           []UNION(CHAR,STRING,INT,[]INT,REF TAG) p)VOID:
+BEGIN
+  PROC empty the buffer = (REF STREAM st)VOID:
+  (
+    IF CHAR b1=(b OF st)[1];
+      b1="*" OR b1="%"
+    THEN put(f OF st,blank)
+    FI;
+    put(f OF st,((b OF st)[:upb OF st],newline));
+    n OF st+:=1; upb OF st:=0
+  );
+
+  FOR i FROM LWB p TO UPB p
+  DO
+    []CHAR outs=@/
+      CASE p[i]
+      IN
+      (CHAR ci):   ci,
+      (STRING si): IF CHAR sil=si[LWB si]; tag output & is digit(sil)
+                THEN tag output:=FALSE; blank+si+blank
+                ELIF is digit(sil)
+                THEN si+blank
+                ELIF tag output:=FALSE; si="="
+                THEN blank+si
+                ELSE si
+                FI,
+      (INT ni):   CASE 2+SIGN ni
+                IN
+         #bold sym#  IF tag output
+                  THEN blank
+                  ELSE tag output:=TRUE; ""
+                  FI+bold sym[ABS ni]
+                  ,
+          #newline#  (empty the buffer(st); tag output:=FALSE; "")
+                  ,
+          #sec num#  (tag output:=FALSE; whole(ni,0))
+                ESAC,
+       ([]INT ri):    (tag output:=FALSE;
+                   (ri[1]<0|"I"|"")+whole(ABS ri[1],0)
+                    +"."+whole(ri[2],0)
+                    +"."+whole(ri[3],0)
+                    +"."+whole(ri[4],0)),
+     (REF TAG ti): (tag output|blank|tag output:=TRUE;"")+s OF ti
+     ESAC;
+
+    IF upb OF st + UPB outs > max output line leng
+    THEN empty the buffer(st)
+    FI;
+    (b OF st)[upb OF st+1:upb OF st+UPB outs]:=outs;
+    upb OF st+:=UPB outs
+  OD
+END; #put out#
+
+@ Now we need to close the files.
+
+@<Close the...@>=
+IF upb OF output>0
+THEN put(f OF output,((b OF output)[:upb OF output],newline))
+FI;
+close(f OF output)
+
+@2Macro expansion.
+There are two cases of macro expansion: where a macro has no
+parameters, the macro call is simply replaced with a copy of the macro
+body. The important point to note here is that a reference to the macro
+text is insufficient because the rest of the text stream must be
+appended to the macro text and, because the tail of the macro text has
+only one !next! field, a further expansion of the macro for another
+call could not then be performed. This diagram will help us understand
+what is happening.
+
+@m void token(t) = (text OF t|(VOID): TRUE|FALSE)
+
+@<Procedures...@>=
+PROC expand macro=(REF REF TEXT txt,REF MACRO mc)BOOL:
+IF REF TEXT new text:=no text,      #expanded text#
+     loc mac text:=text beg OF mc; #macro replacement text#
+  REF REF TEXT loc new text:=new text; #to step down the new text#
+  param OF mc IS no wparam
+THEN #Simple text replacement#
+  WHILE
+    IF loc mac text IS no text
+    THEN FALSE
+    ELSE NOT void token(loc mac text)
+    FI
+  DO
+    REF REF TEXT(loc new text):=HEAP TEXT:=(text OF loc mac text,no text);
+    CO Copy the macro text item CO
+    loc new text:=next OF loc new text; #nudge along the new text chain#
+    loc mac text:=next OF loc mac text #nudge along the macro text#
+  OD;
+
+  CO Now insert the new text into the text chain at !txt! CO
+  REF REF TEXT(loc new text):=next OF txt;
+    #existing chain appended to !new text!#
+  txt:=new text; #new chain replaces the macro call#
+  FALSE #so that the replaced text can be rescanned by !process module!#
+ELSE @<Expand macro replacing formal parameters with actual parameters@>
+FI;
+
+@ Because actual parameters for a macro call could contain virtually
+any tokens, we restrict the use of parentheses to balanced pairs with
+the result that should an actual parameter contain a comma, it can be
+simply enclosed in a pair of parentheses. This means that
+\begin{enumerate}
+\item Every parameter except the last is followed by a !STRING! with
+value ",";
+\item The last parameter (or the only parameter) is followed by a
+!STRING! with value ")";
+\item Any other terminator is an error.
+\end{enumerate}
+We should also note that the macro call should be followed by a
+!STRING! with value "(".
+
+Because each actual parameter is a linked list of text and because it is
+convenient to keep all the actual parameters also as a linked list, we
+shall need a new mode. !actual param! refers to the head of the list of
+actual parameters.
+
+@<Expand macro replacing...@>=
+MODE ACTUAL = STRUCT(REF TEXT actual, REF ACTUAL next);
+
+REF ACTUAL no actual = NIL;
+REF ACTUAL actual param:=no actual;
+
+@ Because the macro call with its actual parameters in the main text
+linked list will be replaced by the expanded macro body, we can use a
+reference to each actual parameter in the macro call, replacing each
+terminator (whether "," or ")") with !no text!, thus ensuring that
+each actual parameter is properly terminated for the text replacement
+routine.
+
+If we create the linked list of actual parameters with !NIL!
+references to the text before we scan the actual macro call, then
+that scanning can easily check whether the number of supplied actual
+parameters agrees with the number of formal parameters in the macro
+definition; !loc formal param! is used to step down the linked list
+of formal parameters in the macro definition while !loc actual param!
+is used to step down the linked list of actual parameters.
+
+@<Expand macro replacing...@>=
+REF REF WPARAM loc formal param:=param OF mc;
+REF REF ACTUAL loc actual param:=actual param;
+
+WHILE loc formal param ISNT no wparam
+DO
+  REF REF ACTUAL(loc actual param):=HEAP ACTUAL:=(no text, no actual);
+  loc actual param:=next OF loc actual param;
+  loc formal param:=next OF loc formal param
+OD;
+
+@ Now we must check whether the macro call is followed by a "(". Here is
+a convenient macro to determine whether a !TEXT! item has been united from
+a !STRING!.@^system dependencies@>
+
+@m text to string(t) = (t|(STRING s): s|"")
+
+@<Expand macro replacing...@>=
+IF text to string(text OF next OF txt)/=STRING("(")
+  #cast needed by the local compiler#
+THEN
+  err print("call of macro "+s OF id OF mc+" not followed by ""("""+
+         ", macro call ignored");
+  #@.Error: call of macro...@>#
+  TRUE
+ELSE
+
+@ We need a local name which can refer to each !TEXT! item in the
+linked list to which the !expand macro! parameter !txt! refers.
+Because we know that the macro call (of mode !REF MACRO!) is followed
+by "(", we can skip that token. The end of the text is always denoted
+by a !VOID! token, so !next OF next OF txt! is guaranteed to not be
+!NIL!.
+
+@<Expand macro replacing...@>=
+REF REF TEXT loc text:=next OF next OF txt;
+  #first token of the first actual parameter#
+
+@ For each formal parameter, we need to assign the current value referred
+to by !loc text! to the equivalent actual parameter, then chase down the
+text linked list until a string equal to "," or ")" is found. If ")" is
+found, it should be in the last actual parameter. If the correct terminator
+is found, !loc text! is made to refer to its successor, and the terminator
+is replaced in the actual parameter by !no text!. We must also check for
+nested parentheses, so we declare a !REF INT! to hold the nesting level.
+
+Firstly, we reset !loc actual param! to the start of the actual parameter
+list. The casts in the definition of !terminator! and in the code below
+are required because thelocal compiler does not permit comparison of a
+string and a character where the character is the yield of a conditional
+clause.@^system dependencies@>
+
+@<Expand macro replacing...@>=
+loc actual param:=actual param; #head of the list#
+
+WHILE
+  IF loc actual param IS no actual
+  THEN FALSE
+  ELSE NOT void token(loc text)
+  FI
+DO #Scan the tokens of this actual parameter#
+  INT level:=0;
+
+  actual OF loc actual param:=loc text; #start of the actual parameter#
+
+  WHILE
+    STRING cur txt = text to string(text OF loc text);
+    NOT(void token(loc text) OR level=0 AND (cur txt = ")" OR cur txt = ","))
+  DO
+    IF cur txt = "(" THEN level+:=1
+    ELIF cur txt = ")" THEN level-:=1
+    FI;
+
+    loc text:=next OF loc text
+  OD;
+
+  IF void token(loc text)
+  THEN err print("unexpected end of text")
+    #@.Error: unexpected end of text@>#
+  ELIF text to string(text OF loc text)=STRING(")")
+              &
+     (next OF loc actual param ISNT no actual)
+  THEN fatal error("! Fatal error: insufficient parameters in a macro call")
+    #@.Fatal error: insufficient parameters...@>#
+  ELIF text to string(text OF loc text)=STRING(",")
+              &
+     (next OF loc actual param IS no actual)
+  THEN fatal error("! Fatal error: too many parameters in a macro call")
+  ELSE
+    REF REF TEXT tmp text=loc text;
+    loc text:=next OF loc text; #first token of the next actual parameter#
+    tmp text:=no text; #actual parameter terminator#
+    loc actual param:=next OF loc actual param
+  FI
+OD;
+
+@ We are now in a position to replace formal parameters in a copy of the
+replacement text by actual parameters. We shall use !new text!, declared at
+the beginning of !expand macro!, to refer to the new expanded text and add
+the new text after the macro expansion to !txt!. We also have:-
+\begin{itemize}
+\item !loc mac text! refers to the macro replacement text
+\item !param OF mc! refers to the list of formal parameters
+\item !actual param! refers to the list of actual parameters
+\end{itemize}
+For each token in the macro text, we compare it with each formal parameter,
+keeping the actual parameter reference in step. If the token is a formal
+parameter, we append a copy of the corresponding actual parameter to !new
+text!. A copy of all other tokens is appended to !new text!.
+
+@<Expand macro replacing...@>=
+  # Step down the macro replacement text#
+  WHILE loc mac text ISNT no text
+  DO
+    CASE text OF loc mac text
+    IN
+      (REF TAG tag):
+        IF @<!tag! is not a formal parameter@>
+        THEN
+          CO Add a copy of the token !loc mac text! to !loc new text! CO
+          REF REF TEXT(loc new text):=HEAP TEXT:=
+            (text OF loc mac text,no text);
+          loc new text:=next OF loc new text
+        ELSE
+          CO Replace it with a copy of !loc actual param! CO
+          REF REF TEXT loc actual param text:=actual OF loc actual param;
+
+          WHILE loc actual param text ISNT no text
+          DO
+            REF REF TEXT(loc new text):=HEAP TEXT:=loc actual param text;
+            loc new text:=next OF loc new text;
+            loc actual param text:=next OF loc actual param text
+          OD
+        FI
+    OUT
+      CO !loc mac text! is not a tag and so cannot be a formal parameter.
+        We just append a copy to !loc new text! CO
+      REF REF TEXT(loc new text):=HEAP TEXT:=
+        (text OF loc mac text,no text);
+      loc new text:=next OF loc new text
+    ESAC;
+
+    loc mac text:=next OF loc mac text
+  OD;
+
+  @<Insert the expanded text into the text chain at !txt!@>;
+
+  CO We yield !FALSE! to ensure that the replacement text is rescanned by
+    !process module! CO
+  FALSE
+FI
+
+@ Now insert the new text into the text chain at !txt!. After scanning the
+macro call for actual parameters, !loc text! refers to the final terminator (a
+!STRING! with value !")"!), so the end of the replacement text must refer to the
+token following !")"!. First we replace the !next! field of !loc new text! so
+that it refers to the text at !loc text! because !loc text! now refers to the
+token following the !")"! after the end of the macro call. Then we replace the
+text at !txt! with the new text.
+
+@<Insert the expanded text...@>=
+REF REF TEXT(loc new text):=loc text;
+txt:=new text
+
+@ @<!tag! is not a formal...@>=
+# Reset the stepping names #
+loc formal param:=param OF mc;
+loc actual param:=actual param;
+
+WHILE
+  IF loc formal param IS no wparam
+  THEN FALSE
+  ELSE tag ISNT par OF loc formal param
+  FI
+DO
+  loc formal param:=next OF loc formal param;
+  loc actual param:=next OF loc actual param
+OD;
+
+loc formal param IS no wparam
+
+@2tangling the parsed text.
+The !unnamed module! contains the program proper. Some of its tokens will
+be references to modules which will need to be replaced by a copy of
+their replacement texts. References to macros will also have to be
+replaced by the macros' replacement texts. The sign of integers will
+determine their meaning.
+
+@<tangle the parsed...@>=
+process module(output, unnamed module, HEAP[4]INT)
+
+@ The top-level tangling consists of a loop in which each token is
+examined in turn. In fact, since the current text of the !unnamed
+module! may be replaced, the current position is not advanced until
+the current text item is an !int!, a !string!, a !ref tag! or !void!
+(the end of the text). Furthermore, the expanded text can be output
+immediately.
+
+Section numbers are output as comments. The start of each section, or
+replacement section, $n$ appears as \.{#n:#} and the end of each section
+of text by \.{#:n#}. We need to keep track of the current section
+number: when text is replaced, the replacement text will also have its
+own section number and we shall want to revert to the previous section
+when the replacement has been completed. This points to the need for a
+stack of section numbers. However, using a !REF[]INT! parameter for the
+procedure !process module! and calling the latter recursively when we
+get a module reference provides the necessary stack.
+
+Note that the first text item of a module is always a section number.
+
+@<Procedures...@>=
+PROC process module = (REF STREAM st, #output stream#
+               REF MODULE mod, #module being processed#
+               REF[]INT cur sec)VOID:
+IF text beg OF mod:=:no text
+THEN warn print(("Module """,id OF mod,""" has no text!",EMPTY))
+ELSE
+  cur sec:=(text OF text beg OF mod|([]INT n): n|(0,0,0,0));
+  put out(st,("#",cur sec,":# "));
+
+  REF REF TEXT loc txt:=next OF text beg OF mod;
+
+  WHILE loc txt ISNT no text
+  DO
+    debug print text("process module: ",loc txt);
+    IF @<!CASE! all the modes of a text item@>
+    THEN loc txt:=next OF loc txt
+    FI
+  OD;
+
+  put out(st,("#:",cur sec,"# "))
+FI;
+
+@ We need a !CASE! to process all the possible !TEXT! modes. Note that a
+!STRING! denotation is preceded by a blank to ensure that successive quote
+symbols are not regarded as a single quote symbol in the string.
+
+@<!CASE! all the modes...@>=
+CASE text OF loc txt
+IN
+  (INT @!n): (put out(st,n); TRUE),
+  ([]INT @!r): (put out(st,("#:",cur sec,blank));
+           put out(st,(cur sec:=r,":# "));
+           TRUE),
+  (STRING @!s): ((s[LWB s]=""""|put out(st,blank)); put out(st,s); TRUE),
+  (REF TAG @!t): (put out(st,t); TRUE),
+  (REF MACRO mc): @<Check for a one-off macro@>,
+  (REF MODULE md): (process module(st,md,HEAP[4]INT); TRUE),
+  (VOID): TRUE,
+  (CONTROL @!c): BEGIN
+              err print("unexpected control sequence("+cs OF c+@/
+                    ") in module """+id OF mod+"""");
+              #@.Error: unexpected control sequence in...@>#
+              TRUE
+           END
+ESAC
+
+@ If a macro was defined using \.{@@d}, it can be called only once.
+That a macro was so defined is recorded in bit 32 of its !flags! field.
+If it is a one-off macro, this is a call, so we need to check bit 31
+which is set once the macro has been called. For subsequent calls,
+the macro call is replaced by !SKIP!.
+
+@<Check for a one-off...@>=
+IF 32 ELEM flags OF mc
+THEN
+  IF NOT(31 ELEM flags OF mc)
+  THEN
+    flags OF mc:=flags OF mc OR ELEM 31;
+    expand macro(loc txt,mc)
+  ELSE put out(st," SKIP");@& TRUE
+  FI
+ELSE expand macro(loc txt,mc)
+FI
+
+@1System dependent changes.
+This module should be replaced, if necessary, by changes to the program that
+are necessary to make tang work at a particular installation. Note that
+change files have been jettisoned in tang because it is felt that
+version control systems provide better facilities for keeping a check on
+changes to programs.
+

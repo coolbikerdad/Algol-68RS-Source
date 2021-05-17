@@ -1,0 +1,11 @@
+#!/bin/bash
+
+CMD=$(pxs -ICommand,40)
+if [ "${CMD}" == "" ]
+then :
+else
+    CMD=$(echo ${CMD} | sed -e "s:~:${HOME}:g" -)
+    exec ${CMD} 2>&1 | xless
+fi
+#end of cmd
+

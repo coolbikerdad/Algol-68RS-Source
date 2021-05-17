@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for f in $*
+do
+  ~/bin/xless.sh ${f} $(pxs -w$(basename $f) -CLine_numbers?,With,Without)
+done
+# end of Lister

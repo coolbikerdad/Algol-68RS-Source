@@ -1,0 +1,185 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>The Algol 68 part</title>
+<meta name="description" content="The Algol 68 part">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node23.html">
+<link rel="previous" href="node19.html">
+<link rel="up" href="node4.html">
+<link rel="next" href="node23.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html328"
+  href="node23.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html324"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html318"
+  href="node21.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html326"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html329"
+  href="node23.html">Web 68 commands</a>
+<b> Up:</b> <a name="tex2html325"
+  href="node4.html">Web&nbsp;68</a>
+<b> Previous:</b> <a name="tex2html319"
+  href="node21.html">Using macros</a>
+ &nbsp; <b>  <a name="tex2html327"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h2><a name="SECTION00048000000000000000"></a><a name="subsec:algol68"></a>
+<br>
+The Algol 68 part
+</h2>
+
+<p>
+The Algol 68 program is written as modules. The outermost module is the 
+<span  class="textit">untagged module</span> and is introduced by the Web
+68 command 
+<code>@a</code> (a for Algol 68).
+
+<p>
+Tagged modules are preceded by a module tag, consisting of HTML&nbsp;code
+which appears between <tt>@&lt;</tt> and <tt>@&gt;</tt>.
+
+<p>
+Module tags should be a good description of the contents of the
+module. If you are tempted to write a comment inside Algol 68 which
+will explain what the following lines of code do, consider writing the
+comment as a module tag and putting the lines of code in their own
+section.
+
+<p>
+Multiple spaces and tabs in module tags are reduced to a single space or
+tab and preceding and following spaces are removed. So the module tag
+<pre>
+@&lt;Print input buffer error location@&gt;
+</pre>
+can be matched by
+<pre>
+@&lt; Print input buffer   error location @&gt;
+</pre>
+However, inputting such long tags is error prone, so Web 68 allows you
+to abbreviate them whereby you provide a unique prefix to identify the
+tag. Thus, the above tag could be abbreviated to
+<pre>
+@&lt;Print input error...@&gt;
+</pre>
+provided that no other module starts with those characters.
+
+<p>
+When you want to add actual Algol 68 source code to a module, you
+should append an <code>=</code> symbol to the command <tt>@&gt;</tt>, viz:-
+
+<p>
+<pre>
+@&lt;Compiler pre...@&gt;=
+PROGRAM tang CONTEXT VOID
+USE @&lt;Library preludes@&gt; standard
+</pre>
+
+<p>
+You can add Algol 68 source code to any module as many times as you want.
+
+<p>
+You can place comments in the Algol 68 source code in a module.
+tang will ignore them and weav will format them, the text between
+the <code>#</code> or <tt>CO</tt> or <tt>COMMENT</tt> pairs being regarded
+as HTML code. Thus you can use text between bangs just as in the
+HTML part.
+
+<p>
+Modules are particularly useful when you have a long procedure: you
+can use a module tag instead of comments.  For example, here is a
+procedure from tang which has the same piece of code
+occurring in two places.  The actual code has already been specified,
+so both references are abbreviated.  Notice how the module tags
+materially add to your understanding of the procedure:-
+
+<p>
+<pre>
+@&lt;Input...@&gt;=
+PROC next char = CHAR:
+IF input ended
+THEN @&lt;Check if included...@&gt;; blank
+ELIF loc OF web &gt;= UPB b OF web
+THEN
+   WHILE input ln(web) &amp; UPB b OF web = 0 DO SKIP OD;
+   IF input ended
+   THEN @&lt;Check if included...@&gt;
+   FI;
+   blank
+ELSE (b OF web)[loc OF web+:=1]
+FI;
+</pre>
+
+<p>
+In a sense, modules are like Algol 68 procedures with mode
+<tt>VOID</tt>, except that they do not have to be units.
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html328"
+  href="node23.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html324"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html318"
+  href="node21.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html326"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html329"
+  href="node23.html">Web 68 commands</a>
+<b> Up:</b> <a name="tex2html325"
+  href="node4.html">Web&nbsp;68</a>
+<b> Previous:</b> <a name="tex2html319"
+  href="node21.html">Using macros</a>
+ &nbsp; <b>  <a name="tex2html327"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

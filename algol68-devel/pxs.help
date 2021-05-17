@@ -1,0 +1,56 @@
+@fpxs can be used in shell scripts to interact
+@fwith the user. The following dialogues are
+@favailable:-
+
+@f@b(a) -Ctext,b1,b2,b3...
+@f    Display a window containing `text' with
+@f    buttons along the bottom whose labels
+@f    are `b1', `b2' etc. The label of the
+@f    button pressed will be output to
+@f    `stand out'.
+
+@f@b(b) -Ddir
+@f    Display a directory selector with `dir'
+@f    as the default directory.The chosen 
+@f    directory, if selected, will be output
+@f    to `stand out'. If the selector is
+@f    cancelled, there will be no output.
+
+@f@b(c) -Fdir
+@f    Display a file selector with `dir' as
+@f    the default directory. The name of
+@f    chosen file, if selected, will be output
+@f    to `stand out'. If the selector is
+@f    cancelled, there will be no output.
+
+@f@b(d) -Iprompt,len
+@f    Display an input field which can accept
+@f    `len' characters as input. `prompt'
+@f    will be displayed at the front of the
+@f    field. The input will be displayed on
+@f    `stand out'. If `len' is omitted, the
+@f    default length is 80. If the prompt is
+@f    omitted, the default is "Input". If the
+@f    input string ends with a comma, use the
+@f    string, minus the comma, as a regular
+@f    expression to search the history.
+
+@f@b(e) -Tmessage
+@f    Display the message and wait for the `Ok'
+@f    button to be pressed. If the first
+@f    character of `message' is `@', regard
+@f    `message' as the name of a file which
+@f    should be displayed. Click on `Ok' to
+@f    finish. If a text is selected, it will
+@f    be sent to `stand out'.
+
+@f@b(f) -h
+@f    Display this help.
+
+@f@b(g) -wtext
+@f    Change the title of the window to
+@f    `text'.
+
+@fThe border width of the widgets is set
+@fby the program to `-2'.
+@b(c) BD21312-4, Phoenix Engineering.

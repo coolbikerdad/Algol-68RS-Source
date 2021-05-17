@@ -1,0 +1,15 @@
+        Help for New_Web68
+        ==================
+
+The program edits a skeleton file with the name of the
+module.
+
+Choose the subdirectory name (it can be an existing one).
+
+Choose the kind of module:-
+   Prog  -- a plain program
+   Decs  -- a declaration module
+   Forms -- a program using the Xforms library
+
+Enter the program identification.
+

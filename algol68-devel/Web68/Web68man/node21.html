@@ -1,0 +1,162 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Using macros</title>
+<meta name="description" content="Using macros">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="previous" href="node20.html">
+<link rel="up" href="node19.html">
+<link rel="next" href="node22.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html316"
+  href="node22.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html312"
+  href="node19.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html308"
+  href="node20.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html314"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html317"
+  href="node22.html">The Algol 68 part</a>
+<b> Up:</b> <a name="tex2html313"
+  href="node19.html">The definition part</a>
+<b> Previous:</b> <a name="tex2html309"
+  href="node20.html">Defining macros</a>
+ &nbsp; <b>  <a name="tex2html315"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h3><a name="SECTION00047200000000000000"></a><a name="subsubsec:usemacros"></a>
+<br>
+Using macros
+</h3>
+
+<p>
+Macros are used by <span  class="textit">calling</span> them, just like Algol
+68
+procedures.  The only restriction on the actual parameters of a macro
+is that any parentheses should be balanced.  Furthermore, if you want
+to include a comma in an actual parameter, it should be surrounded by
+parentheses because the actual parameters, if there are more than
+one, are themselves separated by commas.  The actual parameters can
+include or consist of calls to other macros.
+
+<p>
+If a declarative macro is called more than once, the second and
+subsequent calls are replaced by <tt>SKIP</tt> instead of the macro
+body.
+
+<p>
+Because each token is considered in turn, the following definitions
+and call will produce an error message:-
+
+<p>
+<pre>
+@m arg = (p)
+@m identity(p1) = p1
+@a identity ## arg
+</pre>
+
+<p>
+The <code>##</code> between <tt>identity</tt> and <tt>arg</tt> serve to
+separate the two words into two lexical entities because otherwise
+they would be regarded as part of a single identifier. The error is
+caused by <tt>identity</tt> being expanded first: <tt>identity</tt>
+requires a parameter pack, but the next token is not <code>(</code>, but
+<tt>arg</tt> which has not yet been expanded. Only when the macro call
+has been expanded will <tt>arg</tt> be expanded. This will produce the
+error message
+<pre>
+! Error: call of identity not followed by "(".
+</pre>
+
+<p>
+This brings us to a useful wrinkle associated with macro definitions
+and calls.
+
+<p>
+In the next macro, the body of the macro contains two identifiers which
+are split into two lexical tokens by <code>##</code> enabling the actual
+parameters, provided that they are just identifiers, to be used to
+construct two identifiers.
+
+<p>
+<pre>
+@m mcheck col(col1,col2) =@/
+   IF NOT q##col1 OR NOT q##col2
+   THEN@/
+      []CHAR s="fl set object color";
+      put(outf,
+          ("   ",s,"(",obj ident,",",
+           CA mov(gen##col1),",",CA mov(gen##col2),");",
+			  newline));
+      add mac(s)
+   FI
+</pre>
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html316"
+  href="node22.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html312"
+  href="node19.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html308"
+  href="node20.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html314"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html317"
+  href="node22.html">The Algol 68 part</a>
+<b> Up:</b> <a name="tex2html313"
+  href="node19.html">The definition part</a>
+<b> Previous:</b> <a name="tex2html309"
+  href="node20.html">Defining macros</a>
+ &nbsp; <b>  <a name="tex2html315"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

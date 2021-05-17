@@ -1,0 +1,205 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Overview of tang</title>
+<meta name="description" content="Overview of tang">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node8.html">
+<link rel="previous" href="node6.html">
+<link rel="up" href="node6.html">
+<link rel="next" href="node8.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html148"
+  href="node8.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html144"
+  href="node6.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html138"
+  href="node6.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html146"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html149"
+  href="node8.html">Overview of weav</a>
+<b> Up:</b> <a name="tex2html145"
+  href="node6.html">Program usage</a>
+<b> Previous:</b> <a name="tex2html139"
+  href="node6.html">Program usage</a>
+ &nbsp; <b>  <a name="tex2html147"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h3><a name="SECTION00042100000000000000"></a><a name="subsubsec:tang"></a>
+<br>
+Overview of tang
+</h3>
+
+<p>
+tang now reads its parameters as though they were a call to an
+Algol 68 program. The simplest call of the program is
+<blockquote>
+tang ("filename")
+
+</blockquote>
+If you are using the <tt>bash</tt> shell, remember to quote the
+parentheses like this:-
+<blockquote>
+tang '("filename")'
+
+</blockquote>
+Alternatively, you can specify the filename as a straight path without
+the string quotes provided that you enclose it in parentheses and
+precede it with the `f' option:-
+<blockquote>
+tang (f(filename))
+
+</blockquote>
+
+<p>
+Other options are:-
+<dl>
+<dt><strong><tt>d</tt></strong></dt>
+<dd>Output debugging information to <tt>tang.dbg</tt>.
+</dd>
+<dt><strong><tt>f</tt></strong></dt>
+<dd>Specify the input filename. The `f' should be
+followed by the filename, either enclosed in parentheses, or enclosed
+both by parentheses and by string quotes. For example:-
+<blockquote>
+tang (f("filename"))
+
+</blockquote>
+</dd>
+<dt><strong><tt>h</tt></strong></dt>
+<dd>Display a usage message only.
+</dd>
+<dt><strong><tt>v</tt></strong></dt>
+<dd>Display the version of the program only.
+</dd>
+<dt><strong><tt>w</tt></strong></dt>
+<dd>Specify directories to search for Web 68 include
+files. The `w' should be followed by a parenthesised list of
+directories. For example:-
+<blockquote>
+tang (w(dir1,dir2),f(filename))
+
+</blockquote>
+</dd>
+</dl>
+The author's program development system uses <code>~/lib</code> as the
+directory for included Web 68 files (see that system for details).
+
+<p>
+See section <a href="node5.html#subsec:input">3.1</a> for details of input
+and output
+filenames.
+
+<p>
+tang works roughly as follows:-
+
+<ol>
+<li>It reads the Web 68 source file, skipping the HTML part of
+each section, but tokenising the macro definitions and all the
+Algol 68 code in the modules. Wherever Algol 68 code is specified as
+being in an already existing module, whether tagged or untagged, it is
+simply tacked onto the end of that module, together with the section
+number in which the code appears.
+</li>
+<li>The untagged module is then output, token by token.
+</li>
+<li>Wherever a token is a module tag, the tag is replaced by the
+text in that module.
+</li>
+<li>Wherever a token is a macro, the macro is replaced by the body
+of the macro. If the macro has parameters, the actual parameters are
+scanned and used to replace the formal parameters in the macro body.
+</li>
+<li>The process of expanding macros and modules bodies continues
+until the output text consists of plain tokens.
+</li>
+<li>The output lines are filled to 80 characters as much as
+possible, although string denotations are not split across line
+boundaries.
+</li>
+<li>The output text contains comments which specify the section in
+which each piece of code occurs:-
+<dl>
+<dt><strong>Starting comment</strong></dt>
+<dd><tt>#</tt>section.subsection.subsubsection.paragraph:<tt>#</tt>
+</dd>
+<dt><strong>Finishing comment</strong></dt>
+<dd><tt>#</tt>:section.subsection.subsubsection.paragraph<tt>#</tt>
+</dd>
+<dt><strong>Finishing and starting comment</strong></dt>
+<dd>Instead of outputting a finishing comment followed by a starting
+comment, the two comments are concatenated to form a single comment of
+the form #:1.1.2.1 3.1.4.2:#.
+</dd>
+</dl>
+</li>
+</ol>
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html148"
+  href="node8.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html144"
+  href="node6.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html138"
+  href="node6.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html146"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html149"
+  href="node8.html">Overview of weav</a>
+<b> Up:</b> <a name="tex2html145"
+  href="node6.html">Program usage</a>
+<b> Previous:</b> <a name="tex2html139"
+  href="node6.html">Program usage</a>
+ &nbsp; <b>  <a name="tex2html147"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

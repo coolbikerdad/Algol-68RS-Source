@@ -1,0 +1,201 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Defining macros</title>
+<meta name="description" content="Defining macros">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node21.html">
+<link rel="previous" href="node19.html">
+<link rel="up" href="node19.html">
+<link rel="next" href="node21.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html306"
+  href="node21.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html302"
+  href="node19.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html296"
+  href="node19.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html304"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html307"
+  href="node21.html">Using macros</a>
+<b> Up:</b> <a name="tex2html303"
+  href="node19.html">The definition part</a>
+<b> Previous:</b> <a name="tex2html297"
+  href="node19.html">The definition part</a>
+ &nbsp; <b>  <a name="tex2html305"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h3><a name="SECTION00047100000000000000"></a><a name="subsubsec:defmacros"></a>
+<br>
+Defining macros
+</h3>
+
+<p>
+Web 68 provides two kinds of macros:
+
+<p>
+<dl>
+<dt><strong><tt>@m</tt></strong></dt>
+<dd>Multi-macros which may be called many times.
+</dd>
+<dt><strong><tt>@d</tt></strong></dt>
+<dd>One-off macros which may only be called once
+(a declarative macro).
+</dd>
+</dl>
+
+<p>
+Both macros may have any number of parameters (including none).
+
+<p>
+The definition of a macro consists of four or five parts:
+
+<ol>
+<li>the Web 68 macro definition command (<code>@d</code> or <code>@m</code>)
+followed by at least one space
+</li>
+<li>the macro identifier (which looks like an Algol 68 identifier)
+</li>
+<li>an optional formal parameter pack
+</li>
+<li>an equals symbol (<code>=</code>)
+</li>
+<li>the macro body
+</li>
+</ol>
+
+<p>
+The text
+<blockquote>
+<tt>@m</tt> <span  class="textit">identifier</span> = Algol 68 text
+
+</blockquote>
+defines a <span  class="textit">simple</span> macro, where the identifier
+will be
+replaced by the Algol 68 text when tang produces its output.
+
+<p>
+The text
+<blockquote>
+<tt>@m</tt> <span  class="textit">identifier</span><!-- math
+ $(p_1,\ldots,p_n)$
+ -->
+<span class="MATH">(<i>p</i><sub>1</sub>,&#8230;, <i>p</i><sub>n</sub>)</span>
+= Algol 68 text
+
+</blockquote>
+defines a <span  class="textit">parametric</span> macro, where the identifier
+plus the
+actual parameters (in a parameter pack) will be replaced by the
+Algol 68 text and where occurrences of the formal parameters <span class="MATH"><i>p</i><sub>i</sub></span>
+in
+that Algol 68 text will be replaced by the corresponding actual
+argument.
+
+<p>
+The formal parameter pack looks just like the parameter pack of an
+Algol 68 routine.  The formal parameters themselves can take the form
+of Algol 68 identifiers or mode or operator indicants and should be
+separated by commas as in an Algol 68 routine call.  The macro body
+can contain any Algol 68 code, including calls of previously defined
+macros, but parentheses should be balanced.  Note that ``previously''
+in this case refers to previously in the Web 68 file.  Any occurrence
+of the formal parameters in the text, as a lexical unit, will be
+replaced by the corresponding actual parameter when the macro is
+expanded.  These two examples show a simple macro and a parametrised
+macro, both taken from tang:-
+<pre>
+@m help status = 1
+@m err print(msg)=(print nl; print out(msg); error(errors))
+</pre>
+and here is a declarative macro taken from the <tt>forms.w</tt>
+prelude:-
+<pre>
+@d macro x raise window =
+PROC(DISPLAY,WINDOW)INT x raise window =
+   ALIEN "XRAISEWINDOW"
+   "#define XRAISEWINDOW(dpy,win) \"
+   " XRaiseWindow((void *)dpy,win)";
+</pre>
+Because declarative macros can be only be called once, they usually
+do not have parameters.
+
+<p>
+It should be noted that macros have to be recognised during tang's
+first phase, so every macro must be defined before it is used. You
+should not call a macro recursively. Macros are expanded by tang in
+its second phase.
+
+<p>
+Macros are only operational for tang. weav simply
+regards them as Algol 68 code. However, the macro identifier will
+appear in the cross-reference index.
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html306"
+  href="node21.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html302"
+  href="node19.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html296"
+  href="node19.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html304"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html307"
+  href="node21.html">Using macros</a>
+<b> Up:</b> <a name="tex2html303"
+  href="node19.html">The definition part</a>
+<b> Previous:</b> <a name="tex2html297"
+  href="node19.html">The definition part</a>
+ &nbsp; <b>  <a name="tex2html305"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

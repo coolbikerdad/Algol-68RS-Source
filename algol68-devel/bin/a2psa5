@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ $# -lt 3 ]
+then echo "Usage: a2psa5 lang outpufile files"; exit 1
+fi
+
+LANG=$1
+DIR=$(pwd)
+OUT=$(basename $2 .ps)
+shift 2
+a2ps -T3 -1 -g -Afill -E${LANG} -o - $* | psresize -pa5 | psbook | psnup -2 -l -Pa5 -pa4 >${OUT}
+psselect -e -r ${OUT} ${OUT}-evenr.ps
+psselect -o ${OUT} ${OUT}-odd.ps
+rm -f ${OUT}
+cat <<****
+Print the even pages:
+lp -d HP-LaserJet-1018 ${OUT}-evenr.ps
+Re-insert without reorientating:
+lp -d HP-LaserJet-1018 ${OUT}-odd.ps
+****

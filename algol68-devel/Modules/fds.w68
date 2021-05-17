@@ -1,0 +1,616 @@
+% This program is copyright (c) BP66 Phoenix Engineering
+@1Introduction.
+A new file or directory selection widget for the Xforms library.
+
+@m cvs fds = "$Id: fds.w68,v 1.2 2005/11/20 12:05:05 sian Exp $"
+
+@a@<Prelude@>
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<!NIL!s in the outer reach@>
+@<Plain values in the outer reach@>
+@<Names in the outer reach@>
+@<Procedures in the outer reach@>
+SKIP
+KEEP
+@<Public tags@>
+FINISH
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+DECS fds CONTEXT VOID
+USE @<Library preludes@>:
+
+@ The regex library and the standard prelude are required.
+
+@<Library...@>=
+regex,standard
+
+@ The Xforms library and the system prelude need to be included.
+
+@isysprelude.w@>
+@iforms.w@>
+
+@ The procedures can be subclassed as follows.
+
+@<Proced...@>=
+@<Utility procedures@>
+@<Callback procedures@>
+@<Main procedures@>
+
+@1Defining the form.
+Firstly, define a structure which not only contains all the objects,
+but also contains the necessary global data. The values of !flag! are:
+\begin{description}
+\item[!TRUE!] select a directory
+\item[!FALSE!] select a file
+\end{description}
+Firstly, the node for the alphabetic trees.
+
+@<Modes...@>=
+MODE ALPHA = STRUCT(STRING ent,REF ALPHA left,right);
+
+@ The form was created using \.{fdesign}.
+
+@m vague pink = fl free col14
+@m old parchment = fl free col15
+@m light grey = fl free col16
+
+@ifdsfd.w@>
+
+@ A !NIL! is needed for the mode !REF ALPHA!.
+
+@<!NIL!...@>=
+REF ALPHA no entry = NIL;
+
+@1Utility procedures.
+These are used by the callback procedures.
+
+@2Alphabetical ordering of listed entries.
+Firstly, define a simple routine which clears an alphabetic tree.
+
+@<Util...@>=
+PROC clear alphabetic tree = (REF REF ALPHA alpha)VOID:
+	alpha:=no entry;
+
+@ The next routine adds an entry in alphabetical order. Duplicate entries are
+ignored.
+
+@<Util...@>=
+PROC add entry = (REF REF ALPHA tree,[]CHAR line)VOID:
+IF tree IS no entry
+THEN tree:=HEAP ALPHA:=(line,no entry,no entry)
+ELIF line < ent OF tree
+THEN add entry(left OF tree,line)
+ELIF line > ent OF tree
+THEN add entry(right OF tree,line)
+FI; #add entry#
+
+@ The routine !add browser line! calls !add entry! appropriately.
+
+@<Util...@>=
+PROC add browser line = (REF FLOBJECT obj,[]CHAR line)VOID:
+IF obj IS REF FLOBJECT(subdirs OF form fds)
+THEN add entry(subdirs tree OF form fds,line)
+ELSE add entry(files tree OF form fds,line)
+FI;
+
+@ Lastly, a routine is needed which will add the entries to a browser
+in alphabetical order. The last character is placed before each entry
+followed by a blank if the parameter !dir! is !FALSE!.
+
+@<Util...@>=
+PROC display alphabetic tree =
+ (REF FLOBJECT obj,
+  REF REF ALPHA tree,
+  BOOL dir)VOID:
+IF tree ISNT no entry
+THEN
+	IF left OF tree ISNT no entry
+	THEN display alphabetic tree(obj,left OF tree,dir)
+	FI;
+	fl add browser line
+		(obj,
+		 IF dir
+		 THEN ent OF tree
+		 ELSE (ent OF tree)[UPB ent OF tree]+blank+(ent OF tree)[:UPB ent OF tree-1]
+		 FI);
+	IF right OF tree ISNT no entry
+	THEN display alphabetic tree(obj,right OF tree,dir)
+	FI
+FI; #display alphabetic tree#
+
+@2Other utility routines.
+Firstly, some simple declarations.
+
+@<Plain...@>=
+CHAR stroke = "/";
+STRING no filter = ".*";
+
+@ A procedure is needed which will be elaborated for each directory
+entry. The entity type letter has to be added after the entity entry
+to ensure that the alphabetic sorting works. The letter will be
+restored to the front of the entry when the entry is added to the
+browser.
+
+@<Util...@>=
+PROC for each entry = (REF DIRENT rd,[]SIMPLIN si)BOOL:
+IF name OF rd = "."
+THEN TRUE
+ELIF CHAR ch=FTYPELET(LENG LENG type OF rd SHL 12);
+	ch = "d"
+THEN add browser line(subdirs OF form fds,name OF rd);
+	TRUE
+ELIF flag OF form fds
+THEN TRUE
+ELIF rx match(cur rx OF form fds,name OF rd,LOC SUBEXP)
+THEN add browser line(files OF form fds,
+		      name OF rd+(ch="-"|blank|ch));
+	TRUE
+ELSE TRUE
+FI; #for each entry#
+
+@ The call to !macro scan dir! ensures that the mode !DIRENT! is
+declared.
+
+@<Include...@>=
+macro scan dir;
+macro op ftypelet;
+
+@ The procedure !tidy up! ensures that the form will be left in a
+usable state.
+
+@<Util...@>=
+PROC tidy up = (REF FLFORM f,CPTR d)INT:
+BEGIN
+	cur dir OF form fds:="";
+	cur rx OF form fds:=no regex;
+	clear alphabetic tree(subdirs tree OF form fds);
+	clear alphabetic tree(files tree OF form fds);
+	fl clear menu(dir list OF form fds);
+	fl clear menu(filters OF form fds);
+	fl ok
+END; #tidy up#
+
+@ This procedure clears the !files! browser and displays an error
+message therein.
+
+@<Util...@>=
+PROC dsp msg = (STRING msg)VOID:
+BEGIN
+	fl clear browser(files OF form fds);
+
+	TO 2
+	DO
+		fl add browser line(files OF form fds,blank)
+	OD;
+
+	fl addto browser(files OF form fds,msg)
+END; #dsp msg#
+
+@ The action of the !rescan dir cb! callback procedure has to be
+performed by most of the other callback procedures, so we put the
+browser clearing and population code into a separate procedure.
+
+It performs the following actions:-
+\begin{enumerate}
+\item It determines what part of the !dir inp! input field is valid.
+If none of it is valid, it is replaced by the user's home directory,
+otherwise, it is replaced by its valid part. We use the !TC! operator
+to convert a tilde to the user's home directory.
+\item The !updirs!, !subdirs! and !files! browsers are cleared.
+\item The alphabetic trees !subdirs tree! and !files tree! are
+cleared.
+\item The !updirs! browser is populated with the valid directories in
+the !dir inp! field.
+\item The alphabetic trees !subdirs tree! and !files tree! are filled
+with all the sub-directories and non-directories in the current
+directory. The tree !files tree! is filled with only those
+non-directories which match the currently selected filter.
+\item The !subdirs! browser is populated in alphabetical order from
+!subdirs tree!.
+\item The !files! browser is populated in alphabetical order from
+!files tree!.
+\end{enumerate}
+
+@<Callback...@>=
+PROC clear and populate = VOID:
+BEGIN
+	STRING entity:=TC fl get input(dir inp OF form fds);
+	REF STAT rs;
+	@<cap: convert !entity! to an absolute path@>
+	@<cap: get the valid part of !entity!@>
+	@<cap: clear the !updirs!, !subdirs! and !files! browsers@>
+	@<cap: populate the !updirs! browser from !entity!@>
+	@<cap: clear the directory trees@>
+	@<cap: extract the entries in the !entity! directory into the trees@>
+	@<cap: populate the browsers from their trees@>
+END; #clear and populate#
+
+@ Firstly, set !entity! to the current working directory if it is the empty
+string.
+
+@<cap: convert !entity!...@>=
+IF entity=""
+THEN entity:=getcwd
+FI;
+
+@ Then check the first character. If it is not a stroke, prepend the current
+working directory and a !"/"!.
+
+@<cap: convert !entity!...@>=
+IF entity[LWB entity]/=stroke
+THEN (getcwd+stroke) PLUSTO entity
+FI;
+
+@ If !entity! is not a valid directory, keep lopping off the last
+part until it is valid. It may result in just !"/"!.
+
+@<cap: get the valid...@>=
+WHILE
+	IF (rs:=stat(entity)) IS no stat
+	THEN TRUE
+	ELSE NOT is dir(rs)
+	FI
+DO
+	entity:=entity LOP stroke
+OD;
+
+@ If !entity! is now the null string, set it to the root directory.
+
+@<cap: get the valid...@>=
+IF entity=""
+THEN entity:=stroke
+FI;
+
+@ To clear the browsers, we simply call !fl clear browser! which does
+nothing if the browser is already clear.
+
+@<cap: clear the !updirs!...@>=
+fl clear browser(updirs OF form fds);
+fl clear browser(subdirs OF form fds);
+fl clear browser(files OF form fds);
+
+@ The first entry of the !updirs! browser is always the root
+directory.
+
+@<cap: populate the !updirs!...@>=
+fl add browser line(updirs OF form fds,stroke);
+
+@ Now a temporary copy of !entity! is needed so that its parts can be extracted
+from the front.
+
+@<cap: populate the !updirs!...@>=
+STRING tmps:=entity[1+LWB entity:];
+
+WHILE tmps/=""
+DO
+	fl add browser line(updirs OF form fds,tmps UPTO stroke);
+	tmps:=tmps AFTER stroke
+OD;
+
+@ Call !clear alphabetic tree! for each tree.
+
+@<cap: clear the dir...@>=
+clear alphabetic tree(subdirs tree OF form fds);
+clear alphabetic tree(files tree OF form fds);
+
+@ Extracting each entry is done by the routine !for each entry! using
+a dummy name because it is not used by that routine.
+
+@<cap: extract...@>=
+scan dir(entity,for each entry,(LOC INT));
+
+@ Call !display alphabetic tree! for each tree.
+
+@<cap: populate the browsers...@>=
+display alphabetic tree(subdirs OF form fds,subdirs tree OF form fds,TRUE);
+display alphabetic tree(files OF form fds,files tree OF form fds,FALSE)
+
+@1Callback procedures.
+These are defined for all the objects except the \textbf{Select} and
+\textbf{Cancel} buttons so that !fl do forms! will return to the main
+procedure when one of those buttons is pressed.
+
+There are eight callback procedures:-
+\begin{itemize}
+\item one each for the two input fields
+\item one each for the three browsers
+\item one each for the two menus
+\item one for the \textbf{Rescan Directory} button
+\end{itemize}
+
+@2The button callbacks.
+The button \textbf{Rescan Directory} clears the !updirs!, !subdirs!
+and !files! browsers and then populates them with the directories and
+non-directories which match the current filter.
+
+@<Callback...@>=
+rescan dir cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	fl freeze form(fds OF form fds);
+	clear and populate;
+	fl thaw form(fds OF form fds)
+END; #rescan dir cb#
+
+@2The input fields.
+If the user keys a valid path into the top input field, the following should
+be done:-
+\begin{enumerate}
+\item Ensure that the !updirs! browser contains all the directories
+back to the root directory.
+\item Ensure that the !subdirs! browser contains the !..! directory
+and any sub-directories.
+\item Ensure that the !files! browser, if a file is to be selected,
+contains the appropriate entries. Otherwise, display the message
+!"Select a directory"!.
+\end{enumerate}
+The callback routine will only be called when either return has been
+pressed or the focus is shifted to another field, and then only if
+the text in the field has changed. If the user enters an invalid
+directory/file, display a suitable message in the !files! browser.
+
+@<Callback...@>=
+dir inp cb:=(REF FLOBJECT obj,INT n)VOID:
+IF []CHAR d=TC fl get input(obj);
+	REF STAT rs=stat(d);
+	rs ISNT no stat
+THEN
+	fl freeze form(fds OF form fds);
+	clear and populate;
+	fl thaw form(fds OF form fds)
+ELSE dsp msg("Invalid path"+lf+lf+"Choose a directory")
+FI; #dir inp cb#
+
+@ This callback routine must scan the current directory using the
+current filter in the input field. All it needs to do is to compile the
+filter to a regular expression and then call !rescan dir cb!.
+
+@<Callback...@>=
+filter inp cb:=(REF FLOBJECT obj,INT n)VOID:
+IF (cur rx OF form fds:=rx compile(fl get input(obj))) ISNT no regex
+THEN fl call object callback(rescan dir OF form fds)
+ELSE dsp msg("Invalid regex. Try again")
+FI;
+
+@2The browsers.
+A utility procedure is needed for constructing a path from an upper or lower
+directory.
+
+@<Util...@>=
+PROC mk path = (INT n)STRING:
+IF n<0
+THEN #Index a line in the !subdirs! browser#
+	[]CHAR sd=fl get browser line(subdirs OF form fds,ABS n);
+	mk path(fl get browser maxline(updirs OF form fds))+sd+stroke
+ELSE #Index a line in the !updirs! browser#
+	STRING s;
+
+	FOR i FROM 2 TO n
+	DO
+		s+:=stroke+fl get browser line(updirs OF form fds,i)
+	OD;
+	s+stroke
+FI; #mk path#
+
+@ The first callback routine has to get the directory selected,
+construct the absolute path and then call !dir inp cb!.
+
+@<Callback...@>=
+updirs cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	cur dir OF form fds:=mk path(fl get browser(updirs OF form fds));
+	fl set input(dir inp OF form fds,cur dir OF form fds);
+	fl call object callback(dir inp OF form fds)
+END; #updirs cb#
+
+@ This callback routine has to construct the path for the selected
+subdirectory and then actuate the callback for !dir inp!. If a
+directory is to be selected, !yield OF form fds! should be set.
+
+@<Callback...@>=
+subdirs cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	REF STRING cd=cur dir OF form fds;
+	cd:=mk path(-fl get browser(subdirs OF form fds));
+	IF cd[UPB cd-2:]="../"
+	THEN #Remove the last directory#
+		cd:=cd[:UPB cd-4] LOP stroke;
+		IF cd="" THEN cd:=stroke FI
+	FI;
+	fl set input(dir inp OF form fds,cur dir OF form fds);
+	IF flag OF form fds
+	THEN yield OF form fds:=cur dir OF form fds
+	FI;
+
+	fl call object callback(dir inp OF form fds)
+END; #subdirs cb#
+
+@ This routine is called when a file has been selected. Change the top input
+field value, but not actuate its callback. Also, set the yield.
+
+@<Callback...@>=
+files cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	[]CHAR sf=fl get browser line(files OF form fds,
+											fl get browser(files OF form fds));
+   IF NOT (cur dir OF form fds ENDS stroke)
+   THEN cur dir OF form fds+:=stroke
+   FI;
+	fl set input(dir inp OF form fds,cur dir OF form fds+sf[3:]);
+	yield OF form fds:=fl get input(dir inp OF form fds)
+END; #files cb#
+
+@ @<Include...@>=
+macro gp op ends;
+
+@2The menus.
+The callback routine for the directory list is called when the user selects one
+of the directories in the menu. The directory displayed in the directory input
+field should be changed and then its callback routine should be activated.
+
+@<Callback...@>=
+dir list cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	fl set input(dir inp OF form fds,fl get menu text(obj));
+	fl call object callback(dir inp OF form fds)
+END; #dir list cb#
+
+@ This callback routine is called when the user has selected a filter from the
+list of filters. Activate the callback routine for the filter input field when
+its text has been changed.
+
+@<Callback...@>=
+filters cb:=(REF FLOBJECT obj,INT n)VOID:
+BEGIN
+	fl set input(filter inp OF form fds,fl get menu text(obj));
+	fl call object callback(filter inp OF form fds)
+END; #filters cb#
+
+@1The principal procedure.
+This procedure has been bedevilled by problems with the parameters. After
+trying ![][]CHAR! and then ![]STRING!, followed by ![]REF STRING! for the
+directories and the filters, this version uses a simple string.
+
+@ The procedure !px fds! takes the following parameters:-
+\begin{description}
+\item[!start!] This has mode ![]CHAR! and is the default directory.
+If it is the empty string, the current working directory will be
+used.
+\item[!title!] This has mode ![]CHAR! and is the title of the
+selector window.
+\item[!dir!] This has mode !BOOL! and is !TRUE! for directory
+selection, !FALSE! for file selection.
+\item[!dirs!] This has mode !STRING! and is the list of directories
+to be displayed on the \textbf{Directories} menu, the directories being
+separated by vertical bars.
+\item[!filters!] This has mode !STRING! and is the list of filters to be
+displayed on the \textbf{Filters} menu, the filters being separated by vertical
+bars. The first filter will be used as the default. The filter !".*"! (!no
+filter!) will always be available, but it may be given as the first filter to
+make it the default. The filters will be regarded as regular expressions with
+the same syntax as that used by the \.{FTE} editor.
+\end{description}
+This procedure will yield the directory or file selected. If the
+yield is the empty string, then the \textbf{Cancel} button was
+pressed. Closing the window will have the same effect.
+
+@<Main...@>=
+PROC px fds = ([]CHAR start, title,
+					BOOL dir,
+					STRING dirs, filters)STRING:
+BEGIN
+	fl deactivate all forms;
+	IF form fds IS no fds
+	THEN form fds:=create form fds
+	ELSE fl activate form(fds OF form fds)
+	FI;
+	@<Alter some properties of the form@>
+	fl show form(fds OF form fds,fl place center,fl transient,title);
+	STRING y=IF fl do forms IS select OF form fds
+				THEN yield OF form fds
+				ELSE ""
+				FI;
+	fl hide form(fds OF form fds);
+	fl activate all forms;
+	y
+END; #px fds#
+
+@ The usual !NIL!.
+
+@<!NIL!...@>=
+REF FDFDS no fds = NIL;
+
+@ The name for !form fds! is declared globally and is assigned !NIL!
+so that the form need be created once only.
+
+@<Names...@>=
+REF FDFDS form fds:=no fds;
+
+@ Some properties need to be set using the parameters of !px fds!.
+
+@<Alter some prop...@>=
+fl set input return(dir inp OF form fds,fl return end changed);
+fl set input return(filter inp OF form fds,fl return end changed);
+
+@ Set the input fields to the supplied values.
+
+@<Alter some prop...@>=
+fl set input(dir inp OF form fds,
+				 cur dir OF form fds:=(start=""|getcwd|TC start));
+fl set input(filter inp OF form fds,(filters/=""|filters|no filter));
+
+@ Set the routine for when the window is closed.
+
+@<Alter some prop...@>=
+fl set form atclose(fds OF form fds,tidy up,CPTR(NIL));
+
+@ Now actuate the appropriate callback routines.
+
+@<Alter some prop...@>=
+fl call object callback(filter inp OF form fds);
+fl call object callback(dir inp OF form fds);
+
+@ The menus must be populated appropriately.
+
+@<Alter some prop...@>=
+fl set menu(dir list OF form fds,
+            (dirs=""|cur dir OF form fds|dirs));
+fl set menu(filters OF form fds,
+				IF filters=""
+				THEN no filter
+				ELIF no filter FIND filters >= LWB filters
+				THEN filters
+				ELSE no filter + "|" + filters
+				FI);
+
+@ Store the !dir! discriminator in the form for access by the callback
+procedures.
+
+@<Alter some prop...@>=
+flag OF form fds:=dir;
+
+@1Public tags.
+
+@<Pub...@>=
+px fds
+
+@1Included declarations.
+Here are the calls to the macros for the Xforms library and other
+procedures.
+
+@<Include...@>=
+macro fl activate all forms;
+macro fl activate form;
+macro fl add browser line;
+macro fl addto browser;
+macro fl call object callback;
+macro fl clear browser;
+macro fl clear menu;
+macro fl deactivate all forms;
+macro fl do forms;
+macro fl freeze form;
+macro fl get browser;
+macro fl get browser line;
+macro fl get browser maxline;
+macro fl get input;
+macro fl get menu text;
+macro fl hide form;
+macro fl set form atclose;
+macro fl set input;
+macro fl set input return;
+macro fl set menu;
+macro fl show form;
+macro fl thaw form;
+macro get cwd;
+macro gp op find row char row char;
+macro gp op lop;
+macro gp op upto;
+macro is dir;
+macro no stat;
+macro op tc;
+macro stat;
+
+@1System dependencies.
+Check these if you are porting this program to another platform.

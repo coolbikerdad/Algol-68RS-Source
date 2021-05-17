@@ -1,0 +1,66 @@
+% This program is copyright (c) bliadhna Phoenix Engineering
+@1Introduction.
+
+@m cvs prog = "$Id:$"
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<!ALIEN!s in the outer reach@>
+@<!NIL!s in the outer reach@>
+@<Plain values in the outer reach@>
+@<Other non-routines in the outer reach@>
+@<Names in the outer reach@>
+@<Operators in the outer reach@>
+@<Procedures in the outer reach@>
+@<Logic in the outer reach@>
+END
+@<Postlude@>
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM prog CONTEXT VOID
+USE @<Library preludes@>
+
+@ And a special postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@ This Web68 file provides the Xforms prelude.
+
+@iforms.w@>
+
+@ The program requires the predefined forms and the standard prelude.
+
+@<Library...@>=
+prog fd,standard
+
+@1Initialisation.
+The initial processing consists of the following:-
+\begin{enumerate}
+\item Initialising the Xforms library.
+\item Setting the border to !-2!.
+\end{enumerate}
+
+@<Logic...@>=
+open(argf,"",arg channel);
+fl initialise(argc,argv,"prog",NIL,0);
+fl set border width(-2);
+
+@ Declare the !REF FILE!.
+
+@<Names...@>=
+FILE argf;
+
+@1Macro declarations.
+All the macros used in the program are declared here.
+
+@<Include...@>=
+macro fl initialise;
+macro fl set border width;
+
+@1System dependencies.
+Check these if you are porting this program to another platform.

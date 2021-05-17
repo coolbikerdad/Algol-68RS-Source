@@ -1,0 +1,293 @@
+% This program is copyright (c) BP66 Phoenix Engineering
+@1Introduction.
+This program started as a small utility written in OCCL \Algol. This
+version uses the \Web\ system. The program converts the contents of
+a file into hexadecimal.
+
+@m cvs hex = "$Id: hex.w68,v 1.3 2005/02/17 12:45:50 sian Exp $"
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Names in the outer reach@>
+@<Procedures in the outer reach@>
+@<Logic in the outer reach@>
+END
+@<Postlude@>
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM hex CONTEXT VOID
+USE @<Library preludes@>
+
+@ We shall need the precompiled parameter and standard preludes.
+
+@<Library...@>=
+params, standard
+
+@ And a special postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@ The program needs the !STAT! mode and the !stat! procedure from the
+\Web\ system prelude and some operators from the general prelude.
+
+@isysprelude.w@>
+@igprelude.w@>
+
+@ The program displays the contents of the input file as follows:-
+\begin{enumerate}
+   \item The start address of each line in hexadecimal.
+   \item Eight bytes printed as two hexadecimal characters for each.
+   \item A gap.
+   \item Another eight bytes as for (2).
+   \item On the next line, the sixteen characters as:-
+   \begin{enumerate}
+      \item 00--20 $\Rightarrow$ \verb*|^X  |
+      \item 20--7e $\Rightarrow$ \verb*| X  |
+      \item else as \verb*| .  |
+   \end{enumerate}
+\end{enumerate}
+All should be appropriately spaced.
+
+@2Parameters.
+The program accepts the following parameters:-
+\begin{description}
+\item[\textbf{h}] Prints a short usage message.
+\item[\textbf{v}] Prints a version message.
+\item[\textbf{f(filename)}] Specifies its input file.
+\end{description}
+
+Firstly, we need to open a file on !arg channel!.
+
+@<Logic...@>=
+open(argf,"",arg channel);
+
+@ Here is !argf!.
+
+@<Names...@>=
+FILE argf;
+
+@ And !usage!.
+
+@<Proc...@>=
+PROC usage = VOID:
+(
+   put(stand error,("hex usage: hex '(h|v|f(file))'",newline));
+   stop
+);
+
+@ We shall be needing some error messages.
+
+@<Proc...@>=
+PROC error = ([]CHAR msg)VOID:
+(
+   put(stand error,("hex: error:",msg,newline));
+   exit(1)
+);
+
+@ We use !get param! to read and parse the parameters. No parameters
+or an erroneous format simply gives the usage message.
+
+@<Logic...@>=
+CASE get param(argf)
+IN
+   (REF PARAM rp1):
+      IF rp1 IS no param@& THEN usage
+      ELIF UPB val OF rp1/=1@& THEN usage
+      ELSE
+         CASE (val OF rp1)[1]
+         IN
+            (REF PARAM rp2): @<Parse the only parameter@>
+         OUT usage
+         ESAC
+      FI
+OUT usage
+ESAC;
+
+@ The parameter should be one of \.{h}, \.{v} or \.{f}.
+
+@<Parse the only...@>=
+IF rp2 IS no param@& THEN usage
+ELIF prog OF rp2 = ""@& THEN usage
+ELIF INT pos2:=0;
+   char in string((prog OF rp2)[1],pos2,"hvf")
+THEN
+   CASE pos2
+   IN
+   #h#   usage,
+   #v#   (put(stand error,
+              ("hex: version ",
+               cvs hex AFTER blank AFTER blank UPTO blank,
+               newline));
+          stop),
+   #f#   @<Get the file name@>
+   ESAC
+ELSE error("unknown parameter: "+prog OF rp2)
+FI
+
+@ The file name may be provided as a string denotation or as just the
+required characters.
+
+@<Get the file...@>=
+IF UPB val OF rp2/=1@& THEN usage
+ELSE
+   CASE (val OF rp2)[1]
+   IN
+      (REF PARAM rp3):
+         IF rp3 IS no param@& THEN usage
+         ELIF prog OF rp3=""@& THEN usage
+         ELSE infn:=TC prog OF rp3
+         FI,
+      (STRING s):
+         IF s=""@& THEN usage ELSE infn:=TC s FI
+   OUT usage
+   ESAC
+FI
+
+@ @<Names...@>=
+STRING infn;
+
+@ !AFTER! and !UPTO! are in the \Web\ general prelude.
+
+@<Include...@>=
+macro gp op upto;
+macro gp op after;
+
+@1Reading the file.
+We use the !stat! routine to get the file size.
+
+@<Logic...@>=
+IF REF STAT st=stat(infn);@& st IS no stat
+THEN error("cannot get the size of file "+infn)
+ELSE sz:=st size OF st
+FI;
+
+@ @<Names...@>=
+INT sz;
+
+@ @<Include...@>=
+macro no stat;
+macro stat;
+macro op tc;
+
+@ Now we can open the file. Because we know its size, overrunning its
+end must be regarded as unexpected.
+
+@<Logic...@>=
+IF open(inf,infn,stand in channel)/=0
+THEN error("cannot open file "+infn)
+ELSE
+   on logical file end(inf,(REF FILE f)BOOL:
+      (error("unexpected EOF on "+idf(f)); SKIP))
+FI;
+
+@ @<Names...@>=
+FILE inf;
+
+@ We read the file as 16-byte chunks, so we need to round the size down
+to the nearest 16 bytes and get the size of any remainder.
+
+@<Logic...@>=
+INT
+   chunks = ABS(BIN sz SHR 4),
+   remainder = ABS(BIN sz & 16rf);
+
+@ @<Logic...@>=
+FOR i TO chunks
+DO
+   [16]CHAR chunk;
+   get bin(inf,chunk);
+   print lines((BIN(i-1)SHL 4),chunk)
+OD;
+
+@ There may be an odd-sized chunk at the end.
+
+@<Logic...@>=
+IF remainder/=0
+THEN
+   [remainder]CHAR chk;
+   get bin(inf,chk);
+   print lines(BIN sz & NOT 16rf,chk)
+FI;
+
+@ Now we can close the files.
+
+@<Logic...@>=
+close(inf);
+close(argf)
+
+@1Printing the lines.
+This routine must be able to deal with a short line.
+
+@<Proc...@>=
+PROC print lines = (BITS addr,[]CHAR data)VOID:
+BEGIN
+   print((HEX addr,2*blank));
+   @<Print the first 8 bytes@>;
+   IF UPB data > 8
+   THEN
+      print(blank);
+      @<Print any more bytes@>
+   FI;
+   @<Print the characters on the next line@>
+END;
+
+@ We have to be able to convert a character into two hexadecimal
+digits. For this, the operand of !HEX! should be of mode !SHORT SHORT
+BITS!. This macro does the conversion.
+
+@m binhex(c) = HEX SHORTEN SHORTEN BIN ABS c
+
+@<Print the first...@>=
+FOR i TO UPB data MIN 8
+DO
+   print((binhex(data[i]),blank))
+OD
+
+@ Only the bounds differ for printing any more bytes.
+
+@<Print any...@>=
+FOR i FROM 9 TO UPB data
+DO
+   print((binhex(data[i]),blank))
+OD
+
+@ Now we can print the characters on the next line, lined up with
+their corresponding hexadecimal values.
+
+@<Print the char...@>=
+@+print((newline,10*blank));
+
+FOR i TO UPB data MIN 8
+DO
+   @<Print a rendered character@>
+OD;
+
+IF UPB data > 8
+THEN
+   print(blank);
+   FOR i FROM 9 TO UPB data
+   DO
+      @<Print a ren...@>
+   OD
+FI;
+print(newline)
+
+@ As clarified in the introduction, each character is either printed
+as is if it is in the range !16r20:16r7e!, or as \verb*| ^X | if it
+is a control character, or else as a dot.
+
+@<Print a ren...@>=
+print(IF CHAR di=data[i];
+         ABS di>=ABS blank & ABS di<=ABS "~"
+      THEN blank+di+blank
+      ELIF ABS di < ABS blank
+      THEN "^"+REPR(ABS di+64)+blank
+      ELSE blank+"."+blank
+      FI)
+
+@1System dependencies.
+Check these if you are porting this program to another platform.

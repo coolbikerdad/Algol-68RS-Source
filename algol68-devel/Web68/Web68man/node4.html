@@ -1,0 +1,210 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Web&nbsp;68</title>
+<meta name="description" content="Web&nbsp;68">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node26.html">
+<link rel="previous" href="node3.html">
+<link rel="up" href="Web68man.html">
+<link rel="next" href="node5.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html89"
+  href="node5.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html85"
+  href="Web68man.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html79"
+  href="node3.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html87"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html90"
+  href="node5.html">Filenames</a>
+<b> Up:</b> <a name="tex2html86"
+  href="Web68man.html">.</a>
+<b> Previous:</b> <a name="tex2html80"
+  href="node3.html">Structure of this document</a>
+ &nbsp; <b>  <a name="tex2html88"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h1><a name="SECTION00040000000000000000"></a><a name="sec:web68"></a>
+<br>
+Web&nbsp;68
+</h1>
+
+<p>
+A Web 68 file is a long string of text which has been divided, more or
+less arbitrarily, into individual lines. The exact line boundaries are
+not critical, so that you can chop up the input file in any way you
+wish. The end of a line is regarded by weav as a blank space.
+However, Algol 68 program source code is very flexible, so
+<tt>weav</tt> will try to respect your layout within certain bounds.
+
+<p>
+Web 68 contains its own command language which is described in the
+following sections.  Subsection <a href="node23.html#subsec:cmds">3.9</a>
+gives the
+definitive list of commands (there are no undocumented commands).
+Thus, to write a program using Web&nbsp;68, you must be familiar with
+three languages:
+
+<ul>
+<li>HTML for the documentation itself
+</li>
+<li>Algol 68 for the source code
+</li>
+<li>Web 68 for weaving the whole together
+</li>
+</ul>
+In practice, error messages from the Web 68 programs
+and the Algol 68 compiler or interpreter can occur.  Thus this system
+is not intended for the beginner and never will be.  Consult the
+documentation for your Algol 68 compiler or
+interpreter for the meaning of its messages. See section
+<a href="node25.html#subsec:errors">3.11</a> for the location of error messages
+from
+tang and weav.
+
+<p>
+As you write a program using Web&nbsp;68, you should be aware both of the
+documentation and of the program you are writing: that is, you should
+be aware of the different actions that tang and weav will perform
+on your document. See sections <a href="node7.html#subsubsec:tang">3.2.1</a>
+and
+<a href="node8.html#subsubsec:weav">3.2.2</a> for an overview of what each
+program does.
+
+<p>
+A Web 68 document consists of a number of sections, each of which
+starts with a section command and can contain an HTML part, a
+definition part or an Algol 68 part.  Any of the parts can be omitted.
+Indeed, a section command can be followed immediately by another
+section command.
+
+<p>
+<br><hr>
+<!--table of child-links-->
+<a name="CHILD_LINKS"><strong>Subsections</strong></a>
+
+<ul class="ChildLinks">
+<li><a name="tex2html91"
+  href="node5.html">Filenames</a>
+<li><a name="tex2html92"
+  href="node6.html">Program usage</a>
+<ul>
+<li><a name="tex2html93"
+  href="node7.html">Overview of tang</a>
+<li><a name="tex2html94"
+  href="node8.html">Overview of weav</a>
+</ul>
+<br>
+<li><a name="tex2html95"
+  href="node9.html">Algol 68 code</a>
+<ul>
+<li><a name="tex2html96"
+  href="node10.html">Identifiers</a>
+<li><a name="tex2html97"
+  href="node11.html">In the HTML section</a>
+<li><a name="tex2html98"
+  href="node12.html">In macro bodies</a>
+<li><a name="tex2html99"
+  href="node13.html">In module bodies</a>
+</ul>
+<br>
+<li><a name="tex2html100"
+  href="node14.html">Limbo</a>
+<li><a name="tex2html101"
+  href="node15.html">Sections</a>
+<ul>
+<li><a name="tex2html102"
+  href="node16.html">Level sections</a>
+<li><a name="tex2html103"
+  href="node17.html">Plain sections</a>
+</ul>
+<br>
+<li><a name="tex2html104"
+  href="node18.html">The HTML part</a>
+<li><a name="tex2html105"
+  href="node19.html">The definition part</a>
+<ul>
+<li><a name="tex2html106"
+  href="node20.html">Defining macros</a>
+<li><a name="tex2html107"
+  href="node21.html">Using macros</a>
+</ul>
+<br>
+<li><a name="tex2html108"
+  href="node22.html">The Algol 68 part</a>
+<li><a name="tex2html109"
+  href="node23.html">Web 68 commands</a>
+<li><a name="tex2html110"
+  href="node24.html">Notes</a>
+<li><a name="tex2html111"
+  href="node25.html">Errors</a>
+</ul>
+<!--end of table of child-links-->
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html89"
+  href="node5.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html85"
+  href="Web68man.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html79"
+  href="node3.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html87"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html90"
+  href="node5.html">Filenames</a>
+<b> Up:</b> <a name="tex2html86"
+  href="Web68man.html">.</a>
+<b> Previous:</b> <a name="tex2html80"
+  href="node3.html">Structure of this document</a>
+ &nbsp; <b>  <a name="tex2html88"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

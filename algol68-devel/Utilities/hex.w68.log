@@ -1,0 +1,49 @@
+This is TeX, Version 3.14159265 (TeX Live 2020/Debian) (preloaded format=tex 2021.5.5)  6 MAY 2021 16:43
+**hex.w68.tex
+(./hex.w68.tex (/usr/share/texlive/texmf-dist/tex/plain/knuth-lib/webmac.tex
+\bak=\box16
+\bakk=\box17
+\ind=\count26
+\pagewidth=\dimen16
+\pageheight=\dimen17
+\fullpageheight=\dimen18
+\pageshift=\dimen19
+\cont=\write0
+\sbox=\box18
+\lbox=\box19
+)
+! Undefined control sequence.
+l.4 ...d as a small utility written in OCCL \Algol
+                                                  . This
+? 
+! Undefined control sequence.
+l.5 version uses the \Web
+                         \ system. The program converts the contents of
+? 
+! Undefined control sequence.
+l.39 \Web
+         \ system prelude and some operators from the general prelude.
+? 
+! Undefined control sequence.
+l.47 \begin
+           {enumerate}
+? 
+! Undefined control sequence.
+l.53 \begin
+           {enumerate}
+? 
+! Undefined control sequence.
+l.54 \item 00--20 $\Rightarrow$ \verb
+                                     *$\^\|X$
+? 
+! Undefined control sequence.
+l.55 \item 20--7e $\Rightarrow$ \verb
+                                     *\|X
+? 
+! Undefined control sequence.
+l.56 \item else as \verb
+                        *.
+? 
+[1] )
+(\end occurred when \iftrue on line 46 was incomplete)
+Output written on hex.w68.dvi (1 page, 2172 bytes).

@@ -1,0 +1,181 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Notes</title>
+<meta name="description" content="Notes">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node25.html">
+<link rel="previous" href="node23.html">
+<link rel="up" href="node4.html">
+<link rel="next" href="node25.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html352"
+  href="node25.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html348"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html342"
+  href="node23.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html350"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html353"
+  href="node25.html">Errors</a>
+<b> Up:</b> <a name="tex2html349"
+  href="node4.html">Web&nbsp;68</a>
+<b> Previous:</b> <a name="tex2html343"
+  href="node23.html">Web 68 commands</a>
+ &nbsp; <b>  <a name="tex2html351"
+  href="node1.html">Contents</a></b> 
+<br>
+<br></div>
+<!--end of navigation panel-->
+
+<h2><a name="SECTION000410000000000000000"></a><a name="subsec:notes"></a>
+<br>
+Notes
+</h2>
+
+<p>
+This section provides some additional features and warnings.
+
+<p>
+
+<ol>
+<li>Lines containing HTML comments.
+<br>
+The HTML output by
+weav is broken into lines containing not more than 80 characters
+each. When the HTML text is being copied, the existing line breaks
+are copied as well, so there is no problem with `<code>&lt;!--</code>' symbols
+unless the original Web 68 file contains a line more than 80 characters
+long or a line with a snippet that expands to a line of more than 80
+characters. Such lines should not have `<code>&lt;!--</code>' symbols in
+them.
+
+<p>
+</li>
+<li>The weav output contains embedded codes that cause HTML to
+indent and break lines as necessary, depending on the fonts used and
+the desired page width. For best results it is wise to adhere to the
+following restrictions:-
+
+<ol>
+<li>Comments in Algol 68 text should appear only after units; that
+is, after semicolons, after bold tags like <span  class="textbf">then</span>
+or
+<span  class="textbf">do</span>, or before bold tags like <span  class="textbf">end</span>
+or <span  class="textbf">od</span>.
+</li>
+<li>Don't enclose long Algol 68 texts in snippets, since
+the indentation and line breaking codes are omitted when the
+snippet is translated from Algol 68 to HTML. Stick to
+simple expressions or units.
+</li>
+</ol>
+
+<p>
+</li>
+<li>Comments and module tags are not permitted in snippets. After a
+`<tt>!</tt>' signals the change from HTML text to Algol 68 text, the
+next `<tt>!</tt>' that is not part of a string or control text ends
+the snippet.
+
+<p>
+</li>
+<li>Because an Algol 68 comment must begin and end with the same
+symbol, it is quite possible to nest a comment delimited by
+`<tt>#</tt>' with a comment delimited by <span  class="textbf">co</span>
+or <span  class="textit">vice
+versa</span>. At present, tang and weav handle comments in different
+ways and it is necessary to satisfy both conventions: tang ignores
+`<tt>!</tt>' characters entirely, while weav uses them to switch
+between HTML text and Algol 68 text.
+
+<p>
+</li>
+<li>Algol 68 bold tags must appear entirely in uppercase letters in
+the Web 68 file; otherwise their special nature will not be recognised
+by weav. You could, for example, have an <span  class="textit">end</span>
+identifier or
+macro and it will not be confused with Algol 68's <span  class="textbf">end</span>.
+
+<p>
+</li>
+<li>Sometimes it is desirable to insert spacing into Algol 68 code
+that is more general than the thin space provided by `<tt>@,</tt>'.
+The <tt>@h</tt> command can be used for this purpose; for example,
+`<code>@h&lt;hr&gt;@&gt;</code>' will emit a horizontal rule.
+
+<p>
+</li>
+<li>weav and tang are both designed to work with a single input
+file, called a Web 68 file. Any changes required in the Web 68 file
+should be made with a version control system. There are no ``change
+files'' corresponding to the original Web system created by Donald
+Knuth.
+</li>
+</ol>
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html352"
+  href="node25.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html348"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html342"
+  href="node23.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html350"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html353"
+  href="node25.html">Errors</a>
+<b> Up:</b> <a name="tex2html349"
+  href="node4.html">Web&nbsp;68</a>
+<b> Previous:</b> <a name="tex2html343"
+  href="node23.html">Web 68 commands</a>
+ &nbsp; <b>  <a name="tex2html351"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

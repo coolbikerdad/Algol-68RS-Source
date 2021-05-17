@@ -1,0 +1,33 @@
+% This program is copyright (c) bliadhna Phoenix Engineering
+@1Introduction.
+
+@m cvs prog = "$Id: $"
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<!ALIEN!s in the outer reach@>
+@<!NIL!s in the outer reach@>
+@<Plain values in the outer reach@>
+@<Other non-routines in the outer reach@>
+@<Names in the outer reach@>
+@<Operators in the outer reach@>
+@<Procedures in the outer reach@>
+@<Logic in the outer reach@>
+END
+@<Postlude@>
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM prog CONTEXT VOID
+USE @<Library preludes@>
+
+@ And a special postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@1System dependencies.
+Check these if you are porting this program to another platform.

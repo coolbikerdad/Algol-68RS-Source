@@ -1,0 +1,198 @@
+#1.1.1.1:# #1.1.1.2:# DECS regex CONTEXT VOID USE standard:#:1.1.1.2# #1.3.1.1
+:# MODE RX =STRUCT(CHAR c,INT ind,REF RX back,forw);#:1.3.1.1 1.3.1.2:# MODE
+ CHARBAG =[8 ]BITS;#:1.3.1.2 1.3.1.3:# MODE REGEX =STRUCT(BITS what,CHAR c,
+CHARBAG cb,REF REGEX rx,prev,next);#:1.3.1.3 1.3.1.5:# MODE SUBEXP =[0 :9 ]
+STRUCT(INT open,close);#:1.3.1.5# #1.3.1.4:# REF RX norx =NIL;REF REGEX noregex
+ =NIL;#:1.3.1.4# #1.4.1.5:# BITS bwm =BIN(bitswidth-1 );#:1.4.1.5# #1.2.1.3:# [
+27 ]CHAR metachar;REF CHAR metaescape =metachar[1 ]:= "\",metabol =metachar[2 ]
+:= "^",metaeol =metachar[3 ]:= "$",metabow =metachar[4 ]:= "<",metaeow =metachar
+[5 ]:= ">",metaany =metachar[6 ]:= ".",meta0or1 =metachar[7 ]:= "?",metan0p =
+metachar[8 ]:= "@",metax0p =metachar[9 ]:= "*",metan1p =metachar[10 ]:= "#",
+metax1p =metachar[11 ]:= "+",metachoice =metachar[12 ]:= "|",metaboset =metachar
+[13 ]:= "[",metaeoset =metachar[14 ]:= "]",metacompl =metachar[15 ]:= "~",
+metarange =metachar[16 ]:= ":",metabog =metachar[17 ]:= "{",metaeog =metachar[
+18 ]:= "}",metabosub =metachar[19 ]:= "(",metaeosub =metachar[20 ]:= ")",metadig
+ =metachar[21 ]:= "d",metanodig =metachar[22 ]:= "D",metaws =metachar[23 ]:= "s"
+,metanows =metachar[24 ]:= "S",metaword =metachar[25 ]:= "w",metanoword =
+metachar[26 ]:= "W",metahex =metachar[27 ]:= "x";#:1.2.1.3 1.7.1.1:# INT pti;#:
+1.7.1.1# #1.6.1.11:# CHARBAG nullbag =(2r0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 );
+CHARBAG digits:=(2r0 ,16rffc0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 ),wordchars:=(2r0 ,
+2r0 ,16r7fffffe0 ,16r7fffffe0 ,2r0 ,2r0 ,16rfffffeff ,16rfffffeff ),whitespace:=
+(16rfc0000 ,16r80000000 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 ,2r0 );#:1.6.1.11# #1.4.1.4:# 
+OP+ =(CHARBAG a,b)CHARBAG:BEGIN CHARBAG sum;FOR i TO UPB sum DO sum[i]:=a[i]OR b
+[i]OD;sum END;#:1.4.1.4 1.4.1.6:# OP STRINGTOBAG =([]CHAR s)CHARBAG:BEGIN
+ CHARBAG cb;FOR i TO UPB cb DO cb[i]:=2r0 OD;FOR i FROM LWB s TO UPB s DO INT as
+ =ABS s[i];REF BITS bits =cb[1 +as%bitswidth];bits:=bits OR ELEM(1 +ABS(BIN as&
+bwm))OD;cb END;#:1.4.1.6 1.4.1.7:# OP NOT =(CHARBAG cb)CHARBAG:BEGIN CHARBAG r;
+FOR i TO UPB cb DO r[i]:=NOT cb[i]OD;r END;#:1.4.1.7 1.4.1.8:# OP ELEM =(CHAR c,
+CHARBAG cb)BOOL:(1 +ABS(BIN ABS c&bwm))ELEM cb[1 +ABS(BIN ABS c SHR 5 )];#:
+1.4.1.8# #1.2.1.4:# #1.4.1.10:# OP- =(CHAR a,b)[]CHAR:IF ABS a<=ABS b THEN[ABS a
+:ABS b]CHAR s;FOR i FROM LWB s TO UPB s DO s[i]:=REPR i OD;s ELSE[ABS b:ABS a]
+CHAR s;FOR i FROM LWB s TO UPB s DO s[i]:=REPR i OD;s FI;#:1.4.1.10# #1.4.1.1:# 
+PRIO SET =7 ,CLEAR =7 ;#:1.4.1.1 1.4.1.2:# OP SET =(BITS b,INT n)BITS:2r1 SHL(
+32 -n)OR b;#:1.4.1.2 1.4.1.3:# OP CLEAR =(BITS b,INT n)BITS:NOT(2r1 SHL(32 -n))
+AND b;#:1.4.1.3 1.4.1.9:# PROC rangeset =(REF CHARBAG bag,CHAR c1,c2)REF CHARBAG
+:bag:=bag+STRINGTOBAG(c1-c2);#:1.4.1.9 1.4.1.11:# PRIO SETAB =1 ;OP SETAB =(REF
+ CHARBAG bag,CHAR c)REF CHARBAG:rangeset(bag,c,c);#:1.4.1.11 1.5.1.3:# PROC
+ expandsetdenoter =(BITS what)CHARBAG:IF HEAP CHARBAG set:=nullbag;INT pos;
+charinstring(REPR ABS what,pos,(REPR ABS 16r26 ,REPR ABS 16r27 ,REPR ABS 16r24 ,
+REPR ABS 16r25 ,REPR ABS 16r28 ,REPR ABS 16r29 ))THEN set:=CASE pos IN digits,
+NOT digits,whitespace,NOT whitespace,wordchars,NOT wordchars ESAC ELSE set FI;#:
+1.5.1.3 1.6.1.4:# PROC isdec =(CHAR c)BOOL:ABS c>=ABS "0"&ABS c<=ABS "9";#:
+1.6.1.4 1.6.1.5:# PROC ishex =(CHAR c)BOOL:isdec(c)OR ABS c>=ABS "a"&ABS c<=ABS 
+"f";#:1.6.1.5 1.6.1.6:# PROC ctoi =(CHAR c)INT:IF isdec(c)THEN ABS c-ABS "0"ELIF
+ ishex(c)THEN ABS c-ABS "a"+10 ELSE 0 FI;#:1.6.1.6 1.8.1.2:# OP UC =(CHAR c)CHAR
+:(c>= "a"&c<= "z"|REPR(ABS c-32 )|c);OP LC =(CHAR c)CHAR:(c>= "A"&c<= "Z"|REPR(
+ABS c+32 )|c);#:1.8.1.2# #1.6.1.1:# PROC newnode =(BITS what)REF REGEX:HEAP
+ REGEX:=(what,REPR 0 ,nullbag,noregex,noregex,noregex);#:1.6.1.1 1.6.1.2:# PROC
+ newchar =(CHAR ch)REF REGEX:BEGIN REF REGEX hr =newnode(16r23 );c OF hr:=ch;
+HEAP REGEX:=hr END;#:1.6.1.2 1.6.1.3:# PROC newescape =(REF REF RX rx)REF REGEX:
+IF INT pos;#1.6.1.7:# PROC processdigits =(INT radix,maxchars,REF REF RX rx)REF
+ REGEX:IF BOOL noval:=TRUE;INT num:=0 ;TO maxchars WHILE IF forw OF rx IS norx
+ THEN FALSE ELSE ishex(c OF forw OF rx)FI DO noval:=FALSE;rx:=forw OF rx;num*:=
+radix+:=ctoi(c OF rx)OD;noval THEN noregex ELSE newchar(REPR num)FI;#:1.6.1.7# 
+charinstring(c OF rx,pos,(metadig,metanodig,metaws,metanows,metaword,metanoword,
+metahex))THEN CASE pos IN(REF REGEX lx =newnode(16r26 );cb OF lx:=
+expandsetdenoter(16r26 );what OF lx:=16r22 ;HEAP REGEX:=lx),(REF REGEX lx =
+newnode(16r27 );cb OF lx:=expandsetdenoter(16r27 );what OF lx:=16r22 ;HEAP REGEX
+:=lx),(REF REGEX lx =newnode(16r24 );cb OF lx:=expandsetdenoter(16r24 );what OF
+ lx:=16r22 ;HEAP REGEX:=lx),(REF REGEX lx =newnode(16r25 );cb OF lx:=
+expandsetdenoter(16r25 );what OF lx:=16r22 ;HEAP REGEX:=lx),(REF REGEX lx =
+newnode(16r28 );cb OF lx:=expandsetdenoter(16r28 );what OF lx:=16r22 ;HEAP REGEX
+:=lx),(REF REGEX lx =newnode(16r29 );cb OF lx:=expandsetdenoter(16r29 );what OF
+ lx:=16r22 ;HEAP REGEX:=lx),processdigits(16 ,2 ,rx)OUT newchar(c OF rx)ESAC
+ ELSE newchar(c OF rx)FI;#:1.6.1.3 1.6.1.8:# PROC newset =(REF REF RX rx)REF
+ REGEX:BEGIN HEAP CHARBAG set:=nullbag;CHAR ch,c1,c2;BOOL neg:=(c OF rx =
+metacompl),range:=FALSE;IF neg THEN rx:=forw OF rx FI;REF REGEX yield:=newnode(
+16r22 );WHILE IF(rx IS norx)OR(yield IS noregex)THEN yield:=noregex;FALSE ELIF c
+ OF rx =metaeoset THEN#1.6.1.10:# IF range THEN yield:=noregex ELSE cb OF yield
+:=(neg|NOT set|set)FI;FALSE#:1.6.1.10# ELSE TRUE FI DO REF REGEX lrx;IF c OF rx
+ =metaescape THEN IF forw OF rx IS norx THEN yield:=noregex ELIF lrx:=newescape(
+rx:=forw OF rx);what OF lrx =16r23 THEN ch:=c OF lrx;#1.6.1.9:# IF IF NOT range
+ THEN IF forw OF rx IS norx THEN yield:=noregex;FALSE ELSE c OF forw OF rx =
+metarange FI ELSE FALSE FI THEN range:=TRUE;rx:=forw OF rx;c1:=ch ELIF range
+ THEN IF ABS c1<=ABS(c2:=ch)THEN rangeset(set,c1,c2);range:=FALSE ELSE yield:=
+noregex FI ELIF yield ISNT noregex THEN set SETAB ch FI#:1.6.1.9# ELSE set:=set+
+cb OF lrx FI ELSE ch:=c OF rx;#1.6.1.9:# IF IF NOT range THEN IF forw OF rx IS
+ norx THEN yield:=noregex;FALSE ELSE c OF forw OF rx =metarange FI ELSE FALSE FI
+ THEN range:=TRUE;rx:=forw OF rx;c1:=ch ELIF range THEN IF ABS c1<=ABS(c2:=ch)
+THEN rangeset(set,c1,c2);range:=FALSE ELSE yield:=noregex FI ELIF yield ISNT
+ noregex THEN set SETAB ch FI#:1.6.1.9# FI;rx:=forw OF rx OD;HEAP REGEX:=yield
+ END;#:1.6.1.8 1.6.1.13:# PROC addnode =(REF REF REGEX st,fn,REF REGEX node)REF
+ REGEX:IF node IS noregex THEN noregex ELIF(st IS noregex)OR(fn IS noregex)THEN
+ st:=fn:=node ELSE next OF fn:=node;prev OF node:=fn;WHILE next OF fn ISNT
+ noregex DO fn:=next OF fn OD;node FI;#:1.6.1.13 1.6.1.14:# PROC newsub =(REF
+ REF REGEX begin,end,REF RX rx)REF REGEX:IF end IS noregex THEN noregex ELIF
+ HEAP REF REGEX no,new,jump,skip,last:=end,p;INT numchars:=0 ;(24 ELEM what OF
+ last)&(23 ELEM what OF last)THEN noregex ELIF IF(24 ELEM what OF last)THEN p:=
+last;INT nestinglevel:=1 ;#1.6.1.15:# WHILE nestinglevel>0 &(p ISNT noregex)DO p
+:=prev OF p;IF p ISNT noregex THEN IF(24 ELEM what OF p)THEN nestinglevel+:=((
+22 ELEM what OF p)|1 |-1 )ELIF ABS what OF p>=ABS 16r21 &ABS what OF p<=ABS
+ 16r29 THEN numchars+:=1 FI;last:=p FI OD#:1.6.1.15# ELSE numchars:=1 FI;last IS
+ noregex THEN noregex ELIF numchars =0 THEN noregex ELIF c OF rx =metachoice
+ THEN#1.6.1.19:# IF forw OF rx ISNT norx THEN new:=newnode(BIN ABS c OF rx SET
+ 20 SET 19 );jump:=newnode(16r2 );no:=newnode(16r0 );next OF jump:=no;prev OF no
+:=jump;next OF end:=jump;prev OF jump:=end;next OF new:=last;prev OF new:=prev
+ OF last;prev OF last:=new;IF prev OF new IS noregex THEN begin:=new ELSE next
+ OF prev OF new:=new FI;rx OF new:=no;rx OF no:=new;rx OF jump:=new;HEAP REGEX:=
+end:=no ELSE noregex FI#:1.6.1.19# ELIF c OF rx =meta0or1 THEN#1.6.1.16:# new:=
+newnode(BIN ABS c OF rx SET 20 SET 19 );no:=newnode(16r0 );next OF end:=no;prev
+ OF no:=end;next OF new:=last;prev OF new:=prev OF last;prev OF last:=new;IF
+ prev OF new IS noregex THEN begin:=new ELSE next OF prev OF new:=new FI;rx OF
+ new:=no;rx OF no:=new;end:=no#:1.6.1.16# ELIF c OF rx =metax0p OR c OF rx =
+metan0p THEN#1.6.1.17:# new:=newnode(IF c OF rx =metax0p THEN BIN ABS c OF rx
+ SET 20 SET 19 ELSE BIN ABS c OF rx SET 20 FI);jump:=newnode(16r1 );no:=newnode(
+16r0 );next OF end:=jump;prev OF jump:=end;next OF jump:=no;prev OF no:=jump;
+next OF new:=last;prev OF new:=prev OF last;prev OF last:=new;IF prev OF new IS
+ noregex THEN begin:=new ELSE next OF prev OF new:=new FI;rx OF new:=no;rx OF no
+:=new;rx OF jump:=new;end:=no#:1.6.1.17# ELSE#1.6.1.18:# new:=newnode(IF c OF rx
+ =metax1p THEN BIN ABS c OF rx SET 20 SET 19 ELSE BIN ABS c OF rx SET 20 FI);
+skip:=newnode(16r1 );jump:=newnode(16r1 );no:=newnode(16r0 );next OF end:=jump;
+prev OF jump:=end;next OF jump:=no;prev OF no:=jump;next OF skip:=new;prev OF
+ new:=skip;next OF new:=last;prev OF skip:=prev OF last;prev OF last:=new;IF
+ prev OF skip IS noregex THEN begin:=skip ELSE next OF prev OF skip:=skip FI;rx
+ OF new:=no;rx OF no:=new;rx OF jump:=new;rx OF skip:=last;end:=no#:1.6.1.18# FI
+;#:1.6.1.14 1.7.1.2:# PROC matcher =(REF REGEX rx,[]CHAR str,INT st,level,REF
+ SUBEXP se)BOOL:IF level =1000 THEN FALSE ELSE HEAP REF REGEX n:=rx;BOOL yield:=
+FALSE;INT pos,save;WHILE IF n IS noregex THEN FALSE ELIF ABS what OF n>=ABS
+ 16r1f AND ABS what OF n<ABS 16r29 AND charinstring(REPR ABS what OF n,pos,(REPR
+ ABS 16r23 ,REPR ABS 16r21 ,REPR ABS 16r22 ,REPR ABS 16r1f ))THEN#1.7.1.3:# IF
+ pos =4 THEN se[0 ]:=(st,pti);NOT(yield:=TRUE)ELIF pti>UPB str THEN FALSE ELSE
+ CASE pos IN IF c OF n =str[pti]THEN pti+:=1 ;n:=next OF n;TRUE ELSE FALSE FI,
+BEGIN pti+:=1 ;n:=next OF n;TRUE END,IF str[pti]ELEM cb OF n THEN pti+:=1 ;n:=
+next OF n;TRUE ELSE FALSE FI ESAC FI#:1.7.1.3# ELIF ABS what OF n<ABS 16r1f THEN
+ CASE ABS what OF n+1 IN(n:=next OF n;TRUE),(n:=rx OF n;TRUE),#1.7.1.4:# BEGIN n
+:=next OF next OF n;IF(20 ELEM what OF n)THEN#1.7.1.9:# REF REGEX m;WHILE IF NOT
+(20 ELEM what OF n)THEN FALSE ELSE((m:=rx OF n):/=:noregex)AND REPR ABS(what OF
+ n&16rff ) =metachoice FI DO n:=next OF m OD#:1.7.1.9# FI;IF(24 ELEM what OF n)
+THEN#1.7.1.10:# INT nestinglevel:=1 ;WHILE(nestinglevel>0 |(n:=next OF n):/=:
+noregex|FALSE)DO IF(24 ELEM what OF n)THEN nestinglevel+:=((23 ELEM what OF n)|
+1 |-1 )FI OD#:1.7.1.10# FI;n:=next OF n;TRUE END#:1.7.1.4# ,(pti =1 |n:=next OF
+ n;TRUE|FALSE),(pti>UPB str|n:=next OF n;TRUE|FALSE),#1.7.1.5:# IF pti>UPB str
+ THEN FALSE ELIF pti =1 THEN IF str[pti]ELEM wordchars THEN n:=next OF n;TRUE
+ ELSE FALSE FI ELIF UPB str>LWB str THEN IF NOT(str[pti-1 ]ELEM wordchars)&str[
+pti]ELEM wordchars THEN n:=next OF n;TRUE ELSE FALSE FI ELSE FALSE FI#:1.7.1.5# 
+,#1.7.1.6:# IF pti =LWB str THEN FALSE ELIF UPB str>=LWB str THEN IF pti>UPB str
+&str[pti-1 ]ELEM wordchars THEN n:=next OF n;TRUE ELIF pti>UPB str THEN FALSE
+ ELIF UPB str>LWB str THEN IF str[pti-1 ]ELEM wordchars&NOT(str[pti]ELEM
+ wordchars)THEN n:=next OF n;TRUE ELSE FALSE FI ELSE FALSE FI ELSE FALSE FI#:
+1.7.1.6# ESAC ELIF(24 ELEM what OF n)THEN#1.7.1.7:# IF(21 ELEM what OF n)THEN
+ INT b =ABS(what OF n&16rff );IF save:=pti;matcher(next OF n,str,st,level+1 ,se)
+THEN((23 ELEM what OF n)|open OF se[b]|close OF se[b]):=save;NOT(yield:=TRUE)
+ELSE((23 ELEM what OF n)|open OF se[b]|close OF se[b]):=0 ;FALSE FI ELSE n:=next
+ OF n;TRUE FI#:1.7.1.7# ELIF(20 ELEM what OF n)THEN#1.7.1.8:# IF(19 ELEM what OF
+ n)THEN IF save:=pti;matcher(next OF n,str,st,level+1 ,se)THEN se[0 ]:=(st,pti);
+NOT(yield:=TRUE)ELSE pti:=save;n:=rx OF n;TRUE FI ELIF save:=pti;matcher(rx OF n
+,str,st,level+1 ,se)THEN se[0 ]:=(st,pti);NOT(yield:=TRUE)ELSE pti:=save;n:=next
+ OF n;TRUE FI#:1.7.1.8# ELSE FALSE FI DO SKIP OD;yield FI;#:1.7.1.2# #1.2.1.5:# 
+PROC rxinit =([]STRUCT(INT ind,CHAR val)r)BOOL:BEGIN FOR i FROM LWB r TO UPB r
+ DO INT ii =ind OF r[i];IF ii<LWB metachar OR ii>UPB metachar THEN GOTO error
+ ELSE metachar[ii]:=val OF r[i]FI OD;TRUE EXIT error:FALSE END;#:1.2.1.5 
+1.4.1.12:# PROC rxcompile =([]CHAR regexp)REF REGEX:IF UPB regexp<LWB regexp
+ THEN noregex ELIF INT subexpct:=0 ;[LWB regexp:UPB regexp]RX rgx;#1.5.1.1:# 
+PROC rxcomp =(REF REF RX rx)REF REGEX:BEGIN HEAP REF REGEX head:=noregex,tail:=
+noregex;INT ct,pos;WHILE noregex ISNT IF rx IS norx THEN noregex ELIF
+ charinstring(c OF rx,pos,(meta0or1,metan0p,metax0p,metan1p,metax1p,metachoice))
+THEN newsub(head,tail,rx)ELIF c OF rx =metaeog OR c OF rx =metaeosub THEN
+ noregex ELIF charinstring(c OF rx,pos,(metabog,metabosub,metaescape,metaboset))
+THEN rx:=forw OF rx;#1.5.1.2:# CASE pos IN IF addnode(head,tail,newnode(2r0 SET
+ 24 SET 23 ));addnode(head,tail,rxcomp(rx))ISNT noregex THEN IF rx IS norx THEN
+ noregex ELIF c OF rx =metaeog THEN addnode(head,tail,newnode(2r0 SET 24 SET 22 
+))ELSE noregex FI ELSE head:=noregex FI,IF addnode(head,tail,newnode(BIN(ct:=
+subexpct+:=1 )SET 24 SET 23 SET 21 ));noregex ISNT addnode(head,tail,rxcomp(rx))
+THEN IF rx IS norx THEN noregex ELIF c OF rx =metaeosub THEN addnode(head,tail,
+newnode(BIN ct SET 24 SET 22 SET 21 ))ELSE noregex FI ELSE head:=noregex FI,
+addnode(head,tail,newescape(rx)),addnode(head,tail,newset(rx))ESAC#:1.5.1.2# 
+ELIF charinstring(c OF rx,pos,(metabol,metaeol,metaany,metabow,metaeow))THEN
+ addnode(head,tail,newnode((pos|16r3 ,16r4 ,16r21 ,16r5 ,16r6 )))ELSE addnode(
+head,tail,newchar(c OF rx))FI DO IF rx ISNT norx THEN rx:=forw OF rx FI OD;head
+ END;#:1.5.1.1# FOR i FROM LWB rgx TO UPB rgx DO rgx[i]:=(regexp[i],i,(i =LWB
+ rgx|norx|rgx[i-1 ]),(i =UPB rgx|norx|rgx[i+1 ]))OD;#1.4.1.16:# REF REGEX result
+ =rxcomp(HEAP REF RX:=rgx[1 ]);result IS noregex THEN noregex ELSE HEAP REF
+ REGEX tmp:=result;WHILE next OF tmp ISNT noregex DO tmp:=next OF tmp OD;next OF
+ tmp:=newnode(16r1f );HEAP REGEX:=result#:1.4.1.16# FI;#:1.4.1.12 1.6.1.12:# 
+PROC rxchangeset =(INT type,[]CHAR newval)BOOL:IF UPB newval-LWB newval+1 <3 
+THEN FALSE ELIF newval[LWB newval]/=metaboset OR newval[UPB newval]/=metaeoset
+ THEN FALSE ELIF type<1 OR type>3 THEN FALSE ELIF[LWB newval+1 :UPB newval-1 ]RX
+ rgx;FOR i FROM LWB newval+1 TO UPB newval-1 DO rgx[i]:=(newval[i],i,(i =LWB rgx
+|norx|rgx[i-1 ]),(i =UPB rgx|norx|rgx[i+1 ]))OD;REF REGEX rs =newset(LOC REF RX
+:=rgx[LWB rgx]);rs IS noregex THEN FALSE ELSE[]REF CHARBAG(digits,wordchars,
+whitespace)[type]:=cb OF rs;TRUE FI;#:1.6.1.12 1.7.1.11:# PROC rxmatch =(REF
+ REGEX rx,[]CHAR pattern,REF SUBEXP se)BOOL:IF rx IS noregex THEN FALSE ELIF
+ PROC zerose =VOID:FOR i FROM LWB se TO UPB se DO se[i]:=(0 ,0 )OD;what OF rx =
+16r3 THEN zerose;matcher(rx,pattern[@1 ],pti:=1 ,1 ,se)ELSE FOR i TO UPB pattern
+[@1 ]DO zerose;IF matcher(rx,pattern[@1 ],pti:=i,1 ,se)THEN GOTO ytrue FI OD;
+FALSE EXIT ytrue:TRUE FI;#:1.7.1.11 1.8.1.1:# PROC rxreplace =([]CHAR replacer,
+matched,SUBEXP se)[]CHAR:BEGIN STRING yield;INT ri:=LWB replacer-1 ,pos,val;BOOL
+ escape:=FALSE,upper:=FALSE,lower:=FALSE;WHILE ri<UPB replacer DO CHAR rr:=
+replacer[ri+:=1 ];IF escape THEN escape:=FALSE;#1.8.1.3:# IF isdec(rr)THEN INT
+ si =ABS rr-ABS "0";INT oi =open OF se[si],ci =close OF se[si]-1 ;IF oi/=0 &ci/=
+0 THEN yield+:=matched[oi:ci]FI ELIF charinstring(rr,pos, "elux")THEN CASE pos
+ IN upper:=lower:=FALSE,lower:=TRUE,upper:=TRUE,#1.8.1.4:# BEGIN val:=0 ;FOR i
+ TO 2 WHILE ishex(rr:=replacer[ri+:=1 ])DO val:=val*16 +ctoi(rr)OD;IF NOT ishex(
+rr)THEN ri-:=1 FI;yield+:=REPR val END#:1.8.1.4# OUT SKIP ESAC ELSE yield+:=(
+upper|UC rr|:lower|LC rr|rr)FI#:1.8.1.3# ELIF rr =metaescape THEN escape:=TRUE
+ ELIF upper THEN yield+:=UC rr ELIF lower THEN yield+:=LC rr ELSE yield+:=rr FI
+ OD;yield END;#:1.8.1.1# #:1.2.1.4# #1.1.1.3:# SKIP KEEP#2.1.1.1:# REGEX,SUBEXP,
+noregex,rxinit,rxcompile,rxchangeset,rxmatch,rxreplace#:2.1.1.1# FINISH#:1.1.1.3
+# #:1.1.1.1# 

@@ -1,0 +1,458 @@
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<!--converted with latex2html 2008 (1.71)
+original version by:  nikos drakos, cblu, university of leeds
+* revised and updated by:  marcus hennecke, ross moore, herb swan
+* with significant contributions from:
+  jens lippmann, marek rouchal, martin wilck and others -->
+<html>
+<head>
+<title>Web 68 commands</title>
+<meta name="description" content="Web 68 commands">
+<meta name="keywords" content="Web68man">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="LaTeX2HTML v2008">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="Web68man.css">
+
+<link rel="next" href="node24.html">
+<link rel="previous" href="node22.html">
+<link rel="up" href="node4.html">
+<link rel="next" href="node24.html">
+</head>
+
+<body >
+
+<div class="navigation"><!--navigation panel-->
+<a name="tex2html340"
+  href="node24.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html336"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html330"
+  href="node22.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html338"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html341"
+  href="node24.html">Notes</a>
+<b> Up:</b> <a name="tex2html337"
+  href="node4.html">Web 68</a>
+<b> Previous:</b> <a name="tex2html331"
+  href="node22.html">The Algol 68 part</a>
+ &nbsp; <b>  <a name="tex2html339"
+  href="node1.html">Contents</a></b> 
+<br>
+</div>
+<!--end of navigation panel-->
+
+<h2><a name="SECTION00049000000000000000"></a><a name="subsec:cmds"></a>
+Web 68 commands
+</h2>
+
+<p>
+Every Web 68 command consists of the command introducer <tt>@</tt>
+followed by a defining character.  Some commands are followed by other
+text which is delimited by the concluding command <code>@&gt;</code>. See
+section <a href="node14.html#subsec:limbo">3.4</a> for an example of the
+<code>@=</code> command.
+Such text is called ``control text'' and, like a string denotation,
+must end on the same line of the Web 68 file as it began. Furthermore,
+no Web 68 commands are allowed in a control text, not even <tt>@@</tt>.
+(Remember that Algol 68 allows <tt>AT</tt> instead of <tt>@</tt>.
+However, if you need an <tt>@</tt> sysmbol you can get around this
+restriction by typing `<code>&amp;#64;</code>'.)</p>
+
+<p>
+The letters following each code indicate in which sections that code can
+be found:-</p>
+<dl>
+<dt><strong>L</strong></dt>
+<dd>In limbo.
+</dd>
+<dt><strong>H</strong></dt>
+<dd>In the HTML part of a section.
+</dd>
+<dt><strong>M</strong></dt>
+<dd>In the definition part of a section.
+</dd>
+<dt><strong>A</strong></dt>
+<dd>In the Algol 68 part of a section.
+</dd>
+<dt><strong>C</strong></dt>
+<dd>In a comment.
+</dd>
+<dt><strong>S</strong></dt>
+<dd>In a string.
+</dd>
+</dl>
+<p>A bar over one of these letters means that the control code ends the
+present part of the Web 68 file; for example,
+<span  class="textit">&#256;</span> means
+that this control code ends the Algol 68 part of a section.</p>
+
+<dl>
+<dt><strong><tt>@@</tt>
+<span class="MATH">[<i>A</i>, <i>C</i>, <i>H</i>, <i>L</i>, <i>M</i>, <i>S</i>]
+</span></strong></dt>
+<dd>A double <tt>@</tt> symbol denotes a
+single <tt>@</tt> symbol. This is the only Web 68 command which is
+legal in limbo, in comments and in strings.
+</dd>
+<dt><strong>@&nbsp;
+<span class="MATH">[<img
+ width="15" height="16" align="BOTTOM" border="0"
+ src="img1.gif"
+ alt="$\bar{L}$">,<img
+ width="16" height="16" align="BOTTOM" border="0"
+ src="img2.gif"
+ alt="$\bar{A}$">,<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$\bar{H}$">]</span></strong></dt>
+<dd>This
+denotes the start of a plain section. A tab character or the end of
+the line is equivalent to a space when it follows an <tt>@</tt>
+symbol.
+
+<p>
+</dd>
+<dt><strong><tt>@1,@2,@3</tt> <!-- math
+ $[\bar{l},\bar{a},\bar{h}]$
+ -->
+<span class="MATH">[<img
+ width="15" height="16" align="BOTTOM" border="0"
+ src="img1.gif"
+ alt="$ \bar{L}$">,<img
+ width="16" height="16" align="BOTTOM" border="0"
+ src="img2.gif"
+ alt="$ \bar{A}$">,<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">]</span></strong></dt>
+<dd>This denotes
+the start of a level section, that is, a section which begins a new
+major part of the Web 68 file.  The title of the new part should
+appear after the <tt>@n</tt> (<span class="MATH"><i>n</i>&#8712;[1, 3]</span>)
+followed by a full-stop and a
+newline. HTML tags should be avoided in titles unless
+they are quite simple: such as font switching commands. When tang&nbsp;and
+weav meet a level section, they print the number of that section on
+the console.  The very first section should be an <tt>@1</tt> section.
+Included files cannot use level 1 sections. This ensures integrity of
+the indexes.
+</dd>
+<dt><strong><tt>@a</tt> <!-- math
+ $[\bar{h},\bar{m}]$
+ -->
+<span class="MATH">[<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">,<img
+ width="21" height="16" align="BOTTOM" border="0"
+ src="img4.gif"
+ alt="$ \bar{M}$">]</span></strong></dt>
+<dd>This denotes the start of a
+part of the untagged module. weav will format the Algol 68 code
+without a module tag at its start, so if you are writing a Web 68 file
+based on HTML formatted documentation, you should precede each untagged
+module with <tt>@a</tt>. tang will concatenate all the source code
+preceded by <tt>@a</tt>.
+</dd>
+<dt><strong><tt>@d</tt> <!-- math
+ $[\bar{h},\bar{m}]$
+ -->
+<span class="MATH">[<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">,<img
+ width="21" height="16" align="BOTTOM" border="0"
+ src="img4.gif"
+ alt="$ \bar{M}$">]</span></strong></dt>
+<dd>This denotes the start
+of a declarative macro and, therefore, the end of a previous macro.
+
+<p>
+</dd>
+<dt><strong><tt>@f</tt> <!-- math
+ $[\bar{h},\bar{m}]$
+ -->
+<span class="MATH">[<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">,<img
+ width="21" height="16" align="BOTTOM" border="0"
+ src="img4.gif"
+ alt="$ \bar{M}$">]</span></strong></dt>
+<dd>This denotes the start of a
+formatting directive which determines how a symbol should be formatted.
+It should be followed by a single symbol, an equal symbol and another
+single symbol. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@h</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>The control text that follows, upto the
+next <tt>@&gt;</tt> will be regarded as HTML code and formatted
+along with the Algol 68 program. The text is ignored by tang, but it
+can be used for various purposes by weav.
+
+<p>
+</dd>
+<dt><strong><tt>@i</tt> <!-- math
+ $[\bar{l},\bar{a},\bar{h},\bar{m}]$
+ -->
+<span class="MATH">[<img
+ width="15" height="16" align="BOTTOM" border="0"
+ src="img1.gif"
+ alt="$ \bar{L}$">,<img
+ width="16" height="16" align="BOTTOM" border="0"
+ src="img2.gif"
+ alt="$ \bar{A}$">,<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">,<img
+ width="21" height="16" align="BOTTOM" border="0"
+ src="img4.gif"
+ alt="$ \bar{M}$">]</span></strong></dt>
+<dd>The control
+text upto the next <tt>@&gt;</tt> will be regarded by both weav and
+tang as the filename of a file to be included at that point. The
+file will be looked for in directories previously specified to the
+program (see sections <a href="node7.html#subsubsec:tang">3.2.1</a> and <a
+href="node8.html#subsubsec:weav">3.2.2</a>).
+Such a file is presumed to be in Web 68 format and should contain
+sections as described above. It will be read completely before both
+programs return to the current point in the text. Whether weav includes the
+include file in the current output is determined by an
+option when calling the program. The <tt>@i</tt> command may also
+occur in an included file. However, circular calls will not be
+honoured because both tang and weav keep a check on which files
+have been included.
+</dd>
+<dt><strong><tt>@m</tt> <!-- math
+ $[\bar{h},\bar{m}]$
+ -->
+<span class="MATH">[<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">,<img
+ width="21" height="16" align="BOTTOM" border="0"
+ src="img4.gif"
+ alt="$ \bar{M}$">]</span></strong></dt>
+<dd>This denotes the start of a
+multi-call macro and, therefore, the end of a previous macro.
+</dd>
+<dt><strong><tt>@&lt;</tt> <!-- math
+ $[a,\bar{h}]$
+ -->
+<span class="MATH">[<i>A</i>,<img
+ width="19" height="16" align="BOTTOM" border="0"
+ src="img3.gif"
+ alt="$ \bar{H}$">]</span></strong></dt>
+<dd>A module tag begins with this
+command followed by HTML text followed by the concluding command
+<tt>@&gt;</tt>; the HTML text should not contain any Web 68 commands
+other than <tt>@@</tt>, unless these commands appear in snippets (see
+section <a href="node11.html#subsubsec:snippets">3.3.2</a>). The module tag
+may be abbreviated
+after its first appearance in the Web 68 file, by giving any unique
+prefix followed by ..., where the three dots immediately precede
+the command <tt>@&gt;</tt>. No module tag should be the prefix of
+another.  Module tags may not appear in snippets, nor may they appear
+in the definition part of a module (because the appearance of a module
+tag signals the end of the definition part and the beginning of the
+Algol 68 part).
+</dd>
+<dt><strong><tt>@&#94;</tt> <span class="MATH">[<i>A</i>, <i>H</i>]</span>
+</strong></dt>
+<dd>The control text that follows, up to
+the next <tt>@&gt;</tt>, will be inserted into the index together with
+the identifiers and indicants of the Algol 68 program. The text will
+appear in roman type. For example, to put ``system dependencies'' into
+the index, you can key `<code>@^system dependencies@&gt;</code>' in each
+section that you want to index as system dependent.
+</dd>
+<dt><strong><tt>@.</tt> <span class="MATH">[<i>A</i>, <i>H</i>]</span></strong></dt>
+<dd>The ``control text'' that follows, will be
+inserted into the index in <tt>typewriter type</tt>; see the rules for
+<tt>@&#710; </tt> which is analogous.
+</dd>
+<dt><strong><tt>@:</tt> <span class="MATH">[<i>A</i>, <i>H</i>]</span>
+</strong></dt>
+<dd>The control text that follows, will be
+inserted into the index in a format controlled by the HTML tag
+<code>&lt;code&gt;</code>...<code>&lt;/code&gt;</code>,
+which the user should define as desired; see the rules
+for `<code>@^</code>', which is analogous.
+</dd>
+<dt><strong><tt>@!</tt> <span class="MATH">[<i>A</i>, <i>H</i>]</span></strong></dt>
+<dd>The section number in an index entry will
+be underlined if this command immediately precedes the identifier or
+control text being indexed. This convention is used to distinguish the
+sections where an identifier is defined, or where it is explained in
+some special way, from the sections where it is used. A reserved bold
+tag or an identifier of length one will not be indexed except for
+underlined entries. An `<tt>@!</tt>' is implicitly inserted by weav just
+after the bold tags <b>proc</b>, <b>op</b>
+and <b>mode</b>,
+and just after <tt>@d</tt> and <tt>@m</tt>; but you should insert your
+own `<tt>@!</tt>' before the declarations of modes, denotations,
+names, parameters and field selectors of <b>struct</b>s
+and operators that are not covered by this implicit convention, if you
+want to improve the quality of the index that you get.
+</dd>
+<dt><strong><tt>@?</tt> <span class="MATH">[<i>A</i>, <i>H</i>]</span>
+</strong></dt>
+<dd>This command cancels an implicit (or
+explicit) `<tt>@!</tt>', so that the next index entry will not be
+underlined.
+</dd>
+<dt><strong><tt>@=</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>the control text that follows, upto the
+next `<code>@&gt;</code>', will be passed verbatim to the Algol 68 program.
+</dd>
+<dt><strong><code>@\</code> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command forces tang to
+break the line in the output Algol 68 source program here.
+</dd>
+<dt><strong><tt>@/</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command forces weav to break the line
+at this point in the output HTML file. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@|</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command specifies an optional line
+break in the middle of an expression. For example, if you have a
+complex conditional clause between <span  class="textbf">if</span> and <span
+ class="textbf">then</span>, or a
+long expression on the right-hand side of an assignment, you can use
+`<tt>@|</tt>' to specify breakpoints more logical than the ones that
+the HTML choose on visual grounds. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@#</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command forces a line break, as
+<tt>@/</tt> does, but it also causes a little extra white space to
+appear between the lines at this break. You might use it, for example,
+between procedure declarations or between groups of macro definitions
+that are logically separate within the same section. It is ignored by
+tang.
+
+<p>
+</dd>
+<dt><strong><tt>@,</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command inserts a thin space into
+weav's output; it is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@&amp;</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command cancels a line break that
+might otherwise be inserted by weav, for example, before the bold tag
+`<span  class="textbf">then</span>' if you want to put a short <span  class="textbf">if-then-else-fi</span>
+construction on a single line. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@;</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This command is treated like a semicolon,
+for formatting purposes, except that it is invisible. You can use it,
+for example, after a module tag when the Algol 68 text represented by
+that module tag ends with a semicolon. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@+</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This control code forces weav to indent
+the Algol 68 code from this point on this and succeeding lines. It is
+ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@-</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This control code cancels the last
+<tt>@+</tt>. It is ignored by tang.
+
+<p>
+</dd>
+<dt><strong><tt>@{</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This control code marks the current
+position as an alignment column. All subsequent lines will be aligned
+to it until the control code <tt>@}</tt> is read, when the previous
+alignment will be resumed. It is ignored by tang. These two control
+codes must occur in pairs and may be nested.
+
+<p>
+</dd>
+<dt><strong><tt>@}</tt> <span class="MATH">[<i>A</i>]</span></strong></dt>
+<dd>This control code cancels the previous
+<tt>@{</tt>. It is ignored by tang.
+
+<p>
+</dd>
+</dl>
+
+<p>
+The last ten commands have no effect on the Algol 68 program output by
+tang; they merely help to improve the readability of the
+HTML formatted Algol 68 that is output by weav. Although Web 68 allows
+you to override the automatic formatting provided by weav, your best
+strategy is not to worry about such things until you have seen what
+weav produces automatically, since you will probably need to make
+only a few corrections when you are fine-tuning your documentation.
+
+<p>
+Because of the rules by which every section is broken into three
+parts, the commands `<tt>@a</tt>', `<tt>@d</tt>' and `<tt>@m</tt>' are
+not allowed to occur once the Algol 68 part of a section has begun.
+
+<p>
+
+<div class="navigation"><hr>
+<!--navigation panel-->
+<a name="tex2html340"
+  href="node24.html">
+<img width="37" height="24" align="BOTTOM" border="0" alt="next"
+ src="next.gif"></a> 
+<a name="tex2html336"
+  href="node4.html">
+<img width="26" height="24" align="BOTTOM" border="0" alt="up"
+ src="up.gif"></a> 
+<a name="tex2html330"
+  href="node22.html">
+<img width="63" height="24" align="BOTTOM" border="0" alt="previous"
+ src="prev.gif"></a> 
+<a name="tex2html338"
+  href="node1.html">
+<img width="65" height="24" align="BOTTOM" border="0" alt="contents"
+ src="contents.gif"></a>  
+<br>
+<b> Next:</b> <a name="tex2html341"
+  href="node24.html">Notes</a>
+<b> Up:</b> <a name="tex2html337"
+  href="node4.html">Web&nbsp;68</a>
+<b> Previous:</b> <a name="tex2html331"
+  href="node22.html">The Algol 68 part</a>
+ &nbsp; <b>  <a name="tex2html339"
+  href="node1.html">Contents</a></b> </div>
+<!--end of navigation panel-->
+<address>
+Sian Mountbatten
+2012-01-05
+</address>
+</body>
+</html>

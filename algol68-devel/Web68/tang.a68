@@ -1,0 +1,491 @@
+#1.1.1.2:# #1.1.1.3:# PROGRAM tang CONTEXT VOID USE#1.1.1.5:# params,#:1.1.1.5# 
+standard#:1.1.1.3# BEGIN#5.1.1.1:# MODE STREAM =STRUCT(REF FILE f,BOOL ended,INT
+ fnum,n,loc,upb,[4 ]INT sec,[256 ]CHAR b,REF STREAM next);#:5.1.1.1 5.1.1.9:# 
+MODE INCLUDED =STRUCT(STRING s,REF INCLUDED left,right);#:5.1.1.9 6.2.1.3:# MODE
+ CONTROL =STRUCT(CHAR cs);#:6.2.1.3 6.2.1.4:# MODE TAG =STRUCT(STRING s,REF TAG
+ left,right);#:6.2.1.4 6.2.1.5:# MODE TOKEN,MACRO,MODULE,#:6.2.1.5 6.2.1.6:# 
+TEXT =STRUCT(UNION(TOKEN,REF MACRO,REF MODULE)text,REF TEXT next),#:6.2.1.6 
+6.2.1.7:# MODULE =STRUCT(STRING id,REF REF TEXT textbeg,textend,REF MODULE left,
+right),#:6.2.1.7 6.2.1.8:# WPARAM =STRUCT(REF TAG par,REF WPARAM next),MACRO =
+STRUCT(REF TAG id,BITS flags,REF WPARAM param,REF REF TEXT textbeg,textend,REF
+ MACRO left,right),#:6.2.1.8 6.2.1.10:# TOKEN =UNION(INT,[]INT,CONTROL,STRING,
+VOID,REF TAG);#:6.2.1.10# #1.1.1.1:# STRING cvstang = 
+"$Id: tang.w68,v 1.10 2005/01/21 15:34:16 sian Exp $";#:1.1.1.1 5.3.1.1:# []CHAR
+ webext = ".w68",outext = ".a68";#:5.3.1.1 7.1.1.3:# OP- =(CHAR a,b)[]CHAR:IF
+ ABS a<=ABS b THEN[ABS a:ABS b]CHAR s;FOR i FROM LWB s TO UPB s DO s[i]:=REPR i
+ OD;s ELSE[ABS b:ABS a]CHAR s;FOR i FROM LWB s TO UPB s DO s[i]:=REPR i OD;s FI;
+[]CHAR boldrange =( "0"- "9")+( "A"- "Z"),idrange =blank+( "0"- "9")+ "_"+( "a"-
+ "z");#:7.1.1.3# #5.1.1.2:# REF STREAM nostream =NIL;#:5.1.1.2 5.1.1.10:# REF
+ INCLUDED noinc =NIL;#:5.1.1.10 6.2.2.4:# REF MACRO nomac =NIL;REF MODULE nomod
+ =NIL;REF WPARAM nowparam =NIL;REF TAG notag =NIL;REF TEXT notext =NIL;#:6.2.2.4
+# #3.1.1.1:# BOOL debug:=FALSE;#:3.1.1.1 3.1.1.2:# PROC(STRING,TOKEN)VOID
+ debugprinttoken:=(STRING s,TOKEN t)VOID:SKIP;PROC(STRING,TEXT)VOID
+ debugprinttext:=(STRING s,TEXT t)VOID:SKIP;PROC(STRING,STRING)VOID
+ debugprintstring:=(STRING s,t)VOID:SKIP;#:3.1.1.2 4.1.1.1:# INT history:=0 ;#:
+4.1.1.1 4.1.1.2:# INT consolepos:=0 ;#:4.1.1.2 4.1.1.4:# BOOL phaseone:=TRUE;#:
+4.1.1.4 5.1.1.6:# INT filenumber:=0 ;#:5.1.1.6 5.1.1.11:# REF INCLUDED inctree:=
+noinc;#:5.1.1.11 5.1.1.13:# REF STREAM web:=HEAP STREAM:=(HEAP FILE,FALSE,0 ,0 ,
+0 ,0 ,(0 ,0 ,0 ,0 ),256 *blank,nostream);STREAM output:=(HEAP FILE,FALSE,0 ,0 ,
+0 ,0 ,(0 ,0 ,0 ,0 ),256 *blank,nostream);#:5.1.1.13 5.2.1.1:# STRING tangfn;#:
+5.2.1.1 5.2.1.2:# FILE argf;#:5.2.1.2 5.2.1.5:# STRING homedir;#:5.2.1.5 
+5.2.1.12:# STRING includepaths:= "/usr/share/algol68toc:";#:5.2.1.12 5.3.1.4:# 
+STRING arg;#:5.3.1.4 6.1.1.1:# INT curmood:=0 ;#:6.1.1.1 6.2.1.1:# HEAP[0 :315 ]
+STRING boldsym:=[]STRING( "", "", "LE", "", "ELSE", "LEVEL", "", "", "", "ELIF",
+ "", "FLEX", "EQ", "", "", "", "", "", "", "", "", "EXIT", "", "", "", "", "", 
+"", "", "KEEP", "", "", "LT", "", "", "", "", "", "", "ESAC", "", "", "", "", 
+"SKIP", "", "", "RE", "HEAP", "REAL", "", "STRUCT", "", "REF", "UP", "", "", "",
+ "", "FILE", "", "", "IF", "", "TRUE", "", "", "PRAGMAT", "", "PROC", "USE", 
+"CHANNEL", "", "", "", "", "", "", "", "SHORT", "", "", "IS", "", "ISNT", "", ""
+, "OP", "", "", "", "PLUSTO", "PR", "", "REPR", "", "EDOC", "OF", "", "WHILE", 
+"", "PLUSAB", "", "", "", "FINISH", "", "FI", "LOC", "CODE", "COMPL", "FORMAT", 
+"", "CHAR", "", "", "", "", "", "", "", "", "GE", "FALSE", "LENG", "", "ELEM", 
+"COMMENT", "", "NE", "", "FIND", "SEMA", "", "PRIO", "", "", "CASE", "FOR", 
+"CONJ", "", "OUSE", "", "", "OUTTYPE", "AT", "", "", "LWB", "", "UPB", "", "GT",
+ "", "OVER", "OUT", "STRING", "", "", "", "", "PAR", "", "", "BITS", "", "", 
+"TIMESAB", "AFTER", "", "", "", "", "", "PROGRAM", "", "FROM", "OR", "ENTIER", 
+"", "NIL", "VOID", "", "INTYPE", "BOOL", "BYTES", "", "TO", "", "", "THEN", "", 
+"CO", "SHORTEN", "", "INT", "SIGN", "EMPTY", "", "", "", "", "END", "", "", "", 
+"OVERAB", "ROUND", "", "LONG", "", "MODE", "", "", "", "", "", "", "", "", "", 
+"", "DIVAB", "", "", "", "ABS", "BEGIN", "", "", "NOT", "OD", "ODD", "", "", "",
+ "", "BY", "", "", "", "", "", "", "DO", "ALIEN", "", "", "", "", "", "", "", ""
+, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
+, "MINUSAB", "BIN", "", "", "", "", "", "ARG", "MOD", "", "", "", "", "", "DOWN"
+, "", "", "", "GO", "", "GOTO", "", "IM", "", "", "", "", "", "", "", "", "", 
+"IN", "MODAB", "", "", "", "UNION", "", "", "", "AND");#:6.2.1.1 6.2.2.5:# REF
+ MACRO macroroot:=nomac;REF MODULE moduleroot:=nomod;[0 :15 ]REF TAG tagroot;FOR
+ i FROM LWB tagroot TO UPB tagroot DO tagroot[i]:=notag OD;#:6.2.2.5 6.2.2.10:# 
+BOOL oneoffmacro:=FALSE;#:6.2.2.10 7.1.1.6:# REF MACRO curmac:=nomac;REF MODULE
+ curmod:=nomod;MODULE unnamedmodule:=( "",HEAP REF TEXT:=notext,HEAP REF TEXT:=
+notext,nomod,nomod);textend OF unnamedmodule:=textbeg OF unnamedmodule;#:7.1.1.6
+ 7.1.1.17:# INT incomment:=0 ;#:7.1.1.17 8.1.1.1:# BOOL tagoutput:=FALSE;#:
+8.1.1.1# #3.1.1.3:# FILE monitorfile;PROC monitor =([]UNION(SIMPLOUT,PROC(REF
+ FILE)VOID)s)BOOL:IF open(monitorfile,idf(monitorfile),standbackchannel)/=0 THEN
+ FALSE ELSE set(monitorfile,0 ,0 ,logicalend(monitorfile));put(monitorfile,s);
+close(monitorfile);TRUE FI; SKIP; SKIP;PROC startmonitor =(STRING fn)BOOL:IF
+ establish(monitorfile,fn,standbackchannel,0 ,0 ,0 )/=0 THEN FALSE ELSE put(
+monitorfile,( "Monitor log",newline, "===========",newline,newline));close(
+monitorfile);TRUE FI;#:3.1.1.3 3.1.1.4:# PROC monitorprinttoken =(STRING s,TOKEN
+ t)VOID:monitor((s,CASE t IN(INT n): "INT("+IF n<0 THEN boldsym[ABS n]+ "["+
+whole(ABS n,0 )+ "]"ELSE whole(n,0 )FI+ ")",(CONTROL c): "CONTROL("+cs OF c+ ")"
+,(STRING st): "STRING("+st+ ")",(VOID): "VOID",(REF TAG rt): "REF TAG("+s OF rt+
+ ")"ESAC,newline));#:3.1.1.4 3.1.1.5:# PROC monitorprinttext =(STRING s,TEXT t)
+VOID:monitor((s,(text OF t|(INT n): "INT("+(n<0 |boldsym[ABS n]|whole(n,0 ))+ 
+")",([]INT r): "[]INT("+whole(r[1 ],0 )+ "."+whole(r[2 ],0 )+ "."+whole(r[3 ],0 
+)+ "."+whole(r[4 ],0 )+ ")",(STRING st): "STRING("+st+ ")",(REF TAG tg): 
+"REF TAG("+s OF tg+ ")",(REF MACRO mc): "REF MACRO("+s OF id OF mc+ ")",(REF
+ MODULE md): "REF MODULE("+id OF md+ ")",(VOID): "VOID",(CONTROL c): "CONTROL("+
+cs OF c+ ")"),newline));#:3.1.1.5 3.1.1.6:# PROC monitorprintstring =(STRING s,t
+)VOID:monitor((s,t,newline));#:3.1.1.6# #4.1.1.3:# PROC printout =([]UNION(
+STRING,CHAR,INT,VOID)s)VOID:FOR i FROM LWB s TO UPB s DO STRING outs =CASE s[i]
+IN(STRING si):si,(CHAR ci):ci,(INT ni):whole(ni,0 ),(VOID):(print(newline);
+consolepos:=0 ; "")ESAC;IF consolepos+UPB outs>80 THEN print(newline);consolepos
+:=0 FI;print(outs);consolepos+:=UPB outs OD;#:4.1.1.3 4.1.1.5:# PROC error =(INT
+ status)VOID:IF IF history<status THEN history:=status FI;phaseone THEN#4.1.1.6
+:# printout(( ". (",idf(f OF web), ", l.",n OF web, ")",EMPTY));FOR k TO loc OF
+ web DO printout((CHAR bk =(b OF web)[k];bk =tabch|blank|bk))OD;printout((EMPTY,
+loc OF web*blank,(loc OF web<upb OF web|(b OF web)[loc OF web+1 :upb OF web]| ""
+)));printout(blank)#:4.1.1.6# ELSE#4.1.1.7:# printout(( ". (l.",n OF output, ")"
+,EMPTY,(b OF output)[upb OF output], "... ",EMPTY))#:4.1.1.7# FI;#:4.1.1.5 
+4.1.1.9:# PROC simpleerror =(STRING s,INT halt)VOID:(print((newline, "! Error: "
+,s));exit(halt));#:4.1.1.9# #5.2.1.9:# PRIO FIND =6 ;OP FIND =(CHAR c,[]CHAR s)
+INT:(INT p;charinstring(c,p,s)|p|LWB s-1 );PRIO UPTO =5 ;OP UPTO =([]CHAR s,CHAR
+ t)[]CHAR:IF INT toix;charinstring(t,toix,s)THEN s[:toix-1 @LWB s]ELSE s FI;#:
+5.2.1.9 6.2.1.2:# OP LOOKUP =(STRING str)INT:IF UPB str>=2 &UPB str<=7 THEN PROC
+ hash =(STRING s)INT:([]INT assovalues =[]INT(316 ,316 ,316 ,316 ,316 ,316 ,316 
+,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 
+,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 
+,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 
+,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,113 ,95 ,20 ,72 ,0 ,5 ,120 ,
+44 ,50 ,30 ,25 ,0 ,122 ,127 ,85 ,0 ,5 ,45 ,15 ,15 ,52 ,20 ,50 ,2 ,70 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,316 ,
+316 ,316 ,316 ,316 )[@0 ];UPB s+assovalues[ABS s[1 +LWB s]]+assovalues[ABS s[LWB
+ s]]+assovalues[ABS s[UPB s]]);INT key =hash(str);IF key<0 OR key>315 THEN 0 
+ELIF boldsym[key] =str THEN key ELSE 0 FI ELSE 0 FI;#:6.2.1.2 7.1.1.2:# OP TRIM
+ =([]CHAR s)[]CHAR:(INT l:=LWB s;FROM LWB s TO UPB s WHILE s[l]<= " "DO l+:=1 OD
+;INT u:=UPB s;FROM UPB s BY---1 TO l WHILE s[u]<= " "DO u-:=1 OD;(l>u|s[LWB s:
+LWB s-1 @LWB s-1 ]|s[l:u@l]));#:7.1.1.2 7.1.1.4:# PRIO CHOP =7 ;OP CHOP =(CHAR c
+,[]CHAR s)INT:BEGIN INT bot:=LWB s,top:=UPB s;INT i:=(bot+top)OVER 2 ;WHILE CHAR
+ si;(bot<=top|(si:=s[i])/=c|FALSE)DO(c<si|top:=i-1 |bot:=i+1 );i:=(bot+top)OVER
+ 2 OD;(bot<=top|i|LWB s-1 )END;#:7.1.1.4 7.1.1.11:# OP UC =(CHAR c)CHAR:(c>= "a"
+&c<= "z"|REPR(ABS c-32 )|c);#:7.1.1.11 7.1.1.18:# OP COMPACT =([]CHAR tag)[]CHAR
+:BEGIN[LWB tag:UPB tag]CHAR loctag;INT n:=LWB tag-1 ;FOR i FROM LWB tag TO UPB
+ tag DO IF CHAR ti =tag[i];ti/=blank THEN loctag[n+:=1 ]:=ti FI OD;loctag[:n]END
+;#:7.1.1.18 7.3.1.1:# OP MULTICASE =(CHAR c,[]STRING s)INT:BEGIN INT j:=LWB s-1 
+;FOR i FROM LWB s TO UPB s WHILE j<LWB s DO IF STRING si =s[i];c CHOP si>=LWB si
+ THEN j:=i FI OD;j END;#:7.3.1.1# #5.1.1.8:# PROC scanincludedtree =(REF REF
+ INCLUDED tr,STRING fn)BOOL:IF tr IS noinc THEN FALSE ELIF fn =s OF tr THEN TRUE
+ ELIF fn<s OF tr THEN scanincludedtree(left OF tr,fn)ELSE scanincludedtree(right
+ OF tr,fn)FI;#:5.1.1.8 5.2.1.10:# PROC usage =VOID:BEGIN put(standerror,( 
+"Usage: tang (d,h,v,w(paths),f(tang-file))",newline, 
+" d: output debugging data to tang.dbg",newline, " f: (input file)",newline, 
+" h: this message",newline, " v: version",newline, 
+" w: comma-separated include path(s) to be",newline, 
+"     added to /usr/share/algol68toc",newline));exit(1 )END;#:5.2.1.10 6.2.2.1
+:# PROC inccursec =(INT level)VOID:IF level>=1 &level<=3 THEN(sec OF web)[level]
++:=1 ;FOR i FROM level+1 TO UPB(sec OF web)DO(sec OF web)[i]:=1 OD ELIF level =
+4 THEN(sec OF web)[level]+:=1 FI;#:6.2.2.1 6.2.2.2:# PROC printcursec =VOID:
+printout(( "[",(fnum OF web>0 | "I"+whole(fnum OF web,0 )|(sec OF web)[1 ]), "."
+,(sec OF web)[2 ], ".",(sec OF web)[3 ], ".",(sec OF web)[4 ], "]"));#:6.2.2.2 
+6.2.2.3:# PROC maketext =([]INT cursec)TEXT:BEGIN[4 ]INT cs:=cursec;IF next OF
+ web ISNT nostream THEN cs[1 ]:=-fnum OF web FI;TEXT(cs,notext)END;#:6.2.2.3 
+6.2.2.7:# PROC addmoduletag =(REF REF MODULE root,STRING s,BOOL adding,prefix)
+REF MODULE:IF root IS nomod THEN IF prefix THEN nomod ELIF adding THEN root:=
+HEAP MODULE:=(s,HEAP REF TEXT:=notext,HEAP REF TEXT:=notext,nomod,nomod);textend
+ OF root:=textbeg OF root;root ELSE nomod FI ELIF UPB s>UPB id OF root THEN IF s
+<id OF root THEN addmoduletag(left OF root,s,adding,prefix)ELSE addmoduletag(
+right OF root,s,adding,prefix)FI ELIF prefix THEN IF STRING pref =(id OF root)[:
+UPB s];s =pref THEN IF(addmoduletag(left OF root,s,NOT TRUE,prefix)IS nomod)AND(
+addmoduletag(right OF root,s,NOT TRUE,prefix)IS nomod)THEN root ELSE nomod FI
+ ELIF s<pref THEN addmoduletag(left OF root,s,adding,prefix)ELSE addmoduletag(
+right OF root,s,adding,prefix)FI ELIF s =id OF root THEN root ELIF s<id OF root
+ THEN addmoduletag(left OF root,s,adding,prefix)ELSE addmoduletag(right OF root,
+s,adding,prefix)FI;#:6.2.2.7 6.2.2.8:# PROC addtag =(REF[]REF TAG root,REF TAG
+ tag)REF TAG:BEGIN OP HASH =(STRING s)INT:(ABS s[LWB s]+2 *ABS s[UPB s])MOD(1 +
+UPB tagroot);PROC locaddtag =(REF REF TAG r,REF TAG t)REF TAG:IF r IS notag THEN
+ r:=t ELIF s OF t =s OF r THEN r ELIF s OF t<s OF r THEN locaddtag(left OF r,t)
+ELSE locaddtag(right OF r,t)FI;locaddtag(root[HASH s OF tag],tag)END;#:6.2.2.8 
+6.2.2.9:# PROC addmacroid =(REF REF MACRO root,REF TAG tag,BOOL once)REF MACRO:
+IF root IS nomac THEN root:=HEAP MACRO:=(tag,BIN ABS once,nowparam,HEAP REF TEXT
+:=notext,HEAP REF TEXT:=notext,nomac,nomac);textend OF root:=textbeg OF root;
+root ELIF s OF tag =s OF id OF root THEN nomac ELIF s OF tag<s OF id OF root
+ THEN addmacroid(left OF root,tag,once)ELSE addmacroid(right OF root,tag,once)FI
+;#:6.2.2.9 6.2.2.11:# PROC addmacropar =(REF MACRO rm,REF TAG par)BOOL:IF param
+ OF rm IS nowparam THEN param OF rm:=HEAP WPARAM:=(par,nowparam);TRUE ELIF REF
+ REF WPARAM locpar:=param OF rm;WHILE IF locpar ISNT nowparam THEN s OF par/=s
+ OF par OF locpar ELSE FALSE FI DO locpar:=next OF locpar OD;locpar IS nowparam
+ THEN REF REF WPARAM(locpar):=HEAP WPARAM:=(par,nowparam);TRUE ELSE FALSE FI;#:
+6.2.2.11 6.2.2.12:# PROC addmactext =(REF MACRO rmc,TEXT t)VOID:(REF REF TEXT(
+textbeg OF rmc:=:notext|textbeg OF rmc|textend OF rmc):=HEAP TEXT:=t;textend OF
+ rmc:=next OF textend OF rmc);#:6.2.2.12 6.2.2.13:# PROC addmodtext =(REF MODULE
+ rmd,TEXT t)VOID:(REF REF TEXT(textbeg OF rmd:=:notext|textbeg OF rmd|textend OF
+ rmd):=HEAP TEXT:=t;textend OF rmd:=next OF textend OF rmd);#:6.2.2.13 7.2.1.8
+:# PROC searchmacro =(REF REF MACRO root,REF TAG t)REF MACRO:IF root IS nomac
+ THEN nomac ELIF s OF t =s OF id OF root THEN root ELIF s OF t<s OF id OF root
+ THEN searchmacro(left OF root,t)ELSE searchmacro(right OF root,t)FI;#:7.2.1.8 
+8.1.1.2:# PROC putout =(REF STREAM st,[]UNION(CHAR,STRING,INT,[]INT,REF TAG)p)
+VOID:BEGIN PROC emptythebuffer =(REF STREAM st)VOID:(IF CHAR b1 =(b OF st)[1 ];
+b1 = "*"OR b1 = "%"THEN put(f OF st,blank)FI;put(f OF st,((b OF st)[:upb OF st],
+newline));n OF st+:=1 ;upb OF st:=0 );FOR i FROM LWB p TO UPB p DO[]CHAR outs =
+CASE p[i]IN(CHAR ci):ci,(STRING si):IF CHAR sil =si[LWB si];tagoutput&(sil>= "0"
+&sil<= "9"OR sil = ".")THEN tagoutput:=FALSE;blank+si+blank ELIF(sil>= "0"&sil<=
+ "9"OR sil = ".")THEN si+blank ELIF tagoutput:=FALSE;si = "="THEN blank+si ELSE
+ si FI,(INT ni):CASE 2 +SIGN ni IN IF tagoutput THEN blank ELSE tagoutput:=TRUE;
+ ""FI+boldsym[ABS ni],(emptythebuffer(st);tagoutput:=FALSE; ""),(tagoutput:=
+FALSE;whole(ni,0 ))ESAC,([]INT ri):(tagoutput:=FALSE;(ri[1 ]<0 | "I"| "")+whole(
+ABS ri[1 ],0 )+ "."+whole(ri[2 ],0 )+ "."+whole(ri[3 ],0 )+ "."+whole(ri[4 ],0 )
+),(REF TAG ti):(tagoutput|blank|tagoutput:=TRUE; "")+s OF ti ESAC;IF upb OF st+
+UPB outs>80 THEN emptythebuffer(st)FI;(b OF st)[upb OF st+1 :upb OF st+UPB outs]
+:=outs;upb OF st+:=UPB outs OD END;#:8.1.1.2 8.2.1.1:# PROC expandmacro =(REF
+ REF TEXT txt,REF MACRO mc)BOOL:IF REF TEXT newtext:=notext,locmactext:=textbeg
+ OF mc;REF REF TEXT locnewtext:=newtext;param OF mc IS nowparam THEN WHILE IF
+ locmactext IS notext THEN FALSE ELSE NOT(text OF locmactext|(VOID):TRUE|FALSE)
+FI DO REF REF TEXT(locnewtext):=HEAP TEXT:=(text OF locmactext,notext);
+locnewtext:=next OF locnewtext;locmactext:=next OF locmactext OD;REF REF TEXT(
+locnewtext):=next OF txt;txt:=newtext;FALSE ELSE#8.2.1.2:# MODE ACTUAL =STRUCT(
+REF TEXT actual,REF ACTUAL next);REF ACTUAL noactual =NIL;REF ACTUAL actualparam
+:=noactual;#:8.2.1.2 8.2.1.3:# REF REF WPARAM locformalparam:=param OF mc;REF
+ REF ACTUAL locactualparam:=actualparam;WHILE locformalparam ISNT nowparam DO
+ REF REF ACTUAL(locactualparam):=HEAP ACTUAL:=(notext,noactual);locactualparam:=
+next OF locactualparam;locformalparam:=next OF locformalparam OD;#:8.2.1.3 
+8.2.1.4:# IF(text OF next OF txt|(STRING s):s| "")/=STRING( "(")THEN(print(
+newline);consolepos:=0 ;printout(( "! Error: ", "call of macro "+s OF id OF mc+ 
+" not followed by ""("""+ ", macro call ignored"));error(2 ));TRUE ELSE#:8.2.1.4
+ 8.2.1.5:# REF REF TEXT loctext:=next OF next OF txt;#:8.2.1.5 8.2.1.6:# 
+locactualparam:=actualparam;WHILE IF locactualparam IS noactual THEN FALSE ELSE
+ NOT(text OF loctext|(VOID):TRUE|FALSE)FI DO INT level:=0 ;actual OF
+ locactualparam:=loctext;WHILE STRING curtxt =(text OF loctext|(STRING s):s| "")
+;NOT((text OF loctext|(VOID):TRUE|FALSE)OR level =0 AND(curtxt = ")"OR curtxt = 
+","))DO IF curtxt = "("THEN level+:=1 ELIF curtxt = ")"THEN level-:=1 FI;loctext
+:=next OF loctext OD;IF(text OF loctext|(VOID):TRUE|FALSE)THEN(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "unexpected end of text"));error(2 ))ELIF
+(text OF loctext|(STRING s):s| "") =STRING( ")")&(next OF locactualparam ISNT
+ noactual)THEN(printout((EMPTY, 
+"! Fatal error: insufficient parameters in a macro call"));error(2 );close(f OF
+ output);exit(-1 ))ELIF(text OF loctext|(STRING s):s| "") =STRING( ",")&(next OF
+ locactualparam IS noactual)THEN(printout((EMPTY, 
+"! Fatal error: too many parameters in a macro call"));error(2 );close(f OF
+ output);exit(-1 ))ELSE REF REF TEXT tmptext =loctext;loctext:=next OF loctext;
+tmptext:=notext;locactualparam:=next OF locactualparam FI OD;#:8.2.1.6 8.2.1.7
+:# WHILE locmactext ISNT notext DO CASE text OF locmactext IN(REF TAG tag):IF#
+8.2.1.9:# locformalparam:=param OF mc;locactualparam:=actualparam;WHILE IF
+ locformalparam IS nowparam THEN FALSE ELSE tag ISNT par OF locformalparam FI DO
+ locformalparam:=next OF locformalparam;locactualparam:=next OF locactualparam
+ OD;locformalparam IS nowparam#:8.2.1.9# THEN REF REF TEXT(locnewtext):=HEAP
+ TEXT:=(text OF locmactext,notext);locnewtext:=next OF locnewtext ELSE REF REF
+ TEXT locactualparamtext:=actual OF locactualparam;WHILE locactualparamtext ISNT
+ notext DO REF REF TEXT(locnewtext):=HEAP TEXT:=locactualparamtext;locnewtext:=
+next OF locnewtext;locactualparamtext:=next OF locactualparamtext OD FI OUT REF
+ REF TEXT(locnewtext):=HEAP TEXT:=(text OF locmactext,notext);locnewtext:=next
+ OF locnewtext ESAC;locmactext:=next OF locmactext OD;#8.2.1.8:# REF REF TEXT(
+locnewtext):=loctext;txt:=newtext#:8.2.1.8# ;FALSE FI#:8.2.1.7# FI;#:8.2.1.1 
+8.3.1.2:# PROC processmodule =(REF STREAM st,REF MODULE mod,REF[]INT cursec)VOID
+:IF textbeg OF mod:=:notext THEN(print(newline);consolepos:=0 ;printout(( 
+"Module """,id OF mod, """ has no text!",EMPTY));error(1 ))ELSE cursec:=(text OF
+ textbeg OF mod|([]INT n):n|(0 ,0 ,0 ,0 ));putout(st,( "#",cursec, ":# "));REF
+ REF TEXT loctxt:=next OF textbeg OF mod;WHILE loctxt ISNT notext DO
+ debugprinttext( "process module: ",loctxt);IF#8.3.1.3:# CASE text OF loctxt IN(
+INT n):(putout(st,n);TRUE),([]INT r):(putout(st,( "#:",cursec,blank));putout(st,
+(cursec:=r, ":# "));TRUE),(STRING s):((s[LWB s] = """"|putout(st,blank));putout(
+st,s);TRUE),(REF TAG t):(putout(st,t);TRUE),(REF MACRO mc):#8.3.1.4:# IF 32 ELEM
+ flags OF mc THEN IF NOT(31 ELEM flags OF mc)THEN flags OF mc:=flags OF mc OR
+ ELEM 31 ;expandmacro(loctxt,mc)ELSE putout(st, " SKIP");TRUE FI ELSE
+ expandmacro(loctxt,mc)FI#:8.3.1.4# ,(REF MODULE md):(processmodule(st,md,HEAP[
+4 ]INT);TRUE),(VOID):TRUE,(CONTROL c):BEGIN(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unexpected control sequence("+cs OF c+ ") in module """
++id OF mod+ """"));error(2 ));TRUE END ESAC#:8.3.1.3# THEN loctxt:=next OF
+ loctxt FI OD;putout(st,( "#:",cursec, "# "))FI;#:8.3.1.2# #5.1.1.3:# PROC
+ addfiletotree =(REF REF INCLUDED tr,STRING fn)VOID:IF tr IS noinc THEN tr:=HEAP
+ INCLUDED:=(fn,noinc,noinc)ELIF fn<s OF tr THEN addfiletotree(left OF tr,fn)ELIF
+ fn>s OF tr THEN addfiletotree(right OF tr,fn)ELSE(print(newline);consolepos:=0 
+;printout( "file "+fn+ " has already been read");error(1 ))FI;#:5.1.1.3 5.1.1.4
+:# PROC addincludefile =(REF REF STREAM web,STRING incfn)BOOL:IF HEAP FILE incf;
+open(incf,incfn,standinchannel) =0 THEN filenumber+:=1 ;#5.1.1.5:# web:=HEAP
+ STREAM:=(incf,FALSE,filenumber,0 ,0 ,0 ,(filenumber,0 ,0 ,0 ),256 *blank,web);
+#:5.1.1.5# addfiletotree(inctree,incfn);TRUE ELSE#5.1.1.7:# FILE pf;STRING path;
+open(pf,MAKERVC includepaths,memchannel);maketerm(pf, ":");onlogicalfileend(pf,(
+REF FILE f)BOOL:(close(f);GOTO eof;SKIP));DO get(pf,(skipterminators,path));IF
+ path[UPB path]/= "/"THEN path+:= "/"FI;IF open(incf,path+incfn,standinchannel)
+ =0 THEN filenumber+:=1 ;#5.1.1.5:# web:=HEAP STREAM:=(incf,FALSE,filenumber,0 ,
+0 ,0 ,(filenumber,0 ,0 ,0 ),256 *blank,web);#:5.1.1.5# close(pf);addfiletotree(
+inctree,incfn);GOTO found ELSE debugprintstring( "looking for include file ",
+path+incfn)FI OD;eof:FALSE EXIT found:TRUE#:5.1.1.7# FI;#:5.1.1.4 7.1.1.1:# PROC
+ inputln =(REF STREAM inp)BOOL:BEGIN CHAR ch;upb OF inp:=0 ;loc OF inp:=0 ;
+onlogicalfileend(f OF inp,(REF FILE f)BOOL:(ended OF inp:=TRUE;GOTO lab1;SKIP));
+WHILE getbin(f OF inp,ch);ch/=lf DO(b OF inp)[upb OF inp+:=1 ]:=ch OD;IF upb OF
+ inp>0 THEN[]CHAR trimmedb =(TRIM(b OF inp)[:upb OF inp])[@1 ];upb OF inp:=UPB
+ trimmedb;(b OF inp)[:upb OF inp]:=trimmedb FI;n OF inp+:=1 ;TRUE EXIT lab1:
+FALSE END;#:7.1.1.1 7.1.1.5:# PROC nextchar =CHAR:IF ended OF web THEN#5.1.1.12
+:# IF next OF web ISNT nostream THEN close(f OF web);web:=next OF web FI#:
+5.1.1.12# ;blank ELIF loc OF web<upb OF web THEN(b OF web)[loc OF web+:=1 ]ELSE
+ WHILE inputln(web)&upb OF web =0 DO SKIP OD;IF ended OF web THEN#5.1.1.12:# IF
+ next OF web ISNT nostream THEN close(f OF web);web:=next OF web FI#:5.1.1.12# 
+FI;blank FI;#:7.1.1.5 7.1.1.7:# PROC gathertochar =(REF STRING s,CHAR c)VOID:IF
+ CHAR ch;WHILE ch:=nextchar;NOT ended OF web&ch/=c DO s+:=ch OD;ended OF web
+ THEN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"input ended while gathering to "+c));error(2 ))ELSE s+:=ch FI;#:7.1.1.7 7.1.1.8
+:# PROC skiptochar =(CHAR c)VOID:BEGIN CHAR ch;WHILE ch:=nextchar;NOT ended OF
+ web&ch/=c DO SKIP OD;IF ended OF web THEN(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "input ended while skipping to "+c));error(2 ))FI END;#:
+7.1.1.8 7.1.1.9:# PROC skiptobang =BOOL:BEGIN CHAR ch;WHILE WHILE ch:=nextchar;
+NOT ended OF web&ch/= "!"&ch/= "@"DO SKIP OD;IF ended OF web OR ch = "!"THEN
+ FALSE ELIF(ch:=nextchar)/= "@"THEN(print(newline);consolepos:=0 ;printout(( 
+"! Error: ", "control sequence inside !...!"));error(2 ));(loc OF web>=LWB b OF
+ web|loc OF web-:=1 );(loc OF web>=LWB b OF web|loc OF web-:=1 );GOTO err ELSE
+ TRUE FI DO SKIP OD;TRUE EXIT err:FALSE END;#:7.1.1.9 7.1.1.10:# PROC skiptocs =
+([]CHAR cset)VOID:WHILE IF ended OF web THEN FALSE ELSE CHAR ch:=nextchar;CASE
+ ch FIND """!{%@"IN(skiptochar(ch);TRUE),skiptobang,(#7.1.1.12:# INT bal:=1 ;
+WHILE ch:=nextchar;NOT(ch = "}"&bal =1 )DO IF ch = "{"THEN bal+:=1 ELIF ch = "}"
+THEN bal-:=1 FI OD#:7.1.1.12# ;TRUE),(loc OF web:=upb OF web;TRUE),NOT
+ charinstring(UC nextchar,LOC INT,cset)OUT TRUE ESAC FI DO SKIP OD;#:7.1.1.10 
+7.1.1.13:# PROC gettok =TOKEN:BEGIN TOKEN t;STRING s;BOOL valid:=TRUE;WHILE CHAR
+ ch:=nextchar;IF ended OF web THEN t:=EMPTY;FALSE ELIF ch =blank OR ch =tabch
+ THEN TRUE ELIF(ch>= "A"&ch<= "Z")THEN#7.1.1.14:# s:=ch;WHILE IF loc OF web =upb
+ OF web THEN FALSE ELSE valid:=(ch:=nextchar)CHOP boldrange>=LWB boldrange FI DO
+ s+:=ch OD;IF NOT valid THEN(loc OF web>=LWB b OF web|loc OF web-:=1 )FI;#:
+7.1.1.14 7.1.1.15:# IF INT bs =LOOKUP s;bs =0 THEN t:=HEAP TAG:=(s,notag,notag);
+FALSE ELIF bs/=192 &bs/=127 THEN t:=-bs;FALSE ELIF incomment/=0 THEN t:=-bs;
+FALSE ELIF#7.1.1.16:# incomment:=-bs;WHILE CASE gettok IN(INT n):n/=incomment,(
+VOID):FALSE OUT TRUE ESAC DO SKIP OD;incomment:=0 ;#:7.1.1.16# ended OF web THEN
+(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"input ended while searching for "+(incomment =127 | "COMMENT"| "CO")));error(2 
+));t:=EMPTY;FALSE ELSE TRUE FI#:7.1.1.15# ELIF(ch>= "a"&ch<= "z"OR ch = "_")THEN
+#7.1.1.19:# s:=ch;WHILE IF ended OF web THEN FALSE ELSE valid:=(ch:=nextchar)
+CHOP idrange>=LWB idrange FI DO s+:=ch OD;IF NOT valid THEN(loc OF web>=LWB b OF
+ web|loc OF web-:=1 )FI;t:=HEAP TAG:=(COMPACT s,notag,notag);FALSE#:7.1.1.19# 
+ELIF(ch>= "0"&ch<= "9"OR ch = ".")THEN#7.1.1.20:# s:=ch;WHILE IF ch:=nextchar;
+ended OF web THEN FALSE ELSE ch>= "0"&ch<= "9"OR ch CHOP " .abcdefr">0 FI DO s
++:=ch OD;(loc OF web>=LWB b OF web|loc OF web-:=1 );t:=COMPACT STRING(s);FALSE#:
+7.1.1.20# ELIF ch = "@"THEN#7.1.1.21:# t:=IF ch:=nextchar;ended OF web THEN
+ EMPTY ELSE HEAP CONTROL h;cs OF h:=ch;h FI;FALSE#:7.1.1.21# ELSE#7.1.1.22:# IF
+ ch = """"THEN#7.1.1.23:# s:=ch;WHILE gathertochar(s,ch);(ch:=nextchar) = """"DO
+ s+:=ch OD;(loc OF web>=LWB b OF web|loc OF web-:=1 );#7.1.1.24:# INT nat:=0 ;
+BOOL err:=FALSE;FOR i FROM LWB s TO UPB s DO nat+:=ABS(s[i] = "@")OD;IF ODD nat
+ THEN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"odd number of @-symbols in a string"));error(2 ))ELIF nat>0 THEN[LWB s:UPB s-
+nat%2 ]CHAR ss;INT pss:=LWB ss-1 ;BOOL atread:=FALSE;FOR i FROM LWB s TO UPB s
+ WHILE NOT err DO CHAR si =s[i];IF si = "@"THEN IF atread THEN ss[pss+:=1 ]:=si;
+atread:=FALSE ELSE atread:=TRUE FI ELIF atread THEN(print(newline);consolepos:=
+0 ;printout(( "! Error: ", "single @-symbol in a string"));error(2 ));atread:=
+FALSE;err:=TRUE ELSE ss[pss+:=1 ]:=si FI OD;s:=(err| ""|ss)FI;(err|TRUE|t:=s;
+FALSE)#:7.1.1.24# #:7.1.1.23# ELIF ch = "#"THEN skiptochar(ch);TRUE ELIF ch CHOP
+ "$(),;=?[\]{|}">0 THEN t:=STRING(ch);FALSE ELIF ch = ":"THEN s:=ch;WHILE
+ charinstring(ch:=nextchar,LOC INT, "%&*+-/:<=>^")DO s+:=ch OD;(loc OF web>=LWB
+ b OF web|loc OF web-:=1 );t:=s;FALSE ELIF ch CHOP "%&*+-/:<=>^" =0 THEN t:=
+STRING(ch);FALSE ELSE WHILE s+:=ch;ch:=nextchar;ch CHOP "%&*+-/:<=>^">0 DO SKIP
+ OD;(loc OF web>=LWB b OF web|loc OF web-:=1 );t:=STRING(s);FALSE FI#:7.1.1.22# 
+FI DO SKIP OD;debugprinttoken( "(l."+whole(n OF web,0 )+ ",c."+whole(loc OF web,
+0 )+ ") get tok: ",t);t END;#:7.1.1.13 7.2.1.2:# PROC gathertocs =(CHAR c)STRING
+:BEGIN STRING s;CHAR ch;BOOL sp:=FALSE;WHILE IF ch:=nextchar;ended OF web THEN(
+print(newline);consolepos:=0 ;printout(( "! Error: ", "EOF while gathering to @"
++c));error(2 ));FALSE ELIF ch = "@"THEN IF(ch:=nextchar) =c THEN FALSE ELSE s+:=
+ "@"+ch;TRUE FI ELIF ch =blank OR ch =tabch THEN IF NOT sp THEN s+:=ch;sp:=TRUE
+ ELSE TRUE FI ELSE s+:=ch;NOT(sp:=FALSE)FI DO SKIP OD;s END;#:7.2.1.2# #:1.1.1.2
+ 5.2.1.3:# #5.2.1.4:# IF FILE hf;open(hf, "HOME",envchannel)/=0 THEN simpleerror
+( "HOME undefined",5 )ELSE get(hf,homedir);close(hf)FI;#:5.2.1.4# #5.2.1.6:# IF
+ open(argf, "",argchannel)/=0 THEN simpleerror( 
+"program's arguments inaccessible",5 )ELSE onlogicalfileend(argf,(REF FILE f)
+BOOL:(close(f);usage;TRUE))FI;#:5.2.1.6# #5.2.1.7:# CASE getparam(argf)IN(REF
+ PARAM rp):IF IF rp IS noparam THEN TRUE ELSE UPB val OF rp =0 FI THEN usage
+ ELSE#5.2.1.8:# FOR i FROM LWB val OF rp TO UPB val OF rp DO CASE(val OF rp)[i]
+IN(REF PARAM rp1):IF IF rp1 IS noparam THEN TRUE ELSE prog OF rp1 = ""FI THEN
+ simpleerror( "missing parameter",5 )ELIF INT p;charinstring((prog OF rp1)[LWB
+ prog OF rp1],p, "dfhvw")THEN CASE p IN debug:=TRUE,#5.2.1.11:# IF UPB val OF
+ rp1/=1 THEN simpleerror( "wrong number of filenames",5 )ELSE CASE(val OF rp1)[
+LWB val OF rp1]IN(REF PARAM rp2):IF IF rp2 IS noparam THEN TRUE ELSE prog OF rp2
+ = ""FI THEN simpleerror( "missing filename",5 )ELSE tangfn:=prog OF rp2 FI,(
+STRING fn):tangfn:=fn OUT simpleerror( "unknown parameter format",5 )ESAC FI#:
+5.2.1.11# ,usage,(INT vpos = "v"FIND cvstang;put(standerror,( 
+"This is tang, version ",(cvstang[vpos+2 :])UPTO blank, 
+" (C) BP64,65,66,67 Phoenix Engineering",newline));exit(1 )),#5.2.1.13:# IF UPB
+ val OF rp1 =0 THEN simpleerror( "missing path",5 )ELSE FOR j FROM LWB val OF
+ rp1 TO UPB val OF rp1 DO CASE(val OF rp1)[j]IN(REF PARAM rp2):IF IF rp2 IS
+ noparam THEN TRUE ELSE prog OF rp2 = ""FI THEN simpleerror( "missing path",5 )
+ELSE STRING path:=prog OF rp2;#5.2.1.14:# WHILE INT pos;charinstring( "~",pos,
+path)DO path:=path[:pos-1 ]+homedir+path[pos+1 :]OD#:5.2.1.14# ;#5.2.1.15:# (
+path+ ":")PLUSTO includepaths#:5.2.1.15# FI,(STRING dir):BEGIN STRING path;#
+5.2.1.14:# WHILE INT pos;charinstring( "~",pos,path)DO path:=path[:pos-1 ]+
+homedir+path[pos+1 :]OD#:5.2.1.14# ;#5.2.1.15:# (path+ ":")PLUSTO includepaths#:
+5.2.1.15# END OUT simpleerror( "unknown parameter format",5 )ESAC OD FI#:
+5.2.1.13# ESAC ELSE simpleerror( "unknown parameter",5 )FI,(STRING s):IF s = ""
+THEN simpleerror( "missing filename",5 )ELSE tangfn:=s FI OUT simpleerror( 
+"unknown parameter format",5 )ESAC OD#:5.2.1.8# FI OUT simpleerror( 
+"unknown parameter format",5 )ESAC;#:5.2.1.7# #:5.2.1.3 5.3.1.2:# IF IF UPB
+ tangfn>=5 THEN IF tangfn[UPB tangfn-UPB webext+1 :]/=webext THEN tangfn+:=
+webext FI ELSE tangfn+:=webext FI;open(f OF web,tangfn,standinchannel)/=0 THEN
+ simpleerror( "cannot open web 68 file "+tangfn,2 )FI;#:5.3.1.2 5.3.1.3:# arg:=(
+tangfn UPTO ".")+outext;IF establish(f OF output,arg,standoutchannel,0 ,0 ,0 )/=
+0 THEN simpleerror( "cannot establish the output file "+arg,3 )ELSE
+ onphysicalfileend(f OF output,(REF FILE f)BOOL:((print(newline);consolepos:=0 ;
+printout(( "! Error: ", "output medium full"));error(2 ));exit(-1 );TRUE));n OF
+ output:=1 ;loc OF output:=0 FI;#:5.3.1.3 5.3.1.5:# IF debug THEN startmonitor( 
+"tang.dbg");debugprinttoken:=monitorprinttoken;debugprinttext:=monitorprinttext;
+debugprintstring:=monitorprintstring FI;#:5.3.1.5 6.1.1.2:# #6.1.1.3:# WHILE
+ skiptocs( "=\ *123");(loc OF web>=LWB b OF web|loc OF web-:=1 );CHAR ch =
+nextchar;NOT charinstring(ch,LOC INT, " *123")DO IF ch = "\"THEN putout(output,
+0 )ELIF STRING s;gathertochar(s, "@");nextchar/= ">"THEN(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "no control sequences allowed in @=...@>"
+));error(2 ))ELSE putout(output,s[:UPB s-1 ])FI OD;(NOT ended OF web|TO 2 DO(loc
+ OF web>=LWB b OF web|loc OF web-:=1 )OD)#:6.1.1.3# ;curmood:=1 ;(NOT ended OF
+ web|TO 2 DO(loc OF web>=LWB b OF web|loc OF web-:=1 )OD);DO IF curmood =1 THEN
+ skiptocs( " 123<ADFIM");(NOT ended OF web|TO 2 DO(loc OF web>=LWB b OF web|loc
+ OF web-:=1 )OD)FI;HEAP TOKEN curtok:=gettok;#7.2.1.3:# CASE curtok IN(INT bs):#
+7.2.1.4:# CASE curmood IN SKIP,BEGIN(print(newline);consolepos:=0 ;printout(( 
+"! Error: ", "a macro identifier cannot be a recognised bold tag"));error(2 ));
+curmood:=1 END,BEGIN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"a macro formal parameter must be an identifier"));error(2 ));curmood:=1 END,
+addmactext(curmac,TEXT(curtok,notext)),addmodtext(curmod,TEXT(curtok,notext))
+ESAC#:7.2.1.4# ,(CONTROL co):#7.3.1.2:# CASE UC cs OF co MULTICASE[]STRING( 
+"!#&+,-/;?{|}", ".:H^",tabch+blank, "=")IN SKIP,skiptocs( ">"),(inccursec(4 );
+curmood:=1 ),IF curmood =4 THEN addmactext(curmac,TEXT(gathertocs( ">"),notext))
+ELIF curmood =5 THEN addmodtext(curmod,TEXT(gathertocs( ">"),notext))ELSE(print(
+newline);consolepos:=0 ;printout(( "! Error: ", "@= not in macro/module body"));
+error(2 ));skiptocs( ">")FI OUSE UC cs OF co CHOP "123<@ADFIM\"IN#7.3.1.3:# IF
+ next OF web ISNT nostream THEN(print(newline);consolepos:=0 ;printout(( 
+"! Error: ", "level-1 sections are disallowed in included files"));error(2 ))
+ELSE inccursec(1 );printcursec;curmood:=1 FI,(inccursec(2 );printcursec;curmood
+:=1 ),(inccursec(3 );printcursec;curmood:=1 ),#7.3.1.5:# CASE STRING mtag:=TRIM
+ gathertocs( ">");CHAR ch =nextchar;curmood IN IF ch = "="THEN#7.3.1.6:# IF UPB
+ mtag>3 THEN IF mtag[UPB mtag-2 :] = "..."THEN IF REF MODULE rm =addmoduletag(
+moduleroot,mtag[:UPB mtag-3 ],NOT TRUE,TRUE);rm IS nomod THEN(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "unknown or duplicate module prefix"));
+error(2 ))ELSE curmood:=5 ;addmodtext(curmod:=rm,maketext((sec OF web)))FI ELSE#
+7.3.1.7:# curmood:=5 ;addmodtext(curmod:=addmoduletag(moduleroot,mtag,TRUE,NOT
+ TRUE),maketext((sec OF web)))#:7.3.1.7# FI ELSE#7.3.1.7:# curmood:=5 ;
+addmodtext(curmod:=addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),maketext((sec OF
+ web)))#:7.3.1.7# FI#:7.3.1.6# ELSE(loc OF web>=LWB b OF web|loc OF web-:=1 )FI,
+(IF ch/= "="THEN(loc OF web>=LWB b OF web|loc OF web-:=1 )FI;(print(newline);
+consolepos:=0 ;printout(( "! Error: ", 
+"unexpected module tag after a macro identifier"));error(2 ))),(IF ch/= "="THEN(
+loc OF web>=LWB b OF web|loc OF web-:=1 )FI;(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unexpected module tag in a macro header"));error(2 ))),
+IF ch = "="THEN#7.3.1.6:# IF UPB mtag>3 THEN IF mtag[UPB mtag-2 :] = "..."THEN
+ IF REF MODULE rm =addmoduletag(moduleroot,mtag[:UPB mtag-3 ],NOT TRUE,TRUE);rm
+ IS nomod THEN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"unknown or duplicate module prefix"));error(2 ))ELSE curmood:=5 ;addmodtext(
+curmod:=rm,maketext((sec OF web)))FI ELSE#7.3.1.7:# curmood:=5 ;addmodtext(
+curmod:=addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),maketext((sec OF web)))#:
+7.3.1.7# FI ELSE#7.3.1.7:# curmood:=5 ;addmodtext(curmod:=addmoduletag(
+moduleroot,mtag,TRUE,NOT TRUE),maketext((sec OF web)))#:7.3.1.7# FI#:7.3.1.6# 
+ELIF(loc OF web>=LWB b OF web|loc OF web-:=1 );#7.3.1.8:# UPB mtag>3 THEN IF
+ mtag[UPB mtag-2 :] = "..."THEN IF REF MODULE rm =addmoduletag(moduleroot,mtag[:
+UPB mtag-3 ],NOT TRUE,TRUE);rm IS nomod THEN(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unknown or duplicate module prefix"));error(2 ))ELSE
+ addmodtext(curmod,TEXT(rm,notext))FI ELIF#7.3.1.9:# curmood =5 THEN addmodtext(
+curmod,TEXT(addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),notext))ELIF curmood =4 
+THEN addmactext(curmac,TEXT(addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),notext))
+ELSE(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"module tag occurs in mood "+whole(curmood,0 )));error(2 ))#:7.3.1.9# FI ELIF#
+7.3.1.9:# curmood =5 THEN addmodtext(curmod,TEXT(addmoduletag(moduleroot,mtag,
+TRUE,NOT TRUE),notext))ELIF curmood =4 THEN addmactext(curmac,TEXT(addmoduletag(
+moduleroot,mtag,TRUE,NOT TRUE),notext))ELSE(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "module tag occurs in mood "+whole(curmood,0 )));error(
+2 ))#:7.3.1.9# #:7.3.1.8# FI,IF ch = "="THEN(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unexpected module tag in a module body"));error(2 ))
+ELIF(loc OF web>=LWB b OF web|loc OF web-:=1 );#7.3.1.8:# UPB mtag>3 THEN IF
+ mtag[UPB mtag-2 :] = "..."THEN IF REF MODULE rm =addmoduletag(moduleroot,mtag[:
+UPB mtag-3 ],NOT TRUE,TRUE);rm IS nomod THEN(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unknown or duplicate module prefix"));error(2 ))ELSE
+ addmodtext(curmod,TEXT(rm,notext))FI ELIF#7.3.1.9:# curmood =5 THEN addmodtext(
+curmod,TEXT(addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),notext))ELIF curmood =4 
+THEN addmactext(curmac,TEXT(addmoduletag(moduleroot,mtag,TRUE,NOT TRUE),notext))
+ELSE(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"module tag occurs in mood "+whole(curmood,0 )));error(2 ))#:7.3.1.9# FI ELIF#
+7.3.1.9:# curmood =5 THEN addmodtext(curmod,TEXT(addmoduletag(moduleroot,mtag,
+TRUE,NOT TRUE),notext))ELIF curmood =4 THEN addmactext(curmac,TEXT(addmoduletag(
+moduleroot,mtag,TRUE,NOT TRUE),notext))ELSE(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "module tag occurs in mood "+whole(curmood,0 )));error(
+2 ))#:7.3.1.9# #:7.3.1.8# FI ESAC#:7.3.1.5# ,#7.3.1.4:# IF curmood =4 THEN
+ addmactext(curmac,TEXT(STRING( "@"),notext))ELIF curmood =5 THEN addmodtext(
+curmod,TEXT(STRING( "@"),notext))FI#:7.3.1.4# ,BEGIN curmod:=unnamedmodule;
+curmood:=5 ;addmodtext(curmod,maketext((sec OF web)))END,BEGIN curmac:=nomac;
+oneoffmacro:=TRUE;curmood:=2 END,IF curmood/=1 &curmood/=4 THEN(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "unexpected control sequence"));error(2 )
+);curmood:=1 ELSE curmac:=nomac;curmood:=1 FI,#7.3.1.10:# IF STRING incfn =
+gathertocs( ">");scanincludedtree(inctree,incfn)THEN(print(newline);consolepos:=
+0 ;printout( "! Warning: included file "+incfn+ " already included");error(1 ))
+ELIF NOT addincludefile(web,incfn)THEN(print(newline);consolepos:=0 ;printout(( 
+"! Error: ", "cannot find the included file "+incfn));error(2 ))FI#:7.3.1.10# ,
+BEGIN curmac:=nomac;oneoffmacro:=FALSE;curmood:=2 END,IF curmood =4 THEN
+ addmactext(curmac,TEXT(0 ,notext))ELIF curmood =5 THEN addmodtext(curmod,TEXT(
+0 ,notext))FI#:7.3.1.3# OUT(print(newline);consolepos:=0 ;printout(( "! Error: "
+, "unknown control sequence"));error(2 ));curmood:=1 ESAC#:7.3.1.2# ,(STRING s):
+#7.2.1.5:# CASE curmood IN SKIP,IF s = "("THEN#7.2.1.6:# IF IF curmac IS nomac
+ THEN TRUE ELIF param OF curmac ISNT nowparam THEN TRUE ELSE curmood:=3 ;FALSE
+ FI THEN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"macro id. delimiter unexpected"));error(2 ));curmood:=1 FI#:7.2.1.6# ELIF s = 
+"="THEN#7.2.1.7:# IF curmac IS nomac THEN(print(newline);consolepos:=0 ;printout
+(( "! Error: ", "missing macro id"));error(2 ));curmood:=1 ELSE curmood:=4 FI#:
+7.2.1.7# ELSE(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"unexpected string in macro id"));error(2 ));curmood:=1 FI,IF s = ","OR s = ")"
+THEN SKIP ELIF s = "="THEN curmood:=4 ELSE(print(newline);consolepos:=0 ;
+printout(( "! Error: ", "unexpected string in macro header"));error(2 ));curmood
+:=1 FI,addmactext(curmac,TEXT(curtok,notext)),addmodtext(curmod,TEXT(curtok,
+notext))ESAC#:7.2.1.5# ,(REF TAG tag):#7.2.1.9:# CASE curmood IN SKIP,IF curmac
+ IS nomac THEN IF(curmac:=addmacroid(macroroot,addtag(tagroot,tag),oneoffmacro))
+IS nomac THEN(print(newline);consolepos:=0 ;printout(( "! Error: ", 
+"macro id. already defined"));error(2 ));curmood:=1 FI ELSE(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "macro id. already read"));error(2 ));
+curmood:=1 FI,IF NOT addmacropar(curmac,addtag(tagroot,tag))THEN(print(newline);
+consolepos:=0 ;printout(( "! Error: ", "duplicate macro formal parameter"));
+error(2 ));curmood:=1 FI,BEGIN REF TAG storedtag =addtag(tagroot,tag);REF MACRO
+ rm =searchmacro(macroroot,storedtag);addmactext(curmac,TEXT((rm:=:nomac|
+storedtag|rm),notext))END,BEGIN REF TAG storedtag =addtag(tagroot,tag);REF MACRO
+ rm =searchmacro(macroroot,storedtag);addmodtext(curmod,TEXT((rm:=:nomac|
+storedtag|rm),notext))END ESAC#:7.2.1.9# OUT addmodtext(unnamedmodule,TEXT(
+curtok,notext));#6.1.1.4:# IF history>1 THEN print((newline, 
+"! Did we find something wrong?",newline));#8.1.1.3:# IF upb OF output>0 THEN
+ put(f OF output,((b OF output)[:upb OF output],newline))FI;close(f OF output)#:
+8.1.1.3# ;exit(5 )ELSE print(newline)FI;phaseone:=FALSE;#8.3.1.1:# processmodule
+(output,unnamedmodule,HEAP[4 ]INT)#:8.3.1.1# ;#8.1.1.3:# IF upb OF output>0 THEN
+ put(f OF output,((b OF output)[:upb OF output],newline))FI;close(f OF output)#:
+8.1.1.3# ;exit(0 )#:6.1.1.4# ESAC#:7.2.1.3# OD END#1.1.1.4:# FINISH#:1.1.1.4# #:
+6.1.1.2# 

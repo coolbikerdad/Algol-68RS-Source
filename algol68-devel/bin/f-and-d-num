@@ -1,0 +1,9 @@
+#!/bin/sh
+
+case $# in
+	0) cat $I/*.list | sort | uniq | wc -l;;
+	*) echo "Prints the total number of files and directories installed via Debian"
+	   ;;
+esac
+
+exit 0

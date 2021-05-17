@@ -1,0 +1,545 @@
+% This program is copyright (c) BP66 Phoenix Engineering
+@1Introduction.
+This program will perform regular expression search and replace on a
+complete file without regard for line feed characters unless specified in
+regular expressions.
+
+@m cvs fed = "$Id: fed.w68,v 1.5 2004/11/26 22:40:59 sian Exp $"
+
+@a@<Prelude@>
+BEGIN
+@<Included declarations@>
+@<Modes in the outer reach@>
+@<!NIL!s in the outer reach@>
+@<Names in the outer reach@>
+@<Plain values in the outer reach@>
+@<Procedures in the outer reach@>
+@<Logic in the outer reach@>
+END
+@<Postlude@>
+
+@ The local compiler requires a special prelude.@^system dependencies@>
+
+@<Prel...@>=
+PROGRAM fed CONTEXT VOID
+USE @<Library preludes@>
+
+@ And a special postlude.@^system dependencies@>
+
+@<Post...@>=
+FINISH
+
+@ We shall require the \.{params} prelude as well as the standard prelude.
+
+@<Lib...@>=
+params, standard
+
+@ We shall also need the regex and system include files.
+
+@iregex.w@>
+@isysprelude.w@>
+
+@1Parameter processing.
+The program will accept the following parameters:-
+\begin{description}
+\item[\texttt{f(filename sequence)}] Specifies the input file(s).
+\item[\texttt{e(extension)}] Specifies what should be added to the input
+filename to get the output filename. Default is \.{.fed}.
+\item[\texttt{i(int,"char",...)}] Initialiser for !rx init!. Even
+parameters are either a character denotation or an integer which is taken
+to be the absolute value of such a character. If a string denotation is
+given, only the first character is used.
+\item[\texttt{r("s1","s2",...)}] Specifies regular expression search
+strings and replacement strings. Odd parameters are the search strings and
+even parameters are the replacement strings.
+\item[h] Give brief help.
+\item[H] Give greater help.
+\item[v] Give the version of the program.
+\end{description}
+Firstly, we must open the !arg channel! so that we can read the parameters.
+
+@<Logic...@>=
+open(argf,"",arg channel);
+
+@ @<Names...@>=
+FILE @!argf;
+
+@ Now we can read the parameters which can occur in any order.
+
+@<Logic...@>=
+CASE get param(argf)
+IN
+	(REF PARAM @!rp1):
+		IF rp1 IS no param
+		THEN usage(1)
+		ELSE @<Check and scan the parameters@>
+		FI
+OUT usage(1)
+ESAC;
+
+@ The procedure !usage! gives a brief help message, then terminates the
+program.
+
+@<Proced...@>=
+PROC usage = (INT n)VOID:
+BEGIN
+	IF n/=0
+	THEN put(stand error,(error messages[n],newline,newline))
+	FI;
+	put(stand error,
+	  ("Usage: fed(h|H|v|e(ext),f(file,...),i(ind,val,...),r(""s1"",""s2"",...))",
+		  newline,
+		  "   where ind is an INT index of a metacharacter",newline,
+        "         val is an INT or a CHAR denotation",newline,
+		  "         ext is the extension for the output file",newline,
+		  "         s1,s3... are search strings",newline,
+		  "         s2,s4... are replacement strings",newline,
+		  newline));
+	stop
+END; #usage#
+
+@ Here are all the error messages.
+
+@<Plain...@>=
+[]STRING @!error messages = (
+	"No parameters given",
+	"No arguments specified",
+	"Only single character parameters: e, f, h, H, i, r, v",
+	"Unknown parameter",
+	"Wrong kind of parameter",
+	"No filenames given",
+	"Null filename given",
+	"Wrong number of parameters for rx init given",
+	"Wrong type of parameter for rx init",
+	"Wrong number of parameters for strings given",
+	"Wrong type of parameter for strings",
+	"Wrong number of parameters for the output extension",
+	"Null extension given",
+	"Wrong type of parameter for the output extension");
+
+@ The procedure !help! gives a more thoroughgoing message.
+
+@<Proced...@>=
+PROC help = VOID:
+BEGIN
+	PROC(REF FILE)VOID nl = newline;
+   put(stand error,
+   	 ("fed:  file editor",nl,nl,
+        "The program edits a file as a file rather than line by line.",nl,
+        "so newlines can be removed or inserted.",nl,nl,
+        "Parameters:",nl,
+        " h:        give a brief usage message.",nl,
+        " H:        give this message.",nl,
+        " v:        display the version.",nl,
+        " e(ext)    specify the characters to be added to each input",nl,
+        "           filename to get the corresponding output filename",nl,
+        "           (default is .fed)",nl,
+        " f(file1,file2,...):",nl,
+        "           specify the input filenames.",nl,
+        " i(ind1,val1,ind2,val2,...):",nl,
+        "           specify index and value pairs for `rx init'.",nl,
+        "           Ind Meaning       Value",nl,
+        @<List the metacharacter indices@>,
+        " r(srch1,repl1,srch2,repl2,...):",nl,
+        "           specify search and replacement strings as",nl,
+        "           regular expressions.",nl,nl));
+   stop
+END;
+
+@ The metacharacter indices range from 1 to 27.
+
+@<List the meta...@>=
+"           1   meta escape   \",nl,
+"           2   meta bol      ^",nl,
+"           3   meta eol      $",nl,
+"           4   meta bow      <",nl,
+"           5   meta eow      >",nl,
+"           6   meta any      .",nl,
+"           7   meta 0 or 1   ?",nl,
+"           8   meta n 0 p    @@",nl,
+"           9   meta x 0 p    *",nl,
+"          10   meta n 1 p    #",nl,
+"          11   meta x 1 p    +",nl,
+"          12   meta choice   |",nl,
+"          13   meta boset    [",nl,
+"          14   meta eoset    ]",nl,
+"          15   meta compl    ~",nl,
+"          16   meta range    :",nl,
+"          17   meta bog      {",nl,
+"          18   meta eog      }",nl,
+"          19   meta bosub    (",nl,
+"          20   meta eosub    )",nl,
+"          21   meta dig      d",nl,
+"          22   meta no dig   D",nl,
+"          23   meta ws       s",nl,
+"          24   meta no ws    S",nl,
+"          25   meta word     w",nl,
+"          26   meta no word  W",nl,
+"          27   meta hex      x",nl
+
+@2Parameter modes.
+Each of the parameters, except \.{h} and \.{v}, can have multiple
+arguments, so we store them on linked lists.
+
+@<Modes...@>=
+MODE
+	FILENAME = STRUCT(REF FILE inf,INT sz,STRING fn,REF FILENAME next),
+	INIT = STRUCT(STRUCT(INT ind,CHAR val)pair,REF INIT next),
+	REP = STRUCT(REF REGEX sx,STRING rp,REF REP next);
+
+@ We shall need !NIL!s for each list.
+
+@<!NIL!s...@>=
+REF FILENAME no fn = NIL;
+REF INIT no init = NIL;
+REF REP no rep = NIL;
+
+@ Now we can declare the heads and tails of each list, the tail referring
+to its corresponding head.
+
+@<Names...@>=
+REF REF FILENAME hd fn:=HEAP REF FILENAME:=no fn;
+REF REF INIT hd init:=HEAP REF INIT:=no init;
+REF REF REP hd rep:=HEAP REF REP:=no rep;
+REF REF FILENAME tl fn:=hd fn;
+REF REF INIT tl init:=hd init;
+REF REF REP tl rep:=hd rep;
+
+@2Parameter adding routines.
+We shall need routines which will add a parameter, or pair of parameters,
+to a linked list. the first one is for filenames. We stat the file to get
+its size, but do not open it because we might exceed the system limit for
+open files. The macro encapsulates error messages.
+
+@m err(msg) = (put(stand error,("fed: ",msg,newline));  stop)
+
+@<Proced...@>=
+PROC add filename = (REF REF REF FILENAME @!h,@!t,STRING @!fn)VOID:
+IF HEAP FILENAME hf:=(HEAP FILE,0,fn,no fn);
+	REF STAT rs=stat(fn);
+	rs IS no stat
+THEN err("cannot stat file "+fn)
+ELIF NOT is nor(rs)
+THEN err("file "+fn+" is not a normal file")
+ELSE sz OF hf:=st size OF rs;
+   REF REF FILENAME(h:=:no fn|h|t):=hf;
+   t:=next OF t
+FI; #add filename#
+
+@ We shall need some included values.
+
+@<Include...@>=
+macro stat;
+macro is nor;
+macro no stat;
+
+@ This one is for !rx init! parameters.
+
+@<Proced...@>=
+PROC add init = (REF REF REF INIT @!h,@!t,INT ind,CHAR val)VOID:
+BEGIN
+   REF REF INIT(h:=:no init|h|t):=HEAP INIT:=((ind,val),no init);
+   t:=next OF t
+END; #add init#
+
+@ Finally, one for search and replace strings. We compile the search string
+at this stage into a regular expression.
+
+@<Proced...@>=
+PROC add rep = (REF REF REF REP @!h,@!t,STRING @!s,@!r)VOID:
+IF HEAP REP hr:=(rx compile(s),r,no rep);
+	sx OF hr IS no regex
+THEN err("search string |"+s+"| is not a valid regular expression")
+ELSE
+	REF REF REP(h:=:no rep|h|t):=hr;
+	t:=next OF t
+FI; #add rep#
+
+@2Parameter checking.
+Now we can scan and check the parameters.
+
+@<Check and scan...@>=
+IF UPB val OF rp1 = 0
+THEN usage(2)
+ELSE
+	FOR i1 TO UPB val OF rp1
+	DO
+		CASE (val OF rp1)[i1]
+		IN
+			(REF PARAM @!rp2):
+				IF prog OF rp2 = "" OR UPB prog OF rp2 > 1
+				THEN usage(3)
+				ELIF CHAR @!pr=(prog OF rp2)[1];
+					INT @!p;
+					NOT char in string(pr,p,"efHvir")
+				THEN usage(4)
+				ELSE @<Check individual parameters@>
+				FI
+		OUT usage(5)
+		ESAC
+	OD
+FI
+
+@ Now we can check each parameter.
+
+@<Check individ...@>=
+CASE p
+IN
+	@<Process output file extension@>
+	,
+	@<Process filenames@>
+   ,
+   help
+	,
+	err(cvs fed AFTER "," AFTER blank)
+	,
+	@<Process !rx init! parameters@>
+	,
+	@<Process search and replace strings@>
+OUT usage(0)
+ESAC
+
+@ We shall need !AFTER!.
+
+@<Include...@>=
+macro gp op after;
+
+@ The output file extension should be given as either a string denotation
+or else like a filename.
+
+@<Process output...@>=
+IF UPB val OF rp2 /= 1
+THEN usage(12)
+ELSE
+	CASE (val OF rp2)[LWB val OF rp2]
+	IN
+		(STRING @!s):
+			IF s = ""
+			THEN usage(13)
+			ELSE out ext:=s
+			FI
+		,
+		(REF PARAM @!rp3):
+			IF prog OF rp3 = ""
+			THEN usage(13)
+			ELSE out ext:=prog OF rp3
+			FI
+	OUT usage(14)
+	ESAC
+FI
+
+@ Here is !out ext!.
+
+@<Names...@>=
+STRING @!out ext:=".fed";
+
+@ If any filenames have been given, we add them to the file list.
+
+@<Process filena...@>=
+IF UPB val OF rp2 = 0
+THEN usage(6)
+ELSE
+	FOR i2 TO UPB val OF rp2
+	DO
+		CASE (val OF rp2)[i2]
+		IN
+			(REF PARAM @!rp3):
+				IF prog OF rp3 = ""
+				THEN usage(7)
+				ELSE add filename(hd fn,tl fn,prog OF rp3)
+				FI
+				,
+			(STRING @!s3):
+				IF s3 = ""
+				THEN usage(7)
+				ELSE add filename(hd fn,tl fn,s3)
+				FI
+		OUT usage(5)
+		ESAC
+	OD
+FI
+
+@ Parameters for !rx init! come in pairs. We place them on the linked list
+until all have been found.
+
+@<Process !rx init!...@>=
+IF UPB val OF rp2 = 0 OR ODD UPB val OF rp2
+THEN usage(8)
+ELSE
+	FOR i2 BY ---2 TO UPB val OF rp2-1
+	DO
+		INT @!x;
+		CHAR @!c;
+
+		CASE (val OF rp2)[i2]
+		IN
+			(INT @!ind): x:=ind
+		OUT usage(9)
+		ESAC;
+
+		CASE (val OF rp2)[i2+1]
+		IN
+			(INT @!val): c:=REPR val
+			,
+			(STRING @!s): c:=s[LWB s]
+		OUT usage(9)
+		ESAC;
+		add init(hd init,tl init,x,c)
+	OD
+FI
+
+@ Search and replace strings also come in pairs.
+
+@<Process search...@>=
+IF UPB val OF rp2 = 0 OR ODD UPB val OF rp2
+THEN usage(10)
+ELSE
+	STRING @!srch, @!repl;
+
+	FOR i2 TO UPB val OF rp2
+	DO
+		CASE (val OF rp2)[i2]
+		IN
+			(STRING @!s): (ODD i2|srch|repl):=s
+		OUT usage(11)
+		ESAC;
+
+		IF NOT ODD i2
+		THEN add rep(hd rep,tl rep,srch,repl)
+		FI
+	OD
+FI
+
+@1Initialising the regex library.
+This consists of calling !rx init! with new metacharacters. It only needs
+to be done once, so we use !hd init! to step down the list.
+
+@<Logic...@>=
+WHILE
+	IF hd init ISNT no init
+	THEN rx init(pair OF hd init)
+	ELSE FALSE
+	FI
+DO
+	hd init:=next OF hd init
+OD;
+
+@1Processing each file.
+For each file in the file list, we
+\begin{enumerate}
+\item Open the file.
+\item Allocate two buffers.
+\item Read the file.
+\item Close the file.
+\item Search and replace.
+\item Write the file to output.
+\item Close the output file.
+\end{enumerate}
+The filename list is only processed once, but we might want to provide
+statistics in a later version, so we step down the list with !tl fn!.
+
+@<Logic...@>=
+tl fn:=hd fn;
+
+WHILE tl fn ISNT no fn
+DO
+	IF open(inf OF tl fn,fn OF tl fn,stand in channel)/=0
+	THEN err("cannot open file "+fn OF tl fn)
+	ELIF
+		@<Allocate the buffers@>
+		get bin(inf OF tl fn,buff1[:sz OF tl fn]);
+		close(inf OF tl fn);
+		buff 1 used+:=sz OF tl fn;
+		buff 1 start:=LWB buff1;
+		@<Perform search and replace on the buffers@>
+		FILE @!outf;
+		establish(outf,fn OF tl fn+out ext,stand out channel,0,0,0)/=0
+	THEN err("cannot establish file "+fn OF tl fn+out ext)
+	ELSE put bin(outf,buff1[:buff1 used]);
+		close(outf)
+	FI;
+	tl fn:=next OF tl fn
+OD
+
+@ We allocate buffers whose initial size is the next power of two larger
+than the file size. For !buff1!, we need the start and finish indexers. For
+!buff2!, we only need the !used! indexer.
+
+@<Allocate...@>=
+INT @!buf sz = 2**(ENTIER(ln(sz OF tl fn)/ln(2))+1);
+REF[]CHAR@/
+	@!buff1:=HEAP[buf sz]CHAR,
+	@!buff2:=HEAP[buf sz]CHAR;
+INT @!buff 1 start:=0, @!buff 1 used:=0, @!buff 2 used:=0;
+
+@ Each search string has been compiled into a regular expression, so we now
+search !buff1! until !rx match! yields !FALSE!. For each successful match,
+we transfer the replacement string to !buff2!, and update !buff 1 start!
+appropriately.
+
+@<Perform search...@>=
+tl rep:=hd rep; #initialise !tl rep!#
+
+WHILE tl rep ISNT no rep
+DO
+	SUBEXP @!se;
+
+	WHILE rx match(sx OF tl rep,buff1[buff 1 start:buff 1 used],se)
+	DO
+		INT @!st=open  OF se[0]+buff 1 start-1,
+			@!fn=close OF se[0]+buff 1 start-1; #extent of match#
+		[]CHAR @!replaced=@/
+			rx replace(rp OF tl rep,buff1[buff 1 start:buff 1 used],se);
+		IF buff 1 start < st
+		THEN #skipped buffer#
+			add to buffer(buff2,buff 2 used,buff1[buff 1 start:st-1@@buff 1 start])
+		FI;
+		add to buffer(buff2,buff 2 used,replaced);
+		buff 1 start:=fn
+	OD;
+
+	@<Add the remainder of !buff1!@>
+	@<Switch the buffers@>
+	tl rep:=next OF tl rep
+OD;
+
+@ When the match fails, the remainder of !buff1! needs to be added to
+!buff2!.
+
+@<Add the rem...@>=
+add to buffer(buff2,buff 2 used,buff1[buff 1 start:buff 1 used@@buff 1 start]);
+
+@ Switching the buffers consists merely of changing references. We use a
+temporary reference.
+
+@<Switch...@>=
+REF[]CHAR @!tmp ref = buff1;
+buff1:=buff2;
+buff2:=tmp ref;
+buff 1 start:=LWB buff 1;
+buff 1 used:=buff 2 used;
+buff 2 used:=0;
+
+@ The procedure !add to buffer! checks whether the string to be added to
+!buff2! will fit. If not, !buff2! is made to refer to a buffer twice as
+big.
+
+@<Proced...@>=
+PROC add to buffer = (REF REF[]CHAR @!buffer,@/
+							 REF INT @!used,@/
+							 []CHAR @!rc)VOID:
+BEGIN
+	INT sz = UPB rc-LWB rc+1;
+
+	IF sz+used > UPB buffer
+	THEN
+		REF[]CHAR @!temp=buffer;
+		buffer:=HEAP[2*UPB buffer]CHAR;
+		buffer[:used]:=temp
+	FI;
+	buffer[used+1:used+sz]:=rc;
+	used+:=sz
+END; #add to buffer#
+
+@1System dependencies.
+Check these if you are porting this program to another platform.

@@ -1,0 +1,46 @@
+#!/bin/sh
+
+BDY=$(($(date +%Y)+19307))
+
+if [ "$1" != "" ]
+then pxs -T@${HOME}/.px/neweb68.help
+   exit 0
+fi
+
+DIR=$(pxs -ISubdirectory,40)
+if [ "${DIR}" == "" ]
+then exit 0
+else DIR=${HOME}/src/algol68/${DIR}
+fi
+
+MODE=$(pxs -CWhich_module_type?,Prog,Decs,Forms)
+FILE=${HOME}/src/algol68/
+
+if [ "${MODE}" == "Decs" ]
+then
+   EXT="w"
+   PROG=$(pxs -wDecs_id -IId,30)
+else
+   EXT="w68"
+   PROG=$(pxs -wProgram_id -IId,30)
+fi
+
+if [ "${PROG}" == "" ]
+then exit 0
+elif [ ${MODE} == "Forms" ]
+then FILE=${FILE}/fskel.w68
+else FILE=${FILE}/skel.${EXT}
+fi
+
+PROG=${PROG%% }
+SEDF=/tmp/neweb.sh
+echo "s/bliadhna/BD${BDY}/" >>${SEDF}
+echo "s/prog /${PROG} /" >>${SEDF}
+echo "s/\"prog\"/\"${PROG}\"/" >>${SEDF}
+
+mkdir -p ${DIR}
+sed -f ${SEDF} ${FILE} >${DIR}/${PROG}.${EXT}
+rm -f ${SEDF}
+
+exit 0
+# end of neweb68

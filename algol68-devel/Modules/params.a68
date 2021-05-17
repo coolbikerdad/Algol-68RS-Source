@@ -1,0 +1,37 @@
+#1.1.1.1:# #1.1.1.2:# DECS params CONTEXT VOID USE standard:#:1.1.1.2# #2.1.1.1
+:# MODE PARTOK =STRUCT(STRING v,INT ty);#:2.1.1.1 3.1.1.1:# MODE PARAM,VAL =
+UNION(STRING,INT,REAL,VOID,REF PARAM),PARAM =STRUCT(STRING prog,REF[]VAL val);#:
+3.1.1.1# #2.1.1.2:# REF PARTOK notok =NIL;#:2.1.1.2 3.1.1.2:# REF PARAM noparam
+ =NIL;#:3.1.1.2# #3.1.1.3:# VAL prevval:=noparam;#:3.1.1.3# #3.1.1.6:# OP+:= =(
+REF PARAM rp,VAL v)VOID:(HEAP[1 +UPB val OF rp]VAL hv;IF UPB hv =1 THEN hv[1 ]:=
+v ELSE hv[:UPB hv-1 ]:=val OF rp;hv[UPB hv]:=v FI;val OF rp:=hv);#:3.1.1.6# #
+2.2.1.1:# PROC getpartok =(REF FILE f)REF PARTOK:BEGIN HEAP PARTOK hp:=( "",0 );
+CHAR ch;INT p;onlogicalfileend(f,(REF FILE ff)BOOL:(GOTO eof;SKIP));#2.2.1.2:# 
+WHILE get(f,ch);ch =blank OR ch =tabch DO SKIP OD;#:2.2.1.2# CASE IF
+ charinstring(ch,p, """(,)")THEN p ELSE 0 FI IN#2.2.1.3:# BEGIN maketerm(f, """"
+);WHILE STRING s;get(f,(s,LOC CHAR,ch));v OF hp+:=s;ch = """"DO v OF hp+:= """"
+OD;backspace(f);ty OF hp:=4 ;hp END#:2.2.1.3# ,hp:=(ch,1 ),hp:=(ch,2 ),hp:=(ch,
+3 )OUT IF ch>= "a"&ch<= "z"OR ch>= "A"&ch<= "Z"OR charinstring(ch,LOC INT, "/.~"
+)THEN#2.2.1.4:# WHILE NOT charinstring(ch,LOC INT, "(,)"+nulch)DO IF ch/=blank&
+ch/=tabch THEN v OF hp+:=ch FI;get(f,ch)OD;ty OF hp:=6 ;backspace(f);hp#:2.2.1.4
+# ELIF ch>= "0"&ch<= "9"OR ch = "-"OR ch = "+"THEN#2.2.1.5:# WHILE charinstring(
+ch,LOC INT,tabch+ " 0123456789-+.e")DO IF ch/=blank&ch/=tabch THEN v OF hp+:=ch
+ FI;get(f,ch)OD;ty OF hp:=5 ;backspace(f);hp#:2.2.1.5# ELIF ch =nulch THEN hp
+ ELSE backspace(f);notok FI ESAC EXIT eof:hp END;#:2.2.1.1 3.1.1.4:# PROC
+ getparam =(REF FILE f)VAL:IF REF PARTOK rp =getpartok(f);rp IS notok THEN
+ noparam ELSE CASE ty OF rp IN getparam(f),(prevval|(REF PARAM):EMPTY|getparam(f
+)),EMPTY,prevval:=v OF rp,#3.1.1.7:# IF STRING s =v OF rp;charinstring( ".",LOC
+ INT,s)OR charinstring( "e",LOC INT,s)THEN REAL r;#3.1.1.8:# create(standback,
+standbackchannel);put(standback,(s, "A"));reset(standback);#:3.1.1.8# 
+onlogicalfileend(standback,(REF FILE f)BOOL:(r:=0.0 ;GOTO eofr;SKIP));get(
+standback,r);eofr:scratch(standback);prevval:=r ELIF BOOL dig:=FALSE;FOR i FROM
+ LWB s TO UPB s WHILE NOT(dig:=s[i]>= "0"&s[i]<= "9")DO SKIP OD;NOT dig THEN
+ prevval:=s ELSE INT n;#3.1.1.8:# create(standback,standbackchannel);put(
+standback,(s, "A"));reset(standback);#:3.1.1.8# onlogicalfileend(standback,(REF
+ FILE f)BOOL:(n:=0 ;GOTO eofi;SKIP));get(standback,n);eofi:scratch(standback);
+prevval:=n FI#:3.1.1.7# ,(#3.1.1.5:# HEAP PARAM hp:=(v OF rp,HEAP[1 :0 ]VAL);
+prevval:=hp;WHILE VAL v:=getparam(f);CASE v IN(UNION(INT,REAL,STRING)u):(hp+:=
+VAL(u);TRUE),(VOID):FALSE,(REF PARAM p):(p IS noparam|FALSE|hp+:=VAL(p);TRUE)
+ESAC DO SKIP OD;hp#:3.1.1.5# )OUT noparam ESAC FI;#:3.1.1.4# SKIP#1.1.1.3:# KEEP
+#3.1.1.9:# +:=(REF PARAM,VAL),PARAM,VAL,getparam,noparam#:3.1.1.9# FINISH#:
+1.1.1.3# #:1.1.1.1# 

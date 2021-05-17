@@ -1,0 +1,398 @@
+\input webmac
+% This program is copyright (c) BP66 Phoenix Engineering
+@Introduction.
+This program started as a small utility written in OCCL \Algol. This
+version uses the \Web\ system. The program converts the contents of
+a file into hexadecimal.
+
+@ cvs hex = "$Id: hex.w68,v 1.3 2005/02/17 12:45:50 sian Exp $"
+
+@@Prelude@
+BEGIN
+@Included declarations@
+@Names in the outer reach@
+@Procedures in the outer reach@
+@Logic in the outer reach@
+END
+@Postlude@
+
+
+\M1. The local compiler requires a special prelude.
+
+\Y\P$\4\X1:\X\S$\6
+\\{PROGRAM}\\{hex}\\{CONTEXT}\\{VOID}\\{USE}\X2:Library preludes\X\par
+\fi
+
+\M2. We shall need the precompiled parameter and standard preludes.
+
+\Y\P$\4\X2:Library preludes\X\S$\6
+$\\{params},\39\\{standard}$\par
+\U1.\fi
+
+\M3. And a special postlude.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\\{FINISH}\par
+\fi
+
+\M4. The program needs the !STAT! mode and the !stat! procedure from the
+\Web\ system prelude and some operators from the general prelude.
+
+sysprelude.w
+gprelude.w
+
+\fi
+
+\M5. The program displays the contents of the input file as follows:-
+\begin{enumerate}
+\item The start address of each line in hexadecimal.
+\item Eight bytes printed as two hexadecimal characters for each.
+\item A gap.
+\item Another eight bytes as for (2).
+\item On the next line, the sixteen characters as:-
+\begin{enumerate}
+\item 00--20 $\Rightarrow$ \verb*$\^\|X$
+\item 20--7e $\Rightarrow$ \verb*\|X
+\item else as \verb*.
+\end{enumerate}
+\end{enumerate}
+All should be appropriately spaced.
+
+Parameters.
+The program accepts the following parameters:-
+\begin{description}
+\item[\textbf{h}] Prints a short usage message.
+\item[\textbf{v}] Prints a version message.
+\item[\textbf{f(filename)}] Specifies its input file.
+\end{description}
+
+Firstly, we need to open a file on !arg channel!.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{open}(\\{argf},\39\.{""},\39\\{arg}\\{channel})$;\par
+\fi
+
+\M6. Here is !argf!.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\\{FILE}\\{argf};\par
+\fi
+
+\M7. And !usage!.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\4$\\{PROC}\\{usage}=\\{VOID}$: \37$(\\{put}(\\{stand}\\{error},\39(\.{"hex\
+usage:\ hex\ \'(h|v|f(file))\'"},\39\\{newline}));\,\35\\{stop})$;\par
+\fi
+
+\M8. We shall be needing some error messages.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\4$\\{PROC}\\{error}=([\,]\\{CHAR}\\{msg})\\{VOID}$: \37$(\\{put}(\\{stand}%
+\\{error},\39(\.{"hex:\ error:"},\39\\{msg},\39\\{newline}));\,\35%
+\\{exit}(1))$;\par
+\fi
+
+\M9. We use !get param! to read and parse the parameters. No parameters
+or an erroneous format simply gives the usage message.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\4$\\{CASE}\\{get}\\{param}(\\{argf})\\{IN}(\\{REF}\\{PARAM}\\{rp1})$: \37$%
+\\{IF}\\{rp1}\\{IS}\\{no}\\{param}\J\\{THEN}\\{usage}\\{ELIF}\\{UPB}\\{val}%
+\\{OF}\\{rp1}/=1\J\\{THEN}\\{usage}\\{ELSE}\\{CASE}(\\{val}\\{OF}\\{rp1})[1]%
+\\{IN}(\\{REF}\\{PARAM}\\{rp2})$: \37\X10:Parse the only parameter\X\\{OUT}%
+\\{usage}\\{ESAC}\\{FI}\\{OUT}\\{usage}\\{ESAC};\par
+\fi
+
+\M10. The parameter should be one of \.{h}, \.{v} or \.{f}.
+
+\Y\P$\4\X10:Parse the only parameter\X\S$\6
+$\\{IF}\\{rp2}\\{IS}\\{no}\\{param}\J\\{THEN}\\{usage}\\{ELIF}\\{prog}\\{OF}%
+\\{rp2}=\.{""}\J\\{THEN}\\{usage}\\{ELIF}\\{INT}\\{pos2}\K0$;\5
+$\\{char}\in\\{string}((\\{prog}\\{OF}\\{rp2})[1],\39\\{pos2},\39\.{"hvf"})%
+\\{THEN}\\{CASE}\\{pos2}\\{IN}\#\|h\#\\{usage},\39\#\|v\#(\\{put}(\\{stand}%
+\\{error},\39(\.{"hex:\ version\ "},\39\\{cvs}\\{hex}\\{AFTER}\\{blank}%
+\\{AFTER}\\{blank}\\{UPTO}\\{blank},\39\\{newline}));\,\35\\{stop}),\39\#\|f\#%
+\X11:Get the file name\X\\{ESAC}\\{ELSE}\\{error}(\.{"unknown\ parameter:\ "}+%
+\\{prog}\\{OF}\\{rp2})\\{FI}$\par
+\U9.\fi
+
+\M11. The file name may be provided as a string denotation or as just the
+required characters.
+
+\Y\P$\4\X11:Get the file name\X\S$\6
+\4$\\{IF}\\{UPB}\\{val}\\{OF}\\{rp2}/=1\J\\{THEN}\\{usage}\\{ELSE}\\{CASE}(%
+\\{val}\\{OF}\\{rp2})[1]\\{IN}(\\{REF}\\{PARAM}\\{rp3})$: \37$\\{IF}\\{rp3}%
+\\{IS}\\{no}\\{param}\J\\{THEN}\\{usage}\\{ELIF}\\{prog}\\{OF}\\{rp3}=\.{""}\J%
+\\{THEN}\\{usage}\\{ELSE}\\{infn}\K\\{TC}\\{prog}\\{OF}\\{rp3}\\{FI},\39(%
+\\{STRING}\|s)$: \37$\\{IF}\|s=\.{""}\J\\{THEN}\\{usage}\\{ELSE}\\{infn}\K%
+\\{TC}\|s\\{FI}\\{OUT}\\{usage}\\{ESAC}\\{FI}$\par
+\U10.\fi
+
+\M12. \P$\X1:\X\mathrel{+}\S$\6
+\\{STRING}\\{infn};\par
+\fi
+
+\M13. !AFTER! and !UPTO! are in the \Web\ general prelude.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+\\{macro}\\{gp}\\{op}\\{upto};\5
+\\{macro}\\{gp}\\{op}\\{after}; \\{Reading}\\{the} \&{file} $.\\{We}\\{use}%
+\\{the}!\\{stat}!\\{routine}\mathrel{\&{to}}\\{get}\\{the}$ \&{file} $\\{size}.%
+\X1:\X=\\{IF}\\{REF}\\{STAT}\\{st}=\\{stat}(\\{infn})$;\5
+$\J\\{st}\\{IS}\\{no}\\{stat}\\{THEN}\\{error}(\.{"cannot\ get\ the\ size\ of\
+file\ "}+\\{infn})\\{ELSE}\\{sz}\K\\{st}\\{size}\\{OF}\\{st}\\{FI}$;\par
+\fi
+
+\M14. \P$\X1:\X\mathrel{+}\S$\6
+\\{INT}\\{sz};\par
+\fi
+
+\M15. \P$\X1:\X\mathrel{+}\S$\6
+\\{macro}\\{no}\\{stat};\5
+\\{macro}\\{stat};\5
+\\{macro}\\{op}\\{tc};\par
+\fi
+
+\M16. Now we can open the file. Because we know its size, overrunning its
+end must be regarded as unexpected.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{IF}\\{open}(\\{inf},\39\\{infn},\39\\{stand}\in\\{channel})/=0\\{THEN}%
+\\{error}(\.{"cannot\ open\ file\ "}+\\{infn})\\{ELSE}\\{on}\\{logical}$ %
+\&{file}  \6
+\&{end} $(\\{inf},\39(\\{REF}\\{FILE}\|f)\\{BOOL}:(\\{error}(\.{"unexpected\
+EOF\ on\ "}+\\{idf}(\|f));\,\35\\{SKIP}))\\{FI}$;\par
+\fi
+
+\M17. \P$\X1:\X\mathrel{+}\S$\6
+\\{FILE}\\{inf};\par
+\fi
+
+\M18. We read the file as 16-byte chunks, so we need to round the size down
+to the nearest 16 bytes and get the size of any remainder.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{INT}\\{chunks}=\\{ABS}(\\{BIN}\\{sz}\\{SHR}4),\39\\{remainder}=\\{ABS}(%
+\\{BIN}\\{sz}&16\\{rf})$;\par
+\fi
+
+\M19. \P$\X1:\X\mathrel{+}\S$\6
+$\\{FOR}\|i\\{TO}\\{chunks}\\{DO}[16]\\{CHAR}\\{chunk}$;\5
+$\\{get}\\{bin}(\\{inf},\39\\{chunk})$;\5
+$\\{print}\\{lines}((\\{BIN}(\|i-1)\\{SHL}4),\39\\{chunk})\\{OD}$;\par
+\fi
+
+\M20. There may be an odd-sized chunk at the end.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{IF}\\{remainder}/=0\\{THEN}[\\{remainder}]\\{CHAR}\\{chk}$;\5
+$\\{get}\\{bin}(\\{inf},\39\\{chk})$;\5
+$\\{print}\\{lines}(\\{BIN}\\{sz}&\\{NOT}16\\{rf},\39\\{chk})\\{FI}$;\par
+\fi
+
+\M21. Now we can close the files.
+
+\Y\P$\4\X1:\X\mathrel{+}\S$\6
+$\\{close}(\\{inf})$; $\\{close}(\\{argf})\\{Printing}\\{the}\\{lines}.\\{This}%
+\\{routine}\\{must}\\{be}\\{able}\mathrel{\&{to}}\\{deal}$ \6
+\&{with} $\|a\\{short}\\{line}.\X1:\X=\\{PROC}\\{print}\\{lines}=(\\{BITS}%
+\\{addr},\39[\,]\\{CHAR}\\{data})\\{VOID}:\\{BEGIN}\\{print}((\\{HEX}\\{addr},%
+\392\ast\\{blank}))$;\5
+\X22:Print the first 8 bytes\X;\6
+$\\{IF}\\{UPB}\\{data}>8\\{THEN}\\{print}(\\{blank})$;\5
+\X23:Print any more bytes\X\\{FI};\5
+\X24:Print the characters on the next line\X\\{END};\par
+\fi
+
+\M22. We have to be able to convert a character into two hexadecimal
+digits. For this, the operand of !HEX! should be of mode !SHORT SHORT
+BITS!. This macro does the conversion.
+
+binhex(c) = HEX SHORTEN SHORTEN BIN ABS c
+
+\Y\P$\4\X22:Print the first 8 bytes\X\S$\6
+$\\{FOR}\|i\\{TO}\\{UPB}\\{data}\\{MIN}8\\{DO}\\{print}((\\{binhex}(\\{data}[%
+\|i]),\39\\{blank}))\\{OD}$\par
+\U21.\fi
+
+\M23. Only the bounds differ for printing any more bytes.
+
+\Y\P$\4\X23:Print any more bytes\X\S$\6
+$\\{FOR}\|i\\{FROM}9\\{TO}\\{UPB}\\{data}\\{DO}\\{print}((\\{binhex}(\\{data}[%
+\|i]),\39\\{blank}))\\{OD}$\par
+\U21.\fi
+
+\M24. Now we can print the characters on the next line, lined up with
+their corresponding hexadecimal values.
+
+\Y\P$\4\X24:Print the characters on the next line\X\S$\ $\\{print}((%
+\\{newline},\3910\ast\\{blank}))$;\5
+\\{FOR}\|i\\{TO}\\{UPB}\\{data}\\{MIN}8\\{DO}\X25:Print a rendered character\X%
+\\{OD};\5
+$\\{IF}\\{UPB}\\{data}>8\\{THEN}\\{print}(\\{blank})$;\5
+\\{FOR}\|i\\{FROM}9\\{TO}\\{UPB}\\{data}\\{DO}\X25:Print a rendered character\X%
+\\{OD}\\{FI};\5
+$\\{print}(\\{newline})$\par
+\U21.\fi
+
+\M25. As clarified in the introduction, each character is either printed
+as is if it is in the range !16r20:16r7e!, or as \verb*$\^\|X$ if it
+is a control character, or else as a dot.
+
+\Y\P$\4\X25:Print a rendered character\X\S$\6
+$\\{print}(\\{IF}\\{CHAR}\\{di}=\\{data}[\|i];\,\35\\{ABS}\\{di}\G\\{ABS}%
+\\{blank}&\\{ABS}\\{di}\L\\{ABS}\.{"\~"}\\{THEN}\\{blank}+\\{di}+\\{blank}%
+\\{ELIF}\\{ABS}\\{di}<\\{ABS}\\{blank}\\{THEN}\.{"\^"}+\\{REPR}(\\{ABS}%
+\\{di}+64)+\\{blank}\\{ELSE}\\{blank}+\.{"."}+\\{blank}\\{FI})\\{System}%
+\\{dependencies}.\\{Check}\\{these}$  \6
+\&{if} $\\{you}\\{are}\\{porting}\\{this}$ \6
+\4\&{program}\1\  \37$\mathrel{\&{to}}\\{another}\\{platform}.$\par
+
+\Us24\ET24.\fi
+
+
+\inx
+\:\\{able}, 21.
+\:\\{ABS}, 18, 25.
+\:\\{addr}, 21.
+\:\\{AFTER}, 10.
+\:\\{after}, 13.
+\:\\{another}, 25.
+\:\\{are}, 25.
+\:\\{arg}, 5.
+\:\\{argf}, 5, 6, 9, 21.
+\:\\{be}, 21.
+\:\\{BEGIN}, 21.
+\:\\{bin}, 19, 20.
+\:\\{BIN}, 18, 19, 20.
+\:\\{binhex}, 22, 23.
+\:\\{BITS}, 21.
+\:\\{blank}, 10, 21, 22, 23, 24, 25.
+\:\\{BOOL}, 16.
+\:\\{CASE}, 9, 10, 11.
+\:\\{channel}, 5, 16.
+\:\\{CHAR}, 8, 19, 20, 21, 25.
+\:\\{char}, 10.
+\:\\{Check}, 25.
+\:\\{chk}, 20.
+\:\\{chunk}, 19.
+\:\\{chunks}, 18, 19.
+\:\\{close}, 21.
+\:\\{CONTEXT}, 1.
+\:\\{cvs}, 10.
+\:\\{data}, 21, 22, 23, 24, 25.
+\:\\{deal}, 21.
+\:\\{dependencies}, 25.
+\:\\{di}, 25.
+\:\\{DO}, 19, 22, 23, 24.
+\:\\{ELIF}, 9, 10, 11, 25.
+\:\\{ELSE}, 9, 10, 11, 13, 16, 25.
+\:\\{END}, 21.
+\:\\{error}, 7, 8, 10, 13, 16.
+\:\\{ESAC}, 9, 10, 11.
+\:\\{exit}, 8.
+\:\\{FI}, 9, 10, 11, 13, 16, 20, 21, 24, 25.
+\:\\{FILE}, 6, 16, 17.
+\:\\{FINISH}, 3.
+\:\\{FOR}, 19, 22, 23, 24.
+\:\\{FROM}, 23, 24.
+\:\\{get}, 9, 13, 19, 20.
+\:\\{gp}, 13.
+\:\\{hex}, 1, 10.
+\:\\{HEX}, 21.
+\:\\{idf}, 16.
+\:\\{IF}, 9, 10, 11, 13, 16, 20, 21, 24, 25.
+\:\\{IN}, 9, 10, 11.
+\:\\{inf}, 16, 17, 19, 20, 21.
+\:\\{infn}, 11, 12, 13, 16.
+\:\\{INT}, 10, 14, 18.
+\:\\{IS}, 9, 10, 11, 13.
+\:\\{line}, 21.
+\:\\{lines}, 19, 20, 21.
+\:\\{logical}, 16.
+\:\\{macro}, 13, 15.
+\:\\{MIN}, 22, 24.
+\:\\{msg}, 8.
+\:\\{must}, 21.
+\:\\{newline}, 7, 8, 10, 24.
+\:\\{no}, 9, 10, 11, 13, 15.
+\:\\{NOT}, 20.
+\:\\{OD}, 19, 22, 23, 24.
+\:\\{OF}, 9, 10, 11, 13.
+\:\\{on}, 16.
+\:\\{op}, 13, 15.
+\:\\{open}, 5, 16.
+\:\\{OUT}, 9, 11.
+\:\\{param}, 9, 10, 11.
+\:\\{PARAM}, 9, 11.
+\:\\{params}, 2.
+\:\\{platform}, 25.
+\:\\{porting}, 25.
+\:\\{pos2}, 10.
+\:\\{print}, 19, 20, 21, 22, 23, 24, 25.
+\:\\{Printing}, 21.
+\:\\{PROC}, 7, 8, 21.
+\:\\{prog}, 10, 11.
+\:\\{PROGRAM}, 1.
+\:\\{put}, 7, 8, 10.
+\:\\{Reading}, 13.
+\:\\{REF}, 9, 11, 13, 16.
+\:\\{remainder}, 18, 20.
+\:\\{REPR}, 25.
+\:\\{rf}, 18, 20.
+\:\\{routine}, 13, 21.
+\:\\{rp1}, 9.
+\:\\{rp2}, 9, 10, 11.
+\:\\{rp3}, 11.
+\:\\{SHL}, 19.
+\:\\{short}, 21.
+\:\\{SHR}, 18.
+\:\\{size}, 13.
+\:\\{SKIP}, 16.
+\:\\{st}, 13.
+\:\\{stand}, 7, 8, 10, 16.
+\:\\{standard}, 2.
+\:\\{stat}, 13, 15.
+\:\\{STAT}, 13.
+\:\\{stop}, 7, 10.
+\:\\{STRING}, 11, 12.
+\:\\{string}, 10.
+\:\\{System}, 25.
+\:{system dependencies}, 1, 3.
+\:\\{sz}, 13, 14, 18, 20.
+\:\\{tc}, 15.
+\:\\{TC}, 11.
+\:\\{the}, 13, 21.
+\:\\{THEN}, 9, 10, 11, 13, 16, 20, 21, 24, 25.
+\:\\{these}, 25.
+\:\\{this}, 25.
+\:\\{This}, 21.
+\:\&{to}, \[25].
+\:\\{TO}, 19, 22, 23, 24.
+\:\\{UPB}, 9, 11, 21, 22, 23, 24.
+\:\\{upto}, 13.
+\:\\{UPTO}, 10.
+\:\\{usage}, 7, 9, 10, 11.
+\:\\{use}, 13.
+\:\\{USE}, 1.
+\:\\{val}, 9, 11.
+\:\\{VOID}, 1, 7, 8, 21.
+\:\\{We}, 13.
+\:\\{you}, 25.
+\fin
+\:\X11:Get the file name\X
+\U10.
+\:\X2:Library preludes\X
+\U1.
+\:\X10:Parse the only parameter\X
+\U9.
+\:\X25:Print a rendered character\X
+\Us24\ET24.
+\:\X23:Print any more bytes\X
+\U21.
+\:\X24:Print the characters on the next line\X
+\U21.
+\:\X22:Print the first 8 bytes\X
+\U21.
+\con
