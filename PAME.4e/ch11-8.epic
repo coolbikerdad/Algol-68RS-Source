@@ -1,0 +1,53 @@
+\setlength{\unitlength}{0.00087489in}
+%
+% $Log: ch11-8.epic,v $
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(4068,2112)(0,-10)
+\drawline(12,1362)(1047,1362)(1047,1002)
+	(12,1002)(12,1362)
+\dottedline{45}(462,1362)(462,1002)
+\put(57,1047){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(552,1047){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\drawline(1722,1362)(2757,1362)(2757,1002)
+	(1722,1002)(1722,1362)
+\dottedline{45}(2172,1362)(2172,1002)
+\put(1767,1047){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(2262,1047){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\drawline(822,372)(1857,372)(1857,12)
+	(822,12)(822,372)
+\dottedline{45}(1272,372)(1272,12)
+\put(867,57){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(1362,57){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\drawline(12,2082)(732,2082)(732,1722)
+	(12,1722)(12,2082)
+\drawline(372,1722)(372,1362)
+\drawline(342.000,1482.000)(372.000,1362.000)(402.000,1482.000)
+\drawline(1002,1182)(1722,1182)
+\drawline(1602.000,1152.000)(1722.000,1182.000)(1602.000,1212.000)
+\drawline(3027,1227)(2802,1227)
+\whiten\drawline(2922.000,1257.000)(2802.000,1227.000)(2922.000,1197.000)(2922.000,1257.000)
+\drawline(2217,237)(1902,237)
+\whiten\drawline(2022.000,267.000)(1902.000,237.000)(2022.000,207.000)(2022.000,267.000)
+\dashline{60.000}(777,1002)(1092,372)
+\drawline(1011.502,465.915)(1092.000,372.000)(1065.167,492.748)
+\dashline{60.000}(1632,282)(1902,1002)
+\drawline(1887.955,879.107)(1902.000,1002.000)(1831.775,900.174)
+\put(3072,1272){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}Existing list of}}}}}
+\put(3072,1092){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}REF QUEUE}}}}}
+\put(3972,1092){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}s}}}}}
+\put(2262,192){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}REF QUEUE}}}}}
+\put(3207,192){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}to be inserted}}}}}
+\put(777,1992){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RRQ}}}}}
+\put(102,1812){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}marker}}}}}
+\end{picture}
+}

@@ -1,0 +1,685 @@
+% $Log: chapter2.tex,v $
+% Revision 1.4  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Formul\ae}{chapii}
+Formul{\ae} consist of \hx{\textbf{operators}}{operator} with
+\hx{operands}{operand}.  Operators are predeclared pieces of program
+which compute a value determined by their operands.  Algol~68 is
+provided with a rich set of operators in the standard prelude and you
+can define as many more as you want.  In this chapter, we shall
+examine all the operators in the \ix{standard prelude} which can take
+operands of mode \verb|INT|, \verb|REAL| or \verb|CHAR|.  In
+chapter~6, we shall return to operators and look at what they do in
+more detail, as well as how to define new ones.
+
+Operators are written as a combination of one or more symbols, or in
+capital letters like a \hx{mode indicant}{mode!indicant}. We
+shall meet both kinds in this chapter.
+
+\Section{Monadic operators}{form-monad}
+Operators come in two flavours:
+\hx{\textbf{monadic}}{operator!monadic} and
+\hx{\textbf{dyadic}}{operator!dyadic}. A monadic operator has
+only one operand, but a dyadic operator has two operands. A monadic
+operator is written before its operand. For example, the monadic
+minus \hx{\texttt{-}}{-@\texttt{-}!monadic} reverses the sign of
+its operand:
+\begin{verbatim}
+   -3000
+\end{verbatim}
+\noindent
+This could equally well be written \verb|- 3000| since spaces are,
+generally speaking, not significant. There is, likewise, a monadic
+\hx{\texttt{+}}{+@\texttt{+}!monadic} operator which doesn't do
+anything to its operand, but is useful where you want to refer
+expressly to a positive number.  It has been provided for the sake of
+consistency.  You should note that \verb|-3000| is not a denotation,
+but a formula consisting of a monadic operator operating on an
+operand which is a \ix{denotation}.  We say that the monadic operator
+\verb|-| takes an operand of mode \ixtt{INT} and
+\hx{\textbf{yields}}{yield} a value of mode \verb|INT|.  It can also
+take an operand of \hx{mode}{mode!INT@\texttt{INT}} \ixtt{REAL} when
+it will yield a value of mode \verb|REAL|.
+
+A formula can be used as the value part of an identity
+\hx{declaration}{declaration!identity}.  Thus the following
+identity declarations are both valid:
+\begin{verbatim}
+   INT  minus 2 = -2;
+   REAL minus point five = -0.5
+\end{verbatim}
+\noindent
+The operator \ixtt{ABS} takes an operand of mode \verb|INT| and
+yields the absolute value again of mode \verb|INT|. For example,
+\verb|ABS -5| yields the value denoted by~\verb|5|:
+\begin{verbatim}
+   INT five = ABS -5
+\end{verbatim}
+\noindent
+Note that when two monadic operators are
+\hx{combined}{operator!combining}, they are elaborated in
+right-to-left order, as in the above
+\hx{example}{elaboration!order of}.  That is, the \verb|-| acts
+on the \verb|5| to yield \verb|-5|, then the \verb|ABS| acts on
+\verb|-5| to yield \verb|+5|. This is just what you might expect.
+\verb|ABS| can also take an operand of mode \verb|REAL| yielding a
+value of mode \verb|REAL|.  For example:
+\begin{verbatim}
+   REAL x = -1.234;
+   REAL y = ABS x
+\end{verbatim}
+
+Another monadic operator which takes an \verb|INT| operand is
+\ixtt{SIGN}. This yields $-1$ if the operand is negative, $0$ if it
+is zero, and $+1$ if it is positive.  Thus you can declare
+\begin{verbatim}
+   INT res = SIGN i
+\end{verbatim}
+\noindent
+if \verb|i| has been previously declared.
+
+\Section{Dyadic operators}{form-dyad}
+A dyadic operator takes two operands and is written between them. The
+simplest operator is dyadic \hx{\texttt{+}}{+@\texttt{+}!dyadic}.
+Here is an identity declaration using it:
+\begin{verbatim}
+   INT one = 1;
+   INT two = one + one
+\end{verbatim}
+\noindent
+This operator takes two operands of mode \ixtt{INT} and yields a
+result of mode \verb|INT|. It is also defined for two operands of
+mode \ixtt{REAL} yielding a result of mode \verb|REAL|:
+\begin{verbatim}
+REAL x = 1.4e5 + 3.7e12
+\end{verbatim}
+\noindent
+The \verb|+| operator performs an action quite different for
+\verb|REAL| operands from that performed for \verb|INT| operands. Yet
+the meaning is essentially the same, and so the same symbol is used
+for the two operators.
+
+Before we continue with the other dyadic operators, a word of caution
+is in order. As we have seen, the maximum integer which the computer
+can use is \verb|max int| and the maximum real is \verb|max real|.
+The dyadic \verb|+| operator could give a result which is greater
+than those two values. Adding two integers such that the sum exceeds
+\verb|max int| is said to give \hx{``integer
+overflow''}{overflow!integer}. Algol~68 contains no specific rules
+about what should happen in such a case.\footnote{The standard
+prelude supplied with the Linux port of the \texttt{a68toc} compiler
+provides a means of specifying what should be done if integer
+overflow occurs, if it can be detected. See section \hyref{stan-othop} for the details.
+Likewise for ``floating-point overflow'' and ``floating-point
+underflow'', see section \hyref{stan-fpov}.}
+
+The dyadic \hx{\texttt{-}}{-@\texttt{-}!dyadic} operator can take
+two operands of mode \verb|INT| or two operands of mode \verb|REAL|
+and yields an \verb|INT| or \verb|REAL| result respectively:
+\begin{verbatim}
+   INT minus 4 = 3 - 7,
+   REAL minus one point five = 1.9 - 3.4
+\end{verbatim}
+\noindent
+Note that the dyadic \verb|-| is quite different from the monadic
+\verb|-|. You can have both operators in the same formula:
+\begin{verbatim}
+   INT minus ten = -3 - 7
+\end{verbatim}
+\noindent
+The first minus sign represents the monadic operator and the second,
+the dyadic.
+
+Since a formula yields a value of a particular mode, you can use it
+as an \ix{operand} for another operator. For example:
+\begin{verbatim}
+   INT six = 1 + 2 + 3
+\end{verbatim}
+\noindent
+The operators are elaborated in left-to-right order. First the
+formula \verb|1+2| is elaborated, then the formula \verb|3+3|. What
+about the formula \verb|1-2-3|?  Again, the first \verb|-| operator
+is elaborated giving \verb|-1|, then the second giving the value
+\verb|-4|.
+
+Instead of saying ``the value of mode \verb|INT|'', we shall
+sometimes say ``the \verb|INT| value'' or even ``the
+\verb|INT|''---all these expressions are equivalent.
+
+\begin{exercise}
+\item Write an identity declaration for the \verb|INT| value
+\verb|-35|. \ans \verb|INT minus thirty five = -35|
+'
+\item What is the value of each of the following formul{\ae}?
+\begin{subex}
+\item \verb|3 - 2| \subans \verb|1|
+'
+\item \verb|3.0 - 2.0| \subans \verb|1.0|
+'
+\item \verb|3.0 - -2.0| \subans \verb|5.0|
+'
+\item \verb|2 + 3 - 5| \subans \verb|0|
+'
+\item \verb|-2 + +3 - -4| \subans \verb|5|
+'
+\end{subex}
+\item Given the following declarations
+\begin{verbatim}
+   INT a = 3, REAL b = 4.5
+\end{verbatim}
+\noindent
+what is the value of the following formul{\ae}?
+\begin{subex}
+\item \verb|a+a| \subans \verb|6|
+'
+\item \verb|-a-a| \subans \verb|-6|
+'
+\item \verb|b+b+b| \subans \verb|13.5|
+'
+\item \verb|-b - -b + -b| \subans \verb|4.5|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Multiplication}{form-mul}
+The operand \ixtt{*} (often said "star") represents normal
+arithmetic \ix{multiplication} and takes \verb|INT| operands yielding
+an \verb|INT| result. For example:
+\begin{verbatim}
+   INT product = 45 * 36
+\end{verbatim}
+\noindent
+Likewise, \verb|*| is also defined for multiplication of two values
+of mode \verb|REAL|:
+\begin{verbatim}
+   REAL real product = 2.4e-4 * 0.5
+\end{verbatim}
+\noindent
+It is important to note that although the actions of the two
+operators are quite different, they both represent multiplication so
+they both use the same symbol.
+
+Like \verb|+| and \verb|-|, multiplication can occur several times:
+\begin{verbatim}
+   INT factorial six = 1 * 2 * 3 * 4 * 5 * 6
+\end{verbatim}
+\noindent
+the order of elaboration being
+\hx{left-to-right}{elaboration!order of}.
+
+You can also combine multiplication with addition and subtraction.
+For example, the value of the formula \verb|2+3*4| is \verb|14|.
+At school, you were probably taught that multiplication should be
+done before addition (your teachers may have used the mnemonic
+\ix{BODMAS} to show the order in which operations are done.  It
+stands for Brackets, Over, Division, Multiplication, Addition and
+Subtraction).  In Algol~68, the same sort of thing applies and it is
+done by operators having a \bfix{priority}.  The priority of
+multiplication is higher than the priority for addition or
+subtraction.  The priority of the dyadic \verb|+| and \verb|-|
+operators is~6, and the priority of the \verb|*| operator is~7.
+
+Here are identity \hx{declarations}{declaration!identity} using a
+combination of multiplication and addition and subtraction:
+\begin{verbatim}
+   INT  i1 = 3, i2 = -7;
+   INT  result1 = i1 * i2 - 8;
+   REAL r1 = 35.2, r2 = -0.04;
+   REAL result2 = r1 * -r2 + 12.67 * 10.0
+\end{verbatim}
+\noindent
+In the elaboration of \verb|result2|, the multiplications are
+elaborated first, and then the addition.
+
+Remember from chapter 1 that \hx{widening}{coercion!widening} is
+allowed in the context of the right-hand side of an identity
+declaration, so the following declaration is valid:
+\begin{verbatim}
+   REAL a = 24 * -36
+\end{verbatim}
+\noindent
+It is important to note that an operand is not in a strong
+\hx{context}{context!strong}, so no widening is allowed. The
+context of an operand is \textbf{firm}.  Because widening is not
+allowed in a firm \hx{context}{context!firm}, it is possible for
+the compiler to examine the modes of the operands of an operator and
+determine which declaration of the operator is to be used in the
+elaboration of the formula. This also applies to monadic operators
+(see \hyref{rout-idops} for details).
+
+Looking again at the above identity declaration, the context of the
+denotation \verb|36| is firm (it is the operand of the monadic
+\verb|-|), the contexts of the \verb|24| and the \verb|-36| are also
+firm because they are the operands of the dyadic \verb|*|, but the
+value \hx{yielded}{value!yield} by the formula is on the
+right-hand side of the identity declaration, so it is in a strong
+\hx{context}{context!strong}.  It is this value which is coerced
+to a value of mode \verb|REAL| by the widening.  Note that the value
+of the formula (which has mode \verb|INT|) does not change.  Instead,
+it is replaced by the \ix{coercion} with a value of mode \verb|REAL|
+whose whole number part has the same value as the \verb|INT| value.
+It is worth saying that the value of the formula obtained by
+elaboration is lost after the coercion. You could hang on to the
+intermediate integer value by using another identity declaration:
+\begin{verbatim}
+    INT intermediate value = 24 * -36;
+    REAL a = intermediate value
+\end{verbatim}
+
+\begin{exercise}
+\item In this exercise, these declarations are assumed to be in force:
+\begin{verbatim}
+   INT  d1 = 12, d2 = -5;
+   REAL d3 = 4.0 * 3.5, d4 = -3.0
+\end{verbatim}
+\noindent
+What is the value of each of the following formul{\ae}?
+\begin{subex}
+\item \verb|ABS d2| \subans \verb|5|
+'
+\item \verb|- ABS d4 + d3 * d4| \subans \verb|-45.0|
+'
+\item \verb|d2 - d1 * 3 + d2 * 4| \subans \verb|-61|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Division}{form-div}
+In the preceding sections, all the operators mentioned yield results
+which have the same mode as the operand or operands. In this and
+following sections, we shall see that this is not always the case.
+
+Division poses a problem because division by integers can have two
+different meanings.  For example, $3\div2$ can be taken to mean
+\verb|1| or \verb|1.5|.  In this case, we use two different operator
+symbols.
+
+Integer \hx{division}{integer division} is represented by the
+symbol \verb|%|.  It takes operands of mode \verb|INT| and yields a
+value of mode \verb|INT|.  It has the \ix{alternative representation}
+\ixtt{OVER}.  The formula \texttt{7 \%\ 3} yields the value \verb|2|,
+and the formula \texttt{-7 \%\ 3} yields the value \verb|-2|.  The
+\ix{priority} of \verb|%| is~7, the same as multiplication.  Here
+are some identity declarations using the operator:
+\begin{verbatim}
+   INT r = 23 OVER 4, s = -33 % 3;
+   INT q = r * s % 2
+\end{verbatim}
+\noindent
+Using the given values of \verb|r| and \verb|s|, the value of
+\verb|q| is \verb|-27|. When a formula containing
+\hx{consecutive}{consecutive operators} dyadic operators of the
+same priority is elaborated, elaboration is always left-to-right, so
+in this case the multiplication is elaborated first, followed by the
+integer division.  Of course, \verb|%| can be combined with
+subtraction as well as all the other operators already discussed.
+
+The modulo \hx{operator}{operator!modulo} \ixtt{MOD} gives the
+\ix{remainder} after integer division. It requires two operands of
+mode \verb|INT| and yields a value also of mode \verb|INT|. Thus
+\verb|5 MOD 3| yields \verb|2|, and \verb|12 MOD 3| yields \verb|0|.
+It does work with negative integers, but the results are unexpected.
+You can explore \verb|MOD| with negative integers in an exercise.
+\verb|MOD| can also be written as \verb|%*|. The priority of
+\verb|MOD| is~7.
+
+Division of \hx{real}{division!real} numbers is performed by the
+operator \ixtt{/}. It takes two operands of mode \verb|REAL| and
+yields a \verb|REAL| result.  Thus the formula \verb|3.0/2.0| yields
+\verb|1.5|.  Again, \verb|/| can be combined with \verb|*| and the
+other operators already discussed.  It has a priority of~7. The
+operator is also defined for integer operands.  Thus \verb|3/2|
+yields the value \verb|1.5|.  No \hx{widening}{coercion!widening}
+takes place here since the operator is defined to yield a value of
+mode \verb|REAL| when its operands have mode \verb|INT|.
+
+Here are some identity declarations using the operators described so
+far:
+\begin{verbatim}
+   REAL pi by 2 = pi / 2,
+        pm3 = pi - 3.0 * -4.1;
+   INT c = 22 % 3 - 22 MOD 3;
+   INT d = c MOD 6 + SIGN -36
+\end{verbatim}
+
+\begin{exercise}
+\item What is the value yielded by each of the following formul{\ae}, and
+what is its mode?
+\begin{subex}
+\item \verb|5 * 4| \subans \verb|20| \verb|INT|
+'
+\item \verb|5 % 4| \subans \verb|1| \verb|INT|
+'
+\item \verb|5 / 4| \subans \verb|1.25| \verb|REAL|
+'
+\item \verb|5 MOD 4| \subans \verb|1| \verb|INT|
+'
+\item \verb|5.0 * 3.5 - 2.0 / 4.0| \subans \verb|17.0| \verb|REAL|
+'
+\end{subex}
+\item Write a short program to print the results of using \verb|MOD| with
+negative integer operands. Try either operand negative, then both
+operands negative. \ans Your answer should be something like this:-
+\begin{verbatim}
+   PROGRAM ex2 6 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(-7 MOD 3);
+      print( 7 MOD -3);
+      print(-7 MOD -3)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+This will display
+\begin{verbatim*}
+         +2          +1          +2
+\end{verbatim*}
+on your screen.
+'
+\item Give an identity declaration for the identifier
+\verb|two pi|. \ans \verb|REAL two pi = 2 * pi|
+'
+\end{exercise}
+
+\Section{Exponentiation}{form-exp}
+If you want to compute the value of \verb|3*3*3*3| you can do so
+using the multiplication operator, but it would be clearer and faster
+if you used the exponentiation operator \ixtt{**}.  The mode of its
+left operand can be either \verb|REAL| or \verb|INT|, but its right
+operand must have mode \verb|INT|. If both its operands have the mode
+\verb|INT|, the yield will have mode \verb|INT| (in this case the
+right operand must not be negative), otherwise the yield will have
+mode \verb|REAL|.  Thus the formula \verb|3**4| yields the value
+\verb|81|, but \verb|3.0**4| yields the value \verb|81.0|.  Its
+priority is~8.  In a formula involving exponentiation as well as
+multiplication or division, the exponentiation is elaborated first.
+For example, the formula \verb|3*2**4| yields \verb|48|, not
+\verb|1296|.
+
+Every \hx{dyadic}{operator!dyadic} operator has a priority of
+between 1 and~9 inclusive, and all
+\hx{monadic}{operator!monadic} operators bind more tightly than
+all dyadic operators.  For example, the formula \verb|-2**2| yields
+\verb|4|, not \verb|-4|.  Here the monadic minus is elaborated first,
+followed by the exponentiation.
+
+\begin{exercise}
+\item Given these declarations:
+\begin{verbatim}
+   INT two = 2, m2 = -2;
+   REAL x = 3.0 / 2.0, y = 1.0
+\end{verbatim}
+\noindent
+what is the value and mode yielded by the following formul{\ae}?
+\begin{subex}
+\item \verb|two ** -m2| \subans \verb|4| \verb|INT|
+'
+\item \verb|x ** two + y ** two| \subans \verb|3.25| \verb|REAL|
+'
+\item \verb|3 * m2 ** two| \subans \verb|12| \verb|INT|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Mixed arithmetic}{form-mix}
+Up to now, the four basic \hx{arithmetic}{arithmetic!mixed}
+operators have always had operands of the same modes.  In practice,
+it is quite surprising how often you want to compute something like
+\verb|2 * 3.0|.  Well, fortunately, the dyadic operators \verb|+|,
+\verb|-|, \verb|*| and \verb|/| (but not \verb|%|) are also defined
+for \hx{mixed modes}{operator!mixed modes}.  That is, any combination of
+\verb|REAL| and \verb|INT| can be used.  With mixed modes the yield
+is always \verb|REAL|.  Thus the following formul{\ae} are all valid:
+\begin{verbatim}
+   1+2.5    3.1*-4    2*3.5**3    2.4-2
+\end{verbatim}
+\noindent
+The \ix{priority} of the mixed-mode operators is unchanged. As we
+shall see later, the priority relates to the operator symbol rather
+than the flavour of the operator in use.
+
+\Section{Order of elaboration}{form-order}
+Even though the \ix{order of elaboration} is dependent on the
+priority of operators, it is often convenient to change the order.
+This can be done by inserting \ix{parentheses} \ixtt{(} and \ixtt{)}
+(or \ixtt{BEGIN} and \ixtt{END}): the formula inside the parentheses is
+evaluated first.  Here are two formul{\ae} which differ only by the
+insertion of parentheses:
+\begin{verbatim}
+   3 * 4 - 2
+   3 *(4 - 2)
+\end{verbatim}
+\noindent
+The first has the value \verb|10|, and the second \verb|6|.
+Parentheses can be \hx{nested}{nesting} to any
+\hx{depth}{parentheses!nesting of}.
+\begin{verbatim}
+   REAL a = (3*a3*(xmin+eps1)**2)/4;
+   REAL alpha g=(ymax - ymin)/(xmax - xmin);
+   INT p=BEGIN 2 * 3**4 % (13-2**3) END - 4.0
+\end{verbatim}
+\noindent
+It is uncommon to find \verb|BEGIN| and \verb|END| in short
+formul{\ae}. If you use \verb|BEGIN| at the start of a formula, you
+must use \verb|END| to complete it even though these symbols and
+parentheses are equivalent.
+
+\Section{Changing the mode}{form-change}
+We have seen that in a strong context, a value of mode \verb|INT| can
+be coerced by \hx{widening}{coercion!widening} to a value of mode
+\verb|REAL|. What about the other way round? Is it possible to coerce
+a value of mode \verb|REAL| to a value of mode \verb|INT|?
+Fortunately, it is impossible using coercion. The reason behind this
+is related to the fact that real numbers can contain fractional
+parts.  In replacing an integer by a real number there is no
+essential change in the value, but when a real number is changed to
+an integer, in general the \ix{fractional part} will be lost.  It is
+undesirable that data should be lost without the programmer noticing.
+
+If you want to convert a \verb|REAL| value to an \verb|INT|, you must
+use one of the operators \ixtt{ROUND} or \ixtt{ENTIER}. The operator
+\verb|ROUND| takes a single operand of mode \verb|REAL| and yields an
+\verb|INT| whose value is the operand rounded to the nearest integer.
+Thus \verb|ROUND 2.7| yields \verb|3|, and \verb|ROUND 2.2| yields
+\verb|2|.  The same rule applies with negative numbers, thus
+\verb|ROUND -3.6| yields \verb|-4|.  At the half way case, for
+example, \verb|ROUND 2.5|, the value is \hx{rounded}{rounding}
+away from zero if the whole number part is odd, and rounded toward
+zero if it is even (zero, in this case, is taken to be an even
+number). This ensures that rounding errors over a large number of
+cases tend to cancel out.
+
+The operator \verb|ENTIER| (French for ``whole'') takes a \verb|REAL|
+operand and likewise yields an \verb|INT| result, but the yield is
+the largest integer equal to or less than the operand. Thus
+\verb|ENTIER 2.2| yields \verb|2|, \verb|ENTIER -2.2| yields
+\verb|-3|.
+
+The operator \ixtt{SIGN} can also be used with a \verb|REAL| operand.
+Its yield has mode \verb|INT| with the same values as before, namely:
+\verb|-1| if the operand is negative, \verb|0| if it is zero, and
+\verb|+1| if it is positive. We shall see in subsequent chapters that
+this property of \verb|SIGN| can be useful.
+
+\begin{exercise}
+\item What is the value and mode of the yield of each of the following
+formul{\ae}?
+\begin{subex}
+\item \verb|ROUND(3.0 - 2.5**2)| \subans \verb|-3| \verb|INT|
+'
+\item \verb|ENTIER -4.5 + ROUND -4.5| \subans \verb|-9| \verb|REAL|
+'
+\item \verb|SIGN(ROUND 3.6 / 2.0) * 2.0| \subans \verb|2.0|
+\verb|REAL|
+'
+\end{subex}
+\item What is the value of the formula
+\begin{verbatim}
+(ENTIER -2.9 + 3**2)/4.0
+\end{verbatim}
+\indent \ans \verb|1.5|
+'
+\end{exercise}
+
+\Section{Miscellaneous operators}{form-miscop}
+The operators \ixtt{MAX} and \ixtt{MIN} are defined for any
+combination of \verb|INT| and \verb|REAL| operands and yield the
+maximum, or minimum, of two values. They can also be combined in the
+same formula:
+\begin{verbatim}
+   INT max min = 345 MAX 249 MIN 1000
+\end{verbatim}
+\noindent
+which yields \verb|345|.  Like \verb|+|, \verb|-|, and \verb|*|, they
+only yield a value of mode \verb|INT| if both their operands are
+\verb|INT|.  Otherwise, they yield a value of mode \verb|REAL|.  They
+both have a priority of~9.
+
+\Section{Operators using \texttt{CHAR}}{from-opchar}
+This chapter has been rather heavy on arithmetic up to now.  You
+might wonder whether operators can have operands of mode \verb|CHAR|.
+The answer is yes.  Indeed, the \ixtt{+} and \ixtt{*} operators are
+so declared, and we shall meet them in chapter~3. There are two
+monadic operators which involve the mode \verb|CHAR|.  The operator
+\ixtt{ABS} (which we have already met) can take a \verb|CHAR| operand
+and yields the integer corresponding to that character.  For example,
+\verb|ABS "A"| yields \verb|65| (the number associated with the
+letter \verb|"A"| as defined by the \ix{ASCII} standard).  The
+identifier \ixtt{max abs char} is declared in the \ix{standard
+prelude} with the value \verb|255|.  Conversely, we can convert an
+integer to a character using the monadic operator \ixtt{REPR}.  The
+formula
+\begin{verbatim}
+   REPR 65
+\end{verbatim}
+\noindent
+yields the value \verb|"A"|.  \verb|REPR| can act on any integer in
+the range \verb|0| to \verb|max abs char|.  \verb|REPR| is of
+particular value in allowing access to control characters.  For
+example, the tab character is declared in the standard prelude as
+\ixtt{tab ch}. Consult section \hyref{stan-enqchar} for the details.
+
+\Section{\texttt{print} revisited}{form-print}
+In chapter 1, we used the \ixtt{print} phrase to convert internal
+values to external characters.  We ought to say what \verb|print| is
+and how it works, but we don't yet know enough about the language.
+Just use it for the moment, and we shall learn more about it later.
+
+Besides being able to convert internal values to external characters,
+\verb|print| can take two \hx{parameters}{parameter} (see chapter~6
+for the low-down on parameters) which can be used to format your
+output.  \ixtt{newline} will cause following output to be displayed
+on a new line, and \ixtt{newpage} will emit a form-feed character
+(\verb|REPR 12|).  \verb|newline| and \verb|newpage| will be
+described in detail in section \hyref{stan-trlay}.
+
+If you want to print the characters emitted by your Algol~68 programs
+you can use \ix{file redirection} to redirect your
+output to a file, which you can later copy to the printer.  For
+example, suppose you have compiled a program called \verb|tt|.  To
+redirect its output to a file called \verb|tt.res|, which you can
+later copy to the printer, you issue the command
+\begin{verbatim}
+   tt > tt.res
+\end{verbatim}
+\noindent
+at the command line. Alternatively, you send the output directly to
+the printer using the command
+\begin{verbatim}
+   tt | lpr
+\end{verbatim}
+\noindent
+at the command line. Try compiling and running the following program:
+\begin{verbatim}
+   PROGRAM tt CONTEXT VOID
+   USE standard
+   BEGIN
+      print(newpage);
+      INT a = ENTIER (3.6**5);
+      REAL p = 4.3 / 2.7;
+      print(a);  print(newline);
+      print(b);  print(newline)
+   END
+   FINISH
+\end{verbatim}
+
+\Section{Summary}{form-summ}
+Operators combined with operands are called formul{\ae}. Operators are
+monadic or dyadic. Monadic operators take a single operand, bind more
+tightly than dyadic operators and when combined are elaborated from
+right to left. Dyadic operators take two operands and have a priority
+of 1 to~9. Successive dyadic operators having the same priority are
+elaborated from left to right. Parentheses, or \verb|BEGIN| and
+\verb|END|, may be used to alter the order of elaboration.
+
+A summary of all the operators described in this chapter, together
+with their priorities, can be found in chapter~13.
+
+Here are some exercises which test you on what you have learned in
+this chapter.  The exercises involving \verb|ABS| and \verb|REPR|
+will need to be written as small programs and compiled and run.  In
+fact, it would be a good idea to write all the answers as small
+programs (or incorporate them all in one large program).  Don't
+forget to use the \verb|print| phrase with \verb|newline| and
+\verb|newpage| to separate your output.
+
+\begin{exercise}
+\item The following declarations are assumed to be in force for
+these exercises:
+\begin{verbatim}
+   INT i = 13, j = -4, k = 7;
+   CHAR s = "s", t = "T";
+   REAL x = -2.4, y = 2.7, z = 0.0
+\end{verbatim}
+\noindent
+What is the value of each of the following formul{\ae}?
+\begin{subex}
+\item \verb|(2 + 3) * (3 - 2)| \subans \verb|5|
+'
+\item \verb|j+i-k| \subans \verb|2|
+'
+\item \verb|3*ABS s| \subans \verb|345|
+'
+\item \verb|ABS"t"-ABS t| \subans \verb|32|
+'
+\item \verb|REPR(k**2)| \subans \verb|"1"|
+'
+\item \verb|ROUND(x**2-y/(x+1))| \subans \verb|8|
+'
+\item \verb|z**9| \subans \verb|0.0|
+'
+\end{subex}
+\item Because of the kind of arithmetic performed by the compiler,
+division of values of mode \verb|REAL| by zero does not cause a
+program to fail (but see section \hyref{stan-fpov}). Write a program
+containing the phrases \verb|REAL z=0.0/0.0;| and \verb|REAL iz=1/0;|
+and see what happens.  In practice, it's probably a good idea to
+check for division by zero. \ans The first \verb|print| phrase
+displays
+\begin{verbatim}
+   $0.0000000000000000$
+\end{verbatim}
+\noindent
+(16 zeros) and the second displays \verb|+infinity|.
+'
+\item Now try the phrase \verb|print(1%0)|. \ans The compiler detects
+the error and rejects it.
+'
+\item What is wrong with the following formul{\ae}?
+\begin{subex}
+\item \verb|[4-j]*3| \subans The brackets should be replaced with
+parentheses.
+'
+\item \verb|(((3-j)*x+3)*x+5.6| \subans There are more opening than
+closing parentheses. The first opening parenthesis should be deleted.
+'
+\item \verb|ROUND "e"| \subans The operator \verb|ROUND| has not been
+declared to use an operand with mode \verb|CHAR|.
+'
+\item \verb|ENTIER 4 + 3.0| \subans The operator \verb|ENTIER| has
+not been declared for use with an operand with mode \verb|INT|. 
+'
+\end{subex}
+\end{exercise}

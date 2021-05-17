@@ -1,0 +1,1035 @@
+% $Log: chapter12.tex,v $
+% Revision 1.4  2004-11-07 16:00:10  sian
+% Removed all references to PLUS, MINUS and TIMES
+%
+% Revision 1.3  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Program development}{chapxii}
+Of course, there is more to writing programs than learning a
+programming language. Although you will find many books on
+programming languages, you will not find many on computer
+\ix{programming} as such.  That is because it is very much a craft.
+Be aware that this book does not, and cannot, train you to become a
+professional programmer.  Only on-the-job training and experience can
+do that---but after working through this chapter, you will have an
+idea of some of the activities a professional programmer does.
+
+In the computer industry, there is a widespread attitude that
+\hx{program maintenance}{program!maintenance} helps build good
+programmers. There are sound reasons for this. One is that reading
+other people's programs helps you learn how to lay out programs, how
+to organise the source, how to write structured code and how to solve
+the sort of problems that a programmer meets daily. Another reason is
+that program maintenance usually involves either removing errors
+(usually called \bfix{bugs}) or making small changes to the program
+to adapt it to changing requirements. You have to learn how a program
+works before you change it and reading someone else's program means
+that the philosophy of the program (the approach of the program to
+solving a problem) is already there---you do not have to create it.
+
+However, there is no substitute for writing your own programs. The
+first section of this chapter is concerned with how to write your own
+programs, from problem analysis to documentation. The next topic
+discusses how to access operating system procedures.  This introduces
+almost all those aspects of Algol~68 which involve direct machine
+access apart from the mode \verb|BITS| and its associated operators
+which were covered in chapter~11.
+
+Next, we turn to the first aspect of program maintenance: how to
+understand a program.  A small utility (\verb|lf|) is provided with
+the \ix{Algol68toC} compilation system documentation.  This section looks
+at \verb|lf| and analyses its functioning.
+
+\Section{Writing programs}{dev-writ}
+The first stage in the development of a new program consists of
+analysing the problem that the program must solve. Unfortunately,
+there is no known method or methodology which will solve any kind of
+problem.  However, a particularly good book on \ix{problem solving}
+was written by \hx{ George P\'olya}{Polya@P\'olya, George}(see
+the Bibliography) and although the book is geared towards
+mathematical problems, it will help you solve most technical problems.
+
+\hx{Problem analysis}{problem analysis} is not usually taught to
+beginners at computer programming because, so far as we know, it is
+mainly an intuitive activity (it is a branch of \ix{Heuristics}).
+Learning to analyse a problem with the intention of writing a
+computer program is largely accomplished by writing simple programs
+followed by programs of increasing sophistication---this is sometimes
+called ``\ix{learning by doing}''.  When we start analysing actual
+programs later in the chapter, each such analysis will be preceded by
+a problem analysis.  You will be able to see how the program, as
+presented, accords with that analysis.
+
+Nevertheless, even though no definitive method can be given, there are
+guidelines which help you to appreciate and analyse problems suitable
+for computer solution. In the field of systems analysis, you will find
+various methodologies (such as \ix{SSADM}). These are usually
+geared towards large-scale systems and are designed to prevent systems
+designers from forgetting details.  In the context of
+\hx{program design}{program!design}, knowing the data to be used by
+the program and the data to be produced by the program is the principal
+guide to knowing what manipulations the program must perform.
+\hx{Data knowledge}{data!knowledge} specifies the books accessed by
+the program and usually constitutes a substantial part of the program's
+documentation.
+
+Once you know the data your program operates on, you can determine
+the actual manipulations, or calculations, required. At this stage,
+you should be able to determine which
+\hx{data structures}{data!structure} are suitable for the solution of
+your problem.  The data structures in turn lead you to the
+\ix{mode declarations}.  The kind of data structure also helps to
+determine the kind of \hx{procedures}{procedure} required.  Some
+examples: if your data structures include a queue, then queue
+procedures will be needed; or, if you are using multiples (repeated
+data), then you will almost invariably be using loops.  Again, if an
+input book contains structured data, such as an item which is
+repeated many times, then again your program will contain a
+processing loop.  The \hx{Jackson programming}{Jackson methodology}
+methodology is a useful way of specifying procedures given the data
+structures to be manipulated (see the bibliography).
+
+\Subsection{Top-down analysis}{dev-top}
+After you have determined suitable modes and procedures, you need to
+analyse the problem in a top-down manner.  Basically,
+\bfix{top-down analysis} consists of determining the principal
+actions needed to perform a given action, then analysing each of the
+principal actions in the same way.  For example, suppose we wished to
+write a program to copy a book whose identifier is given on the
+command line.  The topmost statement of the problem could be
+\begin{verbatim}
+   copy an identified book
+\end{verbatim}
+
+The next stage could be
+\begin{verbatim}
+   get the book identifier
+   open the book
+   establish the output copy book
+   copy the input book to output
+   close both books
+\end{verbatim}
+\noindent
+At this stage, the process ``copy the input book to output'' will
+depend on the structure of the input book. If it is text, with lines
+of differing length, you could use a name of mode \verb|REF STRING|.
+If the book contains similar groupings of data, called
+\hx{\textbf{records}}{record}, then it would be more appropriate to
+declare a structured mode and write appropriate input and output
+procedures:
+\begin{verbatim}
+   DO
+      get record from input book
+      put record to output book
+   OD
+\end{verbatim}
+\noindent
+The analysis is continued until each action can be directly coded.
+
+\Subsection{Program layout}{dev-layout}
+Before you start coding the program (writing the actual Algol~68
+source program), you should be aware of various programming
+strategies besides the different means of manipulating data
+structures.  The first to address is the matter of source
+\hx{program layout}{program!layout}.
+
+In the examples given in this book, code has been indented to reflect
+program structure, but even in this matter, there are choices. For
+example, some people indent the \verb|THEN| and \verb|ELSE| clauses of
+an \verb|IF| \hx{clause}{code!indentation}:
+\begin{verbatim}
+   IF ...
+     THEN ...
+     ELSE ...
+   FI
+\end{verbatim}
+\noindent
+instead of
+\begin{verbatim}
+   IF   ...
+   THEN ...
+   ELSE ...
+   FI
+\end{verbatim}
+\noindent
+Others regard the parts of the \verb|IF| clause as some kind of
+bracketing:
+\begin{verbatim}
+   IF
+      ...
+   THEN
+      ...
+   ELSE
+      ...
+   FI
+\end{verbatim}
+\noindent
+Some people write a procedure as:
+\begin{verbatim}
+   PROC ...
+      BEGIN
+      ...
+      END
+\end{verbatim}
+\noindent
+Others never use \verb|BEGIN| and \verb|END|, but only use parentheses.
+
+Another point is whether to put more than one phrase on the same
+line. And what about \ix{blank lines}---these usually
+improve a program's legibility.  Whatever you decide, keep to your
+decision throughout the program (or most of the program) otherwise the
+format of the code may prove confusing.  Of course, you will learn by
+your mistakes and usually you will change your programming style over
+the years.
+
+\Subsection{Declarations}{dev-decs}
+Another matter is whether to group declarations. Unlike many
+programming languages, Algol~68 allows you to place declarations
+wherever you wish. This does not mean that you should therefore
+sprinkle declarations throughout your program, al\-though there is
+something to be said for declarations being as local as possible.
+There are also advantages in \hx{grouping}{declaration!grouping}
+all your global declarations so that they can be found easily.
+Generally speaking, it is a good idea to group all \ix{global names}
+together (those in the outermost range) and within that grouping, to
+declare together all names which use the same base mode (for example,
+group declarations of modes \verb|CHAR|, \verb|[]CHAR| and
+\verb|STRING|).  Some of the exercises in this book only declare
+names when they are immediately followed by related procedures. If
+your program needs many \hx{global names}{name!global}, it makes
+sense to declare them near the beginning of the program, after mode
+declarations, so that if subsequent changes are required, you know
+that all the global name declarations are together and therefore you
+are unlikely to miss any.
+
+\Subsection{Procedures}{dev-procs}
+The next consideration is breaking your code into
+\hx{procedures}{procedure}.
+As you analyse the problem, you will find that some of the processing
+can be specified in a single line which must be analysed further
+before it can be directly coded.  Such a line is a good indication
+that that process should be written as a procedure.  Even a procedure
+which is used once only is worth writing if the internal logic is
+more than a couple of conditional clauses, or more than one
+conditional clause even.
+
+You also have to decide between repeating a procedure in a loop, or
+placing the loop in the procedure.  Deciding the level at which
+\hx{logic}{logic level} should be put in a procedure is largely the
+product of experience---yours and other people's---another reason for
+maintaining existing programs.
+
+When you have decided where to use procedures, you should then consider
+the \hx{interface}{procedure!interface} between the procedure and the
+code that calls it.  What parameters should it have, what yield, should
+you use a united mode for the yield, and so on.  Try to have as few
+parameters as possible, but preferably use parameters rather than
+assign to names global to the procedure.  The design of individual
+procedures is similar to the design of a complete program.
+
+When you are coding a procedure, be especially careful with compound
+Boolean formul\ae. From experience, this is where most mistakes
+arise. If you are writing a procedure which manipulates a linked
+list, draw a diagram of what you are trying to do.  That is much
+easier than trying to picture the structures in your head.
+
+\Subsection{Monetary values}{dev-money}
+Problems can arise when dealing with \hx{money}{monetary values} in
+computer programs because the value stored must be exact.  For this
+reason, it is usually argued that only integers should be used.  In
+fact, real numbers can be used provided that the precision of the
+mantissa is not exceeded.  Real numbers are stored in two parts: the
+\ix{mantissa}, which contains the significant digits of the value,
+and the \ix{exponent}, which multiplies that value by a power of 2.
+In other words, using decimal arithmetic, the number
+$3\cdot14159\times10^{-43}$ has $3\cdot14159$ as a mantissa and $-43$
+as an exponent.  Because real numbers are stored in \ix{binary}
+(radix~2), the mantissa is stored as a value in the range
+$1\le\textrm{value}<2$ with the exponent adjusted appropriately.
+
+There are a number of identifiers declared in the \ix{standard
+prelude}, known as
+\hx{\textbf{environment enquiries}}{environment enquiry}, which serve
+to determine the range and precision of real numbers.  The
+\ixtt{real precision} is the number of bits used to store the
+mantissa, while the value \ixtt{max exp real} is the maximum exponent
+which can be stored for a binary mantissa ({\it not\/} the number of
+bits, although it is a guide to that number).  The \ixtt{real width}
+and \ixtt{exp width} say how many decimal digits can be written for
+the mantissa and the exponent.  The values \ixtt{max real} and
+\ixtt{min real} are the maximum and minimum real numbers which can be
+stored in the computer.  All these values are specified by the IEEE
+754--1985 standard on
+\hx{``Binary Floating-Point Arithmetic''}{floating-point standard}
+which is implemented by most microprocessors today.
+
+The value of \verb|real width| is 15 meaning that 15 decimal digits can be
+stored accurately. Leaving a margin of safety, we can say that an integer
+with 14 digits can be stored accurately, so that the maximum amount is
+$$99,999,999,999,999$$
+units. If the unit of currency is divided into
+smaller units, such as the sterling pound into pence, or the dollar into
+cents, then the monetary value should be stored in the smaller unit unless
+it is known that the smaller unit is not required. Thus the greatest
+sterling amount that can be handled would appear to be
+\pounds 999,999,999,999.99.
+
+However, Algol~68 allows arithmetic values to be stored to a lesser
+or greater precision.  The modes \ixtt{INT}, \ixtt{REAL},
+\ixtt{COMPL} and \ixtt{BITS} can be preceded by any number of
+\ixtt{SHORT}s or \ixtt{LONG}s (but not both).  Thus
+\begin{verbatim}
+   LONG LONG LONG REAL r;
+\end{verbatim}
+\noindent
+is a valid declaration for a name which can refer to an exceptionally
+precise real.  When declaring identifiers of other precisions,
+denotations of the required precision can be obtained by using a cast
+with the standard denotation of the value as in
+\begin{verbatim}
+   LONG REAL lr = LONG REAL(1);
+\end{verbatim}
+\noindent
+One alternative is to use \verb|LONG| with the denotation:
+\begin{verbatim}
+   LONG REAL lr = LONG 1.0;
+\end{verbatim}
+\noindent
+Another is to use the \ixtt{LENG} operator, which converts a value of
+mode \verb|INT| or \verb|REAL| to a value of the next longer
+precision, as in
+\begin{verbatim}
+   LONG REAL lr = LENG 1.0;
+\end{verbatim}
+\noindent
+\ixtt{SHORTEN}  goes the other way.
+\begin{verbatim}
+   SHORT SHORT INT ssi = SHORTEN SHORTEN 3;
+\end{verbatim}
+\noindent
+All the arithmetic operators are valid for all the \verb|LONG| and
+\verb|SHORT| modes. Although you can write as many \verb|LONG|s or
+\verb|SHORT|s as you like, any implementation of Algol~68 will
+provide only a limited number. The number of different precisions
+available is given by some identifiers in the \ix{standard prelude}
+called \hx{environment enquiries}{environment enquiry}. They are
+\begin{itemize}
+\item \ixtt{int lengths}
+\item \ixtt{int shorths}
+\item \ixtt{real lengths}
+\item \ixtt{real shorths}
+\item \ixtt{bits lengths}
+\item \ixtt{bits shorths}
+\end{itemize}
+The values for complex numbers are the same as those for reals.
+For integers, where \verb|int lengths| is
+greater than \verb|1|, \ixtt{long max int}
+and so on are also declared, and similarly for
+\ixtt{short max int}.  If
+\verb|int lengths| is \verb|1|, then only the mode \verb|INT| is
+available.
+
+For the \hx{a68toc}{a68toc!int lengths@\texttt{int lengths}}
+\hx{compiler}{a68toc!int shorths@\texttt{int shorths}}
+\begin{verbatim}
+   int lengths=2
+   int shorths=3
+\end{verbatim}
+\noindent
+Thus it is meaningful to write
+\begin{verbatim}
+   LONG INT long int:=long max int;
+   INT int:=max int;
+   SHORT INT sh int:=short max int;
+   SHORT SHORT INT sh sh int:=
+            short short max int;
+\end{verbatim}
+\noindent
+The same applies to the mode \verb|BITS|. Try writing a program which
+prints out the values of the environment enquiries mentioned in this
+section. The transput procedures \verb|get|, \verb|put|, \verb|get|
+\verb|bin| and \verb|put bin| all handle the available \verb|LONG|
+and \verb|SHORT| modes.
+
+Although you can still write
+\begin{verbatim}
+   LONG LONG INT lli=LONG LONG 3;
+\end{verbatim}
+\noindent
+the actual value created may not differ from \verb|LONG INT| depending
+on the value of \verb|int lengths|. Note that you cannot transput a
+value which is not covered by the available lengths/shorths. Use
+\verb|LENG| or \verb|SHORTEN| before trying to transput.
+
+For monetary values, \verb|LONG INT| is available with the value of
+\verb|long max int| being
+\begin{verbatim}
+   9,223,372,036,854,775,807
+\end{verbatim}
+\noindent
+which should be big enough for most amounts.
+
+\Subsection{Optimisation}{dev-opt}
+There are two well-known rules about optimisation:
+\begin{enumerate}
+\item Don't do it.
+\item Don't do it now.
+\end{enumerate}
+However, often there is a great temptation to optimise
+\hx{code}{optimisation!code}, particularly if two procedures are
+very similar.  Using identity declarations is a good form of
+optimisation because not only do they save some writing, they also
+lead to more efficient code.  However, you should avoid procedure
+optimisation like the plague because it usually leads to more
+complicated or obscure code.  A good indicator of bad optimisation is
+the necessity of extra conditional clauses.  In general, optimisation
+is never a primary consideration: you might save a few milliseconds
+of computer time at the expense of a few hours of programmer time.
+
+\Subsection{Testing and debugging}{dev-test}
+\hx{When}{testing} \hx{writing}{debugging} a program, there
+is a strong tendency to write hundreds of lines of code and then test
+it all at once.  Resist it.  The actual writing of a program rarely
+occupies more than 30\% of the whole development time.  If you write
+your overall logic, test it and it works, you will progress much
+faster than if you had written the whole program.  Once your overall
+logic works, you can code constituent procedures, gradually refining
+your test data (see below) so that you are sure your program works at
+each stage.  By the time you complete the writing of your program,
+most of it should already be working.  You can then test it
+thoroughly.  The added advantage of \ix{step-wise testing} is that
+you can be sure of exercising more of your code.  Your test data will
+also be simpler.
+
+The idea behind devising \hx{test data}{testing!data} is not just
+giving your program correct data to see whether it will produce the
+desired results.  Almost every program is designed to deal with
+exception conditions.  For example, the \verb|lf| program has to be
+able to cope with blank lines (usually, zero-length lines) so the
+test data should contain not one blank line, but also two consecutive
+blank lines.  It also has to be able to cope with extra-long lines,
+so the test data should contain at least one of those.  Programs
+which check input data for validity need to be tested extensively
+with erroneous data.
+
+It is particularly important that you test your programs with data
+designed to exercise \ix{boundary conditions}.  For example, suppose
+the creation of an output book fails due to a full hard disk. Have
+you tested it, and does your program terminate sensibly with a
+meaningful error message? You could try testing your program with the
+output book being created on a floppy disk which is full.
+
+Sometimes a program will fault with a
+\hx{run-time error}{error!run-time} such as
+\begin{verbatim}
+   Run time fault (aborting):
+   Subscript out of bounds
+\end{verbatim}
+\noindent
+or errors associated with slicing or trimming multiples. A good way of
+discovering what has gone wrong is to write a monitor procedure on the
+lines of
+\begin{verbatim}
+   PROC monitor=(INT a,
+                 []UNION(SIMPLOUT,
+                         PROC(REF FILE)VOID)r
+                 )VOID:
+   BEGIN
+      print(("*** ",whole(a,0)));
+      print(r)
+   END
+\end{verbatim}
+\noindent
+and then call \verb|monitor| with an identifying number and string at
+various points in the program. For example, if you think a multiple
+subscript is suspect, you could write
+\begin{verbatim}
+   monitor(20,("Subscript=",whole(subscript,0)))
+\end{verbatim}
+\noindent
+By placing \ix{monitors} at judicious points, you can follow
+the action of your program. This can be particularly useful for a
+program that loops unexpectedly: monitors will tell you what has gone
+wrong. If you need to collect a large amount of monitors, it is best to
+send the output to a book. The disadvantage of this is that the
+operating system does not register a book as having a size until it has
+been closed after creating. This means that if your program creates a
+monitoring book, writes a large amount of data to it and fails before
+the book is closed, you will not be able to read any of the contents
+because, according to most operating systems, there will not be any
+contents. A way round this problem is to open the book whenever you
+want to write to it, position the writing position at the end of the
+book, write your data to it and then close the book. This will ensure
+that the book will have all the executed monitors (unless, of course,
+it is a monitor which has caused the program to fail!). The procedure
+\ixtt{debug} given in section~\hyref{trans-bin} will
+do this.
+
+An alternative method of tracing the action of a program at run-time
+is to use a \ix{source-level debugger}. The \verb|ddd| or \verb|gdb| programs can
+help you debug the C~source program produced by the
+\hx{a68toc}{a68toc!debugger} compiler, but unless you understand the
+C~programming language and the output of the a68toc compiler, you
+will not find it useful.  Monitors, although an old-fashioned
+solution to program debugging, are still the best means of gathering
+data about program execution.
+
+Another proven method of \bfix{debugging} (the process of removing
+bugs) is \bfix{dry-running}.  This involves acting as though you are
+the computer and executing a small portion of program accordingly. An
+example will be given in the analysis of the \verb|lf| program later.
+
+\hx{Sometimes}{debugging!ploys}, no matter what you do, it just seems
+impossible to find out what has gone wrong.  There are three ploys you can
+try.  The first, and easiest, is to imagine that you are explaining your
+program to a friend.  The second is to actually explain it to a friend!
+This finds most errors.  Finally, if all else fails, contact the
+author.
+
+\Subsection{Compilation errors}{dev-errors}
+You can trust the compiler to find grammatical errors in your program
+if any are there. The compiler will not display an error message for
+some weird, but legal, construction. If your program is syntactically
+correct (that is, it is legal according to the rules of the
+language), then it will parse \hx{correctly}{error!compilation}.
+
+When compiling a program of more than a hundred lines, say, you can use
+the parsing option (\verb|-check|) which will more than double the
+speed of compilation. When your program parses without error, then it
+is worth doing a straight compilation (see the online documentation for
+program \verb|mm| in the \hx{a68toc}{a68toc!mm@\texttt{mm}} compilation system).
+
+A definitive list of error messages can be found in the compiler source code file
+\begin{verbatim}
+   algol68toc-1.xx/src/message.a68
+\end{verbatim}
+\noindent
+You will find that most of the messages are easy to understand.
+Occasionally, you will get a message which seems to make no sense at
+all. This is usually because the actual error occurs much earlier in
+your program. By the time the compiler has discovered something
+wrong, it may well have compiled (or tried to compile) several
+hundred lines of code. A typical error of this sort is starting a
+comment and not finishing it, especially if you start the comment
+with an opening brace (\verb|{|), which gives rise to the following
+error message:
+\begin{verbatim}
+   ERROR (112) end of file inside
+      comment or pragmat
+\end{verbatim}
+\noindent
+If you start a comment with a sharp (\verb|#|) and forget to finish it
+likewise, the next time a sharp appears at the beginning of another
+comment, the compiler will announce all sorts of weird
+errors.\footnote{One way of avoiding this sort of error is to use
+``lexical'' highlighting with your favourite editor. A missing quote
+or sharp will cause large amounts of your program to be displayed as
+a string denotation or a comment.}
+
+Another kind of troublesome error is to insert an extra closing
+parenthesis or \verb|END|. This can produce lots of spurious errors.
+For example:
+\begin{verbatim}
+   ERROR (118) FI expected here
+                  (at character 48)
+   ERROR (203) ELSE not expected here
+                  (at character 4)
+   ERROR (140) BOOL, INT or UNION required here,
+                  not VOID
+   ERROR (116) brackets mismatch
+                  (at character 2)
+   ERROR (159) elements of in-parts
+                  must be units
+   ERROR (117) FINISH expected here
+                  (at character 3)
+\end{verbatim}
+\noindent
+Omitting a semicolon, or inadvertently inserting one will also cause
+the appearance of curious error messages. Messages about
+\ixtt{UNION}s usually mean that you should use a
+cast to ensure that the compiler knows which mode you mean. If, for
+example, you have a procedure which expects a multiple of mode
+\begin{verbatim}
+   []UNION(STRING,[]INT)
+\end{verbatim}
+\noindent
+and you present a parameter like
+\begin{verbatim}
+   ((1,2),(4,2),(0,4))
+\end{verbatim}
+\noindent
+then the compiler will not know whether the display is a
+\hx{row-display}{row!display} or a
+\hx{structure-display}{structure!display}.  Either you should precede
+it with a suitable mode, or modify your procedure to take a single
+\verb|[]INT| and loop through it in twos.  Having to modify your
+program because the compiler does not like what you have written is
+rare however.
+
+\Subsection{Arithmetic overflow}{dev-overflow}
+Sometimes your program will fail at the time of elaboration or
+``run-time'' due to \hx{arithmetic overflow}{overflow!arithmetic}. If,
+during a calculation, an intermediate result exceeds the capacity of an
+\verb|INT|, no indication will be given other than erroneous results.
+
+On some platforms, overflow of \verb|REAL| numbers can be detected by the floating-point
+unit. The standard prelude contains the value \verb|fpu| \verb|cw|
+\verb|algol| \verb|68| \verb|round| of mode \verb|SHORT BITS| and the
+procedure
+\begin{verbatim}
+   PROC set fpu cw = (SHORT BITS cw)VOID:
+\end{verbatim}
+\noindent
+The small test program \verb|testov| (to be found with the
+\hx{a68toc}{a68toc!test program} compilation system documentation)
+illustrates testing for overflow both with integers and real numbers.
+
+\Subsection{Documentation}{dev-docs}
+The most tedious aspect of writing a program is documenting it.  Even
+if you describe what the program is going to do before you write it,
+but after you have designed it, documentation is not usually a
+vitally interesting task. Large programming teams often have the
+services of a technical writer whose job it is to ensure that
+\hx{all}{documentation}
+\hx{program documentation}{program!documentation} is
+completed.\footnote{Various schemes have been developed for
+documenting a program as it is written, They are often called
+``literate programming''.}
+
+Existing programs are usually documented and there is no doubt that
+the best way of learning to document a program is to see how others
+have done it. There are several documentation standards in use,
+although most large companies have their own. Generally speaking, the
+documentation for a program should contain at least the following
+\begin{itemize}
+\item the program name
+\item the language used to write the program
+\item a short description of what the program does
+\item the details of all books used by, or produced by, the program,
+including the screen and the printer
+\item an analysis of how the program works, particularly any special
+algorithms or data structures (queues and trees are examples)
+\item who wrote the program, and when
+\item the location of the source code
+\item the latest listing of the source code
+\end{itemize}
+but not necessarily in the order given above. The aim of program
+documentation is to make it easy to amend the program, or to use it
+for a subsequent rewrite.
+
+Lastly, it is worthwhile saying ``don't be rigid in program design''.
+If, as you reach the more detailed stages of designing your program,
+you discover that you have made a mistake in the high-level design, be
+willing to backtrack and revise it. Design faults are usually
+attributable to faulty analysis of the problem.
+
+\Section{Non-canonical input}{dev-noncanon}
+The \verb|noncanon| program provides a means of entering data via the
+keyboard without echoing it to the screen. This is known as
+non-canonical input mode, the usual echoing of input being
+\ix{canonical input mode}. The general details of terminal control
+are very complex, but simple access has been provided with the
+\verb|kbd channel|.
+
+Here is a sample program which may be used to test the effect of
+\verb|kbd channel|:
+\begin{verbatim}
+   PROGRAM noncanon CONTEXT VOID
+   USE standard
+   BEGIN
+      STRING password;
+      FILE kbd;  open(kbd,"",kbd channel);
+      WHILE
+         CHAR ch;  get bin(kbd,ch);
+         ch /= REPR lf
+      DO
+         password+:=ch;
+         print("*")
+      OD;
+      close(kbd);
+      print(("You entered [",
+             password,"]",
+             newline))
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Notice that the program cannot be aborted by pressing \verb|^C|. Ensure
+you close the \verb|FILE| opened with the \verb|kbd channel| after use
+otherwise you'll find all your commands at the command prompt unechoed.
+If that happens, issue the following command at the prompt:
+\begin{verbatim}
+   $ stty sane
+\end{verbatim}
+\noindent
+when normal echoing will be restored.
+
+\Section{A simple utility}{dev-lf}
+When you are writing computer programs, it is very useful to be able
+to copy your Algol~68 source programs to a printer with line numbers.
+Many editors, including \verb|vim|, \verb|Emacs| and \verb|FTE|, use
+line numbers. When the Algol~68 compiler finds an error in your
+program, it displays the offending line together with its number and
+a descriptive message on the screen and the number of the character
+in the line where the error occurred. However, it is insufficient to
+merely copy the contents of a file to the printer (unless you are
+using the spooling facility of a header file) because the output will
+not contain any identifying information.
+
+What is required is a small program which will optionally write line
+numbers and which will write the name of the file being printed
+together with the date and time at which the file was last modified.
+A page number is another useful item as it prevents pages being lost
+when the listing is made on separate sheets of paper. It would also
+be very useful to be able to specify where in a file a listing should
+start and where it should finish. Such a program is called a
+\bfix{utility}. Notice that the program must be able to handle
+zero-length lines as well as lines which are too long to be printed
+on one line alone. Lastly, some editors allow you to insert tab
+characters into your document, so the utility must be able to print
+the file with the correct indentation.
+
+The preceding problem analysis shows that we could write such a
+program if we knew how to obtain the date and time of last
+modification of a file from the operating system. In the directory
+\verb|/usr/share/doc/algol68toc/|, you will find the source of the
+program \verb|lf| which solves the problem described above for the
+Linux operating system. The source of \verb|lf| is 520 lines long.
+Compile it and run it with the \ix{argument} \verb|-h|. The help
+information displayed by the program should be displayed by every
+program you write which is used at the command line: it prevents
+accidental use from causing damage to your operating system files or
+directories.
+
+\Subsection{The source code}{dev-code}
+There are many ways of tackling the understanding of a program, but
+here is a method which does help with Algol 68 programs. In summary,
+\begin{enumerate}
+\item See what the program does.
+\item Look at the principal processing.
+\item Examine the mode declarations.
+\item Examine the routines.
+\item Repeat steps 2--4 for each routine.
+\end{enumerate}
+
+Stage one of examining a program is to see what it does. Examples of
+its output, and possibly its input, help you to identify the actions
+of various parts of the program. Documentation of the input and
+output would suffice, but neither exists in this case because the
+input is a plain text file and the output is better seen than
+described. Compile the Algol 68 example program \verb|lf| in
+\begin{verbatim}
+   /usr/share/doc/algol68toc/
+\end{verbatim}
+\noindent
+and use it to list the file \verb|test.lf| (in the same directory)
+with line numbers on your printer using the command
+\begin{verbatim}
+   lf -pg -n test.lf | lpr
+\end{verbatim}
+\noindent
+to pipe the output to the printer unless you have a LaserJet 4 or 6L
+when you can omit the \verb|-pg| argument.  Notice that the time and
+date the file was last modified appears at the top of each page,
+together with the identifier of the file and the page number. If you
+used the \verb|-n| parameter to print the test file, each line will
+be preceded by a line number and a colon.  If you did not list the
+file with line numbers, do so now because the line numbers will
+highlight another feature of the program. The first line in
+\verb|test.lf| is too long to be printed on one line, so the program
+breaks it into two parts.  The second part does not have a line
+number since it is part of the same line in the input.
+
+The second stage in understanding a program is to look at the
+principal processing. Since procedures and other values must be
+declared before use in the \hx{a68toc}{a68toc!declarations} compiler,
+the last part of the program contains the \ix{main processing logic}.
+Now print (or display) the source of \verb|lf.a68| using the command
+\begin{verbatim}
+   lf -n /usr/share/doc/algol68toc/lf.a68
+\end{verbatim}
+\noindent
+In the source, the main processing logic is on lines 427--517.
+Examine those lines now.
+
+Before processing any command line arguments, the program defines the
+actions to take when the last argument has been read. In other words,
+what should be done when the logical end of file has been reached for
+\verb|comm line|. The default action is to terminate the program
+immediately with a suitable error message. In \verb|lf|, no
+identification is given for \verb|comm line| in the \verb|open|
+procedure, because it isn't relevant, but if you insert such an
+identification, for example, \verb|command line file|, then any error
+message issued by the transput system will include it. Notice that
+although the anonymous procedure used as the second parameter for
+\verb|on logical file end| on line 448 occurs within the
+\verb|IF ... FI| clause, because it is a denotation (a procedure
+denotation) it has global scope. That is one of the reasons why
+anonymous procedures are so useful. Also note the use of \ixtt{SKIP} to
+yield a value of mode \verb|BOOL|: in fact, it will never be used
+because \ixtt{stop} is a synonym for \verb|GOTO end of program|.
+
+In lines 442--517, the program processes the command line argument by
+argument. If an argument starts with ``-'' it is assumed to be an
+option otherwise it is assumed to be a filename. Note the use of
+\verb|skip terminators| to skip spaces in the command line.  Options
+that require a number (\verb|-s| and \verb|-t|) expect it to follow
+the option directly (see lines 493 and 495). Lines 500--506 process a
+solitary \verb|-| to mean ``list the standard input''. Lines 507--516
+process a named file. As you examine the code, underline the
+identifiers of all procedure calls.
+
+The next stage in understanding a program is to look at all the
+\ix{mode declarations}.  There are three in this program:
+\verb|PRINTER|, \verb|SEC| and \verb|STAT|.  You should scan the
+program to see what identifiers have that or a related mode and where
+they are used.
+
+\Subsection{Routines}{dev-rout}
+Finally, you need to examine the routines declared. It is a good
+idea, especially in a more complicated program, to list the
+identifiers of all procedures with nested declarations of procedures
+indented under their parent procedure identifiers. This helps to fix
+the structure of the program in your mind. Then you should examine
+the procedures used in the main processing loop.  In \verb|lf|, they
+are:
+\begin{verbatim}
+   char in string       close
+   disp error           get
+   get mtime            get numeric arg
+   get sections         help
+   open                 print
+   print file           process file name
+   reset parameters     skip terminators
+\end{verbatim}
+\noindent
+When you examine each procedure, do the same as you did for the whole
+program: first the main logic, then the modes, then the procedures
+and operators. You will need to backtrack several times in a large
+program. If a lot of names are declared, prepare a list together with
+a description of what each name is used for, where it is declared and
+the places where it is used. A cross-reference program would be
+really useful, but it is not a simple program to write for Algol~68.
+
+The principle processing is performed by the procedure \verb|print|
+\verb|file| on lines 258--322. Firstly, tab stops are set according
+to the current value of \verb|tabs|, then \verb|lines| is initialised
+and an initialisation string output to the printer. If letter quality
+has been chosen (option \verb|-q|), a special string is sent to the
+printer accordingly. Then the \verb|logical| \verb|file| \verb|end|
+event procedure is set. Each section specified on the command line
+(or the default section if no sections were specified) is then
+printed using the procedure \verb|do line|. Each line is input using
+\verb|get line| whose principal function is to expand tab characters
+to the required number of spaces (3 unless set by the \verb|-t|
+option). Lines are not output until the \verb|beg OF ss| line is
+reached (1 unless set by the \verb|-s| option). Notice the code
+following \verb|FROM| in the preamble to the inner \verb|DO ... OD|
+loop (on lines 313--316) which ensures that the file is reset if the
+sections to be printed are not ordered (the definition of ordered is
+in the procedure \verb|get sections| (lines 381--425).
+
+Similar to your list of nested procedures, prepare a list of
+procedures where indented procedures identify procedures called by
+the parent procedure. Here is part of the list for \verb|lf|:
+\goodbreak
+\begin{verbatim}
+   fstat
+      linux fstat
+   help
+      exit, newline, put
+   reset parameters
+   lf print
+      ODD, print
+   get mtime
+      fstat, linux ctime
+   get sections
+      +:=
+      add section
+         char in string
+         get numeric arg
+      char in string
+\end{verbatim}
+
+\Subsection{Dry-running example}{dev-dry}
+The procedure \verb|get line| (lines 232--250) and its associated
+procedures \verb|set tabs| (lines 220--224) and \verb|tab pos| (lines
+226--227) are worth examining in detail.  The best way to see how
+they work is to dry-run them.  Take a blank sheet of paper and make a
+vertical list of all the names, both local and global,
+\hx{used}{dry-running} by the procedures. Opposite \verb|in line|,
+write a piece of text containing tab characters (a piece of indented
+program, for example).  Then work your way through the procedure,
+marking the value referenced by each name as you complete each step.
+You should also note the value of each non-name; for example, the
+loop identifier \verb|i|.  Here is what your list could look like
+after going 3 times round the outer loop (the inner loop is on lines
+241--244):
+\smallskip
+\begin{tabbing}
+\ttfamily
+\quad\=tabstops\quad\=FFTFFTFFTFFTFFTFFTFFTFFT$\ldots$\\
+\>line(ln)\>\verb*|    |T\\
+\>in line\>$\rightarrow$\verb*| THEN ch:="A"|\\
+\>op\>$\not1\not2\not3\not4\not5$ 6\\
+\>i\>$\not1\not2$ 3\\
+\>c\>$\not\rightarrow\not\hbox{\verb*| |}$ T
+\end{tabbing}
+\smallskip
+\noindent Struck-out values have been superceded and \verb*| |
+denotes a space. Dry-running is a very useful method, if laborious
+and time-consuming, of finding bugs. \ixtt{tab ch} is declared in the
+standard prelude.
+
+This utility program (\verb|lf|) is quite short, but we have analysed
+its working in detail so that you can see how it is done.
+
+\Subsection{\texttt{ALIEN} procedures}{dev-ALIEN}
+The utility \verb|lf| uses some of the extensions provided by the
+\hx{a68toc}{a68toc!ALIEN@\texttt{ALIEN}} compiler, in particular, the
+\verb|ALIEN| construct which provides access to procedures compiled
+by other compilers. In this section we shall look at the
+\verb|get cwd| and the \verb|fstat| procedures.
+
+\subsubsection{The procedure \texttt{fstat}}\hylabel{dev-fstat}
+The procedure \verb|fstat| is on lines 100--105. It depends on a call
+of the \verb|linux fstat| procedure whose second parameter is a name
+referring to a value of mode \verb|STAT|. The declaration of
+\verb|STAT| is on lines 24--41.
+
+If you investigate the file \verb|/usr/include/bits/stat.h|, you will
+find the C~definition of the \verb|stat| structure therein. The
+\verb|STAT| mode accurately reflects this structure using \verb|LONG|
+or \verb|SHORT| as appropriate. Briefly, a C~\verb|unsigned int| is
+equivalent to an Algol 68 \verb|BITS|. For historical reasons, the~C
+\verb|unsigned long int| has the same meaning as an
+\verb|unsigned int| so \verb|BITS| could have been used for those
+fields as well.  However, because the value is required as an integer
+(and is stored as a positive integer), it is possible to regard them
+as having mode \verb|INT|. Some of the C~modes\footnote{C people call
+them \texttt{types}.} are hidden by further mode
+declarations\footnote{\texttt{typedef}s}, but if you hunt for
+\verb|__dev_t| you will find it is an \verb|unsigned long long int|
+which is equivalent to the Algol 68 \verb|LONG BITS| or, as is used
+in \verb|STAT|, \verb|LONG INT|.
+
+Now look at the declaration of \verb|linux fstat| on lines 85--89.
+Most of this construction is C~source code. The \verb|ALIEN|
+construct may be written as
+\begin{verbatim}
+   <mode> <identifier> = ALIEN "<symbol>"
+      "<C source code>";
+\end{verbatim}
+\noindent
+where the angle brackets denote items to be replaced. In the
+declaration for \verb|linux fstat| we have
+\begin{itemize}
+\item \verb|<mode> = PROC(INT,REF STAT)INT|
+\item \verb|<identifier> = linux fstat|
+\item \verb|<symbol> = FSTAT|
+\end{itemize}
+followed by three lines of C~source code. It is not my intention to
+delve into the mysteries of C. If you don't understand that language,
+consult someone who does. However, the point of the declaration is to
+map the Algol 68 modes onto the C~equivalents. The C~procedure
+\verb|fstat| takes two parameters: the first has mode \verb|int|
+(equivalent to \verb|INT|) and the second of mode \verb|struct stat*|
+which is equivalent to \verb|REF STAT|. The cast in C~consists of a
+mode in parentheses (compare with the Algol 68 cast in
+section~\hyref{gram-prim}) so the third line of C~code ensures that
+the second parameter of the Algol 68 procedure \verb|linux fstat| has
+the right mode. The \verb|A_int_INT(...)| construct is a C~language
+macro\footnote{A synonym for another piece of text which is expanded
+by the C~preprocessor} for a cast which ensures that the yielded
+C~integer is equivalent to the Algol 68 \verb|INT|.  If you want to
+see what the \hx{a68toc}{a68toc!FSTAT@\texttt{FSTAT}} compiler
+generates, look for \verb|FSTAT| in the file \verb|lf.c|.
+
+Reverting to line 102, the field \verb|sys file OF f| has the correct
+mode for use as the ``file descriptor'' for \verb|fstat|. You should
+check the manual page of \verb|fstat| (in section 2 of the Linux
+Programming Manual) for details of its functioning and yield.
+
+\subsubsection{The procedure \texttt{get cwd}}\hylabel{dev-getcwd}
+The procedure \verb|get cwd| is more complicated because it uses
+several facilities provided by the standard prelude as well as
+another extension provided by the
+\hx{a68toc}{a68toc!VECTOR@\texttt{VECTOR}} compiler. Firstly, look at
+the \verb|ALIEN| declaration of \verb|linux getcwd| on lines 91--93.
+The mode \verb|VECTOR[]CHAR| is similar to the mode \verb|[]CHAR|,
+but the lower bound is always 1 and is omitted from the generated
+construct. In fact, a68toc translates this mode into the C~equivalent
+of
+\begin{verbatim}
+   STRUCT(REF CHAR data, INT gc, upb)
+\end{verbatim}
+\noindent
+The \verb|gc| field is an integer provided for the garbage-collector
+(the run-time memory management system which looks after the heap).
+The \verb|data| field is a reference to the actual data (in fact it
+is a memory address)\footnote{The \texttt{VECTOR} mode is not limited
+to \texttt{CHAR}. You can use it for any mode. See section
+\protect\hyref{stan-ctmodes} for details}.
+
+The C~procedure \verb|getcwd| requires two parameters: a reference to
+an area which it can use to return the full path of the current working
+directory and an integer which states how big that area is. The
+C~source code in the declaration for \verb|linux getcwd| contains the
+\ix{C macro}
+\begin{verbatim}
+   A_VC_charptr(buf)
+\end{verbatim}
+\noindent
+which expands into \verb|buf.data| (equivalent to the Algol~68
+expression \verb|data OF buf|) and the C~macro \verb|A_INT_int| which
+converts an Algol~68 \verb|INT| into a C~\verb|int| (directly
+equivalent on Linux).
+
+The yield of \verb|linux getcwd| is a reference to the area in which the
+current working directory path has been put. Strictly speaking, this is
+identical to the first parameter of the C~procedure \verb|getcwd|, but
+the GNU C~compiler complains if it is used as such. To get around this,
+the author used the cast \verb|(void *)| which effectively causes the
+reference to be a reference to an anonymous piece of memory. The
+Algol~68 equivalent is \verb|CPTR| which is defined in the standard
+prelude as \verb|REF BITS|.
+
+Now comes the clever bit. Look at line 98. The value of mode
+\verb|CPTR| (\verb|REF BITS|) is converted by the operator
+\verb|CPTRTOCSTR| into a value of mode \verb|CSTR| (declared in the
+standard prelude as \verb|REF STRUCT 16000000 CHAR|). Now look at the
+definition of that operator (on line 95)! \verb|BIOP| stands for
+``built-in operator'' and \verb|BIOP 99| is the only built-in
+operator implemented by the a68toc translator. \verb|BIOP 99| maps
+its parameter (of one mode) onto its yield (of another mode). It
+effectively acts as a cast (in this case) from one \verb|REF| mode to
+another \verb|REF| mode. Have a look at the C~source code in
+\verb|lf.c| if you are interested in the details. Then the value of
+mode \verb|CSTR| is converted using the operator \verb|CSTRTORVC| to
+a value of mode \verb|REF VECTOR[]CHAR| which is dereferenced and
+then coerced to a value of mode \verb|STRING|. In fact, the a68toc
+compiler will silently coerce values of mode \verb|REF STRUCT i MODE|
+to mode \verb|REF| \verb|VECTOR[]MODE| and thence to
+\verb|REF[]MODE|.  Notice that you cannot coerce a value of mode
+\verb|REF| \verb|VECTOR[]MODE| to \verb|REF FLEX[]MODE|. The mode
+\verb|STRING| has no flexibility (it is equivalent to \verb|[]CHAR|).
+
+Lastly, note that the parameter of \verb|linux getcwd| is an
+\hx{anonymous}{generator!anonymous} \verb|VECTOR[]CHAR| whose scope
+is limited to the scope of \verb|get cwd| (the Algol~68 procedure).
+
+If you want to examine the other macros used for the translated
+C~source, have a look at the files either of the directories (depending on platform):
+\begin{verbatim}
+   /usr/include/algol68/
+   /usr/local/include/algol68
+\end{verbatim}
+
+\Section{Summary}{dev-summ}
+In this chapter, we have covered most of the activities relating to
+program development, whether it be the maintenance of existing
+programs or the development of new programs. The constructor
+\verb|ALIEN| is used to introduce procedures compiled by other
+compilation systems (such as C). We have described one program
+and have shown how to analyse the workings of a program.

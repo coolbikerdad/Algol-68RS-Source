@@ -74,7 +74,7 @@ usage() {
     echo "  -l   Specify a library to be searched for functions"
     echo "         The directory can be specified immediately following"
     echo "         the -l or separated by a space. May be repeated"
-    echo "  -M   Specify a directory for a module library"
+    echo "  -M   Specify a directory for a module library. Defaults to ~/lib"
     echo "  -m   Specify a module library. The .a and leading lib can"
     echo "         be omitted"
     echo "  -u   Specify where the compiler will get its seed for unique"
@@ -235,6 +235,19 @@ if [ $? -eq 0 ]
 then TYPE=p
 else
     TYPE=m
+    # For separate compilation ${DESTDIR} must be set and exist
+    # And a module library name must be specified
+    if [ ! -e "$DESTDIR" ]
+    then
+	echo "ca: Library directory ${DESTDIR} does not exist"
+	exit 1
+    fi
+    if [ -z "${DESTLIB}" ]
+    then
+	echo "ca: Module name must be specified, use -m <libname>"
+	exit 1
+    fi
+    
     # Ensure that the sub-directory for .m files exists
     if [ ! -z "${DESTDIR}" ]
     then

@@ -1,0 +1,864 @@
+% $Log: chapter1.tex,v $
+% Revision 1.4  2003-04-23 08:57:31  sian
+% Debian release 1.5
+%
+% Revision 1.3  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Introduction}{chapi}
+Algol 68 is a high-level, general-purpose programming language ideally
+suited to modern operating systems.  This book will teach you Algol 68
+plus the necessary development skills to enable you to write
+substantial programs which can be executed from the command line.
+
+In principle, you can solve any computable problem with Algol~68.
+You can write programs which perform word processing, perform
+complicated calculations with matrices, design graphs or bridges,
+process pictures, predict the weather, and so on.  Or you can write
+simple programs which count the number of words in a file or list a
+file with line numbers.
+
+Algol 68 is a powerful language.  There are many constructs which
+enable you to manipulate complicated data structures with ease, and
+yet it is all easy to understand because one of the guiding
+principles of Algol~68 was that it was designed to be
+\hx{\textbf{orthogonal}}{orthogonality}. This means that the
+language is based on a few independent ideas which are developed and
+applied with generality.  The language was designed in such a way
+that it is impossible to write ambiguous programs.  The design is
+also difficult to describe until it has been fully described, which
+means that some concepts have to be introduced in a superficial
+manner, but later reading will deepen your understanding.
+
+You need to have a thorough grasp of the basic ideas if you are going
+to write powerful programs in Algol 68: these ideas unfold in the
+first five chapters.  The chapters should be read in order, but
+chapter~5 is a watershed---it forms the basis of much of the computer
+programming performed in the world today.  Its ideas should be
+mastered before continuing.
+
+Chapter 10 draws together all the various references to grammatical
+points and clarifies the limitations of the language---you will need
+to know these if you want to squeeze the last ounce of power out of
+the language. Chapters~11 and~12 deal with advanced topics which
+should not be touched until you have mastered preceding material.
+Chapter~13 describes the standard prelude which, besides providing
+means of determining the characteristics of an Algol 68
+implementation, also provides the transput facilities whose power are
+characteristic of Algol 68.
+
+In this chapter, some aspects of Algol 68 grammar are described.
+Don't worry if they seem confusing; all will become clear later in
+the book.  It also covers denotations and the identity declaration,
+the latter having crucial importance in the language.
+
+\Section{What you will need}{intro-need}
+The language described in this book is that made available by the
+\hx{a68toc}{a68toc!requirements} Algol~68RS compiler developed by the
+\emph{Defence Research Agency} (see section~\hyref{intro-co} for more
+information about what a compiler does).
+It implements almost all of
+the language known as Algol~68, and extends that language in minor
+respects.
+To run the programs described in this book you will need a
+computer with a Linux, macOS\footnote{64-bit only} or
+Windows\footnote{With Windows Subsystem for Linux installed} operating system and
+Intel/AMD i386/x86\_64 or ARM armhf/aarch64 processors with a compatible
+C compiler (GCC and clang should be fine).
+The source package will occupy
+$\approx12$Mb on the hard disk while the binary package will also need
+$\approx9$Mb of space on the hard disk. The source package may be
+deleted once the binary package has been installed.
+
+The book expects you to be familiar with the usual commands for
+manipulating files. You will need to know how to use an editor for
+plain text files (not a word processor).  No programming expertise is
+presumed.
+
+Much program development work takes place at the \ix{command
+line} because a graphical user interface is usually too cumbersome to
+cope with the myriad commands issued by the programmer.  See the
+manual pages for \verb|ca| and \verb|a68toc| for details of how to
+use the \verb|Algol68toC| program development system.
+
+\Section{Terminology}{intro-term}
+In describing Algol 68, it is necessary to use a number of technical
+terms which have a specialist meaning. However, the number of terms
+used has been reduced to a minimum. Whenever a term is introduced it
+will be written in \textbf{bold}. Parts of programs are printed as though
+they had been produced by a typewriter like this:
+\begin{verbatim}
+   BEGIN
+\end{verbatim}
+\noindent
+Some of the terminology may seem pedantic. Describing the parts of an
+Algol~68 program can, and should be, precise. The power of Algol~68
+derives as much from the precision as from the generality of its ideas.
+
+\Section{Values and modes}{intro-values}
+Two of the guiding principles of Algol~68 are the concepts of
+\bfix{value} and \bfix{mode}.  Typically, an Algol~68 program
+manipulates values to produce new values, and, in the process, does
+useful work (such as word-processing). Values are such entities as
+numbers and letters, but you will see in later chapters that values
+can be very complicated and, indeed, can be things that you would not
+normally think of as a value.
+
+A value is characterised by its mode.  Every value has only one mode,
+and cannot change its mode.  Therefore, if you have a mode change you
+must have a new value as well (but see chapter~8).  A mode defines a
+set of values. The number of values in the set depends on the mode
+and there can be from none to potentially infinity.  For example, the
+whole number represented by the digits 37 has mode \ixtt{INT}.  The
+symbol \verb|INT| is called a \textbf{mode indicant}.  You will be
+meeting many more mode indicants in the course of this book and they
+are all written in capital letters and sometimes with digits.  The
+strict definition of a mode indicant is that it consists of a series
+of one or more characters which starts with a capital letter, and is
+continued by capital letters or digits.  No intervening spaces are
+allowed.  There is no limit to the length of a mode indicant although
+in practice it is rare to find mode indicants longer than 16
+characters.  Here are some more mode indicants which you will meet in
+this and later chapters\hx{:}{mode!indicant!definition}
+\begin{verbatim}
+   BOOL    CHAR    COMPL    FILE    HMEAN
+\end{verbatim}
+\noindent
+Section~\hyref{struc-mode} explains how you can define your own mode
+indicants. Although you can use any sequence of valid characters,
+meaningful mode indicants can help you to understand your programs.
+\begin{exercise}
+\item Is there anything wrong with the following mode indicants?
+\begin{subex}
+\item \verb|RealNumber| \subans Yes, it contains lower-case letters.
+'
+\item \verb|2NDINT| \subans Yes, it starts with a digit.
+'
+\item \verb|COMPL| \subans No.
+'
+\item \verb|UPPER CASE| \subans Yes, a space is included.
+'
+\item \verb|ONE.TWO| \subans Yes, a full stop is included.
+'
+\end{subex}
+\item What is the definition of a mode indicant?  \ans It starts with
+a capital letter and continues with capital letters, digits or
+underscores with no intervening spaces, tab characters or newline
+characters.
+'
+\end{exercise}
+\Section{Integers}{intro-ints}
+Although, strictly speaking, there is no largest positive
+\ix{integer}, by default the \hx{largest positive integer}{integer!largest
+positive} which can be manipulated by \verb|a68toc| is the 32-bit value
+$2\,147\,483\,647$, and the \hx{largest negative
+integer}{integer!largest negative} is $-2\,147\,483\,647$ (the first
+is $2^{31}-1$ and the second is $-2^{31}+1$)\footnote{A larger 64-bit integer mode is available, see \hyref{stan-modes}}.
+The representation of a
+value in an Algol~68 program is called a \textbf{denotation} because
+it denotes the value. It is important to realise that the
+\ix{denotation} of a value is not the same as the value itself. To be
+precise, we say that the denotation of a value represents an
+\hx{instance}{value!instance} of that value.  For example, three
+separate instances of the value denoted by the digits \verb|31| occur
+in this paragraph.  All the instances denote the same value.
+
+If you want to write the denotation of an integer in an Algol~68
+program, you must use any of the digits \verb|0| to \verb|9|.  No
+signs are \hx{allowed}{denotation!integer}.  This means that you
+cannot write denotations for negative integers in Algol~68 (but this
+is not a problem as you will see).  Although you cannot use commas or
+decimal points, spaces can be inserted anywhere.  Here are some
+examples of denotations of integers separated by commas (the commas
+are not part of the denotations):
+\begin{verbatim}
+   0 , 3 , 03 , 3000000 , 2 147 483 647
+\end{verbatim}
+\noindent
+Note that \verb|3| and \verb|03| denote the same value because the
+\ix{leading zero} is not significant.  However, the zeros in the
+three million are significant. The \ix{mode} of each of the five
+denotations is \ixtt{INT}. The following are incorrect denotations:
+\begin{verbatim}
+   3,451    -2    1e6
+\end{verbatim}
+\noindent
+The first contains a comma, the second is a \ix{formula}, and the
+third contains the letter \verb|e|.  You will see later on that the
+third expression denotes a number, but by definition this denotation
+does not have mode \verb|INT|.
+
+\begin{exercise}
+\item Write a denotation for thirty-three. \ans 33
+'
+\item What is wrong with the following integer denotations?
+\begin{subex}
+\item \verb|1,234,567| \subans It contains commas.
+'
+\item \verb|5.| \subans It contains a decimal point.
+'
+\item \verb|-4| \subans It is not a denotation: it is a formula (see
+chapter 2).
+'
+\end{subex}
+\end{exercise}
+
+\Section{Identity declarations}{intro-iddecs}
+Suppose you want to use the integer whose denotation is
+\begin{verbatim}
+   48930767
+\end{verbatim}
+\noindent
+in various parts of your program. If you had to
+write out the denotation each time you wanted to use it, you would
+find that
+\begin{itemize}
+\item you would almost certainly make mistakes in copying the value,
+and
+\item the meaning of the integer would not be at all clear
+\end{itemize}
+It is imperative, particularly with large programs, to make the
+meaning of the program as clear as possible. Algol~68 provides a
+special construct which enables you to declare a synonym for a value
+(in this case, an integer denotation). It is done by means of the
+construct known as an
+\hx{\textbf{identity declaration}}{declaration!identity} which is
+used widely in the language.  Here is an identity declaration for the
+integer mentioned at the start of this paragraph:
+\begin{verbatim}
+   INT special integer = 48930767
+\end{verbatim}
+\noindent
+Now, whenever you want to use the integer, you write
+\begin{verbatim}
+   special integer
+\end{verbatim}
+\noindent
+in your program.
+
+An identity declaration consists of four parts:
+\begin{verbatim}
+   <mode indicant> <identifier> = <value>
+\end{verbatim}
+\noindent
+You have already met the \verb|<mode indicant>|. An \bfix{identifier}
+is a sequence of one or more characters which starts with a
+lower-case letter and continues with lower-case letters or digits or
+underscores. It can be broken-up by spaces, newlines or tab
+characters.  Here are some examples of valid identifiers (they are
+separated by commas to show you where they end, but the commas are
+not part of the identifiers):
+\begin{verbatim}
+   i,  algol,  rate 2 pay,  eigen value 3
+\end{verbatim}
+\noindent
+The following are wrong:
+\begin{verbatim}
+   2pairs   escape.velocity   XConfigureEvent
+\end{verbatim}
+\noindent
+The first starts with a digit, the second contains a character which is
+neither a letter nor a digit nor an underscore, and the third contains
+capital letters.
+
+An identifier looks like a name, in the ordinary sense of that word,
+but we do not use the term ``name'' in this sense because it has a
+special meaning in Algol~68 which will be explained in Chapter~5. The
+identifier can abut the mode indicant as in
+\begin{verbatim}
+   INTa = 4
+\end{verbatim}
+\noindent
+but this is unusual. For clarity in your programs, ensure that a
+mode indicant followed by an identifier is separated from the latter
+by a space.
+
+The third part is the equals symbol \ixtt{=}. The fourth part (the
+right-hand side of the equals symbol) requires a value. You will see
+later that the value can be any piece of program which yields a
+\ix{value} of the mode specified by the
+\hx{mode indicant}{mode!indicant}. So far, we have only met integers,
+and we can only denote positive integers.
+
+There are two ways of declaring identifiers for two integers:
+\begin{verbatim}
+   INT i = 2 ; INT j=3
+\end{verbatim}
+\noindent
+The semicolon \verb|;| is called the
+\hx{\textbf{go-on symbol}}{;@\texttt{;}} because it means ``throw
+away the value yielded by the previous \ix{phrase}, and go on to the
+next phrase''.  If this statement seems a little odd, just bear with
+it and all will become clear later.  We can abbreviate the
+declarations as follows:
+\begin{verbatim}
+   INT i=2, j = 3
+\end{verbatim}
+\noindent
+The \ix{comma} separates the two declarations, but does not mean that
+the \verb|i| is declared first, followed by the \verb|j|.  On the
+contrary, it is up to the compiler to determine which
+\ix{declaration} is elaborated first.  They could even be done in
+parallel on a \hx{parallel processing}{parallel!processing} computer.
+This is known as \hx{collateral elaboration}{elaboration!collateral},
+as opposed to \textbf{sequential} elaboration determined by the
+\hx{go-on symbol}{elaboration!sequential} (the semicolon). We shall
+be meeting collateral elaboration again in later chapters.
+Elaboration means, roughly, execution or ``working-out''.  The
+compilation system translates your Algol~68 program into
+\ix{machine code}.  When the machine code is obeyed by the computer,
+your program is elaborated.  The
+\hx{sequence of elaboration}{elaboration!sequence of} is determined
+by the \ix{compiler} as well as by the structure of your
+\hx{program}{program!structure}.  Note that spaces are allowed almost
+everywhere in an Algol~68 program.
+
+Some values are predefined in what is called the
+\bfix{standard prelude}. You will be learning more about it in
+succeeding chapters.  One integer which is predefined in Algol~68 has
+the identifier \ixtt{max int}. Can you guess its value?
+
+\begin{exercise}
+\item What is wrong with the following identifiers?
+\begin{subex}
+\item \verb|INT| \subans It is not an identifier: it is a
+mode-indicant.
+'
+\item \verb|int| \subans Nothing---it's all right.
+'
+\item \verb|thirty-four| \subans It contains a minus symbol.
+'
+\item \verb|AreaOfSquare|
+\subans It contains upper-case letters.
+'
+\end{subex}
+\item What is wrong with the following identity declarations?
+\begin{subex}
+\item \verb|INT thirty four > 33| \subans The \verb|>| symbol should
+be \verb|=|.
+'
+\item \verb|INT big int = 3 000 000 000| \subans The integer
+denotation is larger than the largest integer that the compiler can
+handle.
+'
+\end{subex}
+\item Write an identity declaration for the largest integer which the
+Algol~68 compiler can handle. Use the identifier\newline
+\verb|max int|. \ans \verb|INT max int = 2 147 483 647|
+'
+\end{exercise}
+
+\Section{Characters}{intro-chars}
+All the \ix{symbols} you can see on a computer, and some you
+cannot see, are known as \ix{characters}.  The alphabet
+consists of the characters \verb|A| to \verb|Z| and \verb|a| to
+\verb|z|.  The digits comprise the characters \verb|0| to \verb|9|. 
+Every computer recognises a particular set of characters.  The
+\ix{character set} recognised by \verb|a68toc|
+is \ix{ASCII} (which stands for American
+Standard Code for Information Interchange). The mode of a character is
+\ixtt{CHAR} (read ``car'' because it is short for
+character).  A character is denoted by placing it between quote
+characters.  Thus the denotation of the lower-case a is \verb|"a"|. 
+Here are some \hx{character denotations}{denotation!character}:
+\begin{verbatim}
+   "a"  "A"  "3"  ";"  "\"  "'"  """"  " "
+\end{verbatim}
+\noindent
+Note that quote characters are doubled in their denotations.  The
+third denotation is \verb|"3"|.  This value has mode \verb|CHAR|.
+The denotation \verb|3| has mode \verb|INT|: the two values are quite
+distinct, and one is not a synonym for the other.  The last
+denotation is that of the space character.
+
+Here are some identity declarations for values of mode \verb|CHAR|:
+\begin{verbatim}
+   CHAR a = "A", zed = "z";  CHAR tilde = "~"
+\end{verbatim}
+\noindent
+Note that the two sets of identity declarations are separated by a
+semicolon, but the declaration for \verb|tilde| is not followed by a
+semicolon.  This is because the semicolon \ixtt{;} is not a
+terminator; it is an action. Identity declarations do not
+\bfix{yield} any value. An identity declaration is a \bfix{phrase}.
+Phrases are either identity declarations or \textbf{units}.  When a
+phrase is elaborated, if it is a \ix{unit}, it will yield a value.
+That is, after elaboration, a value will be available for further use
+if required.  Again, this may not make much sense now, but it will
+become clearer as you learn the language.
+
+Here is a piece of program with identity declarations for an
+\verb|INT| and a \verb|CHAR|:\footnote{The
+\protect\hx{a68toc}{a68toc!declarations}
+compiler insists on a semicolon between identity declarations for
+different modes. In the above case, you would have to write
+\texttt{INT ninety nine=99 ; CHAR x = "X"}}
+\begin{verbatim}
+   INT ninety nine=99 , CHAR x = "X"
+\end{verbatim}
+
+The compiler recognises 256 distinct values of mode \verb|CHAR|, but
+most of them can only occur in denotations. The space is declared as
+\ixtt{blank} in the \ix{standard prelude}.
+
+\begin{exercise}
+\item Write the denotations for the full-stop, the comma and the
+digit \verb|8| (not the integer 8).  \ans \verb|"." "," "8"|
+'
+\item Write a suitable identity declaration for the question mark.
+\ans \verb|CHAR question mark = "?"|
+'
+\end{exercise}
+
+\Section{Real numbers}{intro-reals}
+Numbers which contain fractional parts, such as $3.5$ or 
+$0.0005623956$, or numbers expressed in scientific notation, such as
+$1.95\times10^{34}$ are values of mode \ixtt{REAL}.  Reals are
+denoted by digits and one at least of the decimal point (which is
+denoted by a full stop), or the letter \verb|e|.  The \verb|e| means
+$\times10^{\hbox{\scriptsize some power}}$.  Just as with integers,
+there are no denotations for negative reals.  When the exponent is
+preceded by a minus sign, this does not mean that the number is
+negative, but that the decimal point should be shifted leftwards.
+For example, in the following \verb|REAL|
+\hx{denotations}{denotation!real}, the third denotation has the
+same value as the fourth (again, the denotations are separated by
+commas, but the commas are not part of the denotations):
+\begin{verbatim}
+   4.5,  .9,  0.000 000 003 4,  3.4e-9,  1e6
+\end{verbatim}
+\noindent
+Although the second denotation is valid, it is advisable in such a
+case to precede the decimal point with a zero: \verb|0.9|.  This is
+better because a decimal point not preceded by an integer can be
+missed easily.  Here are some identity declarations for values of
+mode \verb|REAL|:
+\begin{verbatim}
+   REAL e = 2.718 281 828,
+        electron charge = 1.602 10 e-19,
+        monthly salary = 2574.43
+\end{verbatim}
+\noindent
+The largest \verb|REAL| which the compiler can handle is declared in
+the \ix{standard prelude} as \ixtt{max real}. Its value is
+$$1.79769313486231571e308$$
+The value of $\pi$ is declared in the
+standard prelude with the identifier \ixtt{pi} and a value of
+\begin{verbatim}
+   REAL pi = 3.141592653589793238462643
+\end{verbatim}
+
+It was mentioned above that in an
+\hx{identity declaration}{declaration!identity}, any piece of
+program yielding a value of the required mode can be used as the
+value. Here, for example, is an identity declaration where the value
+has mode \verb|INT|:
+\begin{verbatim}
+   REAL a = 3
+\end{verbatim}
+\noindent
+However, the mode required is \verb|REAL|. In certain circumstances,
+a value of one mode can be coerced into a value of another mode.
+These circumstances are known as \textbf{contexts}.  There are five
+contexts defined in the language.  Each \ix{context} will be
+mentioned as it occurs.  The right-hand side of an identity
+declaration has a \textbf{strong} context.  In a
+\hx{strong context}{context!strong}, a value and its mode can be
+changed according to six rules, known as \textbf{coercions}, defined
+in the language.  Again, each \ix{coercion} will be explained as it
+occurs.  The coercion which replaces a value of mode \verb|INT| with
+a value of mode \verb|REAL| is known as
+\hx{\textbf{widening}}{coercion!widening}.  You will
+meet a different kind of widening in section~\hyref{struc-compl}.
+
+You can even supply an identifier yielding the required mode on the
+right-hand side. Here are two identity declarations:
+\begin{verbatim}
+   REAL one = 1.0;
+   REAL one again = one
+\end{verbatim}
+\noindent
+You cannot combine these two declarations into one with a \ix{comma}
+as in
+\begin{verbatim}
+   REAL one = 1.0, one again = one
+\end{verbatim}
+\noindent
+because you cannot guarantee that the identity declaration for
+\verb|one| will be elaborated before the declaration for
+\verb|one again| (because the comma is not a \textbf{go-on}
+symbol).\footnote{The \protect\hx{a68toc}{a68toc!declarations}
+compiler does permit a subsequent declaration to use the value of a
+previous value, but it is strictly non-standard. You would be wise to
+restrict your programs to Algol~68 syntax because other Algol~68
+compilers will not necessarily be so lax.}
+
+Values of modes \verb|INT|, \verb|REAL| and \verb|CHAR| are known as
+plain values. We shall be meeting another mode having plain values in
+chapter~4, and modes in chapter~3 which are not plain.  Complex
+numbers are dealt with in chapter~7.
+\newpage
+
+\begin{exercise}
+\item Is there anything wrong with the following identity
+declarations?
+\begin{verbatim}
+   REAL x = 5.,
+        y = .5;
+        z = 100
+\end{verbatim}
+\indent\ans The \verb|5.| should be \verb|5.0|. Either the semicolon
+should be replaced by a comma, or \verb|z| should be preceded by
+\verb|REAL| or \verb|INT|.
+'
+\item Given that light travels $2.997\,925\times10^8$ metres per
+second in a vacuum, write an identity declaration for the identifier
+\verb|light year| in terms of metres to an accuracy of 5 decimal
+places (use a calculator).
+\ans \verb|REAL light year = 9.454 26 e15|\newline
+(assuming 365 days per year).
+'
+\end{exercise}
+
+\Section{Program structure}{intro-prog}
+Algol~68 programs can be written in one or more
+\hx{parts}{program!structure} Here is a valid Algol~68
+\ix{program}:
+\begin{verbatim}
+   PROGRAM firstprogram CONTEXT VOID
+   USE standard
+   BEGIN
+      print(20)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Only the three lines starting with \verb|BEGIN| and ending with
+\verb|END| are strictly part of the Algol 68 program. The first,
+second and last lines are specific to the
+\hx{a68toc}{a68toc!directives} compiler. The
+first line gives the identification of the program as
+\texttt{firstprogram} and the fact that this file contains a program.
+The \verb|CONTEXT VOID| phrase specifies that the program stands on
+its own instead of being embedded in other parts. The phrase is a
+vestige of the modular compilation system originally provided by the
+compiler at the heart of \verb|a68toc|.
+
+A full explanation of the \verb|print| \ix{phrase} will be found in
+chapter~9 (Transput).  For now, it is enough to know that it causes
+the value in the parentheses to be displayed on the
+screen.\footnote{When Algol 68 was first implemented there were few
+monitors around, so \texttt{print} literally printed its output onto
+paper.} The standard prelude must be \ixtt{USE}d if you want to use
+\ixtt{print}. You can use any identifier for the operating system
+file in which to store the Algol~68 \hx{\textbf{source
+code}}{code!source} of the
+program. Although it does not have to be the same as the identifier
+of the module, it is advisable to make it so.
+
+Both the \verb|print| phrase and the \ix{denotation} are
+\hx{units}{unit}.  Chapter 10 will explain units in detail.  Phrases
+are separated by the go-on symbol (a semicolon \ixtt{;}).  Because
+there is only one phrase in \verb|firstprogram|, no go-on symbols are
+required.  Here is another valid program:
+\begin{verbatim}
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT special integer = 48930767;
+      print(20) ; print(special integer)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+The semicolon between the two \verb|print| phrases is not a
+terminator: it is a separator.  It means ``throw away any value
+yielded by the previous phrase and go on with the succeeding
+phrase''.  That is why it is called the
+\hx{go-on symbol}{;@\texttt{;}}.  Notice that there is no semicolon
+after the third phrase.
+
+Algol 68 programs are written in \ix{free format}. This means that
+the meaning of your program is independent of the layout of the
+source program. However, it is sensible to lay out the code so as to
+show the structure of the program. For example, you could write the
+first program like this:
+\begin{verbatim}
+   PROGRAM firstprogram CONTEXT VOID
+   USE standard(print(20))FINISH
+\end{verbatim}
+\noindent
+which is just as valid, but not as comprehensible. Notice that
+\verb|BEGIN| and \verb|END| can be replaced by \verb|(| and \verb|)|
+respectively.  How you lay out your program is up to you, but writing
+it as shown in the examples in this book will help you write
+comprehensible programs.
+
+\begin{exercise}
+\item What is wrong with this sample program?
+\begin{verbatim}
+   PROGRAM test
+   BEGIN
+      print("A"))
+   END
+   FINISH
+\end{verbatim}
+\indent\ans The print phrase has one opening parenthesis and two
+closing ones and there is no \verb|CONTEXT| \verb|VOID| \verb|USE|
+\verb|standard| preceding the \verb|BEGIN|.
+'
+\item Using an editor, key in the two sample programs given in this
+section, and compile and execute them. What do they display on your
+screen?  \ans The first displays \verb|20| at the start of the line.
+The second displays \verb*|        +20   +48930767| on one line.
+'
+\end{exercise}
+
+\Section{Comments}{intro-co}
+When you write a program in Algol 68, the pieces of program which do
+the work are called \hx{``source code''}{code!source}. The
+Algol~68 compiler translates this source code into C source code
+which is then translated by the GNU C compiler into \hx{``object
+code''}{code!object}.  This is then converted by a program called a
+\ix{linker} into \hx{machine code}{code!machine}, which is
+understood by the computer.  You then execute the program by typing
+its name at the command-line plus any arguments needed.  This is
+called \hx{\textbf{running}}{program!running} the program.
+
+When you write the program, it is usually quite clear to you what the
+program is doing.  However, if you return to that program after a gap
+of several months, the source code may not be at all clear to you.
+To help you understand what you have written in the program, it is
+possible, and recommended, to write \hx{comments}{comment} in the
+source code.  Comments can be put almost anywhere, but not in the
+middle of \hx{mode indicants}{mode!indicant} and not in the middle of
+denotations.  A comment is ignored by the compiler, except that
+comments can be nested.  A comment is surrounded by one of the
+following pairs:
+\begin{verbatim}
+   COMMENT ... COMMENT
+   CO ... CO
+   #...#
+   {...}
+\end{verbatim}
+\noindent
+where the $\ldots$ represent the actual comment. The paired braces
+are peculiar to the \hx{a68toc}{a68toc!comments} compiler. Other
+compilers may not accept them. Here is an Algol~68 program with
+comments added:
+\begin{verbatim}
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 23,  # My brother's age #
+          s = 27; CO My sister's age CO
+      CHAR z = "&",  COMMENT An ampersand
+      COMMENT  y{acht}="y";
+      REAL x = 1.25;
+      print(i); print(s); print(z);
+      print(y); print(x)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+There are four comments in the above program. If you start a comment
+with \verb|CO| then you must also finish it with \verb|CO|, and
+likewise for the other comment symbols (except the braces). Here is a
+program with a bit of source code ``commented out'':
+\begin{verbatim}
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 1, j = 2 #, k = 3#;
+      print(i); print(j)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+The advantage of commenting out source is that you only have to
+remove two characters and that source can be included in the program
+again.  You can use any of the comment symbols for commenting out.
+Here is another program with a part of the program containing a
+comment commented-out:
+\begin{verbatim}
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   BEGIN
+      INT i = 1;
+      COMMENT
+      REAL six = 6.0, # Used subsequently #
+           one by 2 = 0.5;COMMENT
+      CHAR x = "X";
+      print(i); {print(six);} print(x)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+This is an example of nested comments. You can use any of the comment
+symbols for this purpose as long as you finish the comment with the
+matching symbol. However, if the part of your program that you want
+to comment out already contains comments, you should ensure that the
+enclosing comment symbols should be different. One way of using
+comment symbols is to develop a standard method. For example, the
+author uses the \verb|#...#| comment symbols for one line comments in
+the code, \verb|CO| symbols for multiline comments and \verb|COMMENT|
+symbols for extensive comments required at the start of programs or
+similar code chunks.
+
+\begin{exercise}
+\item Write a short program which will print the letters of your
+first name. You should declare an identifier of mode \verb|CHAR| for
+each letter, and write a \verb|print| phrase for each letter.
+Remember to put semicolons in the right places. Add comments to your
+program to explain what the program does. \ans It should display your
+name without quote symbols on the screen.  Here is an example
+program:-
+\begin{verbatim}
+   PROGRAM ex1 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      CHAR s="S", i="i", a="a", n="n";
+      CO Letters of my first name CO
+      print(s); print(i);
+      print(a); print(n)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+which will display \verb|Sian| on the screen.
+'
+\end{exercise}
+
+\Section{External values}{intro-ext}
+Values denoted or manipulated by a program are called
+\hx{\textbf{internal}}{value!internal} values.  Values which
+exist outside a program and which are data used by a program or data
+produced by a program (or both) are known as
+\hx{\textbf{external}}{value!external} values.
+
+In the previous sections we have been learning how plain values are
+denoted in Algol~68 programs. This internal display of
+\hx{values}{value!displaying}
+is not necessarily the same as that used for external values. If
+you copy the following program into a file and compile and run it
+you will get\par
+\verb*|        +10A +.15000000000000000e +1|\par\noindent
+output on your screen.
+\begin{verbatim}
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+      print(10);  print("A");  print(1.5)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Notice that although the \ix{denotation} for the first letter of the
+alphabet is surrounded by quote characters, when it is displayed on
+your screen, the quote characters are omitted.  The rules for numbers
+are as follows: if a number is not the first value in the line it is
+preceded by a space.  Integers are always printed in the space
+required by \ixtt{max int} plus one position for the sign. Both
+positive and negative integers have a sign.  A real number is always
+printed using the print positions required by \ixtt{max real}, plus a
+sign for the number. The exponent is also preceded by a sign.  If you
+want extra spaces, you have to insert them.
+
+Try the following program:
+\begin{verbatim}
+   PROGRAM print2 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(10); print(blank); print("A");
+      print(0.015); print(0.15); print(1.5);
+      print(15.0); print(150.0); print(1500.0);
+      print(15e15)
+   END
+   FINISH
+\end{verbatim}
+
+\Section{Summary}{intro-summ}
+An Algol 68 program manipulates values. A value is characterised by
+its mode. A mode is indicated by a mode indicant. Plain values can be
+denoted. Values occur in contexts, and can sometimes be coerced into
+values of different modes. Identifiers can be linked to values using
+identity declarations.  The values manipulated by a program are
+called internal values.  External values are data used by, or
+produced by, a program. Comments describe a program, but add nothing
+to its elaboration.
+
+Finally, here are some exercises which test you on concepts you have
+met in this chapter.
+\newpage
+
+\begin{exercise}
+\item Give denotations of the following values:
+\begin{subex}
+\item one thousand nine hundred and ninety six. \subans \verb|1996|
+'
+\item The fifth letter of the lower-case Roman alphabet.
+\subans \verb|"e"|
+'
+\item The fraction $1\over7$ expressed as a decimal fraction to 6
+decimal places. \subans \verb|0.142857|
+'
+\end{subex}
+\item Is there anything wrong with the following mode indicants?
+\begin{subex}
+\item \verb|C H A R| \subans Yes, it contains spaces.
+'
+\item \verb|INT.CHAR| \subans Yes, it contains a decimal point.
+'
+\item \verb|THISISANEXTREMELYLONGMODEINDICANT| \subans No.
+'
+\item \verb|2CHAR| \subans Yes, it starts with a digit.
+'
+\end{subex}
+\item Write suitable identity declarations for the following
+identifiers:
+\begin{subex}
+\item \verb|fifty five| \subans \verb|INT fifty five = 55|
+'
+\item \verb|three times two point seven|
+\subans \verb|REAL three times two point seven = 8.1|
+'
+\item \verb|colon| \subans \verb|CHAR colon=":"|
+'
+\end{subex}
+\item Is there anything wrong with the following identity declarations?
+\begin{verbatim}
+   REAL x = 1.234,
+        y = x;
+\end{verbatim}
+\indent\ans Yes, you cannot guarantee that the declaration for
+\verb|x| will be elaborated before the declaration of \verb|y|. The
+declarations should be written
+\begin{verbatim}
+   REAL x = 1.234;
+   REAL y = x
+\end{verbatim}
+'
+\item What is the difference in meaning between \verb|0| and
+\verb|0.0|?  \ans \verb|0| denotes an integer with mode \verb|INT|,
+\verb|0.0| denotes a real number with mode \verb|REAL|.
+'
+\item Write a program containing \verb|print| phrases to print the
+following values on your screen, separated by one space between each
+value:
+\begin{verbatim}
+   0.5   "G"   1   ":"   34000000
+\end{verbatim}
+\indent\ans \ %
+\begin{verbatim}
+   PROGRAM ex1 20 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(0.5);  print(blank);
+      print("G");  print(1);
+      print(blank);print(":");
+      print(34 000 000)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}

@@ -1,0 +1,92 @@
+\setlength{\unitlength}{0.00087489in}
+%
+% $Log: ch11-9.epic,v $
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(3346,3222)(0,-10)
+\drawline(1125,3195)(1845,3195)(1845,2835)
+	(1125,2835)(1125,3195)
+\drawline(1305,2880)(1305,2520)
+\drawline(1275.000,2640.000)(1305.000,2520.000)(1335.000,2640.000)
+\dottedline{45}(1485,3195)(1485,2835)
+\drawline(1755,3015)(2205,3015)
+\drawline(2085.000,2985.000)(2205.000,3015.000)(2085.000,3045.000)
+\drawline(2205,3195)(2925,3195)(2925,2835)
+	(2205,2835)(2205,3195)
+\drawline(2385,2880)(2385,2520)
+\drawline(2355.000,2640.000)(2385.000,2520.000)(2415.000,2640.000)
+\dottedline{45}(2565,3195)(2565,2835)
+\drawline(2835,3015)(3285,3015)
+\drawline(3165.000,2985.000)(3285.000,3015.000)(3165.000,3045.000)
+\drawline(2205,1935)(2925,1935)(2925,1575)
+	(2205,1575)(2205,1935)
+\drawline(2385,1620)(2385,1260)
+\drawline(2355.000,1380.000)(2385.000,1260.000)(2415.000,1380.000)
+\dottedline{45}(2565,1935)(2565,1575)
+\drawline(2835,1755)(3285,1755)
+\drawline(3165.000,1725.000)(3285.000,1755.000)(3165.000,1785.000)
+\drawline(1125,855)(1845,855)(1845,495)
+	(1125,495)(1125,855)
+\drawline(1305,540)(1305,180)
+\drawline(1275.000,300.000)(1305.000,180.000)(1335.000,300.000)
+\dottedline{45}(1485,855)(1485,495)
+\drawline(1755,675)(2205,675)
+\drawline(2085.000,645.000)(2205.000,675.000)(2085.000,705.000)
+\drawline(45,3195)(765,3195)(765,2835)
+	(45,2835)(45,3195)
+\drawline(225,2880)(225,2520)
+\drawline(195.000,2640.000)(225.000,2520.000)(255.000,2640.000)
+\dottedline{45}(405,3195)(405,2835)
+\drawline(675,3015)(1125,3015)
+\drawline(1005.000,2985.000)(1125.000,3015.000)(1005.000,3045.000)
+\put(0,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(45,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Fiona"}}}}}
+\put(720,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(810,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n-1}}}}}
+\put(1035,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(45,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(90,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Fiona"}}}}}
+\put(765,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(855,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n-1}}}}}
+\put(1080,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(2160,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(2205,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Fiona"}}}}}
+\put(2880,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(2970,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n+1}}}}}
+\put(2205,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(2250,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Fiona"}}}}}
+\put(2925,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(3015,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n+1}}}}}
+\put(1170,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(1215,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Iain"}}}}}
+\put(1800,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(1890,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n}}}}}
+\put(1125,0){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}(}}}}}
+\put(1170,0){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Iain"}}}}}
+\put(1755,0){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault},}}}}}
+\put(1845,0){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}n}}}}}
+\drawline(45,1935)(765,1935)(765,1575)
+	(45,1575)(45,1935)
+\drawline(225,1620)(225,1260)
+\drawline(195.000,1380.000)(225.000,1260.000)(255.000,1380.000)
+\dottedline{45}(405,1935)(405,1575)
+\drawline(675,1755)(2205,1755)
+\drawline(2085.000,1725.000)(2205.000,1755.000)(2085.000,1785.000)
+\drawline(810,450)(1080,540)
+\whiten\drawline(975.645,473.592)(1080.000,540.000)(956.671,530.513)(975.645,473.592)
+\put(1980,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(3240,2340){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(3285,1035){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(1935,0){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault})}}}}}
+\put(315,360){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\itdefault}garbage}}}}}
+\end{picture}
+}

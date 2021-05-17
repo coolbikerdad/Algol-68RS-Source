@@ -1,0 +1,38 @@
+\setlength{\unitlength}{0.00087489in}
+%
+% $Log: ch11-3.epic,v $
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(3888,537)(0,-10)
+\drawline(12,372)(1092,372)(1092,12)
+	(12,12)(12,372)
+\drawline(1812,372)(2892,372)(2892,12)
+	(1812,12)(1812,372)
+\drawline(1002,192)(1812,192)
+\drawline(1692.000,162.000)(1812.000,192.000)(1692.000,222.000)
+\dashline{45.000}(552,372)(552,12)
+\dashline{45.000}(2352,372)(2352,12)
+\drawline(2802,192)(3612,192)
+\drawline(3492.000,162.000)(3612.000,192.000)(3492.000,222.000)
+\put(102,102){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(597,102){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\put(1902,102){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(2397,102){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\put(12,417){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RQ}}}}}
+\put(57,237){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RF}}}}}
+\put(597,237){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RRQ}}}}}
+\put(1812,417){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RQ}}}}}
+\put(1857,237){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RF}}}}}
+\put(2397,237){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RRQ}}}}}
+\put(3612,147){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}NIL}}}}}
+\end{picture}
+}

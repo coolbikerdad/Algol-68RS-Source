@@ -1,0 +1,1449 @@
+% $Log: chapter10.tex,v $
+% Revision 1.4  2003-04-23 08:57:31  sian
+% Debian release 1.5
+%
+% Revision 1.3  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\newcommand{\co}{$\;\Longrightarrow\;$} % Used in coercion displays
+\Chapter{Units}{chapx}
+The aim of this chapter is to describe the grammar of units in a
+fairly rigorous manner.  The chapter covers units, contexts and
+coercions, as well as a number of lesser, but still important, ideas
+such as casts and balancing.  In describing some of the grammatical
+aspects of the language in previous chapters, it has been necessary
+to gloss over or distort some of the facts.  The definitive truth
+about such matters is in this chapter.
+
+An Algol~68 program consists of a closed \verb|VOID| clause which
+means that any value yielded by the closed clause will be voided. Any
+closed clause can be used including conditional and loop clauses. It
+is unusual to write a program which starts other than with
+\verb|BEGIN| (and ends other than with \verb|END|), but there is
+nothing in the definition of the language to preclude it. On our
+round tour of units, we shall start at the bottom and work up.
+
+\Section{Phrases}{gram-phrases}
+A \ix{phrase} is a \ix{declaration} or a \ix{unit}. Declarations
+yield no value, even if they include an initial
+\hx{assignment}{assignment!initial}. Units are the parts of the
+language which actually manipulate values. There are 22 different
+kinds of unit which can be subdivided into 5 classes arranged in a
+hierarchy:
+\begin{verbatim}
+   Quaternaries
+      Tertiaries
+         Secondaries
+            Primaries
+               Enclosed clauses
+\end{verbatim}
+\noindent
+where each class includes the lower class. For example, all enclosed
+clauses are primaries, but not all primaries are enclosed clauses.
+
+The distinctions between different classes of units prevent the
+writing of ambiguous programs and help to provide the meaning you
+might expect.
+
+The units in each class are as follows:
+\begin{itemize}
+\item Quaternaries
+\begin{itemize}
+\item assignments
+\item \hx{identity relations}{identity!relation}
+\item \hx{routine denotations}{denotation!routine}
+\item \ixtt{SKIP}
+\end{itemize}
+\item Tertiaries
+\begin{itemize}
+\item formul\ae{}
+\item \ixtt{NIL}
+\end{itemize}
+\item Secondaries
+\begin{itemize}
+\item generators
+\item selections
+\end{itemize}
+\item Primaries
+\begin{itemize}
+\item applied-identifiers
+\item calls
+\item casts
+\item \hx{denotations}{denotation} (except routine denotations)
+\item slices
+\end{itemize}
+\item Enclosed clauses
+\begin{itemize}
+\item case clauses
+\item closed clauses
+\item collateral clauses
+\item conditional clauses
+\item conformity clauses
+\item loop clauses
+\item parallel clauses
+\item row-displays
+\item structure-displays
+\end{itemize}
+\end{itemize}
+
+\Section{Contexts}{gram-contexts}
+The circumstances which allow certain coercions are called
+contexts. Each context has an intrinsic strength. There are five
+contexts called \textbf{strong}, \textbf{firm}, \textbf{meek},
+\textbf{weak} and \textbf{soft}. The places in a program which have
+these contexts are:
+\begin{itemize}
+\item \hx{Strong contexts}{context!strong}
+\begin{itemize}
+\item The actual-parameters of calls
+\item The enclosed clauses of casts
+\item The right-hand side of assignments
+\item The right-hand side of identity declarations
+\item The right-hand side of initialised name declarations
+\item The units of routine denotations
+\item \verb|VOID| units
+\item All constituents except one of a balanced clause
+\item One side of an \hx{identity relation}{identity!relation}
+\end{itemize}
+\item \hx{Firm contexts}{context!firm}
+\begin{itemize}
+\item Operands of formul\ae{}
+\item The actual parameters of transput calls
+\end{itemize}
+\item \hx{Meek contexts}{context!meek}
+\begin{itemize}
+\item Enquiry-clauses (including \verb|WHILE|)
+\item Primaries of calls
+\item The units following \verb|FROM|, \verb|BY| and \verb|TO| in a
+loop clause
+\item Trimmers, subscripts and bounds (must yield an \verb|INT|)
+\end{itemize}
+\item \hx{Weak contexts}{context!weak}
+\begin{itemize}
+\item Primaries of slices
+\item Secondaries of selections
+\end{itemize}
+\item \hx{Soft contexts}{context!soft}
+\begin{itemize}
+\item The left-hand side of assignments
+\item The other side of an \hx{identity relation}{identity!relation}
+(see strong context)
+\end{itemize}
+\end{itemize}
+
+\Section{Coercions}{gram-coercions}
+There are seven coercions in the language, namely
+\begin{itemize}
+\item \textbf{voiding}
+\item \textbf{rowing}
+\item \textbf{widening}
+\item \textbf{uniting},
+\item \textbf{deproceduring}
+\item \textbf{dereferencing}
+\item \textbf{weakly-dereferencing}
+\end{itemize}
+Roughly speaking, the coercions can be
+arranged in a hierarchy within the hierarchy of contexts thus:
+\begin{itemize}
+\item Strong context
+\begin{itemize}
+\item \hx{deproceduring}{coercion!deproceduring}
+\item \hx{rowing}{coercion!rowing}
+\item \hx{voiding}{coercion!voiding}
+\item \hx{widening}{coercion!widening}
+\end{itemize}
+\item Firm context
+\begin{itemize}
+\item \hx{uniting}{coercion!uniting}
+\end{itemize}
+\item Meek context
+\begin{itemize}
+\item \hx{dereferencing}{coercion!dereferencing}
+\end{itemize}
+\item Weak context
+\begin{itemize}
+\item \hx{weakly-dereferencing}{coercion!weakly-dereferencing}
+\end{itemize}
+\item Soft context
+\begin{itemize}
+\item deproceduring
+\end{itemize}
+\end{itemize}
+
+The only coercion not yet met is weakly-dereferencing. However, it is
+useful to describe all the coercions here. Before we do so, it should
+be noted that one of the limitations of the language is that you
+cannot specify the kind of context. Thus if you have a weak context
+and you would like a firm context, you cannot specify it. However, in
+any context, you can use a \bfix{cast} (see the section on primaries
+below) which will always make a context strong and because all
+coercions are available in a strong context, you can use the cast to
+specify the mode you require.
+
+\Subsection{Deproceduring}{gram-deproc}
+\hx{This}{coercion!deproceduring} coercion is available in all
+contexts.  Deproceduring is the process by which a parameterless
+procedure is called.  For example, the procedure \ixtt{random},
+declared in the \ix{standard prelude} as having mode
+\verb|PROC REAL|, when called yields a \verb|REAL|.  We can represent
+the coercion by
+$$\hbox{\verb|PROC REAL|\co\verb|REAL|}$$
+The \verb|PROC| is ``removed'', which is why it is called
+deproceduring.
+
+There are occasions when the identifier of a procedure can be written
+without the procedure being called. In the program fragment
+\begin{verbatim}
+   PROC REAL rnd:=random
+\end{verbatim}
+\noindent
+the right-hand side of the assignment requires the mode \verb|PROC|
+\verb|REAL| because the mode of the name identified by \verb|rnd| is
+\verb|REF| \verb|PROC| \verb|REAL|.  Clearly, \verb|random| is not
+called here.
+
+The only possible ambiguities with deproceduring are those of
+assignments and casts. For example, having declared \verb|rnd| above,
+the subsequent assignment
+\begin{verbatim}
+   rnd:=random;
+\end{verbatim}
+\noindent
+yields a value of mode \verb|REF PROC REAL|, because the value of an
+assignment is the value of the left-hand side (see section
+\hyref{gram-quat}). However, the following ``go-on symbol'' indicates
+that the assignment should now be voided. It is a rule of the
+language that voiding takes place before deproceduring if the unit
+being voided is an assignment. If, however, \verb|rnd| had been used
+on its own, as in
+\begin{verbatim}
+   rnd;
+\end{verbatim}
+\noindent
+then it would have been dereferenced, then deprocedured and the
+resulting \verb|REAL| value voided. This would ensure that any
+side-effects (see sections \hyref{rout-nopar} and \hyref{rout-dyad})
+would take effect.
+
+Similarly, in the unit
+\begin{verbatim}
+   PROC REAL(rnd);
+\end{verbatim}
+\noindent
+\verb|rnd| (with mode \verb|REF PROC REAL|) will be dereferenced, but
+the resulting value of mode \verb|PROC REAL| will be voided
+immediately since it is clear that a \verb|REAL| value is not
+required. Note that all the code examples using a go-on symbol could
+have been written with \verb|END| or \verb|FI| etc, provided that the
+resulting context would have resulted in voiding.
+
+When writing a program, it is common to make mistakes\footnote{You
+should expect to make one mistake every 20 lines.  Congratulate
+yourself if you do better!}, and one mistake is to write the
+identifier of a procedure without its parameters (the primary of a
+call).  This is not, strictly speaking, an error. At least, not a
+grammatical error. However, in such a case, the
+\hx{a68toc}{a68toc!voiding error} compiler will issue a warning:
+\begin{verbatim}
+   Proc with parameters voided,
+   parameters of call forgotten perhaps
+\end{verbatim}
+\noindent
+in which case the mistake should be obvious. Suppose you write the
+identifier of a procedure in a formula without its parameters, as in
+\begin{verbatim}
+   PROC p1 = (INT n)INT:  n**2+3;
+   INT a:=4;  a:=4+p1;
+\end{verbatim}
+\noindent
+then the \hx{a68toc}{a68toc!OP error@\texttt{OP} error} compiler will
+issue the message
+\begin{verbatim}
+   op + not declared for INT and PROC (INT)INT
+\end{verbatim}
+\noindent
+The error message for a procedure identifier on the right-hand side of
+an assignment is
+\begin{verbatim}
+   PROC (INT)INT cannot be coerced to INT
+\end{verbatim}
+
+Deproceduring only occurs with parameterless procedures.
+
+\Subsection{Dereferencing}{gram-deref}
+This is the process of moving from a name to the value to which it
+refers (which could also be a name---see chapter~11). For example, if
+\verb|x| has mode \verb|REF REAL|, then in the
+\hx{formula}{coercion!dereferencing}
+\begin{verbatim}
+   x * 3.5
+\end{verbatim}
+\noindent
+the name \verb|x| will be dereferenced to yield a new instance of the
+\verb|REAL| referred to by \verb|x|. The coercion can be represented by
+$$\hbox{\verb|REF REAL|\co\verb|REAL|}$$
+If \verb|rx| has mode \verb|REF REF REAL| (that is, \verb|rx| can
+refer to a name of mode \verb|REF REAL|), then the formula
+\begin{verbatim}
+   rx * 3.5
+\end{verbatim}
+\noindent
+will result in \verb|rx| being dereferenced twice. In this case, the
+coercion could be represented as
+$$\hbox{\verb|REF REF REAL|\co\verb|REAL|}$$
+Dereferencing is available in all contexts except soft.
+
+When a name, such as \verb|rx|, is dereferenced twice, new instances
+of both the values referred to (in the case of \verb|rx|, the
+\verb|REF REAL| and the \verb|REAL| values) are created. However, the
+new instance of the \verb|REF REAL| value is discarded after the
+creation of the \verb|REAL| value. This has no effect on the
+elaboration of the program.
+
+\Subsection{Weakly-dereferencing}{gram-wderef}
+\hx{This}{coercion!weakly-dereferencing} is a variant of the dereferencing
+coercion in which any number of \verb|REF|s can be removed except the
+last. Thus, in the case of \verb|rx| above, weakly-dereferencing would
+yield a mode of \verb|REF REAL| and could be represented by
+$$\hbox{\verb|REF REF REAL|\co\verb|REF REAL|}$$
+This coercion is only available in \hx{weak contexts}{context!weak}.
+It is particularly useful in the selection of
+\hx{secondaries}{secondary} of structure modes which contain fields
+whose mode starts with \verb|REF| (see section~\hyref{gram-sec} and
+chapter~11).
+
+\Subsection{Uniting}{gram-unite}
+\hx{In}{uniting} this coercion, the mode of a value becomes a
+united-mode. For example, if \verb|OO| is an operator both of whose
+operands are \verb|UNION(INT,REAL)|, then in the formula
+\begin{verbatim}
+   3.0 OO -2
+\end{verbatim}
+\noindent
+both operands will be united to \verb|UNION(INT,REAL)| before the
+operator is elaborated. These coercions can be represented by
+$$\left.
+    \begin{array}{l}
+      \hbox{\tt INT}\\
+      \hbox{\tt REAL}
+    \end{array}
+  \right\}\quad\Longrightarrow\quad\hbox{\tt UNION(INT,REAL)}$$
+Uniting is available in \hx{firm}{context!firm} and
+\hx{strong}{context!strong} contexts and must precede rowing.
+
+\Subsection{Widening}{gram-wid}
+In a strong context, an integer can be replaced by a real number and
+a real number replaced by a complex number, depending on the mode
+required. This can be represented by
+\begin{eqnarray*}
+ \hbox{\tt INT}\,&\Longrightarrow\,&\hbox{\tt REAL}\\
+ \hbox{\tt REAL}\,&\Longrightarrow\,&\hbox{\tt COMPL}
+\end{eqnarray*}
+Widening is not available in formul\ae{} (firm contexts).
+
+\Subsection{Rowing}{gram-row}
+\hx{If}{coercion!rowing}, in a strong context, a multiple is required
+and a value is provided whose mode is the \hx{base mode}{mode!base} of the
+multiple, then the value will be rowed to provide the required
+multiple.  There are two cases to consider:
+\begin{enumerate}
+\item If the mode required is not a name and the base-mode of the
+multiple is the mode of the value given, then the value will be rowed
+to give \verb|[]base-mode|.  For example, if the required mode is
+\verb|[]INT|, then the base-mode is \verb|INT|.  In the identity
+declaration
+\begin{verbatim}
+   []INT i = 3
+\end{verbatim}
+\noindent
+the value yielded by the right-hand side (an integer) will be rowed and
+the coercion can be expressed as
+$$\hbox{\verb|INT|\co\verb|[]INT|}$$
+If the value given is a row mode, such as \verb|[]INT|, then there are
+two possible rowings that can occur.
+\begin{enumerate}
+\item In the identity declaration
+\begin{verbatim}
+   [,]INT a = i
+\end{verbatim}
+\noindent
+where \verb|i| was declared above with mode \verb|[]INT|, the coercion
+can be expressed as
+$$\hbox{\verb|[]INT|\co\verb|[,]INT|}$$
+In this case, an extra dimension is added to the multiple.
+\item If the required mode is \verb|[][]INT| as in
+\begin{verbatim}
+   [][]INT r = i
+\end{verbatim}
+\noindent
+then the value on the right-hand side is rowed to yield a
+one-dimensional multiple whose base-mode is \verb|[]INT|. This coercion
+can be represented as
+$$\hbox{\verb|[]INT|\co\verb|[][]INT|}$$
+\end{enumerate}
+\item If the multiple required is a \ix{name}, then a name of
+a non-multiple can be supplied. For example, if the value supplied is
+a name with mode \verb|REF INT|, then a name with mode
+\verb|REF[]INT| will be created. In this identity
+\hx{declaration}{declaration!identity}
+\begin{verbatim}
+   REF[]INT ni = LOC INT
+\end{verbatim}
+\noindent
+the local \hx{generator}{generator!local} yields a name with mode
+\verb|REF INT| and the rowing coercion yields a name with mode
+\verb|REF[]INT| and bounds \verb|[1:1]|. The coercion can be
+represented by
+$$\hbox{\verb|REF INT|\co\verb|REF[]INT|}$$
+The first kind of rowing could also occur. The identity-declaration
+\begin{verbatim}
+   []REF INT rri = LOC INT
+\end{verbatim}
+\noindent
+produces the coercion represented by
+$$\hbox{\verb|REF INT|\co\verb|[]REF INT|}$$
+Likewise, a name of mode \verb|REF[]INT| can be rowed to a name with
+mode \verb|REF[,]INT| or a non-name with mode \verb|[]REF[]INT|,
+depending on the mode required. Although \verb|INT| has been taken as
+an example, any mode could have been used.
+\end{enumerate}
+
+\Subsection{Voiding}{gram-voiding}
+\hx{In}{coercion!voiding} a \hx{strong context}{context!strong}, a
+value can be thrown away, either because the mode \ixtt{VOID} is
+explicitly stated, as in a procedure yielding \verb|VOID|, or because
+the context demands it, as in the case of a
+\hx{semicolon}{;@\texttt{;}} (the go-on symbol).  In this case, there
+are two exceptions to the rule that the value yielded depends only on
+the context. Casts and assignments are voided after the elaboration
+of the unit, but all other units are subjected to the usual coercions
+in a strong context.  The following program illustrates this:
+\begin{verbatim}
+   PROGRAM tproc CONTEXT VOID
+   USE standard
+   BEGIN
+      PROC INT p;
+      PROC pp = INT:
+      (
+         INT i=random int(6);
+         print(i);
+         i
+      );
+      p:=pp;
+      print((" p:=pp",newline));
+      pp;
+      print((" pp",newline));
+      p;
+      print((" p",newline));
+      PROC INT(p);
+      print((" PROC INT(p)",newline))
+   END
+   FINISH
+\end{verbatim}
+\noindent
+The output is
+\begin{verbatim}
+    p:=pp
+            +6 pp
+            +1 p
+    PROC INT(p)
+\end{verbatim}
+\noindent
+In the \ix{assignment} \verb|p:=pp|, the mode required on the
+right-hand side is \verb|PROC INT| so \verb|pp| is not
+\hx{deprocedured}{coercion!deproceduring}, and \verb|p| is neither
+\hx{dereferenced}{coercion!dereferencing} nor deprocedured after the
+assignment has been elaborated. The cast \verb|PROC INT(p)| is
+elaborated (that is, \verb|p| is dereferenced) and then voided
+without the procedure \verb|p| (or \verb|pp|) being
+\hx{called}{elaboration}.
+
+\Subsection{Legal coercions}{gram-legal}
+In any context, you have a unit which has, or yields, a value of some
+mode; and in that context you have a mode which you need. If the
+value of the mode you have can be coerced to a value of the mode you
+need (assuming that the two modes differ), then the coercion is legal.
+
+For example, suppose you have a value of mode \verb|PROC| \verb|REF|
+\verb|INT| in a strong context and the mode you want is
+\verb|[]COMPL|.  The required mode can be got via
+\begin{itemize}
+\item deproceduring to mode \verb|REF INT|
+\item dereferencing to mode \verb|INT|
+\item widening to mode \verb|REAL|
+\item widening to mode \verb|COMPL|
+\item rowing to mode \verb|[]COMPL|
+\end{itemize}
+In practice, coercions are not usually as complicated as this.
+
+Notice that deproceduring can take place before or after
+dereferencing, that widening must occur before rowing and that
+voiding can only take place after all other coercions. For example,
+you cannot coerce \verb|[]INT| to \verb|[]REAL|.
+
+\begin{exercise}
+\item Which coercions are available in a meek context?
+\ans Deproceduring and dereferencing (not weakly-deref\-eren\-cing).
+'
+\item Which coercions are not available in a strong context?
+\ans None.
+'
+\item For each of the following, state whether the given mode can be
+coerced to the mode to the right of the arrow:
+\begin{subex}
+\item Weak context: \verb|REF REF BOOL|\co\verb|REF BOOL| \subans Yes.
+'
+\item Firm context: \verb|PROC INT|\co\verb|UNION(REAL,COMPL)|
+\subans No (cannot widen).
+'
+\item Soft context: \verb|REF PROC CHAR|\co\verb|CHAR| \subans No
+(cannot dereference).
+'
+\item Meek context: \verb|PROC REF REAL|\co\verb|[]REAL| \subans No
+(cannot row).
+'
+\item Weak context: \verb|PROC REF BOOL|\co\verb|BOOL| \subans No
+(cannot dereference).
+'
+\item Strong context: \verb|PROC INT|\co\verb|UNION([]INT,[]REAL)|
+\subans No (cannot unite after rowing).
+'
+\end{subex}
+\end{exercise}
+
+\Section{Enclosed clauses}{gram-enc}
+There are nine kinds of enclosed \hx{clause}{clause!enclosed}, most
+of which we have already met.\footnote{Note that a serial clause is
+\protect\emph{not} an enclosed clause.}
+\begin{enumerate}
+\item The simplest is the closed \hx{clause}{clause!closed} which
+consists of a serial clause enclosed in parentheses (or \ixtt{BEGIN}
+and \ixtt{END}).  The \ix{range} of any identifiers declared in the
+closed clause is limited to the closed clause.  The
+\hx{a68toc}{a68toc!identifier range} compiler limits the use of any
+identifiers declared in the closed clause to the closed clause at and
+after their declaration.  Here are some examples of closed clauses:
+\begin{verbatim}
+   (3)
+   BEGIN p + 3 END
+   (INT s;  read(s);  s)
+   (REAL q:=i+2;  sqrt(q))
+\end{verbatim}
+\noindent
+\item \hx{Collateral clauses}{clause!collateral} look like
+row-displays: there must be at least two units. Remember that
+declarations are not units.  The units are elaborated collaterally.
+This means that the order is undefined and may well be in parallel.
+Examples of collateral clauses are\footnote{The
+\protect\hx{a68toc}{a68toc!collateral clauses}
+compiler does not provide collateral clauses other than row-
+and structure-displays.}
+\begin{verbatim}
+   (m:=3, n:=-2)
+   ((INT m:=2; m),(CHAR a=REPR i; a))
+\end{verbatim}
+\noindent
+The second collateral clause has two units each of which is a
+closed clause.
+
+A parallel \hx{clause}{clause!parallel} looks exactly like a
+collateral clause preceded by \verb|PAR|. The constituent units
+(there must be at least two) are executed in parallel.\footnote{The
+\protect\hx{a68toc}{a68toc!parallel clauses} compiler does not
+provide parallel clauses.}
+\end{enumerate}
+The other enclosed clauses have already been discussed: 
+\begin{enumerate}\setcounter{enumi}{2}
+\item \hx{row-display}{row!display} in section~\hyref{rep-rowdisp}
+\item loop \hx{clause}{clause!loop} in section \hyref{rep-rep}
+\item conditional \hx{clause}{clause!conditional} in section
+\hyref{choice-cond}
+\item case \hx{clause}{clause!case} in section \hyref{choice-case}
+\item \hx{structure-display}{structure!display} in
+section~\hyref{struc-denot}
+\item conformity \hx{clause}{clause!conformity} in
+section~\hyref{union-conf}
+\end{enumerate}
+It should be noted that the enquiry clause (in a conditional- or
+case-clause) is in a \hx{meek context}{context!meek} whatever the
+context of the whole clause. Thus, the context of the clause is
+passed on only to the final phrase (it must be a unit) in the
+\verb|THEN|, \verb|ELSE|, \verb|IN| or \verb|OUT| clauses.
+
+\begin{exercise}
+\item What kind of enclosed clause could each of the following be?
+\begin{subex}
+\item \verb|((INT p:=ENTIER-4.7; p),37.5)| \subans Row-display,
+structure-display, collateral clause.
+'
+\item \verb|PAR BEGIN 3, 15 END| \subans Parallel clause.
+'
+\item \verb!(i|3,-3|4)! \subans Case clause.
+'
+\item \verb!(si|(INT i): i,(STRING i): i)! \subans Conformity clause.
+'
+\item \verb!(a < 3|4|5)! \subans Conditional clause.
+'
+\item \verb|(a:=2; b:=-a)| \subans Closed clause or enclosed clause.
+'
+\end{subex}
+\end{exercise}
+
+\Section{Primaries}{gram-prim}
+Primaries are denotations, applied identifiers, casts, calls and
+slices. We have met \hx{denotations}{denotation} in chapters 1,~4
+and~6. Only plain \hx{values}{values!plain}, routines and a special
+name (\verb|NIL|) have a denotation.  \verb|NIL| is dealt with in the
+section on tertiaries and the mode \verb|BITS| is covered in
+chapter~11.  Applied-identifiers means identifiers being used in a
+context, rather than in their declarations.  We have met numerous
+examples of these.  Routine denotations are not primaries.
+
+A \bfix{cast} consists of a \hx{mode indicant}{mode!indicant}
+followed by an enclosed clause, usually a closed clause. Here is a
+formula with a cast:
+\begin{verbatim}
+   3.4 * REAL (i)
+\end{verbatim}
+\noindent
+where \verb|i| has mode \verb|INT|. The cast puts the enclosed clause
+in a strong context. Thus, in the above formula, the normal context
+of an operand is firm (see chapter~2), but the cast causes the value
+of \verb|i| to be widened to a \verb|REAL|. Casts are usually used in
+formul\ae{} and \hx{identity relations}{identity!relation} (see
+sections \hyref{gram-quat} and \hyref{adv-idrel}). Casts are
+sometimes used to coerce a conditional or case clause where
+\ix{balancing} is insufficient to provide the mode required (see
+section~\hyref{gram-bal} later in this chapter). The mode indicant
+can be any mode and can contain any of the mode-constructors such as
+\verb|REF| or \verb|PROC| or \verb|[]| (but it should not be a
+\ix{generator}, which is not a mode indicant). Care should be taken
+when using a structured mode. For example, in this formula,
+\begin{verbatim}
+   3 * STRUCT(INT k)(4)
+\end{verbatim}
+\noindent
+assuming that the operator has been declared for operands of modes
+\verb|INT| and \verb|STRUCT(INT k)|, the cast must include the
+\ix{field selector} because it is part of the mode.
+
+\hx{Calls}{procedure!call} were discussed in sections
+\hyref{rout-npprocs} and \hyref{rout-parprocs}. Here is a simple example:
+\begin{verbatim}
+   sqrt(0.7)
+\end{verbatim}
+\noindent
+In this call, \verb|sqrt| is itself a primary (it is an
+applied-\hx{identifier}{identifier!applied}). In
+section~\hyref{gram-contexts}, it was mentioned that the primary of a
+call is in a meek \hx{context}{context!meek}. This applies even if
+the call itself (as a whole) is in a strong context. The primary of a
+call can be an enclosed clause. For example,
+\begin{verbatim}
+   (a>4|sqrt|sin)(x)
+\end{verbatim}
+\noindent
+which yields \verb|sqrt(x)| if \verb|a > 4| and \verb|sin(x)|
+otherwise. In this case, the primary is
+\begin{verbatim}
+   (a>4|sqrt|sin)
+\end{verbatim}
+
+We discussed \hx{slices}{slice} in section \hyref{rep-slice}. They
+include simple subscripting.  For example, given the declaration
+\begin{verbatim}
+   [,]INT r = ((1,2,3),(4,5,6))
+\end{verbatim}
+\noindent
+the units \verb|r[1,]| and \verb|r[2,3]| are both slices. Whatever the
+context of the slice, the context of the primary of the slice (\verb|r|
+in these examples) is always \hx{weak}{context!weak}. This means that
+only weak-dereferencing is allowed. Thus, given the
+\hx{phrases}{coercion!weakly-dereferencing}
+\begin{verbatim}
+   [2,3]INT s:=r;  INT p:=s[2,1]
+\end{verbatim}
+\noindent
+the slice \verb|s[2,1]| is in a strong \hx{context}{context!strong},
+but the \verb|s| is in a weak context, so the name that \verb|s|
+identifies, which has the mode \verb|REF[,]INT| will not be
+dereferenced, though the slice, which has mode \verb|REF INT|, will
+be.
+
+\hypertarget{gram-slice}{}\label{gram-slice}%
+There is another consequence of the weak context of the primary of a
+slice: row-displays can only be used in a strong context. So if you
+want to change the bounds of a row-display, because the slicer will
+produce a weak context, the row-display must be enclosed in a cast.
+
+The context of subscripts and bounds in trimmers is
+\hx{meek}{context!meek} and they must be units.
+
+All enclosed clauses are primaries, but not all primaries are
+enclosed clauses.
+
+\begin{exercise}
+\item What are the contexts of
+\begin{subex}
+\item \verb|p| (mode \verb|REF[]REAL|) in \verb|[]REAL (p[3])|
+\subans Weak.
+'
+\item \verb|q| (mode \verb|PROC(REAL)INT|) in \verb|REAL(q(0.5))|
+\subans Meek.
+'
+\end{subex}
+\item How many primaries are there in each of the following units:
+\begin{subex}
+\item \verb|3 * (1.4 + r)/2**6| \subans 6 (4 denotations, 1
+applied-identifier, 1 closed clause).
+'
+\item \verb|p:=sqrt(r) - 6| \subans 5 (1 denotation, 3
+applied-identifiers, 1 call).
+'
+\item \verb|num:=x[3,ENTIER r]| \subans 5 (1 denotation, 3
+applied-identifiers, 1 slice).
+'
+\item \verb|i * []CHAR("e")| \subans (1 denotation, 1 closed clause,
+1 cast, 1 applied-identifier).
+'
+\end{subex}
+\end{exercise}
+
+\Section{Secondaries}{gram-sec}
+We have discussed both kinds of secondary (\hx{selections}{selection}
+and \hx{generators}{generator}), but there are other points which
+need mentioning.
+
+There are two kinds of generator (see section~\hyref{name-assign}).
+Occasionally, when a procedure has a name parameter, the name may not
+be needed. Instead, therefore, of using an identifier of a name which
+is used for another purpose, which would be confusing, or declaring a
+name just for this purpose, which would be unnecessary, an
+\ix{anonymous name} can be used. For example, a
+possible call of the procedure \verb|char in string| could be
+\begin{verbatim}
+   char in string(ch,LOC INT,str)
+\end{verbatim}
+\noindent
+if you are only interested in whether the character is in the string
+and not in its position.
+
+Another case where an anonymous name is useful is in the creation of
+odd-shaped multiples.  Consider the program fragment:
+\begin{verbatim}
+   [10]REF[]INT ri;  INT j;
+   
+   FOR i TO UPB ri
+   DO
+      read(j);
+      ri[i]:=LOC[j]INT;  read(ri[i])
+   OD
+\end{verbatim}
+\noindent
+Since there are no declarations in the loop \hx{clause}{clause!loop},
+the \ix{scope} of the name created by the generator is the
+enclosed clause surrounding the loop clause, which includes the
+declarations for \verb|ri| and \verb|j|.  The mode of the slice
+\verb|ri[i]| is \verb|REF REF[]INT|.  Thus the value of \verb|ri[i]| is
+a name with two \verb|REF|s in its mode, and it is made to refer to a
+name of mode \verb|REF[]INT|, which has one \verb|REF| less. 
+Assignments of this type will be considered in detail in the next
+chapter. Note that the context of a parameter to \verb|read| is firm
+so the parameter is dereferenced once before a value is read.
+
+\hypertarget{gram-paren}{}\label{gram-paren}%
+When discussing \hx{selections}{secondary} in section
+\hyref{struc-field}, you may have wondered about the peculiar rules of
+placing parentheses when talking about rows in structures, rows of
+structures and rows in rows of structures.  Firstly, it should be
+mentioned that in the secondary
+\begin{verbatim}
+   im OF z
+\end{verbatim}
+\noindent
+where z has mode \verb|COMPL| or \verb|REF COMPL|, the \verb|z|
+itself is not only a secondary, it is also a primary (it is an
+\hx{applied-identifier}{identifier!applied}). This means that using
+the declarations
+\begin{verbatim}
+   MODE AM = STRUCT(INT i,CHAR c),
+        BM = STRUCT(INT i,AM a);
+   BM b
+\end{verbatim}
+\noindent
+the selection
+\begin{verbatim}
+   c OF a OF b
+\end{verbatim}
+\noindent
+is valid because
+\begin{verbatim}
+   a OF b
+\end{verbatim}
+\noindent
+is also a secondary. We shall meet extended selections like this in
+chapter~11.
+
+Secondly, a primary is a secondary, but not necessarily the other way
+round.  Consider these declarations:
+\begin{verbatim}
+   STRUCT(INT i,[3]REAL r)s1;
+   [3]STRUCT(INT i,REAL r)s2
+\end{verbatim}
+\noindent
+The selection \verb|r OF s1| has the mode \verb|REF[]REAL|.  If you
+want to slice it, to get one of the constituent names of mode
+\verb|REF REAL| say, you cannot do so directly.  The reason is that
+in a \ix{slice}, as mentioned in the previous section, what is sliced
+must be a \ix{primary}.  To convert the \ix{secondary} into a primary
+you have to enclose it in \ix{parentheses} thus converting it into an
+enclosed clause; and enclosed clauses are also primaries (in
+section~\hyref{gram-phrases}, it was said that the four classes of
+units are arranged in a hierarchy in which each class includes the
+lower classes).  So the second name of \verb|r OF s1| is yielded by
+\verb|(r OF s1)[2]|.
+
+On the other hand, considering the name identified by \verb|s2|, the
+selection
+\begin{verbatim}
+   r OF s2[2]
+\end{verbatim}
+\noindent
+can be written without parentheses because \verb|s2| is not only a
+secondary, it is also a primary (an applied-identifier) with mode
+\verb|REF[]STRUCT...|. The phrase \verb|s2[2]| is perfectly valid, it
+having mode \verb|REF STRUCT(...)|.  The selection \verb|r OF s2| has
+the mode \verb|REF[]REAL| and so it too can be sliced by writing
+\verb|(r OF s2)[2]|. The effect is the same for both of the cases
+involving \verb|s2|. Note that the \hx{a68toc}{a68toc!selections}
+compiler does not permit selection of a field from a row of
+structures. Doing so will yield the following error message:-
+\begin{verbatim}
+OPERATORS - select: []struct not implemented
+FATAL ERROR (661) Compiler error:
+   ENVIRONMENT (ASSERT) - assertion failure
+\end{verbatim}
+
+To summarise, any primary can be regarded as a secondary, but not
+vice-versa.
+
+\begin{exercise}
+\item Give an example of a primary which is also a secondary.
+\ans The identifier of a structure or a name referring to a structure.
+'
+\item Give an example of a secondary which is not a primary. \ans A
+selection.
+'
+\item In this exercise, the following declarations hold:
+\begin{verbatim}
+   MODE AM = STRUCT(CHAR a,b),
+        BM = STRUCT(AM a,
+                    STRUCT(CHAR a,AM b) c,
+                    REF BM d);
+   BM p
+\end{verbatim}
+\noindent
+How many secondaries are there in each of the following units?
+\begin{subex}
+\item \verb|a OF p| \subans 2.
+'
+\item \verb|a OF a OF p| \subans 3.
+'
+\item \verb|a OF c OF p| \subans 3.
+'
+\item \verb|a OF a OF d OF p| \subans 4.
+'
+\end{subex}
+\end{exercise}
+
+\Section{Tertiaries}{gram-ter}
+Tertiaries are formul\ae{} and \verb|NIL|.  \hx{Formul\ae{}}{formula}
+were covered in chapter two.  All that needs to be said here is that a
+formula can consist solely of a single \ix{secondary} or \ix{primary}
+or enclosed clause although this is not usual.  If a formula,
+containing at least one operator, is to be used as a primary or a
+secondary, it must be enclosed in parentheses (or \verb|BEGIN| and
+\verb|END|).  For example, in the formula
+\verb|next OF (H declarer)|, where \verb|H = (INT)REF HAND| and
+\verb|HAND = STRUCT(...,REF HAND next)|, the formula must be
+surrounded by parentheses to make it into a secondary.
+
+The only name having a denotation is \verb|NIL|. Its mode is
+\verb|REF| \verb|whatever|. In other words, it can have any mode
+which starts with \verb|REF|. It does not refer to any value and,
+although it must only occur in a strong context, it cannot be
+coerced. Its uses are described in the next chapter.
+
+\Section{Quaternaries}{gram-quat}
+Quaternaries are assignments, routine denotations,
+\hx{identity relations}{identity!relation} and \verb|SKIP|. Of the
+four, the \ix{assignment} is the most common.  An assignment consists
+of three parts. The left-hand side must be a \ix{tertiary}. It is
+usually an \ix{applied identifier} or, less commonly, an
+\hx{enclosed clause}{clause!closed}. Its value must be a \ix{name}.
+Its context is \hx{soft}{context!soft}, so no dereferencing is
+allowed unless a \ix{cast} is used (see the next chapter), but
+\hx{deproceduring}{coercion!deproceduring} is allowed.  The second
+part is the \ix{assignment token}.  The right-hand side (the third
+part) can be any quaternary (including, of course, another
+assignment). Its context is \hx{strong}{context!strong} so any
+coercion is permitted.  The mode of its value must contain one less
+\verb|REF| than the mode of the left-hand side.
+
+The right-hand side of an assignment is, most commonly, a formula
+which is a tertiary (all tertiaries are quaternaries, but not
+vice-versa).  The left-hand side can also be a formula provided that
+the value yielded is a name (which is the case with the \ix{assigning
+operators}---see section~\hyref{name-assops}). If an assignment is to
+be used as a primary, a secondary or a tertiary, then it must be
+enclosed in \ix{parentheses}(or \ixtt{BEGIN} and \ixtt{END}).  The
+value of an assignment is the value of the left-hand side: that is,
+it is a name.  Assignments were discussed in chapter~5.
+
+\hx{Routine denotations}{denotation!routine} were discussed in
+chapter~6.
+
+\ixtt{SKIP} yields an undefined value of any mode
+and can only occur in a strong context. It is particularly useful in
+the following case. Consider the procedure
+\begin{verbatim}
+   PROC p=(REAL a,b)REAL:
+   IF b=0
+   THEN print(("Division by zero",newline)):
+      stop;  SKIP
+   ELSE a/b
+   FI
+\end{verbatim}
+\noindent
+Since the yield has mode \verb|REAL|, and the \verb|ELSE| part of the
+conditional clause yields a value of mode \verb|REAL|, by the principle
+of \ix{balancing} (see below) the \verb|THEN| part also
+must yield a value of mode \verb|REAL|.  Now the construct \verb|stop|
+yields a value of mode \verb|VOID| which cannot be coerced to
+\verb|REAL| in any context.  If the procedure is going to compile
+successfully, the \verb|THEN| part must yield \verb|REAL| (or, at
+least, a value which can be coerced to \verb|REAL| in the context of
+the body of the procedure which is strong) even though the value
+yielded will never be used (because the \verb|stop| will terminate the
+program).  The \verb|SKIP| will yield an undefined value of mode
+\verb|REAL|.  Although \verb|SKIP| must occur in a strong context, it
+cannot be \hx{coerced}{SKIP@\texttt{SKIP}}.
+
+Another use for \verb|SKIP| is in \hx{row-}{row!display} or
+\hx{structure-displays}{structure!display} where not all the units
+are known at the time of a declaration.  For example:
+\begin{verbatim}
+   [3]INT ii:=(4,?,5)
+\end{verbatim}
+\noindent
+Before the multiple \verb|ii| is used, the second element should be
+given a value. If no such value is assigned, and you try to print the
+value of \verb|ii[2]| the \hx{a68toc}{a68toc!unassigned names}
+compiler will generate code which will print whatever value was there
+at the time the multiple was generated, which may well be rubbish.
+
+The \hx{identity relation}{identity!relation} is discussed in the
+next chapter, but its grammar has important consequences. The
+identity relation consists of two tertiaries separated by an
+\hx{identity relator}{identity!relator} (one of \ixtt{:=:} or
+\ixtt{:/=:}). Since a \ix{formula} is a \ix{tertiary}, it can safely
+be included in an identity relation.  For example, given the
+declarations
+\begin{verbatim}
+   INT x:=3, y:=1;
+   PROC x or y = (REAL r)REF INT: (r<0.5|x|y)
+\end{verbatim}
+\noindent
+the identity relation
+\begin{verbatim}
+   x or y(random) :=: x
+\end{verbatim}
+\noindent
+is legal. However, if you want to include an identity relation in a
+formula then you must surround it with parentheses to make it into a
+tertiary, as in
+\begin{verbatim}
+   IF (x or y(random) :=: x) AND x*y > 0
+   THEN
+\end{verbatim}
+\noindent
+Since one side of an identity relation is in a soft
+\hx{context}{context!soft} while the other is in a strong
+\hx{context}{context!strong}, only one side of an identity
+relation can be strongly-dereferenced. The soft side can be
+weakly-dereferenced which means that one \verb|REF| will always be
+left on that side. \hx{Balancing}{balancing} applies to
+\hx{identity relations}{coercion!weakly-dereferencing} (see the
+discussion in section~\hyref{adv-idrel}).
+
+This completes the general discussion of units.
+
+\begin{exercise}
+\item What kind of units are each of the following:
+\begin{subex}
+\item A cast. \subans A primary.
+'
+\item An applied-identifier. \subans A primary.
+'
+\item A selection. \subans A secondary.
+'
+\item A multiple. \subans A primary.
+'
+\item A name. \subans A primary.
+'
+\item A formula. \subans Tertiary.
+'
+\item A loop clause. \subans Enclosed clause.
+'
+\item An assignment. \subans A quaternary.
+'
+\item A declaration. \subans It is not a unit.
+'
+\item A procedure denotation. \subans A quaternary.
+'
+\end{subex}
+\item Which units are to be found in each of the following:
+\begin{subex}
+\item \verb|3.5 * (a - 2 * x)| \subans 2 denotations $+$ 2
+applied-identifiers $=$ 4 primaries. 1 closed clause. 3~formul\ae{}
+$=$ 3 tertiaries.
+'
+\item \verb|p OR q AND a = 4| \subans 1 denotation $+$ 3
+applied-identifiers $=$ 4 primaries. 3 formul\ae{} $=$ 3 tertiaries.
+'
+\item \verb|sin(x)| \subans 2 applied-identifiers $+$ 1 call $=$ 3
+primaries.
+'
+\item \verb|a[3,2:4]| \subans 3 denotations $+$ 1 applied-identifier
+$+$ 1 slice $=$ 5 primaries.
+'
+\item \verb!x:=(c<"e"|2.4|-y)! \subans 2 denotations $+$ 3
+applied-identifiers $=$ 5 primaries; 1 conditional clause $=$ 1
+enclosed clause, 2 formul\ae{} $=$ 2 tertiaries, 1 assignment $=$ 1
+quaternary.
+'
+\item \verb!(i|x,y,z):=(p|2|-4)! \subans 2 denotations $+$ 5
+applied-identifiers $=$ 7 primaries, 1 formula $=$ 1 tertiary, 1
+assignation $=$ 1 quaternary, 1 case clause $+$ 1 conditional clause
+$=$ 2 enclosed clauses.
+'
+\item \verb|PAR(x:=1.2,y:=3.6)| \subans 2 denotations $+$ 2
+applied-identifiers $=$ 4 primaries, 2 assignments $=$ 2
+quaternaries, 1 parallel clause $=$ 1 enclosed clause.
+'
+\end{subex}
+\end{exercise}
+
+\Section{Balancing}{gram-bal}
+In section~\hyref{rout-rout}, it was pointed out that the context of a
+routine \hx{denotation}{denotation!routine} is passed on to the last
+unit in the denotation.  In the example given, the body of the
+routine denotation was a closed \hx{clause}{clause!closed}.  The
+\ix{yield} of the routine was a value of mode \verb|INT|, but the
+yield of the last unit was a name with mode \verb|REF INT|.  Since
+the context of the body of a routine denotation is strong, the name
+is dereferenced to get an \verb|INT|. This principle is applicable to
+all enclosed clauses.
+
+Now conditional clauses, case clauses and conformity clauses can
+yield one of a number of units, and so it is quite possible for the
+units to yield different values of different modes.  The principle of
+\ix{balancing} allows the context of all these units, except one, to
+be promoted to strong whatever the context of the enclosed clause.
+Balancing is also invoked for
+\hx{identity relations}{identity!relation} which are dealt with in
+the next chapter.
+
+Considering, for example, the formula
+\begin{verbatim}
+   x * (a > 0|3.0|2)
+\end{verbatim}
+\noindent
+the context of the conditional clause is firm which means that widening
+is not allowed. Without balancing, the conditional clause could yield a
+\verb|REAL| or an \verb|INT|. In this example, the principle of
+balancing would promote the context of the \verb|INT| to strong and
+widen it to \verb|REAL|. Balancing thus means ``making the modes the
+same''.
+
+In a balanced clause, one of the yielded units is in the context of the
+whole clause and all the others are in a strong context, irrespective
+of the actual context of the clause. Here is an example of a balanced
+case \hx{clause}{clause!case}
+\begin{verbatim}
+   INT i:=3,j:=4,a:=2;
+   PROC ij = REF INT: (random < 0.5|i|j);
+   print(2 + (a|i,ij|random))
+\end{verbatim}
+\noindent
+where the \verb|a| yields an \verb|INT| in a meek
+\hx{context}{context!meek} (that of the enquiry clause). In this
+example, the modes of the values that can be yielded by the case
+clause are \verb|REF INT| (\verb|i|), \verb|PROC REF INT| (\verb|ij|)
+and \verb|PROC REAL| (\verb|random|).  In a firm context, the modes
+become \verb|INT|, \verb|INT| and \verb|REAL|. Thus the context of
+\verb|random| is taken to be firm, and the context of \verb|i| and
+\verb|ij| is promoted to strong and they are both dereferenced and
+widened to \verb|REAL|.  The result is that the case clause will
+yield a \verb|REAL| value even though the clause as a whole is in a
+firm context (it is an operand of the operator \verb|+|).
+
+If instead, we had
+\begin{verbatim}
+   PROC REAL r:=random;
+   (a|i,ij|j):=ENTIER r
+\end{verbatim}
+\noindent
+using the declaration of \verb|ij| in the previous example, then
+balancing would not be needed to produce the required mode.  The
+modes of the yielded units are \verb|REF INT|, \verb|PROC| \verb|REF|
+\verb|INT| and \verb|REF INT| respectively.  In a soft
+\hx{context}{context!soft}, these modes would yield \verb|REF INT|
+(no dereferencing allowed), \verb|REF INT| (deproceduring is allowed)
+and \verb|REF INT|.  Thus the case clause would yield \verb|REF INT|
+on the left-hand side of the \ix{assignment}.
+
+Here is an example of a conditional \hx{clause}{clause!conditional}
+which cannot be balanced:
+\begin{verbatim}
+   INT i:=2, REAL a:=3.0;
+   (random > 0.5|i|r):=random
+\end{verbatim}
+\noindent
+In this case, the two parts of the conditional clause yield
+\verb|REF INT| and \verb|REF REAL|. There is no coercion which will
+convert a \verb|REF INT| into a \verb|REF REAL|. When you try to
+compile this, the \hx{a68toc}{a68toc!balancing} compiler gives the
+following error message:
+\begin{verbatim}
+   lhs of assignment must be a reference
+\end{verbatim}
+\noindent
+The balancing means that one of the yields is in a strong context and
+so is dereferenced which yields a value which is not a name.
+
+The method of determining whether balancing is possible is as follows:
+\begin{enumerate}
+\item Determine the context of the choice clause.
+\item In the context found in step~1, determine the mode yielded by
+each unit in the choice clause.
+\item If there is a mode such that all the modes but that one can be
+strongly coerced to that mode, the clause can be balanced.
+\end{enumerate}
+
+\begin{exercise}
+\item In each of the following clauses, state whether balancing is
+possible, and if so, the mode yielded by the balanced clause. These
+declarations are in force:
+\begin{verbatim}
+   INT i,j, REAL a,b:=random;
+   PROC ij = REF INT: (b>0.5|i|j);
+   PROC r = REAL: random * random;
+   UNION(INT,REAL) ri:=(random>0.6|i|b)
+\end{verbatim}
+\indent\begin{subex}
+\item \verb!a:=2.0*(random<0.3|i|b)! \subans The conditional clause
+can yield a value of mode \verb|REF INT| or \texttt{REF REAL}. In a
+firm context, these can be coerced to \verb|INT| and \verb|REAL|.
+Thus the \verb|INT| is widened to \verb|REAL| and the balanced clause
+yields a value of mode \verb|REAL|.
+'
+\item \verb!(j<2|ij|b):=r! \subans The conditional clause in a soft
+context will yield \verb|REF INT| or \verb|REF REAL|. Neither can be
+coerced to the other in a strong context, so the clause cannot be
+balanced. The error message from the compiler arises from the
+coercions applied in a strong context for the attempted balancing.
+'
+\item \verb!a:=((ri|(INT r):r,(REAL r):r)<1|2|3)! \subans The
+conformity clause yields \verb|INT| or \verb|REAL|. In a strong
+context, \verb|INT| can be widened to \verb|REAL|. Thus the balanced
+clause will yield \verb|REAL|.
+'
+\item \verb!b:=2.0*(j>3|4|SKIP)! \subans The conditional clause
+yields \verb|INT| or whatever. In a strong context, \verb|SKIP| will
+yield \verb|INT|. Thus the balanced clause yields \verb|INT|.
+However, the result will be undefined if the \verb|SKIP| is used in
+the assignment.
+'
+\end{subex}
+\end{exercise}
+
+\Section{Well-formed modes}{gram-well}
+In chapter 6, the mode \hx{declaration}{declaration!mode} was
+presented and it was pointed out that not all possible mode
+declarations are allowed.  The rules for determining whether a mode
+declaration is well-\hx{formed}{mode!well-formed} are
+straightforward.
+
+There are two reasons why a mode might not be well-formed:
+\begin{enumerate}
+\item the \ix{elaboration} of a declaration using that
+mode would need an infinite amount of memory\hylabel{gram-well1}
+\item the mode can be strongly coerced to a related
+mode\hypertarget{gram-well2}{}\label{gram-well2}
+\end{enumerate}
+
+Let us look at some examples of modes which are not well-formed.
+Firstly, in the mode declaration
+\begin{verbatim}
+   MODE WRONG = STRUCT(CHAR c,WRONG w)
+\end{verbatim}
+\noindent
+the \verb|WRONG| within the \verb|STRUCT| would expand to a further
+\verb|STRUCT| and so on \emph{ad infinitum}. Even this declaration
+\begin{verbatim}
+   MODE WRONGAGAIN = STRUCT(WRONGAGAIN wa)
+\end{verbatim}
+\noindent
+will not work for the same reason. However, if the mode within the
+\verb|STRUCT| is \hx{shielded}{mode!shielding} by \verb|REF| or
+\verb|PROC|, then the mode declaration is
+\hx{legal}{mode!recursion}:
+\begin{verbatim}
+   MODE ALRIGHT = STRUCT(CHAR c,REF ALRIGHT a);
+\end{verbatim}
+\noindent
+In the declaration
+\begin{verbatim}
+   ALRIGHT ar = ("A",LOC ALRIGHT)
+\end{verbatim}
+\noindent
+the second field of the structure is a name which is quite different
+from a structure. Likewise, the declaration
+\begin{verbatim}
+   MODE OKP = STRUCT(CHAR c,PROC OKP po)
+\end{verbatim}
+\noindent
+is well-formed because in any declaration, the second field is a
+procedure (or a name referring to such a procedure) which is not the
+original structure and so does not require an infinite amount of
+storage. It should be noted, however, that a \ixtt{UNION} does not
+shield the mode sufficiently.  Thus, the mode declarations
+\begin{verbatim}
+   MODE MW1 = UNION(INT,MW1);
+   MODE MW2 = STRUCT(UNION(CHAR,MW2) u,CHAR c)
+\end{verbatim}
+\noindent
+are not well-formed. In fact, the mode declaration of \verb|MW1| fails
+on reason~\hyref{gram-well2} above.
+
+Secondly, a mode which could be strongly coerced to a related mode
+would lead to ambiguity in coercions. Thus the mode declarations
+\begin{verbatim}
+   MODE WINT = PROC WINT;
+   MODE WREF = REF WREF;
+   MODE WROW = [5]WROW
+\end{verbatim}
+\noindent
+are not well-formed.
+
+All the above declarations have been recursive, but not mutually
+\hx{recursive}{recursion!mutual}. Is it possible to declare
+\begin{verbatim}
+   MODE WA = STRUCT(WB wb,INT i),
+        WB = STRUCT(WA wa,CHAR c)
+\end{verbatim}
+\noindent
+Again, the elaboration of declarations using either mode would
+require an infinite amount of storage, so the modes are not
+well-formed. The following pair of mode declarations are all right:
+\begin{verbatim}
+   MODE RA = STRUCT(REF RB rb,INT i),
+        RB = STRUCT(PROC RA pra,CHAR c)
+\end{verbatim}
+
+All non-recursive mode declarations are well-formed. It is only in
+recursive and mutually-recursive modes that we have to apply a test
+for well-formedness.
+
+\subsection*{Determination of well-formedness}\hylabel{gram-detwell}
+In any mutually-recursive mode declarations, or any recursive mode
+declaration, to get from a particular mode on the left-hand side of
+a mode declaration to the same mode \hx{indicant}{mode!indicant}
+written on the right-hand side of a mode declaration, it is necessary
+to traverse various mode constructors such as \verb|REF|, \verb|PROC|
+or \verb|UNION|. Above each \verb|STRUCT| or set of procedure
+parameters write ``\ix{yang}''. Above each \verb|REF| or \verb|PROC|
+write ``\ix{yin}''. Now trace the path from the mode in question on
+the left-hand side of the mode declaration until you arrive at the
+same mode indicant on the right-hand side.  If you have at least one
+``yin'' and at least one ``yang'', the mode is well-formed.
+
+Let us try this method on the recursive mode declarations given in
+this section. In the mode declaration for \verb|WRONG|, write
+``yang'' above the \verb|STRUCT|. Thus to get from \verb|WRONG| on
+the left to \verb|WRONG| on the right, a single ``yang'' is
+traversed. Thus \verb|WRONG| is not well-formed. Likewise,
+\verb|WRONGAGAIN| is not well-formed.  In mode \verb|ALRIGHT|, you
+have to traverse a ``yang'' (\verb|STRUCT|) and a ``yin''
+(\verb|REF|), so \verb|ALRIGHT| is well-formed.  Try it with the mode
+\verb|OKP|.
+
+Conversely, to get from \verb|MW1| to \verb|MW1| requires neither
+``yin'' nor ``yang'', so \verb|MW1| is not well-formed. To get from
+\verb|MW2| to \verb|MW2|, only a \verb|STRUCT| is traversed (the
+\ixtt{UNION} does not count) so \verb|MW2| is also not well-formed.
+Similar arguments hold for \verb|WINT|, \verb|WREF| and \verb|WROW|.
+
+Now consider the mutually-recursive mode declarations of \verb|WA| and
+\verb|WB|. At whichever mode we start, getting back to that mode means
+traversing two ``yangs'' (both \verb|STRUCT|). Two ``yangs'' are all
+right, but there should be at least one ``yin'', so the modes are not
+well-formed.  On the other hand, from \verb|RA| to \verb|RA| traverses
+a \verb|STRUCT| and a \verb|REF| and, via \verb|RB|, a \verb|STRUCT|
+and a \verb|PROC| giving ``yang-yin-yang-yin'', so both \verb|RA| and
+\verb|RB| are well-formed.
+
+Remember that if you want to declare modes which are
+mutually-recursive, the \hx{a68toc}{a68toc!mode declaration} compiler
+requires that one of the modes should first be declared with a stub
+\hx{declaration}{declaration!stub}.
+
+\begin{exercise}
+\item For each of the following mode declarations, determine whether
+the modes are well-formed:
+\begin{subex}
+\item \texttt{MODE MA = INT} \subans Yes.
+'
+\item \texttt{MODE MB = PROC(MB)VOID} \subans Yes.
+'
+\item \texttt{MODE MC =[3,2]MC} \subans No.
+'
+\item \texttt{MODE MD = STRUCT(BOOL p,MD m)} \subans No.
+'
+\item \texttt{MODE ME = STRUCT(STRING s,REF ME m)} \subans Yes.
+'
+\item \ %
+\begin{verbatim}
+   MODE MF2,
+       MF1 = STRUCT(REF MF2 f),
+       MF2 = PROC(INT)MF1
+\end{verbatim}
+\indent \subans Yes.
+'
+\item \ %
+\begin{verbatim}
+   MODE MGB,
+       MGA = PROC(MGB)VOID,
+       MGB = STRUCT(MGA a)
+\end{verbatim}
+\indent \subans Yes.
+'
+\item \ %
+\begin{verbatim}
+   MODE B, C,
+   MODE A = PROC(B)A,
+   MODE B = STRUCT(PROC C c,
+                   STRUCT(B b,INT i)d),
+   MODE C = UNION(A,B)
+\end{verbatim}
+\indent \subans No.
+'
+\item \verb|C = PROC(C)C| \subans Yes! It's an example in the
+``Revised Report''.
+'
+\end{subex}
+\end{exercise}
+
+\Section{Flexible names}{gram-flex}
+Flexible names were introduced in section \hyref{name-flex}, but only
+one-dimensional names. What has not been made apparent in the text
+hitherto is that a multiple consists of two parts: a
+\hx{\textbf{descrip\-tor}}{descriptor} and the actual elements. The
+descriptor contains the lower and upper bounds of each dimension, the
+``stride'' (that is, the number of bytes between two successive
+elements of the dimension in question), the address in memory of the
+first element of that dimension and whether the dimension is
+flexible. Consider the declaration
+\begin{verbatim}
+   FLEX[1:0][1:3]INT flexfix
+\end{verbatim}
+\noindent
+Because the mode of \verb|flexfix| is \verb|REF FLEX[][]INT|, when it
+is subscripted, the mode of each element is \verb|REF[]INT| with
+bounds of \verb|[1:3]|. Clearly, after the declaration,
+\verb|flexfix| has no elements. In practice, because the first (and
+only) dimension is flexible, there must be some way of referring to a
+``ghost'' element whose descriptor (it is a one-dimensional multiple)
+will give its properties. \verb|flexfix| is quite different from
+\begin{verbatim}
+   FLEX[1:0]FLEX[1:3]INT flexflex
+\end{verbatim}
+\noindent
+each of whose elements (when it has any) have the mode \verb|REF|
+\verb|FLEX[]INT| with initial bounds \verb|[1:3]|.
+
+If the declaration of \verb|flexfix| is followed by the assignment
+and slice
+\begin{verbatim}
+   flexfix:=LOC[1:1][1:3]INT;
+   flexfix[1]:=(1,2,3)
+\end{verbatim}
+\noindent
+then it is clear that the mode of \verb|flexfix[1]| is \verb|REF[]INT|.
+Note that after
+\begin{verbatim}
+   flexfix:=LOC[1:4][1:3]INT
+\end{verbatim}
+\noindent
+\verb|flexfix| refers to a multiple of which each element has the mode
+\verb|[]INT|. However, the single dimension of
+\begin{verbatim}
+   flexfix[1]
+\end{verbatim}
+\noindent
+is \emph{not} flexible, which is why the assignment
+\begin{verbatim}
+   flexfix:=LOC[1:4][1:4]REAL #this is wrong#
+\end{verbatim}
+\noindent
+will fail\footnote{The a68toc compiler will wrongly allow this last
+assignment both at compile-time and run-time.}.
+
+\Section{Orthogonality}{gram-orth}
+\hx{We}{orthogonality} have come a long way and introduced many new
+ideas, yet all these ideas are based on the \ix{primitive concepts}
+of \ix{value}, \ix{mode}, \ix{context}, \ix{coercion} and
+\ix{phrase}.  These concepts are independent of each other, but their
+combination provides Algol~68 with a \ix{flexibility} that few
+programming languages possess.  For example, if a value of mode
+\verb|INT| is required, such as in a trimmer or the bounds of the
+declaration of a multiple, then any unit which will yield an integer
+in that context will suffice.  The consequence is that Algol~68
+programs can be written in a wide variety of styles.  Here is a
+simple example: given the problem of printing the sum of two numbers
+read from the keyboard, it could be programmed in two completely
+different ways.  The conventional solution would be something like
+\begin{verbatim}
+   INT a,b;  read((a,b));
+   print((a+b,newline))
+\end{verbatim}
+\noindent
+but an equally valid solution is
+\begin{verbatim}
+   print(((INT a,b;
+           read((a,b));
+           a+b),newline))
+\end{verbatim}
+\noindent
+Provided that what you write is legal Algol~68, you can adopt any
+approach you please. Orthogonality refers to the independence of the
+basic concepts in that you can combine them without side-effects.
+
+Another consequence of that independence is that there are very few
+exceptions to the rules of the language.  This makes the language
+much easier to learn.
+
+\Section{Summary}{gram-summ}
+The grammar of Algol~68 is expressed in terms of a few primitive
+concepts: value, mode, context, coercion and phrase. A phrase is
+either a declaration or a unit. There are 5 contexts, 7 coercions, 22
+different kinds of unit and potentially an infinite number of values
+and modes.  The coercions available in each context have been
+described.  Balancing is the means by which alternatives in
+conditional, case and conformity clauses and the two sides of an
+identity relation are coerced to a common mode, possibly making
+coercions available which would not normally be so in the context of
+the construct concerned.
+
+No exercises are provided at this point.

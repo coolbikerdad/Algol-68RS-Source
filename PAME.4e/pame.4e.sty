@@ -1,0 +1,225 @@
+% Style file for ``Programming Algol 68 Made Easy''
+%
+%  Created by Sian -- BP21494-04
+%  Amended by Sian -- BP21455-02
+%  Amended by Sian -- BP21455-03
+%  Amended by Sian -- BP21497-06
+%  Amended by Sian -- BP21499-12
+%  Rewritten by Sian -- BP21500-06
+%
+%  $Log: pame.sty,v $
+%  Revision 1.3  2002-06-20 11:49:28  sian
+%  mm removed, padding removed, ca68 added
+%
+\makeatletter
+% Hyphenation patterns
+\hyphenation{Trans-put trans-put}
+\hyphenation{par-am-eter par-am-eters}
+\hyphenation{oper-and oper-ands}
+% New length
+\newlength{\ruleht}\setlength{\ruleht}{0.6pt}
+
+% Commands for answers
+\newcommand{\makeanswers}{%
+   \newwrite\@answerfile
+   \immediate\openout\@answerfile=\jobname.ans
+   \immediate\write\@answerfile{\string\Chapter{Answers}{app-ans}}
+   \typeout{Writing answer file \jobname.ans}}
+
+\newcommand{\printanswers}{%
+   \immediate\closeout\@answerfile
+   \input{\jobname.ans}}
+
+% Counters
+\newcounter{chapnum}       % Used by the answer environment
+\newcounter{exno}[chapter] % Exercise number
+\newcounter{subexno}[exno] % Sub-exercise number (letter)
+\newcounter{hyper}[section]% Used to form hyperref labels
+
+% Table of contents macros
+\renewcommand{\l@chapter}[2]{%
+  \ifnum \c@tocdepth >\m@ne
+    \addpenalty{-\@highpenalty}%
+    \vskip 1.0em \@plus\p@
+    \setlength\@tempdima{2.0em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+      \penalty\@highpenalty
+    \endgroup
+  \fi}
+\renewcommand{\l@section}{\@dottedtocline{1}{2.0em}{2.8em}}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{4.8em}{3.7em}}
+\renewcommand{\l@subsubsection}{\@dottedtocline{3}{8.5em}{4.6em}}
+\renewcommand{\l@paragraph}{\@dottedtocline{4}{13.1em}{5.5em}}
+\renewcommand{\l@subparagraph}{\@dottedtocline{5}{18.6em}{6.5em}}
+
+% Sectioning commands
+\newcommand\Chapter[2]{% #1: chapter title #2: URL
+  \chapter[{#1}]{#1}\hypertarget{#2}{}\label{#2}}
+\newcommand\Section[2]{% #1: section title #2: label
+  \section[{#1}]{#1}\hypertarget{#2}{}\label{#2}}
+\newcommand\Subsection[2]{% #1: subsection title #2: label
+  \subsection[{#1}]{#1}\hypertarget{#2}{}\label{#2}}
+\newcommand\Subsubsection[2]{% #1: subsubsection title #2: label
+  \subsubsection[{#1}]{#1}\hypertarget{#2}{}\label{#2}}
+
+% Heading command
+\renewcommand{\ps@headings}{%
+  \def\@oddfoot{\hyperlink{toc}{Contents}\hfil\hyperlink{index}{Index}}%
+  \def\@oddhead{{\itshape\rightmark}\hfil\thepage}%
+  \let\@mkboth\markboth
+  \def\chaptermark##1{%
+    \markright {%
+      \ifnum \c@secnumdepth > -1
+        \if@mainmatter
+          \@chapapp\ \thechapter. \ %
+        \fi
+      \fi
+    ##1}}}
+
+% Indexing environment
+\renewenvironment{theindex}
+               {\if@twocolumn
+                  \@restonecolfalse
+                \else
+                  \@restonecoltrue
+                \fi
+                \columnseprule \z@
+                \columnsep 35\p@
+                \twocolumn[\@makeschapterhead{\indexname}]%
+				\hylabel{index}%
+                \@mkboth{\MakeUppercase\indexname}%
+                        {\MakeUppercase\indexname}%
+                \thispagestyle{plain}\parindent\z@
+                \parskip\z@ \@plus .3\p@\relax
+                \let\item\@idxitem}
+               {\if@restonecol\onecolumn\else\clearpage\fi}
+
+\def\hy@cnt{\addtocounter{hyper}{1}}
+\def\hy@lab{ind-\roman{chapter}-\ifx\value{section}{0}%
+                \else\roman{section}\fi
+                 -\roman{hyper}}
+
+\def\hylabel#1{\label{#1}}
+\def\hyref#1{\hyperlink{#1}{\ref{#1}}}
+
+\def\hx#1#2{% #1=text entry, #2=index entry
+  \hy@cnt
+  \hypertarget{\hy@lab}{#1}%
+  \index{#2}}
+
+\def\hxrt#1#2{% #1=text entry(r), #2=index entry(t)
+  \hy@cnt
+  \hypertarget{\hy@lab}{#1}%
+  \index{#2@\texttt{#2}}}
+
+\def\hxtt#1#2{% #1=text entry(t), #2=index entry(t)
+  \hy@cnt
+  \hypertarget{\hy@lab}{\texttt{#1}}%
+  \index{#2@\texttt{#2}}}
+
+\def\hxtii#1#2#3{% #1=text, #2=index, #3=level-2 index
+  \hy@cnt
+  \hypertarget{\hy@lab}{\texttt{#1}}%
+  \index{#2@\texttt{#2}!#3@\texttt{#3}}}
+
+\def\hxrtii#1#2#3{% #1=text, #2=index, #3=lev 2
+	\hy@cnt
+	\hypertarget{\hy@lab}{#1}%
+	\index{#2@\texttt{#2}!#3@\texttt{#3}}}
+\def\ix#1{\hx{#1}{#1}}
+\def\ixtt#1{\hxtt{#1}{#1}}
+\def\bfix#1{\hx{\textbf{#1}}{#1}}
+%
+% Exercise and answer macros
+%
+\newenvironment{answer}[1]%
+ {\vskip0pt plus .2\vsize\penalty-250
+  \vskip0pt plus-.2\vsize\goodbreak
+  \ifnum#1=\value{chapnum}%
+  \else
+    \setcounter{chapnum}{#1}%
+    \Section{Chapter \arabic{chapnum}}{app-\roman{chapnum}}%
+  \fi
+  \begin{description}}
+ {\end{description}}
+  
+\newenvironment{exercise}% begdef follows
+  {\immediate\write\@answerfile{}% blank line
+   \immediate\write\@answerfile{\string\begin{answer}{\arabic{chapter}}}%
+   \vskip0pt plus .2\vsize\penalty-250
+   \vskip0pt plus-.2\vsize\goodbreak
+   \bigskip\bigskip\hrule height \ruleht
+   \subsection*{Exercises}
+   \def\@ref{\roman{chapter}-\roman{exno}}%
+   \def\@lab{\arabic{chapter}.\arabic{exno}}%
+   \begin{list}{% Commands for the default label for exercise
+     \addtocounter{exno}{1}%
+     \hypertarget{ex-\@ref}{\@lab}%
+     \immediate\write\@answerfile{% answer label commands
+       \string\item[%
+         \expandafter\string\noexpand\hyperlink{ex-\@ref}{Ex}}%
+     \immediate\write\@answerfile{%
+       \expandafter\string\noexpand\hypertarget{ans-\@ref}{\@lab}]}}%
+     {}}% begdef
+  {\end{list}% enddef
+   \immediate\write\@answerfile{\string\end{answer}}
+   \smallskip
+   \hrule height \ruleht
+   \vskip0pt plus .2\vsize\penalty-250
+   \vskip0pt plus-.2\vsize\goodbreak}
+
+\newenvironment{subex}%
+  {\def\@lab{\arabic{chapter}.\arabic{exno}}
+   \def\@ref{\roman{chapter}-\roman{exno}}
+   \hyperlink{ans-\@ref}{Ans}
+   \immediate\write\@answerfile{\ \string\par}
+   \immediate\write\@answerfile{\string\begin{description}}%
+   \begin{list}{(\alph{subexno})}%
+     {\usecounter{subexno}%
+      \setlength{\itemsep}{0pt}%
+      \setlength{\parsep}{1pt plus 1pt minus 0.5pt}
+      \setlength{\leftmargin}{\labelwidth}%
+      \addtolength{\leftmargin}{\labelsep}}}% end of begdef
+  {\end{list}
+   \immediate\write\@answerfile{\string\end{description}}}% enddef
+
+\outer\def\ans{\nobreak
+  \def\@ref{\roman{chapter}-\roman{exno}}%
+  \def\@lab{\arabic{chapter}.\arabic{exno}}%
+  \hyperlink{ans-\@ref}{Ans}%
+  \copytoendans}
+
+\outer\def\subans{%
+  \par
+  \immediate\write\@answerfile{\string\item[(\alph{subexno})]}%
+  \copytoendans}%
+
+\def\@line{}%
+\def\copytoendans{\begingroup\setupcopy\copyans}%
+\def\setupcopy{\def\do##1{\catcode`##1=12}\dospecials
+   \do\| \obeylines}%
+{\obeylines \gdef\copyans#1
+   {\ifx '#1%
+       \let\next=\endgroup %
+    \else \immediate\write\@answerfile{#1}%
+       \let\next\copyans %
+    \fi %
+    \next}}%
+%
+% Miscellaneous macros
+%
+\newcommand{\bang}{\char33} % Exclamation mark in the text
+\def\up#1{\leavevmode\raise.3ex\hbox{#1}}
+\def\pd{{\upr\$}}
+\newcommand{\ith}[2]{$#1^{\hbox{\scriptsize #2}}$}
+\newcommand{\cancel}[2]{\c@ncel{#1}{#2}}
+\newcommand{\displaybreak}{\vskip 11pt plus 1pt minus .5pt}
+% PiCTeX definition
+\def\pmarrow from #1 #2 to #3 #4{\arrow <3.6mm> [0.2, 0.67] from #1 #2 to #3 #4}
+\makeatother

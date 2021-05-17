@@ -1,0 +1,109 @@
+\setlength{\unitlength}{0.00087489in}
+%
+% $Log: ch11-10.epic,v $
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(4264,5584)(0,-10)
+\drawline(777,5557)(1947,5557)(1947,5107)
+	(777,5107)(777,5557)
+\dottedline{45}(1182,5557)(1182,5107)
+\dottedline{45}(1497,5557)(1497,5107)
+\dottedline{45}(1722,5557)(1722,5107)
+\put(1272,5242){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(822,5287){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}there}}}}}
+\drawline(1722,4477)(2892,4477)(2892,4027)
+	(1722,4027)(1722,4477)
+\dottedline{45}(2127,4477)(2127,4027)
+\dottedline{45}(2442,4477)(2442,4027)
+\dottedline{45}(2667,4477)(2667,4027)
+\put(2217,4162){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(1812,4207){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}was}}}}}
+\drawline(12,4477)(1182,4477)(1182,4027)
+	(12,4027)(12,4477)
+\dottedline{45}(417,4477)(417,4027)
+\dottedline{45}(732,4477)(732,4027)
+\dottedline{45}(957,4477)(957,4027)
+\put(507,4162){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(147,4207){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}a}}}}}
+\drawline(597,3352)(1767,3352)(1767,2902)
+	(597,2902)(597,3352)
+\dottedline{45}(1002,3352)(1002,2902)
+\dottedline{45}(1317,3352)(1317,2902)
+\dottedline{45}(1542,3352)(1542,2902)
+\put(1092,3037){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(687,3082){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}lady}}}}}
+\drawline(2622,3352)(3792,3352)(3792,2902)
+	(2622,2902)(2622,3352)
+\dottedline{45}(3027,3352)(3027,2902)
+\dottedline{45}(3342,3352)(3342,2902)
+\dottedline{45}(3567,3352)(3567,2902)
+\put(3117,3037){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(2667,3082){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}young}}}}}
+\drawline(1227,2227)(2397,2227)(2397,1777)
+	(1227,1777)(1227,2227)
+\dottedline{45}(1632,2227)(1632,1777)
+\dottedline{45}(1947,2227)(1947,1777)
+\dottedline{45}(2172,2227)(2172,1777)
+\put(1722,1912){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(1362,1957){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}of}}}}}
+\drawline(2037,1147)(3207,1147)(3207,697)
+	(2037,697)(2037,1147)
+\dottedline{45}(2442,1147)(2442,697)
+\dottedline{45}(2757,1147)(2757,697)
+\dottedline{45}(2982,1147)(2982,697)
+\put(2532,832){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\rmdefault}{\mddefault}{\updefault}1}}}}}
+\put(2082,877){\makebox(0,0)[lb]{\smash{{{\SetFigFont{10}{12.0}{\rmdefault}{\mddefault}{\updefault}Ryde}}}}}
+\drawline(1587,5197)(1137,4477)
+\blacken\drawline(1175.160,4594.660)(1137.000,4477.000)(1226.040,4562.860)(1175.160,4594.660)
+\drawline(1857,5197)(2307,4477)
+\blacken\drawline(2217.960,4562.860)(2307.000,4477.000)(2268.840,4594.660)(2217.960,4562.860)
+\drawline(822,4117)(372,3397)
+\blacken\drawline(410.160,3514.660)(372.000,3397.000)(461.040,3482.860)(410.160,3514.660)
+\drawline(1047,4117)(1047,3352)
+\blacken\drawline(1017.000,3472.000)(1047.000,3352.000)(1077.000,3472.000)(1017.000,3472.000)
+\drawline(2545,4137)(2095,3417)
+\blacken\drawline(2133.160,3534.660)(2095.000,3417.000)(2184.040,3502.860)(2133.160,3534.660)
+\drawline(2802,4117)(3252,3397)
+\blacken\drawline(3162.960,3482.860)(3252.000,3397.000)(3213.840,3514.660)(3162.960,3482.860)
+\thicklines
+\drawline(282,3442)(507,3442)
+\drawline(1992,3397)(2217,3397)
+\thinlines
+\drawline(1407,2947)(957,2227)
+\blacken\drawline(995.160,2344.660)(957.000,2227.000)(1046.040,2312.860)(995.160,2344.660)
+\thicklines
+\drawline(822,2227)(1047,2227)
+\thinlines
+\drawline(1677,2947)(2127,2227)
+\blacken\drawline(2037.960,2312.860)(2127.000,2227.000)(2088.840,2344.660)(2037.960,2312.860)
+\drawline(3432,2947)(2982,2227)
+\blacken\drawline(3020.160,2344.660)(2982.000,2227.000)(3071.040,2312.860)(3020.160,2344.660)
+\drawline(3702,2947)(4152,2227)
+\blacken\drawline(4062.960,2312.860)(4152.000,2227.000)(4113.840,2344.660)(4062.960,2312.860)
+\thicklines
+\drawline(2937,2227)(3162,2227)
+\drawline(4017,2227)(4242,2227)
+\thinlines
+\drawline(2037,1867)(1587,1147)
+\blacken\drawline(1625.160,1264.660)(1587.000,1147.000)(1676.040,1232.860)(1625.160,1264.660)
+\drawline(2307,1867)(2757,1147)
+\blacken\drawline(2667.960,1232.860)(2757.000,1147.000)(2718.840,1264.660)(2667.960,1232.860)
+\drawline(2847,742)(2397,22)
+\blacken\drawline(2435.160,139.660)(2397.000,22.000)(2486.040,107.860)(2435.160,139.660)
+\drawline(3117,742)(3567,22)
+\blacken\drawline(3477.960,107.860)(3567.000,22.000)(3528.840,139.660)(3477.960,107.860)
+\thicklines
+\drawline(1497,1147)(1722,1147)
+\drawline(2307,22)(2532,22)
+\drawline(3432,22)(3657,22)
+\end{picture}
+}

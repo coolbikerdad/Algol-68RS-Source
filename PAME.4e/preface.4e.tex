@@ -1,0 +1,46 @@
+% $Log: preface.4e.tex,v $
+% Revision 1.4  2021/05/17 10:00:00  neil
+% *** empty log message ***
+%
+\parindent=5mm
+\chapter{Preface to the 4th Edition}
+This 4th edition of ``Programming Algol 68 Made Easy'' or ``PAME''
+to its friends has been created to reflect changes in technology and
+the a68toc package since Dr. Mountbatten's last version in 2008.
+
+The book, while mostly general in nature, features the Algol-68RS compiler
+as a target, through the a68toc Algol 68 to C translator. Examples and
+exercises are presented in the dialect supported by a68toc.
+
+To preserve Sian's work to the greatest extent, only very minor
+changes have been made to the text: typos, references to older versions
+of a68toc and support for more architectures.
+
+The \LaTeX\ source has been updated to use the HyperTex package to
+provide internal links suitable for producing a PDF with navigation.
+Exercises now have working links to answers and vice versa.
+
+Starting from a version of Dr. Mountbatten's port of a68toc to 32-bit Linux
+(v1.15\footnote{While a v1.19 is known, no source of this version has been located}),
+the current author has made some advances and released further
+versions\footnote{Releases and work-in-progress available on GitHub: \newline\url{https://github.com/coolbikerdad}}.
+These include:
+\begin{itemize}
+\item A complete port to 64-bit systems, removing assumptions (explicit and implied)
+about word size in the libraries and the compiler itself.
+\item The integration of a well-supported garbage collector (Boehm-Demers-Weiser) as
+a compile-time option for the compiler (default for 64-bit systems).
+\item Added support for 32-/64-bit ARM processor architectures, removing implicit assumptions about endianness.
+\item Added support for 64-bit macOS operating system versions.
+\item A fix for a long-standing bug in the compiling of the \verb|BY| part of \verb|FOR| loops.
+\item Production of Debian Linux binary packages for i386, amd64, armhf, arm64 architectures.
+\end{itemize}
+
+This edition of the book applies to versions of a68toc v1.22 and later.
+
+\bigskip\bigskip
+\begin{flushright}
+Neil Matthew\\
+neil@tilde.co.uk\\
+May 2021
+\end{flushright}

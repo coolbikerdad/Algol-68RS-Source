@@ -1,0 +1,932 @@
+% $Log: chapter4.tex,v $
+% Revision 1.3  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Choice}{chapiv}
+One of the essential properties of a computer program is its ability
+to modify its actions depending on its circumstances and environment.
+In other words, its behaviour is not predetermined, but can vary from
+one execution to another. In this chapter, we shall introduce a new
+plain mode, describe the operators using or yielding values of the
+new mode, and then investigate the program structures which allow an
+Algol~68 program to choose between alternatives.
+
+\pagebreak
+\Section{Boolean values}{choice-bool}
+ The mode \ixtt{BOOL} is named after George
+\hx{Boole}{Boole, George}, the distinguished nineteenth century
+mathematician who developed the system of logic which bears his name.
+There are only two values of mode \verb|BOOL|, and their denotations
+are \ixtt{TRUE} and \ixtt{FALSE}.  Let us declare two identifiers:
+\begin{verbatim}
+   BOOL t = TRUE,
+        f = FALSE
+\end{verbatim}
+\noindent
+The \ixtt{print} phrase, when fed with \ix{Boolean} values prints
+\verb|T| for \verb|TRUE|, and \verb|F| for \verb|FALSE|, with spaces
+neither before nor after. Thus
+\begin{verbatim}
+   print((t,f,t,f,t))
+\end{verbatim}
+\noindent
+produces \verb|TFTFT| on the screen.
+
+\Section{Boolean operators}{choice-bops}
+The simplest operator which has an operand of mode \verb|BOOL| is
+\ixtt{NOT}. If its operand is \verb|TRUE|, it yields \verb|FALSE|.
+Conversely, if its operand is \verb|FALSE|, it yields \verb|TRUE|.
+The operator \ixtt{ODD} yields \verb|TRUE| if its operand is an odd
+integer and \verb|FALSE| if it is even. The operators can be
+combined, so
+\begin{verbatim}
+   NOT ODD 2
+\end{verbatim}
+\noindent
+yields \verb|TRUE|.
+
+\ixtt{ABS} converts its operand of mode \verb|BOOL| and yields an
+integer: \verb|ABS TRUE| yields \verb|1|, \verb|ABS FALSE| yields
+\verb|0|.
+
+Boolean dyadic \hx{operators}{operator!dyadic} come in two
+kinds: those that take operands of mode \verb|BOOL|, yielding
+\verb|TRUE| or \verb|FALSE|, and those that operate on operands of
+other modes.
+
+Two dyadic operators are declared in the \ix{standard prelude} which
+take operands of mode \verb|BOOL|. The operator \ixtt{AND}
+(alternative representation \verb|&|) yields \verb|TRUE| if,
+and only if, both its operands yield \verb|TRUE|, so that
+\begin{verbatim}
+   t AND f
+\end{verbatim}
+\noindent
+yields \verb|FALSE| (\verb|t| and \verb|f| were declared earlier).
+Both the operands are elaborated before the operator (but see the
+section later on pseudo-operators).  The \ix{priority} of \verb|AND|
+is~3.
+
+The operator \ixtt{OR} yields \verb|TRUE| if at least one of its
+operands yields \verb|TRUE|. Thus
+\begin{verbatim}
+   t OR f
+\end{verbatim}
+\noindent
+yields \verb|TRUE|. It has no alternative representation. Again, both
+operands are elaborated before the operator. The priority of
+\verb|OR| is~2.
+
+You will learn in chapter~6 how to define new operators if you need
+them.
+
+\Section{Relational operators}{choice-relops}
+Values of modes \verb|INT|, \verb|REAL|, \verb|CHAR| and
+\verb|[]CHAR| can be compared with each other.  The expression
+\begin{verbatim}
+   3 = 1+2
+\end{verbatim}
+\noindent
+yields \verb|TRUE|.  Similarly,
+\begin{verbatim}
+   1+1=1
+\end{verbatim}
+\noindent
+yields \verb|FALSE|.  The equals symbol \ixtt{=} can also be written
+\verb|EQ|. Likewise, the formula
+\begin{verbatim}
+   35.0 EQ 3.5e1
+\end{verbatim}
+\noindent
+should also yield \verb|TRUE|, but you should be chary of comparing
+two \verb|REAL|s for equality or inequality because the means of
+transforming the denotations into binary values may yield values
+which differ slightly.  The operator is also defined for both
+operands being \verb|CHAR| or \verb|[]CHAR|.  In the latter case, the
+two multiples must have the same number of elements, and
+corresponding elements must be equal if the operator is to yield
+\verb|TRUE|.  Thus
+\begin{verbatim}
+   "a" = "abc"
+\end{verbatim}
+\noindent
+yields \verb|FALSE|. Notice that the bounds do not have to be the
+same.  So \verb|a| and \verb|b| declared as
+\begin{verbatim}
+   []CHAR a = "Dodo" [@0],
+          b = "Dodo"
+\end{verbatim}
+\noindent
+yield \verb|TRUE| when compared with the equals operator.  Because
+the rowing \hx{coercion}{coercion!rowing} is not allowed in
+formul{\ae}, the operator is declared in the \ix{standard prelude}
+for mixed modes (such as \verb|REAL| and \verb|INT|).
+
+The converse of \verb|=| is \ixtt{/=} (not equal). So the formula
+\begin{verbatim}
+   3 /= 2
+\end{verbatim}
+\noindent
+yields \verb|TRUE|, and
+\begin{verbatim}
+   "r" /= "r"
+\end{verbatim}
+\noindent
+yields \verb|FALSE|.  An alternative representation of \verb|/=| is
+\ixtt{NE}.  The \ix{priority} of both \verb|=| and \verb|/=| is~4.
+The operands of \verb|=| and \verb|/=| can be any combination of
+values of mode \verb|INT| and \verb|REAL|.  No
+\hx{widening}{coercion!widening} takes place, the operators being
+declared for the \ix{mixed modes}.
+
+The ordering operators \ixtt{<}, \ixtt{>}, \ixtt{<=} and \ixtt{>=}
+can be used to compare values of modes \verb|INT|, \verb|REAL|,
+\verb|CHAR| and \verb|[]CHAR| in the same way as \verb|=| and
+\verb|/=|.  They are read ``less than'', ``greater than'', ``less
+than or equal to'' and ``greater than or equal to'' respectively. The
+formula
+\begin{verbatim}
+   3 < 3.1
+\end{verbatim}
+\noindent
+yields \verb|TRUE|.
+
+If the identifiers \verb|b| and \verb|c| are declared as having mode
+\verb|CHAR|, then the formula
+\begin{verbatim}
+   c < b
+\end{verbatim}
+\noindent
+will yield the same value as
+\begin{verbatim}
+   ABS c < ABS b
+\end{verbatim}
+\noindent
+and similarly for the operator \verb|>|. The operators \verb|<=| and
+\verb|>=| can both be used with equal values.  For example,
+\begin{verbatim}
+   24 <= 24.0
+\end{verbatim}
+\noindent
+yields \verb|TRUE|.
+
+For values of mode \verb|[]CHAR|, the formula
+\begin{verbatim}
+   "abcd" > "abcc"
+\end{verbatim}
+\noindent
+yields \verb|TRUE|. Two values of mode \verb|[]CHAR| of different
+length can be compared. For example, both
+\begin{verbatim}
+   "aaa" <= "aaab"
+\end{verbatim}
+\noindent
+and
+\begin{verbatim}
+   "aaa" <= "aaaa"
+\end{verbatim}
+\noindent
+yield \verb|TRUE|. Alternative representations for these operators
+are \verb|LT| and \verb|GT| for \verb|<| and \verb|>| and \verb|LE|
+and \verb|GE| for \verb|<=| and \verb|>=| respectively. The priority
+of all four \ix{ordering operators} is~5.
+
+Note that apart from values of mode \verb|[]CHAR|, no operators are
+defined in the standard prelude for multiples.
+
+\begin{exercise}
+\item What is the value of each of the following formul{\ae}?
+\begin{subex}
+\item \verb|ABS NOT TRUE| \subans \verb|0|
+'
+\item \verb|3.4 + ABS TRUE| \subans \verb|4.4|
+'
+\item \verb|-3.5 <= -13.4| \subans \verb|FALSE|
+'
+\item \verb|2e10 >= 3e9| \subans \verb|TRUE|
+'
+\item \verb|"abcd" > "abc"| \subans \verb|TRUE|
+'
+\end{subex}
+\item In the context of these declarations
+\begin{verbatim}
+   []INT i1 = (2,3,5,7);
+   []CHAR t = "uvwxyz"
+\end{verbatim}
+\noindent
+what is the value of each of the following?
+\begin{subex}
+\item \verb|UPB i1 < UPB t| \subans \verb|TRUE|
+'
+\item \verb|t[2:4] >= t[2:3]| \subans \verb|TRUE|
+'
+\item \verb|i1[3] < UPB t[2:]| \subans \verb|FALSE| (the
+\verb|UPB t[2:]| is \verb|5|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Compound Boolean formul{\ae}}{choice-comp}
+Formul{\ae} yielding \verb|TRUE| or \verb|FALSE| can be combined. For
+example, here is a formula which tests whether $\pi$ lies between
+\verb|3| and \verb|4|
+\begin{verbatim}
+   pi > 3 & pi < 4
+\end{verbatim}
+\noindent
+which yields \verb|TRUE|. The priorities of \verb|<|, \verb|>| and
+\verb|&| are so defined that parentheses are unnecessary in this
+case.  Likewise, we may write
+\begin{verbatim}
+   "ab" < "aac" OR 3 < 2
+\end{verbatim}
+\noindent
+which yields \verb|FALSE|. More complicated formul{\ae} can be
+written:
+\begin{verbatim}
+   3.4 > 2 & "a" < "c" OR "b" >= "ab"
+\end{verbatim}
+\noindent
+which yields \verb|TRUE|. Because the priority of the operator
+\verb|&| is higher than the \ix{priority} of \ixtt{OR}, the \verb|&|
+in the above formula is elaborated first. The order of elaboration
+can be changed using parentheses.
+
+There does not seem much point to these formul{\ae} since everything
+is known beforehand, but all will become clear in the next chapter.
+
+Compound Boolean formul{\ae} can be confusing. Being aware of the
+converse of a compound \hx{condition}{converse condition} helps
+you to ensure you have considered all possibilities. For example, the
+converse of the formula
+\begin{verbatim}
+   a < b & c = d
+\end{verbatim}
+\noindent
+is the formula
+\begin{verbatim}
+   a >= b OR c /= d
+\end{verbatim}
+\noindent
+One of the formul{\ae} would yield \verb|TRUE| and the other
+\verb|FALSE|.
+
+\begin{exercise}
+\item What is the value of each of the following:
+\begin{subex}
+\item \verb|NOT ODD 3 OR 3 < 4| \subans \verb|TRUE|
+'
+\item \verb|3 > 2 & (5 > 12 OR 7 <= 8)| \subans \verb|TRUE|
+'
+\item \verb|(TRUE OR FALSE) AND (FALSE OR TRUE)| \subans \verb|TRUE|
+'
+\item \ %
+\begin{verbatim}
+   NOT("d">"e")
+      AND
+      FALSE
+       OR
+   NOT(ODD 5 & 3.6e12 < 0)
+\end{verbatim}
+\indent\subans \verb|TRUE|. It is inadvisable to created compuound
+conditions with this sort of complexity simply because the condition
+is so difficult to understand. You should particularly avoid compound
+conditions with \verb|NOT| in front of the various parts.
+'
+\item \verb|3<4 & 4<5 & 5<6 & 6>7| \subans \verb|FALSE|
+'
+\end{subex}
+\item For each condition, write out its converse:
+\begin{subex}
+\item \verb|FALSE| \subans \verb|TRUE|
+'
+\item \verb|4 > 2| \subans \verb|4 <= 2|
+'
+\item \verb|a > b AND b > c| \subans \verb|a <= b OR b <= c|
+'
+\item \verb|x = y OR x = z| \subans \verb|x /= y AND x /= z|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Conditional clauses}{choice-cond}
+Now we can discuss clauses which choose between alternatives. We have
+met the \hx{enclosed clause}{clause!enclosed} consisting of at least
+one \ix{phrase} enclosed by \ixtt{BEGIN} and \ixtt{END} (or
+\ix{parentheses}) in the structure of an Algol~68 program, and also
+in the \verb|DO|~$\ldots$~\verb|OD| loop of a \verb|FOR| or
+\verb|FORALL| clause.  The part of the enclosed clause inside the
+parentheses (or \verb|BEGIN| and \verb|END|) is called a
+\hx{\textbf{serial clause}}{clause!serial} because,
+historically, sequential elaboration used to be called ``serial
+elaboration''.  The value of the serial clause is the value of the
+last phrase which must be a unit.
+
+There are two kinds of clause which enable programs to modify their
+behaviour. They are called \textbf{choice clauses}.  The
+\hx{\textbf{conditional clause}}{clause!conditional} allows a program
+to elaborate code depending on the value of a
+\hx{boolean serial clause}{clause!boolean}, called a \verb|BOOL|
+\hx{\textbf{enquiry clause}}{clause!enquiry}. Here is a simple
+example:
+\begin{verbatim}
+   IF   salary < 5000
+   THEN 0
+   ELSE (salary-allowances)*rate
+   FI
+\end{verbatim}
+\noindent
+The enquiry clause consists of the formula
+\begin{verbatim}
+   salary < 5000
+\end{verbatim}
+\noindent
+which yields a value of mode \verb|BOOL|. Two serial clauses, both
+containing a single unit can be elaborated. If the value yielded by
+\verb|salary| is less than \verb|5000|, the value \verb|0| is
+yielded.  Otherwise, the program calculates the tax. That is, if the
+\verb|BOOL| enquiry clause yields \verb|TRUE|, the serial clause
+following \ixtt{THEN} is elaborated, otherwise the serial clause
+following \ixtt{ELSE} is elaborated. The \ixtt{FI} following the
+\verb|ELSE| serial clause must be there.
+
+The enquiry clause and the serial clauses may consist of single units
+or possibly declarations and formul{\ae} and loops. However, the last
+phrase in an enquiry clause must be a unit yielding \verb|BOOL|. The
+\ix{range} of any identifiers declared in the enquiry clause extends
+to the serial clauses as well.  The range of any identifiers declared
+in either serial clause is limited to that serial clause.  For
+example, assuming that \verb|a| and \verb|i| are predeclared, we
+could write:
+\begin{verbatim}
+   IF   INT ai = a[i];  ai < 0
+   THEN print((ai," is negative",newline))
+   ELSE print((ai," is non-negative",newline))
+   FI
+\end{verbatim}
+\noindent
+The conditional clause can be written wherever a unit is permitted,
+so the previous example could also be written
+\begin{verbatim}
+   INT ai = a[i];
+   print((ai,IF   ai < 0
+             THEN "is negative"
+             ELSE "is non-negative"
+             FI,newline))
+\end{verbatim}
+\noindent
+The value of each of the serial clauses following \verb|THEN| and
+\verb|ELSE| in this case is \verb|[]CHAR|. Here is an example with a
+\hx{conditional clause}{clause!conditional} inside a loop:
+\begin{verbatim}
+   FOR i TO 100
+   DO
+      IF i MOD 10 = 0
+      THEN print((i,newline))
+      ELSE print((i,blank))
+      FI
+   OD
+\end{verbatim}
+\noindent
+The \verb|ELSE| part of a conditional clause can be omitted. Thus the
+above example could also be written
+\begin{verbatim}
+   FOR i TO 100
+   DO
+      print((i,blank));
+      IF i MOD 10 = 0 THEN print(newline) FI
+   OD
+\end{verbatim}
+
+The whole conditional clause can appear as a formula or as an
+\ix{operand}.  The short form of the clause is often used for this:
+\verb|IF| and \verb|FI| are replaced by \ixtt{(} and \ixtt{)}
+respectively, and \verb|THEN| and \verb|ELSE| are both replaced by
+the vertical bar \hx{\texttt{|}}{clause!conditional!short form}%
+\footnote{Some editors insert a different character when you press
+the key marked \texttt{|}. Check that the character produced is
+accepted by the Algol~68 compiler.}. For example, here is an identity
+declaration which assumes a previous declaration for \verb|x|:
+\begin{verbatim}
+   REAL xx = (x < 3.0|x**2|x**3)
+\end{verbatim}
+\noindent
+If the \verb|ELSE| part is missing then its serial clause is regarded
+as containing the single unit \ixtt{SKIP}.  In this case, \verb|SKIP|
+will yield an undefined value of the mode yielded by the \verb|THEN|
+serial clause.  This is an example of \bfix{balancing} (explained in
+chapter~10).  This is particularly important if a conditional clause
+is used as an operand.\footnote{In this case the
+\protect\hx{a68toc}{a68toc!ELSE SKIP@\texttt{ELSE SKIP}} compiler
+requires an \texttt{ELSE} part and will warn if it is missing.
+It generates code which will cause a run-time fault if your program
+tries to execute an \texttt{ELSE} part which has been omitted. You can
+get around this restriction by explicitly using \texttt{SKIP}.}
+
+Since the right-hand side of an identity declaration is in a strong
+\hx{context}{context!strong},
+\hx{widening}{coercion!widening} is allowed. Thus, in
+\begin{verbatim}
+   REAL x = (i < j|3|4)
+\end{verbatim}
+\noindent
+whichever value the conditional clause yielded would be widened to a
+value of mode \verb|REAL|.
+
+Since the enquiry \hx{clause}{clause!enquiry} is a serial clause,
+it can have any number of phrases before the \verb|THEN|. For example:
+\begin{verbatim}
+   IF []CHAR line =
+      "a growing gleam glowing green";
+      INT sz = UPB line - LWB line + 1;
+      sz > 35
+   THEN
+      ...
+\end{verbatim}
+
+Conditional clauses can be \hx{nested}{clause!conditional!nested}
+\begin{verbatim}
+   IF a < 4.1
+   THEN
+      IF b >= 35
+      THEN print("yes")
+      ELSE print("no")
+      FI
+   ELSE
+      IF c <= 20
+      THEN print("perhaps")
+      ELSE print("maybe")
+      FI
+   FI
+\end{verbatim}
+\noindent
+The \ixtt{ELSE IF} in the above clause could be replaced by
+\ixtt{ELIF}, and the final \verb|FI FI| with a single \verb|FI|,
+giving:
+\begin{verbatim}
+   IF a < 4.1
+   THEN
+      IF b >= 35
+      THEN print("yes")
+      ELSE print("no")
+      FI
+   ELIF c <= 20
+   THEN print("perhaps")
+   ELSE print("maybe")
+   FI
+\end{verbatim}
+\noindent
+Here is another contracted example:
+\begin{verbatim}
+   INT p = IF   c = "a" THEN 1
+           ELIF c = "h" THEN 2
+           ELIF c = "q" THEN 3
+           ELSE 4
+           FI
+\end{verbatim}
+
+The \ix{range} of any identifier declared in an enquiry
+\hx{clause}{clause!enquiry} extends to any serial clause beyond
+its declaration but within the overall conditional clause. Consider
+this conditional clause:
+\begin{verbatim}
+   IF   INT p1 = ABS(c="a");  p1=1
+   THEN  p1+2
+   ELIF INT p2 = p1-ABS(c="h");  p2 = -1
+   THEN INT i1 = p1+p2;  i1+p1
+   ELSE INT i2 = p1+2*p2;  i2-p2
+   FI
+\end{verbatim}
+\noindent
+The range of \verb|p1| extends to the enclosing \verb|FI|; likewise
+the range of \verb|p2|. The ranges of \verb|i1| and \verb|i2| are
+confined to their serial clauses.
+
+In the abbreviated form, \hx{\texttt{$\vert:$}}{$\vert:$@\texttt{$\vert:$}} can be used
+instead of \verb|ELIF|.  For example, the above identity declaration
+for \verb|p| could be written
+\begin{verbatim}
+   INT p = (c="a"|1|:c="h"|2|:c="q"|3|4)
+\end{verbatim}
+\noindent
+In both identity declarations, the opening parenthesis is an
+abbreviated symbol for \verb|IF|.
+
+Sometimes it is useful to include a conditional clause in the
+\verb|IF| part of a conditional clause. In other words, a \verb|BOOL|
+enquiry clause can be a conditional clause yielding a value of mode
+\verb|BOOL|. Here is an example with \verb|a| and \verb|b|
+predeclared with mode \verb|BOOL|:
+\begin{verbatim}
+   IF IF a
+      THEN NOT b
+      ELSE b
+      FI
+   THEN print("First possibility")
+   ELSE print("Second possibility")
+   FI
+\end{verbatim}
+
+\Subsection{Pseudo-operators}{choice-pseud}
+As was mentioned in chapter 2, both the operands of an operator are
+elaborated before the operator is elaborated. The \verb|a68toc| compiler
+implements the \bfix{pseudo-operator} \verb|ANDTH| which although it
+looks like an operator, has its right-hand operand elaborated only if
+its left-hand operand yields \verb|TRUE|. Compare \verb|ANDTH| (which
+is read ``and then'') with the operator \ixtt{AND}.  The priority of
+\verb|ANDTH| is~1. The phrase \verb|IF p ANDTH q THEN ... FI| is
+equivalent to
+\begin{verbatim}
+   IF IF NOT p
+      THEN FALSE
+      ELIF q
+      THEN TRUE
+      ELSE FALSE
+      FI
+   THEN ...
+   FI
+\end{verbatim}
+
+You should be chary of using \verb|ANDTH| in a compound boolean
+\hx{expression}{compound expression}. For example, given the condition
+\begin{verbatim}
+      UPB s > LWB s
+         ANDTH
+      s[UPB s]="-"
+         AND
+   (CHAR c=s[UPB s-1];
+    c>="a" & c<="z")
+\end{verbatim}
+\noindent
+the intention of the compound condition is to determine whether a
+terminating hyphen is preceded by a lower-case letter.  Clearly,
+testing for a character which precedes the hyphen can only be
+elaborated if there are at least two characters in \verb|s|.  The
+first boolean formula (the left operand of \verb|ANDTH|) ensures that
+the second formula (the right operand of \verb|ANDTH|) is only
+elaborated if \verb|s| identifies at least two characters.
+Unfortunately, because the priority of \verb|AND| is greater than the
+priority of \verb|ANDTH| and because both operands of an operator
+must be elaborated before the operator is elaborated, the right-hand
+operand of \verb|AND| will be elaborated whatever the value of the
+left operand of \verb|ANDTH|.  In order to achieve the above aim, the
+compound condition should be written
+\begin{verbatim}
+   UPB s > LWB s
+       ANDTH
+  (s[UPB s]="-"
+      AND
+   (CHAR c=s[UPB s-1];
+    c>="a" & c<="z"))
+\end{verbatim}
+\noindent
+Note the additional parentheses which ensure that the boolean formula
+containing \verb|AND| is treated {\it as a whole\/} as the right-hand
+operand of the pseudo-operator \verb|ANDTH|.
+
+There is another pseudo-operator \ixtt{OREL} (read ``or else'') which
+is similar to the operator \ixtt{OR} except that its right-hand
+operand is only elaborated if its left-hand operand yields
+\verb|FALSE|.  Like \verb|ANDTH|, the priority of \verb|OREL| is~1.
+The remarks given above about the use of \verb|ANDTH| in compound
+boolean formul{\ae} apply equally to \verb|OREL|.
+
+Neither \verb|ANDTH| nor \verb|OREL| are part of Algol 68.
+
+\begin{exercise}
+\item Write a conditional clause which tests whether a \verb|REAL|
+value is less than $\pi$, and prints "Yes" if it is and "No"
+otherwise. \ans \ %
+\begin{verbatim}
+   IF x < pi
+   THEN print("Yes")
+   ELSE print("No")
+   FI
+\end{verbatim}
+'
+\item Write a conditional clause inside a loop clause to display the
+first 96 multiples of 3 (including~3) in lines of 16. Use the
+operator \ixtt{MOD} for the test. \ans \ %
+\begin{verbatim}
+   FOR i TO 96
+   DO
+      print(i*3);
+
+      IF i MOD 16 = 0
+      THEN print(newline)
+      FI
+   OD
+\end{verbatim}
+'
+\item Replace the operator \verb|OREL| in the following program with
+a suitable conditional clause:
+\begin{verbatim}
+   PROGRAM p CONTEXT VOID
+   USE standard
+   IF INT a=3, b=5, c=4;
+      a > b OREL b > c
+   THEN print("Ok")
+   ELSE print("Wrong")
+   FI
+   FINISH
+\end{verbatim}
+\indent\ans The second operand of \verb|OREL| is only elaborated if
+the first yields \verb|FALSE|.
+\begin{verbatim}
+   PROGRAM p CONTEXT VOID
+   USE standard
+   BEGIN
+      INT a = 3, b = 5, c = 4;
+
+      IF
+         IF a > b
+         THEN TRUE
+         ELSE b > c
+         FI
+      THEN print("Ok")
+      ELSE print("Wrong")
+      FI
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Multiple choice}{choice-case}
+Sometimes the number of choices can be quite large or the different
+choices are related in a simple way. For example, consider the
+following conditional clause:
+\begin{verbatim}
+   IF n = 1
+   THEN action1
+   ELIF n = 2
+   THEN action2
+   ELIF n = 3
+   THEN action3
+   ELIF n = 4
+   THEN action4
+   ELSE action5
+   FI
+\end{verbatim}
+\noindent
+This sort of choice can be expressed more concisely using the
+\hx{\textbf{case clause}}{clause!case} in which the boolean enquiry
+clause is replaced by an integer enquiry clause. Here is the above
+conditional clause rewritten using a case clause:
+\begin{verbatim}
+   CASE n
+   IN
+      action1
+         ,
+      action2
+         ,
+      action3
+         ,
+      action4
+   OUT
+      action5
+   ESAC
+\end{verbatim}
+\noindent
+\hx{which}{CASE@\texttt{CASE}} \hx{could}{IN@\texttt{IN}}
+\hx{be}{OUT@\texttt{OUT}}
+\hx{abbreviated}{ESAC@\texttt{ESAC}} as
+\begin{verbatim}
+   (n|action1,action2,action3,action4|action5)
+\end{verbatim}
+\noindent
+Notice that \verb|action1|, \verb|action2|, \verb|action3| and
+\verb|action4| are separated by \hx{commas}{comma} (they are not
+terminators). Each of \verb|action1|, \verb|action2| and
+\verb|action3| is a unit, so that if you want more than one phrase
+for each action, you must make it an enclosed
+\hx{clause}{clause!enclosed} by enclosing the action in
+\ix{parentheses} (or \ixtt{BEGIN} and \ixtt{END}). If the \verb|INT|
+enquiry \hx{clause}{clause!enquiry} yields~\verb|1|, \verb|action1|
+is elaborated, \verb|2|, \verb|action2| is elaborated and so on. If
+the value yielded is negative or zero, or exceeds the number of
+actions available, \verb|action5| in the \verb|OUT| part is
+elaborated.  The \verb|OUT| part is a
+\hx{serial clause}{clause!serial} so no enclosure is required if
+there is more than one unit.
+
+In the following case clause, the second unit is a conditional clause
+to show you that any piece of program which happens to be a unit can
+be used for one of the cases:
+\begin{verbatim}
+   CASE i IN 3,(x>3.5|4|-2),6 OUT i+3 ESAC
+\end{verbatim}
+\noindent
+The first action yields \verb|3|, the second yields \verb|4| if
+\verb|x| exceeds \verb|3.5| and \verb|-2| otherwise, and the third
+action yields~\verb|6|.
+
+Sometimes the
+\hx{\texttt{OUT} clause}{OUT clause@\texttt{OUT} clause}
+consists of another case clause. For example,
+\begin{verbatim}
+   CASE n MOD 4
+   IN
+      print("case 1"),
+      print("case 2"),
+      print("case 3")
+   OUT
+      CASE (n-10) MOD 4
+      IN
+         print("case 11"),
+         print("case 12"),
+         print("case 13")
+      OUT
+         print("other case")
+      ESAC
+   ESAC
+\end{verbatim}
+\noindent
+Just as with \verb|ELIF| in a conditional clause, \ixtt{OUT CASE}
+$\ldots$ \verb|ESAC| \verb|ESAC| can be replaced by \ixtt{OUSE} $\ldots$
+\verb|ESAC|. So the above example can be rewritten
+\begin{verbatim}
+   CASE n MOD 4
+   IN
+      print("case 1"),
+      print("case 2"),
+      print("case 3")
+   OUSE (n-10) MOD 4
+   IN
+      print("case 11"),
+      print("case 12"),
+      print("case 13")
+   OUT print("other case")
+   ESAC
+\end{verbatim}
+\noindent
+Here is a case clause with embedded case clauses:
+\begin{verbatim}
+   CASE command
+   IN
+      action1,
+      action2,
+\end{verbatim}
+\begin{verbatim}
+      (subcommand1
+      |subaction1,subaction2
+      |subaction3)
+   OUSE subcommand2
+\end{verbatim}
+\begin{verbatim}
+   IN subaction4,
+      subaction5,
+\end{verbatim}
+\begin{verbatim}
+      subaction6
+   OUT
+      subaction7
+   ESAC
+\end{verbatim}
+\noindent
+Calendar computations, which are notoriously difficult, give examples
+of case clauses:
+\begin{verbatim}
+   INT days = CASE month IN
+               31,
+               IF year MOD 4 = 0
+                       &
+                  year MOD 100 /= 0
+                      OR
+                  year MOD 400 = 0
+               THEN 29
+               ELSE 28
+               FI,
+               31,30,31,30,31,31,30,31,30,31
+               OUT -1
+              ESAC
+\end{verbatim}
+\noindent
+And here is one in dealing cards:
+\begin{verbatim}
+   []CHAR suit=(i|"spades",
+                  "hearts",
+                  "diamonds",
+                  "clubs"
+                 |"")
+\end{verbatim}
+
+Like the conditional clause, if you omit the \verb|OUT| part, the
+compiler assumes that you wrote \hxtt{OUT SKIP}{SKIP}.  In the
+following example, when \verb|i| is \verb|4|, nothing gets
+printed:\footnote{The a68toc compiler does not support missing \texttt{OUT} parts that are executed.
+It will warn about this and will generate a run-time
+error.  It is good practice to ensure that at least \protect\texttt{OUT SKIP} occurs in
+every case clause.}
+\begin{verbatim}
+   PROGRAM prog CONTEXT VOID
+   USE standard
+   FOR i TO 5
+   DO
+      print((i MOD 4|"a","g","r"))
+   OD
+   FINISH
+\end{verbatim}
+
+\begin{exercise}
+\item What is wrong with the following identity declaration, assuming
+that \verb|p| has been predeclared as a value of mode \verb|BOOL|:
+\begin{verbatim}
+   INT i = (p|1,2,3|4)
+\end{verbatim}
+\indent\ans The right-hand side of the identity declaration is
+clearly an abbreviated case clause, so \verb|p| must yield
+\verb|INT|, not \verb|BOOL|.
+'
+\item Write a program consisting solely of a case clause which uses
+the \verb|SIGN| operator to give three different actions depending on
+the sign of a number of mode \verb|REAL|. \ans \ %
+\begin{verbatim}
+   PROGRAM ex4 9 CONTEXT VOID
+   USE standard
+   CASE SIGN x + 2
+   IN
+      print("x < 0.0"),
+      print("x = 0.0"),
+      print("x > 0.0")
+   ESAC
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Summary}{choice-summ}
+There are two values having mode \verb|BOOL|. Operators with operands
+of mode \verb|BOOL| are predeclared in the standard prelude.  A
+conditional clause uses an enquiry clause yielding a value of mode
+\verb|BOOL|.  A case clause uses an enquiry clause yielding a value
+of mode \verb|INT|.  Both conditional and case clauses can be
+abbreviated.  Extended conditional and case clauses can be written
+using \verb|ELIF| and \verb|OUSE| respectively.  Conditional clauses
+and case clauses are sometimes grouped together and termed choice
+clauses. Choice clauses are examples of enclosed clauses, and are
+units.
+
+Here are some exercises which test you on the material covered in this
+chapter.
+
+\begin{exercise}
+\item Which values have the mode \verb|BOOL|? \ans \verb|TRUE| and
+\verb|FALSE|
+'
+\item What is the value of each of the following formul{\ae}?
+\begin{subex}
+\item \verb|3 < 4| \subans \verb|TRUE|
+'
+\item \verb|4.0 >= 0.4e1| \subans \verb|TRUE|
+'
+\item \verb|2 < 3 & 3 > 2| \subans \verb|TRUE|
+'
+\item \verb|11 < 2 OR 10 < ABS TRUE| \subans \verb|FALSE|
+'
+\item \verb|NOT TRUE & ABS "A" < ABS "D"| \subans \verb|FALSE|
+'
+\item \verb|NOT(3 > 2 & 3 > 1 OR 10 < 6)| \subans \verb|FALSE|
+'
+\end{subex}
+\item What is wrong with the following (\verb|m| is predeclared):
+\begin{verbatim}
+   IF m>4|print("ok")ELSE print(".")ESAC
+\end{verbatim}
+\indent\ans You cannot mix full and abbreviated con\-di\-tional
+clau\-ses.  Replace the vertical bar with \verb|THEN|. Also replace the
+\verb|ESAC| with \verb|FI|.
+'
+\item What would be displayed on your screen by the following:
+\begin{verbatim}
+   FOR i TO 10 DO print(ODD i) OD
+\end{verbatim}
+\indent\ans \verb|TFTFTFTFTF|
+'
+\item Use a conditional clause to print \verb|"Units"| if \verb|m|
+(which has mode \verb|INT|) is less than \verb|10|, \verb|"Tens"| if
+it is less than \verb|100|, \verb|"Hundreds"| if it is less
+than~\verb|1000| and \verb|"Too big"| otherwise. \ans \ %
+\begin{verbatim}
+   IF m < 10
+   THEN print("Units")
+   ELIF m < 100
+   THEN print("Tens")
+   ELIF m < 1000
+   THEN print("Hundreds")
+   ELSE print("Too big")
+   FI
+\end{verbatim}
+'
+\item Use a case clause to print the value of a card in words. For
+example, if it is a queen, print \verb|"Queen"|.
+\ans \ %
+\begin{verbatim}
+   print((card|"Ace","two","three",
+               "four","five","six",
+               "seven","eight","nine",
+               "ten","Jack","Queen",
+               "King"))
+\end{verbatim}
+'
+\end{exercise}

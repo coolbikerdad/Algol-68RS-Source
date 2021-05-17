@@ -1,0 +1,1165 @@
+% $Log: chapter3.tex,v $
+% Revision 1.4  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Repetition}{chapiii}
+Up to now, we have dealt with \hx{plain values}{value!plain}:
+that is, values with modes \verb|INT|, \verb|REAL| or \verb|CHAR|.
+In practice, plain values are of limited use when dealing with a lot
+of data.  For example, commercial programs are continually dealing
+with strings of characters and engineers use vectors and matrices.
+In this chapter, we start the process of building more complicated
+modes.  Firstly, we consider repetition of values.
+\newpage
+
+\Section{Multiples}{rep-mult}
+A \bfix{multiple} consists of a number of \bfix{elements}, each of
+which have the same mode (sometimes known as the
+\hx{\textbf{base mode}}{mode!base}).  The \ix{mode} of a multiple
+consists of the \hx{mode indicant}{mode!indicant} for each
+element preceded by brackets, and is said ``row of mode''.  For
+example, here is an identity declaration of a row of \verb|CHAR|
+\hx{multiple}{declaration!identity![]CHAR@\texttt{[]CHAR}}:
+\begin{verbatim}
+   []CHAR a = "abcd"
+\end{verbatim}
+\noindent
+The phrase on the left-hand side of the equals symbol is read ``row
+of car a''.  The phrase on the right-hand side of the equals symbol
+is the \hx{denotation}{denotation![]CHAR@\texttt{[]CHAR}} of a
+value whose mode is \verb|[]CHAR|.  Spaces can, of course, appear
+before, between or after the brackets.
+
+Multiples of mode \verb|[]CHAR| are so common that this denotation
+was devised as a kind of shorthand. The maximum number of elements in
+a multiple is equal to the maximum positive integer (\ixtt{max int}),
+although in practice, your program will be limited by the available
+memory.  The denotation of a \verb|[]CHAR| may extend over more than
+one line. There are two ways of doing this. You can simply write the
+denotation on more than one line in which case every character
+``between'' the starting and ending quote characters is included
+except the newline characters, or you can split the denotation with
+quote characters at the end of one line and at the start of the
+continuation of the denotation on the next line. Here are two
+declarations which exemplify these rules:
+\begin{verbatim}
+   []CHAR long1 = "The first stage in the develo
+   pment of a new program consists of analysing 
+   the problem that the program must solve.";
+   []CHAR long2 = "The first stage in the "
+              "development of a new "
+              "program consists of "
+              "analysing the problem "
+              "that the program must "
+              "solve."
+\end{verbatim}
+\noindent
+Notice that the second method is neater because you can indent the
+subsequent parts of the denotation. Everything ``between'' the second
+and third quote characters and ``between'' the fourth and fifth quote
+characters is ignored, although you should not put anything other
+than spaces or tabs and newlines there.  If you want to place a quote
+character (\hx{"}{""@\texttt{""}}) in the denotation, you must double it, just as
+in the character denotation.  Here are two \verb|[]CHAR| denotations,
+each containing two quote characters:
+\begin{verbatim}
+   []CHAR rca = """Will you come today?""",
+          rcb = "The minority report stated "
+                "that ""in their opinion""";
+\end{verbatim}
+\noindent
+The repeated quote characters are different from the quote characters
+which chain the two parts of the denotation of \verb|rcb|.
+
+\Subsection{Row-displays}{rep-rowdisp}
+Multiples of other modes cannot be denoted as shown above, but use a
+construct called a \hx{\textbf{row-display}}{row!display}.  A
+row-display consists of none or two or more \hx{units}{unit}
+separated by commas and enclosed by \ix{parentheses} (or \ixtt{BEGIN}
+and \ixtt{END}).  Here is the identity
+\hx{declaration}{declaration!identity![]CHAR@\texttt{[]CHAR}} for
+\verb|a| written using a row-display:
+\begin{verbatim}
+   []CHAR a = ("a","b","c","d")
+\end{verbatim}
+\noindent
+It is important to note that the units in the row-display could be
+quite complicated. For example, here is another declaration for a
+multiple with mode \verb|[]CHAR|:
+\begin{verbatim}
+   []CHAR b = ("a","P",REPR 36,"""")
+\end{verbatim}
+\noindent
+In each of these two declarations, the number of elements is \verb|4|.
+
+Here are identity \hx{declarations}{declaration!identity} for a
+multiple of mode \verb|[]INT| and a multiple of mode \verb|[]REAL|:
+\begin{verbatim}
+   []INT  c = (1, 2+3, -2**4, 7, -11, 2, 1);
+   []REAL d = (1.0, -2.9, 3e4, -2e-2, -5)
+\end{verbatim}
+\noindent
+Note that the last unit of the row-display for \verb|c| has the same
+value as the first unit. In a multiple of mode \verb|[]INT|, the
+individual elements can have any value of mode \verb|INT|: that is to
+say, any integer or formula yielding an integer.  In \verb|d|, the
+unit yielding the last element is written as a formula yielding a
+value of mode \verb|INT|.  Since the context of the row-display is
+\hx{strong}{context!strong} (because it occurs on the right-hand
+side of an identity declaration), this context is passed on to its
+constituent \hx{units}{unit!constituent}.  Thus, the context of
+the formula is also strong, and so the value yielded by the formula
+is widened to yield \hx{\texttt{-5.0}}{coercion!widening}.
+
+An empty row-display can be used to yield a
+\hx{\textbf{flat} multiple}{multiple!flat} (one with no
+elements). For example, here is an identity declaration using an
+empty \hx{row-display}{row!display!empty}:
+\begin{verbatim}
+   []REAL empty = ()
+\end{verbatim}
+\noindent
+The denotation for a flat \verb|[]CHAR| is used in the identity
+declaration
+\begin{verbatim}
+   []CHAR none = ""
+\end{verbatim}
+\noindent
+A multiple can also have a single element. However, a row-display
+cannot have a single \ix{unit} (because it would be an enclosed
+\hx{clause}{clause!enclosed}, which is a different construct). In
+this case, we use a unit (or a \ix{formula}, which is another kind of
+unit) for the only element, and the value of that unit is coerced to
+a multiple with a single element using the \textbf{rowing}
+\hx{coercion}{coercion!rowing}. For example,
+\begin{verbatim}
+   []INT ri = 4
+\end{verbatim}
+\noindent
+yields a multiple with one element. An enclosed clause can be used
+instead:
+\begin{verbatim}
+   []INT ri1 = (4)
+\end{verbatim}
+\noindent
+since an enclosed clause is also a unit (see section \hyref{gram-enc}).
+
+Rowing can only occur in strong \hx{contexts}{context!strong}
+(and the right-hand side of an identity declaration is a strong
+context).  Here is another example:
+\begin{verbatim}
+   []CHAR rc = "p"
+\end{verbatim}
+\noindent
+A row-display can only be used in a strong context. Because the
+context of an operand is \hx{firm}{context!firm}, a row-display
+cannot appear in a formula (but there is a way round this, see
+section \hyref{gram-prim}). The shorthand denotation for a
+\verb|[]CHAR| is not a row-display and so does not suffer from this
+limitation.
+
+\Subsection{Dimensions}{rep-dim}
+One of the properties of a multiple is its number of
+\bfix{dimensions}. All the multiples declared so far have one
+dimension. The number of dimensions affects the mode.  A
+two-dimensional multiple of integers has the mode
+\begin{verbatim}
+   [,]INT
+\end{verbatim}
+\noindent
+(said ``row-row-of-int''), while a 3-dimensional multiple of reals
+(real numbers) has the mode
+\begin{verbatim}
+   [,,]REAL
+\end{verbatim}
+\noindent
+Note that the number of \hx{commas}{comma!dimensions} is always one
+less than the number of dimensions. In Algol~68, multiples of any
+number of dimensions can be declared.\footnote{The
+\protect\hx{a68toc}{a68toc!dimensions} Algol~68 compiler supports
+dimensions up to three. If you try to declare rows having more
+than three dimensions, the translation proceeds without error
+messages, but the resulting C code will fail to compile.}
+
+To cater for more than one dimension, each of the units of a
+\hx{row-display}{row!display} can also be a row-display. For example,
+the row-display for a multiple with mode \verb|[,]INT| could be
+\begin{verbatim}
+   ((1,2,3),(4,5,6))
+\end{verbatim}
+\noindent
+The fact that this is the row-display for a 2-dimensional multiple
+would be clearer if it were written
+\begin{verbatim}
+   ((1,2,3),
+    (4,5,6))
+\end{verbatim}
+\noindent
+For two dimensions, it is convenient to talk of ``\ix{row}s'' and
+``col\-umns''. \hx{Here}{columns} is an identity declaration using
+the previous row-dis\-play:
+\begin{verbatim}
+   [,]INT e = ((1,2,3),
+               (4,5,6))
+\end{verbatim}
+\noindent
+The first ``row'' of \verb|e| is yielded by the row-display
+\verb|(1,2,3)| and the second ``row'' is yielded by \verb|(4,5,6)|.
+The first ``column'' of \verb|e| is yielded by the row-display
+\verb|(1,4)|, the second ``column'' by \verb|(2,5)| and the third
+``column'' by \verb|(3,6)|.  Note that the number of elements in each
+``row'' is the same, and the number of elements in each ``column'' is
+also the same, but that the number of ``rows'' and ``columns''
+differ.  We say that \verb|e| is a
+\hx{\textbf{rectangular}}{multiple!rectangular} multiple. If
+the number of ``rows'' and ``columns'' are the same, the multiple is
+said to be \hx{\textbf{square}}{multiple!square}.  Here is an
+\hx{identity}{declaration!identity} declaration for a square
+multiple:
+\begin{verbatim}
+   [,]CHAR f = (("a","b","c"),
+                ("A","B","C"),
+                ("1","2","3"))
+\end{verbatim}
+\noindent
+All square multiples are also rectangular, but the converse is not
+true. Note that in the row-display for a multi-dimensional multiple
+of characters, it is not possible to use the special denotation for a
+\verb|[]CHAR|.
+
+The base \hx{mode}{mode!base} of a multiple can be any mode,
+including another row mode. For example:
+\begin{verbatim}
+   [][]CHAR days =
+      ("Monday","Tuesday","Wednesday",
+       "Thursday","Friday","Saturday",
+       "Sunday")
+\end{verbatim}
+\noindent
+The mode is said ``row of row of \verb|CHAR|''. Note that \verb|days|
+is one-dimensional, each element consisting of a one-dim\-en\-sional
+\verb|[]CHAR|. The shorthand denotation for a \verb|[]CHAR| can be
+used in this case. Because the base mode is \verb|[]CHAR|, the
+individual \verb|[]CHAR|s can have different lengths. Here is another
+example using integers:
+\begin{verbatim}
+   [][]INT trapezium = ((1,2),(1,2,3),(1,2,3,4))
+\end{verbatim}
+
+\Subsection{Subscripts and bounds}{rep-bound}
+Each element of a multiple has one integer associated with it for
+each dimension. These integers increase by \verb|1| from the first to the
+last element in each dimension. For example, in the declaration
+\begin{verbatim}
+   []INT r1 = (90,95,98)
+\end{verbatim}
+\noindent
+the integers associated with the elements are \verb|[1]|, \verb|[2]|
+and \verb|[3]| (see the next section for an explanation of why the
+integers are written like this). Remember that the first element in a
+row-display always has an associated integer of \verb|[1]|. These
+integers are known as \hx{subscripts}{subscript}\footnote{From the
+practice of mathematicians who write $x_1, x_2, \ldots$} or indexers.
+Thus the subscript of \verb|98| in \verb|r1| is \verb|[3]|. In the
+two-dimensional multiple
+\begin{verbatim}
+   [,]INT r2 = ((-40, -30, -20),
+                (100, 130, 160))
+\end{verbatim}
+\noindent
+the subscripts for \verb|-40| are \verb|[1,1]| and the subscripts for
+\verb|160| are \verb|[2,3]|.
+
+We say that the \hx{\textbf{lower bound}}{bound!lower} of
+\verb|r1| is \verb|1|, and its \hx{\textbf{upper bound}}{bound!upper}
+is~\verb|3|.  The multiple \verb|r2| has a lower bound of \verb|1| for both the
+first and second dimensions, an upper bound of \verb|2| for the first
+dimension (2 ``rows'') and an upper bound of \verb|3| for the second
+dimension (3 ``columns''). We shall write the bounds of \verb|r1| and
+\verb|r2| as \verb|[1:3]| and \verb|[1:2,1:3]| respectively.  The
+bounds of a flat multiple, unless specified otherwise (see the
+section on trimming), are \verb|[1:0]|.
+
+The bounds of a multiple can be
+\hx{interrogated}{bounds!interrogation} using the operators
+\ixtt{LWB} for the lower bound, and \ixtt{UPB} for the upper bound.
+The bounds of the first, or only, dimension can be interrogated using
+the \hx{monadic}{operator!monadic} form of these operators.  For
+example, using \verb|days| defined above, \verb|LWB days| yields
+\verb|1|, and \verb|UPB days| yields \verb|7|. Where the multiple is
+multi-dimensional, the bounds are interrogated using the
+\hx{dyadic}{operator!dyadic} form of \verb|LWB| and \verb|UPB|: the
+left operand is the dimension while the right operand is the
+identifier of the multiple.  For example, \verb|1 UPB r2| yields
+\verb|2| and \verb|2 UPB r2| yields \verb|3|.  The priority of the
+dyadic operators is~\verb|8|.
+
+\begin{exercise}
+\item What is wrong with the following identity declarations?
+\begin{subex}
+\item \verb|()CHAR c1 = "Today"| \subans Strictly speaking, the
+definition of Algol~68 allows parentheses wherever brackets (\verb|[|
+and \verb|]|) are allowed. The
+\ix{a68toc} compiler does not support this and will flag it as an error.
+'
+\item \verb|[]CHAR c2 = 'Yesterday'| \subans The apostrophes should
+be replaced by quote symbols.
+'
+\item \verb|[]INT i1 = (1, 2.0, 3)| \subans The value \verb|2.0| in
+the row-display cannot be coerced to a value of mode \verb|INT| in a
+strong context (or any context, for that matter).
+'
+\end{subex}
+\item Using the identifier \verb|first 4 odd numbers|, write an
+appropriate identity declaration.
+\ans \verb|[]INT first 4 odd numbers = (1,3,5,7)|
+'
+\item Given the identity declarations
+\begin{verbatim}
+   []CHAR s = "abcdefgh";
+   []REAL r = (1.4e2, 3.5e-1, -4.0);
+   [,]INT t = ((2,3,5),
+               (7,11,13),
+               (17,19,23))
+\end{verbatim}
+\noindent
+what is the value of the following:
+\begin{subex}
+\item \verb|UPB s| \subans \verb|8|
+'
+\item \verb|LWB r| \subans \verb|1|
+'
+\item \verb|2 UPB t - 1 LWB t + 1| \subans \verb|3|
+'
+\end{subex}
+\item Write the formul{\ae} which give the upper and lower bounds of
+each of the following multiples:
+\begin{subex}
+\item \ %
+\begin{verbatim}
+[,,]INT a = (((1,2,3),
+              (4,5,6)),
+             ((7,8,9),
+              (10,11,12)))
+\end{verbatim}
+\subans \verb|1 LWB a|, \verb|1 UPB a|, \verb|2 LWB a|,
+\verb|2 UPB a|, \verb|3 LWB a|, \verb|3 UPB a|
+'
+\item \verb|[]REAL b = ()| \subans \verb|LWB b|, \verb|UPB b|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Slicing}{rep-slice}
+In the previous section, it was mentioned that a subscript is
+associated with every element in a multiple.  The lower-bound of the
+multiple for a dimension determines the minimum subscript for that
+dimension and the upper-bound for that dimension determines the
+maximum subscript.  Thus there is a set of subscripts for each
+dimension.  The individual elements can be accessed by quoting all
+the subscripts for that element. For example, the elements of the
+multiple
+\begin{verbatim}
+   []INT odds = (1,3,5)
+\end{verbatim}
+\noindent
+can be accessed as \verb|odds[1]|, \verb|odds[2]| and \verb|odds[3]|.
+The first of these is read ``odds sub one bus'' (``\ix{bus}'' is the opposite
+of ``\ix{sub}'').  In a multi-dimensional multiple, two or more subscripts are
+required to access a single element, the subscripts being separated
+by commas.  For example, in the multiple
+\begin{verbatim}
+   [,]REAL rs = ((1.0, 2.0, 3.0),
+                 (4.0, 5.0, 6.0))
+\end{verbatim}
+\noindent
+\verb|rs[1,2]| yields \verb|2.0|.  Similarly, \verb|rs[2,3]| yields
+\verb|6.0|.  Thus one can declare
+\begin{verbatim}
+   REAL rs12 = rs[1,2],
+        rs23 = rs[2,3]
+\end{verbatim}
+
+Although, technically, a multiple with all its subscripts specified
+is called a \bfix{slice}, the term is usually reserved for a multiple
+with less than the maximum number of subscripts (in other words, at
+least one of the dimensions does not have a subscript).  For example,
+using \verb|rs| declared above, we can write
+\begin{verbatim}
+   []REAL srs = rs[1,]
+\end{verbatim}
+\noindent
+which yields the multiple denoted by \verb|(1.0,2.0,3.0)|.
+The \ix{comma} must be present in the slice on the right-hand side
+otherwise the compiler will report an error of ``wrong number of
+indices''.
+
+Vertical slicing is also possible. The phrase \verb|rs[,2]| yields
+the multiple \verb|(2.0,5.0)|. In the context of the declaration
+\begin{verbatim}
+   [,]CHAR rs2 = (("a","b","c","d"),
+                  ("e","f","g","h"),
+                  ("i","j","k","l"))
+\end{verbatim}
+\noindent
+the slice \verb|rs2[,3]| yields the value \verb|"cgk"| with a mode of
+\verb|[]CHAR|. Note, however, that \ix{vertical slicing} is only
+possible for multiples with at least two dimensions.  The multiple
+\verb|days|, declared in the previous section, is one-dimensional and
+so cannot be sliced vertically.
+
+In a 3-dimensional multiple, both 2-dimensional and 1-dim\-en\-sional
+slices can be produced. Here are some examples:
+\begin{verbatim}
+   [,,]INT r3 = (((1,2),(3,4),((5,6),(7,8)));
+   [,]INT r31 = r3[1,,],
+          r32 = r3[,2,],
+          r33 = r3[,,3];
+   []INT r312 = r31[2,], r4 = r31[,2]
+\end{verbatim}
+
+\begin{exercise}
+\item The declaration
+\begin{verbatim}
+   [,]INT r = (( 1, 2, 3, 4),
+               ( 5, 6, 7, 8),
+               ( 9,10,11,12),
+               (13,14,15,16))
+\end{verbatim}
+\noindent
+is in force for this and the following exercise.  Give the value of
+the following slices:
+\begin{subex}
+\item \verb|r[2,2]| \subans \verb|6|
+'
+\item \verb|r[3,]| \subans \verb|(9,10,11,12)|
+'
+\item \verb|r[,2 UPB r]| \subans \verb|(4,8,12,16)|
+'
+\end{subex}
+\item Write slices for the following values
+\begin{subex}
+\item \verb|10| \subans \verb|r[3,2]|
+'
+\item \verb|(5,6,7,8)| \subans \verb|r[2,]|
+'
+\item \verb|(3,7,11,15)| \subans \verb|r[,3]|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Trimming}{rep-trim}
+The bounds of a multiple can be changed using the \verb|@|
+construction. For example, in the declaration
+\begin{verbatim}
+   []CHAR digits = "0123456789"[@0]
+\end{verbatim}
+\noindent
+the bounds of \verb|digits| are \verb|[0:9]|. Bounds do not have to
+be non-negative.  For example,
+\begin{verbatim}
+   [,]INT ii = ((1,2,3),(4,5,6));
+   [,]INT jj = ii[@-3,@-50]
+\end{verbatim}
+\noindent
+whence the bounds of \verb|jj| are \verb|[-3:-4,-50:-48]|.  Notice
+that you cannot change the bounds of a row-display (except by using a
+\textbf{cast}---see section \hyref{gram-slice}). For now, always
+declare an identifier for the display, and then alter the bounds.
+The bounds of a slice can be changed:
+\begin{verbatim}
+   [,]INT ij = ((1,3,5),(7,9,11),(13,15,17));
+    []INT ij2 = ij[2,][@0]
+\end{verbatim}
+\noindent
+The declaration for \verb|ij2| could also be written
+\begin{verbatim}
+   []INT ij2 = ij[2,@0]
+\end{verbatim}
+\noindent
+\verb|@| can also be written \ixtt{AT}.
+
+Wherever an integer is required in the above, any unit yielding an
+integer will do. Thus it is quite in order to use the formula
+\begin{verbatim}
+   (a+b) UPB r
+\end{verbatim}
+\noindent
+where the parentheses are necessary if \verb|a+b| is expected to
+yield the dimension of \verb|r| under consideration (because the
+\ix{priority} of \verb|UPB| is greater than the priority
+of \verb|+|).
+
+A \bfix{trimmer} uses the \ixtt{:} construction.  In the context of
+the declaration of \verb|digits| above, the phrase \verb|digits[1:3]|
+yields the value \verb|"123"| with mode \verb|[]CHAR|.  Again, using
+the declaration of \verb|r| in the last set of exercises,
+\verb|r[1:2,1]| yields \verb|(1,2)|, and \verb|r[1:2,1:2]| yields
+\verb|((1,2),(5,6))|.
+
+Trimming is particularly useful with values of mode \verb|[]CHAR|.
+Given the declaration
+\begin{verbatim}
+   []CHAR quote = "Habent sua fata libelli"
+\end{verbatim}
+\noindent
+(the quotation at the start of the acknowledgements in the ``Revised
+Report''),
+\begin{verbatim}
+   quote[:6]
+   quote[8:10]
+   quote[12:15]
+\end{verbatim}
+\noindent
+yield the first three words. Note that when the first subscript in a
+trimmer is omitted, the lower bound for that dimension is assumed,
+while omission of the second subscript assumes the corresponding
+upper bound. Again, any unit yielding \verb|INT| may be used for the
+trimmers. The context for a trimmer or a subscript is
+\hx{\textbf{meek}}{context!meek}.
+
+Omission of both subscripts yields the whole \ix{slice} with a lower
+bound of~1. So, the upper bound of the phrase \verb|digits[:]| is
+\verb|10| which is equivalent to \verb|digits[@1]|.
+
+The lower bound of a \verb|trimmer| is, by default, \verb|1|, but may
+be changed by the use of \verb|@|. For example, \verb|digits[3:6]|
+has bounds \verb|[1:4]|, but \verb|digits[3:6@2]| has bounds
+\verb|[2:5]|. The bounds of \verb|quote[17:]| mentioned above are
+\verb|[1:7]|.
+
+\begin{exercise}
+\item Write an identity declaration for \verb|months| on the lines of
+the declaration of \verb|days| in section 3.1.
+\ans \ %
+\begin{verbatim}
+   [][]CHAR months=
+      ("January","February","March",
+       "April","May","June",
+       "July","August","September",
+       "October","November","December")
+\end{verbatim}
+'
+\item Given the declarations
+\begin{verbatim}
+   [,]INT i = ((1,-2,3,4),(-5,6,7,8));
+   []REAL r= (1.4,0,-5.4,3.6);
+   []CHAR s= "abcdefghijklmnopqrstuvwxyz"
+                                [@ ABS"a"]
+\end{verbatim}
+\noindent
+what are the values of the following phrases?
+\begin{subex}
+\item \verb|2 UPB i + UPB s[@1]| \subans \verb|30|
+'
+\item \verb|r[2:3]| \subans \verb|(0.0,-5.4)|
+'
+\item \verb|i[2,2] - r[3]| \subans \verb|11.4|
+'
+\item \verb|i[2,2:]| \subans \verb|(6,7,8)|
+'
+\item \verb|s[ABS"p":ABS"t"]| \subans \verb|"pqrst"|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Printing multiples}{rep-prmult}
+We have already used \ixtt{print} to convert plain values to
+characters displayed on your screen. In fact, \verb|print| can be
+supplied with a row of values to be converted, so it is quite valid
+to write
+\begin{verbatim}
+   []INT i1 = (2,3,5,7,11,13);  print(i1)
+\end{verbatim}
+\noindent
+You can also present an actual \hx{row-display}{row!display}. Instead of using
+\begin{verbatim}
+   print(2); print(blank); print(3)
+\end{verbatim}
+\noindent
+you can write \verb|print((2,blank,3))|. The doubled parentheses are
+necessary: the outer pair are needed by \verb|print| anyway, and the
+inner pair are part of the row-display. Notice that the modes of the
+elements of the row-display are quite different. We shall learn in
+chapter~8 how that can be so.
+
+Here is a program which will print the answers to the last exercise.
+\begin{verbatim}
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+    [,]INT i = ((1,-2,3,4),(-5,6,7,8));
+    []REAL r= (1.4,0,-5.4,3.6);
+    []CHAR s= "abcdefghijklmnopqrstuvwxyz"
+                                  [@ ABS"a"];
+\end{verbatim}
+\begin{verbatim}
+    print(("i=",i,newline,
+           "r=",r,newline,
+           "s=[",s,"]",newline,
+           "2 UPB i + UPB s[@1]=",
+           2 UPB i+UPB s[@1],newline,
+           "r[2:3]=",r[2:3],newline,
+           "i[2,2] - r[3]=",
+           i[2,2] - r[3],newline,
+           "i[2,2:]=",i[2,2:],newline,
+           "s[ABS""p"":ABS""t""]=",
+           s[ABS"p":ABS"t"],
+           newline))
+   END
+   FINISH
+\end{verbatim}
+\noindent
+As you can see, \ixtt{print} will quite happily take values of modes
+\verb|[]CHAR|, \verb|[,]INT|, \verb|[]REAL| and so on\footnote{but
+\protect\hx{a68toc}{a68toc!dimensions} supports multiples of
+up to three dimensions.}.  Notice also that in order to get quote
+symbols in the last line to be printed, they are doubled.  A common
+mistake is to omit a quote symbol or a closing comment symbol. If
+your editor provides lexical highlighting (usually called ``syntax''
+highlighting), an omitted quote or comment symbol will cause a large
+part of your program to be highlighted as though it were a
+\verb|[]CHAR| or a comment. The mistake will be very clear. If your
+editor does not support lexical highlighting, you will get an odd
+message from the compiler (usually to the effect that it has run out
+of program!).
+
+\begin{exercise}
+\item Write short programs to print the answers to all the exercises
+in this chapter from 3.5. You should insert multiples of
+\verb|CHAR| at suitable points, as in the example above, so that you
+can identify the printed answers. \ans This exercise is self-marking,
+but here is a program to print the answer to the first exercise:-
+\begin{verbatim}
+   PROGRAM ex3 5 CONTEXT VOID
+   USE standard
+   BEGIN
+     [,]INT r = ((1,2,3,4),(5,6,7,8),
+              (9,10,11,12),(13,14,15,16));
+
+     print(("r[2,2]=",r[2,2],newline,
+          "r[3,]=",r[3,],newline,
+          "r[,2 UPB r]=",r[,2 UPB r],
+          newline))
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Operators with multiples}{rep-opmult}
+No operators are defined in the standard prelude for multiples whose
+elements have modes \verb|INT| or \verb|REAL|. This is not a drawback
+as you will learn in chapter~6. Nor are there any monadic operators
+in the standard prelude for multiples of \verb|CHAR|. However,
+multiples of \verb|CHAR| occur so often, that two dyadic operators
+are available for them.
+
+The operator \ixtt{+} is defined for all combinations of \verb|CHAR|
+and \verb|[]CHAR|.  Thus, the formula
+\begin{verbatim}
+   "abc" + "d"
+\end{verbatim}
+\noindent
+yields the value denoted by \verb|"abcd"|. With these operands,
+\verb|+| acts as a \ix{concatenation} operator. The operator has a
+\ix{priority} of~6 as before.
+
+Multiplication of values of mode \verb|CHAR| or \verb|[]CHAR| is
+defined using the operator \ixtt{*}. The other operand has mode
+\verb|INT| and the yield has mode \verb|[]CHAR|. For example, in the
+declaration
+\begin{verbatim}
+   []CHAR repetitions = "ab" * 3
+\end{verbatim}
+\noindent
+\verb|repetitions| identifies \verb|"ababab"|.  The formula could
+have been written with the integer as the left operand.  In both
+cases, the operator only makes sense with a positive integer.
+
+\begin{exercise}
+\item Given the identity declarations
+\begin{verbatim}
+   []CHAR s = "Dog bites man",
+          t = "aeiou"
+\end{verbatim}
+\noindent
+what is the value of the following formul{\ae}?
+\begin{subex}
+\item \verb|"M"+s[UPB s-1:]+s[4:10]+"d"+s[2:3]|
+\subans \verb|Man bites dog|
+'
+\item \verb|s[5]*3+2*s[6]| \subans \verb|bbbii|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Ranges}{rep-range}
+If you cast your mind back to the form of an Algol~68 program, you
+will remember that it consists of a number of phrases enclosed by
+\verb|BEGIN| and \verb|END| (or parentheses) preceded by a
+\ixtt{PROGRAM} phrase with an
+optional \ixtt{USE} phrase.  The part of the
+program enclosed by \verb|BEGIN| and \verb|END| (including the
+\verb|BEGIN| and \verb|END|) is called a
+\hx{\textbf{closed clause}}{clause!closed}.  The important point
+here is that a closed clause consists of one or more phrases
+separated by semicolons\ixtt{;} (the last \ix{phrase} being a
+\ix{unit}), surrounded by parentheses (or \verb|BEGIN| and
+\verb|END|).  Since a declaration is not a unit, the last phrase
+cannot be a declaration.  We say that the value of a
+\hx{closed clause}{value!of a closed clause} is the value yielded
+by the final unit.  As an example, here is a closed clause with a
+value of mode \verb|INT|:
+\begin{verbatim}
+   BEGIN
+      INT i = 43;
+      print((i,newline));
+      i
+   END
+\end{verbatim}
+
+An important adjunct of a closed clause is that any identifiers
+declared in the clause do not exist outside the clause.  We say that
+the \bfix{range} of an \ix{identifier} is confined to that section of
+the closed clause from its declaration to the end of the clause.
+
+\Section{Program repetition}{rep-rep}
+Having investigated the construction and use of multiple values, it
+is now time to address \ix{repetition} of program actions.  For
+example, suppose you wanted to output~8 blank lines.  You could write
+\begin{verbatim}
+   print((newline,newline,newline,newline,
+          newline,newline,newline,newline))
+\end{verbatim}
+\noindent
+A simpler way would be to write
+\begin{verbatim}
+   TO 8 DO print(newline) OD
+\end{verbatim}
+\noindent
+The integer following the \ixtt{TO} can be any unit yielding an
+integer (not necessarily positive) in a meek
+\hx{context}{context!meek}.  If the value yielded is zero or
+negative, then the ensuing clause enclosed by \verb|DO| and \verb|OD|
+will not be elaborated at all.  The \verb|TO|~$\ldots$~\verb|OD|
+construct is called a \textbf{loop clause} or, more simply, a loop.
+
+If you omit the \verb|TO| integer construct, the loop will be
+repeated indefinitely.  In that case, you would need some way of
+terminating the program inside the loop.
+
+A more useful form of the loop \hx{clause}{clause!loop} is shown
+by the following example
+\begin{verbatim}
+   FOR i TO 10
+   DO
+      print((i,newline))
+   OD
+\end{verbatim}
+\noindent
+The \verb|i| is an \ix{identifier}, whose declaration occurs at that
+point and whose mode is \ixtt{INT}.  The example will print the
+numbers \verb|1| to \verb|10|, each on its own line.  The \ix{range} of
+\verb|i| is the whole of the loop clause, but does not include the
+unit following \verb|TO|.  Any identifier may be used in place of
+\verb|i|. When the \verb|TO| part is omitted, it is as though
+\verb|TO| $\infty$ had been written.
+
+It is possible to modify the number of times the loop is obeyed. The
+simplest way is to define the starting point using the \ixtt{FROM}
+construct. Here is an example:
+\begin{verbatim}
+   FOR n FROM -10 TO 10 DO print((n,blank)) OD
+\end{verbatim}
+\noindent
+This prints the numbers from \verb|-10| to \verb|+10| on the screen.
+The integer after \verb|FROM| can be any \ix{unit} which yields a
+value of mode \verb|INT| in a meek \hx{context}{context!meek}.
+When \verb|FROM| is omitted, it is assumed that the first value of
+the identifier following \verb|FOR| is~1.
+
+This example prints the square of each of the numbers from \verb|0.2|
+to \verb|0.9|:
+\begin{verbatim}
+   FOR number FROM 2 TO 9
+   DO
+      REAL value = number / 10;
+      print((value," squared =",
+             value * value,newline))
+\end{verbatim}
+\noindent
+In these examples, the value of the identifier has always increased
+by \verb|1|. The increase can be changed using the \ixtt{BY}
+construct. For example, to print the cubes of the even numbers
+between 30 and 50 inclusive, you could write
+\begin{verbatim}
+   FOR n FROM 30 BY 2 TO 50
+   DO
+      print((n**3,newline))
+   OD
+\end{verbatim}
+\noindent
+The \verb|BY| construct is particularly useful for decreasing the
+value of the identifier:
+\begin{verbatim}
+   []CHAR title =
+          "Programming Algol 68 Made Easy";
+\end{verbatim}
+\begin{verbatim}
+   FOR c FROM UPB title BY -1 TO LWB title
+   DO
+      print(title[c])
+   OD
+\end{verbatim}
+\noindent
+This last example shows how useful the loop
+\hx{clause}{clause!loop} can be for accessing some of or all of
+the elements of a multiple.  Here is another
+\hx{example}{LWB@\texttt{LWB}}\hx{:}{UPB@\texttt{UPB}}
+\begin{verbatim}
+   []INT hh=(7,17,27,37,47);
+   INT two=2;
+\end{verbatim}
+\begin{verbatim}
+   FOR i BY 2 TO UPB hh
+   DO
+      print(hh[i] * hh[i])
+   OD
+\end{verbatim}
+\noindent
+which will print
+\begin{verbatim}
+        +49        +729       +2209
+\end{verbatim}
+\noindent
+on one line.  Omitting the \verb|BY| construct assumes a default step
+of~1.
+
+Notice how use of the \verb|LWB| and \verb|UPB| operators ensures
+that your program does not try to use a subscript outwith the bounds
+of the multiple. If you try to access an element whose subscript is
+greater than the upper bound (or less than the lower bound), the
+program will fail at run-time with an appropriate error message.
+
+An important use of the identity
+\hx{declaration}{declaration!identity!optimisation} is that of
+\ix{optimisation}. In the previous example, the computation of the
+\ith{i}{th} element of \verb|hh| takes a little time,
+and there is no point in repeating it.  In the following example, the
+identity declaration computes the value of \verb|hh[i]| and the
+\verb|print| statement uses the resulting value twice:
+\begin{verbatim}
+   FOR i BY 2 TO UPB hh
+   DO
+      INT hhi = hh[i];
+      print((hhi * hhi,newline))
+   OD
+\end{verbatim}
+\noindent
+Everything said about multiples with elements of mode \verb|INT| or
+\verb|CHAR| applies equally well to multiples whose elements have
+mode \verb|REAL|. A \verb|FOR| loop yields no value (cf section
+\hyref{rout-yname}).
+
+\begin{exercise}
+\item Write an Algol 68 program which will print the cubes of the numbers
+from \verb|1| to \verb|25|. \ans \ %
+\begin{verbatim}
+   PROGRAM ex3 11 CONTEXT VOID
+   USE standard
+   BEGIN
+      FOR num TO 25
+      DO
+         print((num^3,newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will print the characters of the alphabet
+backwards, all on one line. \ans \ %
+\begin{verbatim}
+   PROGRAM ex3 12 CONTEXT VOID
+   USE standard
+   BEGIN
+      FOR c FROM ABS "Z" BY -1 TO ABS "A"
+      DO
+         print(REPR c)
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Nested loops}{rep-nestloop}
+When dealing with two-, and higher-dimensional multiples, it is often
+necessary to run a subsidiary loop. For example, suppose we wanted to
+print the square of each element in the multiple declared as
+\begin{verbatim}
+   [,]INT primes = (( 2, 3, 5, 7),
+                    (11,13,17,19),
+                    (23,29,31,37),
+                    (41,43,47,53))
+\end{verbatim}
+\noindent
+with each row on one line. Here is a piece of program which will do
+it:
+\begin{verbatim}
+   FOR i FROM 1 LWB primes TO 1 UPB primes
+   DO
+      []INT pri=primes[i,];
+\end{verbatim}
+\begin{verbatim}
+      FOR j FROM LWB pri TO UPB pri
+      DO
+         INT prij = pri[j];
+         print(prij * prij)
+      OD;
+      print(newline)
+   OD
+\end{verbatim}
+\noindent
+Notice the optimisations. The first defines the \ith{i}{th}
+``row'', and the second defines the \ith{j}{th} element in that
+``row''. The point is that any piece of program can appear inside the
+loop clause.  Loop clauses can be nested to any depth.  Because the
+loop \hx{clause}{clause!loop} is an enclosed
+\hx{clause}{clause!enclosed}, it must contain at least one
+\ix{phrase}, and the last phrase must be a \ix{unit} (see chapter~10
+for a thorough discussion of units).
+
+\begin{exercise}
+\item Using a nested loop, write a short program to display the first
+25 letters of the alphabet on your screen in five rows of five
+letters.  Separate each letter with a comma.
+\ans The main difficulty lies in computing the letter to print. The
+first solution uses numbers and \verb|REPR|:-
+\begin{verbatim}
+   PROGRAM ex3 13a CONTEXT VOID
+   USE standard
+   BEGIN
+      FOR row TO 5
+      DO
+         FOR letter TO 4
+         DO
+            print((REPR((row-1)*5
+                     +letter+ABS"@"),",")
+         OD;
+
+         print((REPR(row*5 + ABS "@"),
+                newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+\noindent
+The second solution uses an actual alphabet and a modified inner
+loop. Note that the formul\ae{} in the \verb|FROM| and \verb|TO|
+constructs are elaborated once only: before the inner loop is
+elaborated for the first time in each elaboration of the outer loop:-
+\begin{verbatim}
+   PROGRAM ex3 13b CONTEXT VOID
+   USE standard
+   BEGIN
+      []CHAR alphabet =
+       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[@1];
+
+      FOR row TO 5
+      DO
+         INT row5 = row*5;
+
+         FOR letter FROM row5-4 TO row5-1
+         DO
+            print((alphabet[letter],","))
+         OD;
+
+         print((alphabet[row5],newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program to print the value of a 3-dimensional multiple
+of real numbers which you have declared in your program.
+\ans The most difficult part is in declaring the multiple.
+\verb|print| will quite happily take the 3-dimensional multiple as
+its parameter:
+\begin{verbatim}
+   PROGRAM ex3 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      [,,]REAL m=(((1e-7,1e-6),
+                   (1e-5,1e-4)),
+                  ((1e-3,1e-2),
+                   (1e-1,1.0)));
+      print(m)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Program structure}{rep-prog}
+In chapter 1, it was mentioned that the basic structure of an
+Algol~68 program consists of
+\begin{verbatim}
+   BEGIN
+      phrases
+   END
+\end{verbatim}
+\noindent
+This is not strictly true. It is quite possible to write a program
+consisting solely of a \verb|DO| loop! For example:
+\begin{verbatim}
+   PROGRAM dosum
+   USE standard
+   FOR i TO 5
+   DO
+      print((i**2,newline))
+   OD
+   FINISH
+\end{verbatim}
+
+\Section{The \texttt{FORALL} loop}{rep-FORALL}
+The \hx{\texttt{FORALL} loop}{FORALL loop@\texttt{FORALL} loop} is
+not part of Algol~68, but an extension introduced by the
+\hx{a68toc}{a68toc!FORALL@\texttt{FORALL}} compiler. It is similar to
+the \verb|FOR| loop, but the identifier has the mode of an element of
+the multiple under consideration.  Look at this
+\hx{example}{IN@\texttt{IN}}:
+\begin{verbatim}
+   []REAL r1 = (1.0,2.0,3.0,4.0,5.0);
+   FORALL e IN r1 DO print(e * e) OD
+\end{verbatim}
+\noindent
+In the \verb|FORALL| loop, \verb|e| takes the value of each element
+in \verb|r1| and so has mode \verb|REAL|. The compiler generates more
+efficient code using the \verb|FORALL| loop by avoiding the normal
+overheads of the subscripting mechanism. However, the \verb|FORALL|
+loop can only be used when all the elements of a dimension are
+required. If you want to limit the processing to a few elements, you
+can trim the multiple or use the \verb|FOR| loop.
+
+The elements of more than one multiple can be combined
+simultaneously. For example:
+\begin{verbatim}
+   []INT i = (1,2,3,4,5),
+         j = (11,12,13,14,15);
+   FORALL ii IN i, jj IN j
+   DO
+      print((ii * jj,newline))
+   OD
+\end{verbatim}
+\noindent
+The \ix{comma} between \verb|ii IN i| and
+\verb|jj IN j| means that the constructs are elaborated
+\hx{collaterally}{elaboration!collateral}.  The \ix{bounds} of
+\verb|i| must be the same as the bounds of \verb|j|.
+
+\verb|FORALL| clauses can be \ix{nested} as in the case of \verb|FOR|
+clauses. If we use \verb|l| and \verb|m| declared in a previous
+example, then
+\begin{verbatim}
+   FORALL ll IN l
+   DO
+      FORALL mm IN m
+      DO
+         print(ll * mm)
+      OD
+   OD
+\end{verbatim}
+\noindent
+could be used to print the products of all the integers.
+
+\Section{Summary}{rep-summ}
+Modes of multiples start with brackets (\verb|[]|). A multiple of
+characters has a special denotation. All multiples can be constructed
+using a row-display. Rows have bounds and dimensions. Rows can be
+sliced and trimmed, and their bounds can be changed using the
+\verb|@| construct.
+
+The \verb|FOR| loop has the form
+\begin{verbatim}
+   FOR id FROM a BY b TO c DO ... OD
+\end{verbatim}
+\noindent
+where the default values of \verb|a|, \verb|b| and \verb|c| are
+\verb|1|, \verb|1| and $\infty$ respectively, but may take any value
+of mode \verb|INT| in a meek context. If \verb|c| is greater than or
+equal to \verb|a| and \verb|b| is negative, the loop will not be
+executed. If \verb|b| is zero, the loop will be executed
+indefinitely. The range of \verb|id| excludes the units \verb|a|,
+\verb|b| and \verb|c|.  The \verb|FORALL| loop has the form
+\begin{verbatim}
+   FORALL id1 IN row1 DO ... OD
+\end{verbatim}
+
+We have covered a good deal of ground in this chapter, so here are
+some more exercises revising what you have learnt.  It is most
+instructive to verify your answers by writing appropriate Algol~68
+programs.
+\newpage
+\begin{exercise}
+\item What is wrong with the following identity declarations?
+\begin{subex}
+\item \verb|[]REAL r1 = [2.5,-2.5,3.5]| \subans The brackets for the
+row-display should be replaced by parentheses.
+'
+\item \verb|[,]INT i1 = ((1,2,3),(4,5,6,7))| \subans The number of
+integers in each row should be the same.
+'
+\item \verb|[]CHAR s1 = "abcde'fg"| \subans Nothing. The denotation
+of an apostrophe is not doubled.
+'
+\end{subex}
+\item What are the upper and lower bounds of the following?
+\begin{subex}
+\item \verb|((10,20,30),(-10,-20,-30))| \subans \verb|[1:2,1:3]|
+'
+\item \verb|("a","b","c")| \subans \verb|[1:3]|
+'
+\item \verb|"abcdef"[3:4]| \subans \verb|[1:2]|
+'
+\end{subex}
+\item If \verb|a| is declared as
+\begin{verbatim}
+   [,]INT a = ((9,8,7),
+               (6,5,4),
+               (3,2,1))
+\end{verbatim}
+\noindent
+what is the value and mode of
+\begin{subex}
+\item \verb|a[2,]| \subans \verb|(6,5,4)| \verb|[]INT|
+'
+\item \verb|a[,2]| \subans \verb|(8,5,2)| \verb|[]INT|
+'
+\item \verb|a[:2,3]| \subans \verb|(7,4)| \verb|[]INT|
+'
+\item \verb|a[2:,:2]| \subans \verb|((6,5),(3,2))| \verb|[,]INT|
+'
+\end{subex}
+\item What value does \verb|"abc"*3+"defg"| yield?
+\ans \verb|"abcabcabcdefg"|
+'
+\item Write a program to display every fifth letter of the alphabet'
+all on one line. \ans \ %
+\begin{verbatim}
+   PROGRAM ex3 19 CONTEXT VOID
+   USE standard
+   BEGIN
+      []CHAR alphabet =
+            "abcdefghijklmnopqrstuvwxyz";
+      []INT by = (1,6,11,16,21,26);
+
+      FOR c BY 5 TO UPB alphabet
+      DO
+         print(alphabet[c])
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}

@@ -1,0 +1,477 @@
+% $Log: chapter8.tex,v $
+% Revision 1.3  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Unions}{chapviii}
+From time to time, you have been using the procedure \ixtt{print} to
+display values on your screen. You must have noticed that it seems to
+be able to take a large variety of values of different modes and that
+it can process more than one value in one call. You may therefore be
+wondering how the parameter of \verb|print| is specified. It cannot
+be a structure because a structure has a fixed number of fields, but
+if it is a row, how can a row have different modes for its elements?
+Although the elements of a row must each have the same mode, the
+explanation is that \verb|print| takes one parameter which is a row
+of a \textbf{united} \hx{mode}{mode!united}.
+
+This very short chapter introduces the final mode constructor available
+in Algol~68. It shows the principles behind the construction and use of
+united modes. It does not and cannot show all the possible usages.
+
+\Section{United mode declarations}{union-mode}
+\ixtt{UNION} is used to create a united mode. Here is a declaration
+for a simple united mode:
+\begin{verbatim}
+   UNION(INT,STRING) u = (random < .5|4|"abc")
+\end{verbatim}
+\noindent
+The first thing to notice is that, unlike structures, there are no
+field selectors.  This is because a united mode does not consist of
+constituent parts. The second thing to notice is that the above mode
+could well have been written
+\begin{verbatim}
+   UNION(STRING,INT) u = (random < .5|4|"abc")
+\end{verbatim}
+\noindent
+The order of the \hx{modes}{order of modes} in the union is
+irrelevant.\footnote{However, for the
+\protect\hx{a68toc}{a68toc!UNION@\texttt{UNION}} compiler, this is
+not the case. Unions with the same modes in a different order are distint united modes}
+What is important is the actual modes present in the
+union. Moreover, a constituent mode can be repeated, as in
+\begin{verbatim}
+   UNION(STRING,INT,STRING,INT) u =
+      (random < .5|4|"abc")
+\end{verbatim}
+\noindent
+This is equivalent to the previous declarations.\footnote{They are distinct
+for the a68toc compiler.}
+
+Like structured modes, united modes are often declared with the mode
+\hx{declaration}{declaration!mode}. Here is a suitable declaration of
+a united mode containing the constituent modes \verb|STRING| and
+\verb|INT|:
+\begin{verbatim}
+   MODE STRINT = UNION(STRING,INT)
+\end{verbatim}
+\noindent
+We could create another mode \verb|STRINTR| in two ways:
+\begin{verbatim}
+   MODE STRINTR = UNION(STRINT,REAL)
+\end{verbatim}
+\noindent
+or
+\begin{verbatim}
+   MODE STRINTR = UNION(STRING,INT,REAL)
+\end{verbatim}
+\noindent
+Using the above declaration for \verb|STRINT|, we could declare
+\verb|u| by
+\begin{verbatim}
+   STRINT u = (random < .5|4|"abc")
+\end{verbatim}
+\noindent
+In this identity declaration, the mode yielded by the right-hand side
+is either \verb|INT| or \verb|STRING|, but the mode required is
+\verb|UNION(STRING,INT|).  The value on the right-hand side is
+coerced to the required mode by \hx{\textbf{uniting}}{coercion!uniting}.
+
+The united mode \verb|STRINT| is a mode whose values either have mode
+\verb|INT| or mode \verb|STRING|.  It was stated in chapter~1 that
+the number of values in the set of values defined by a mode can be
+zero.  Any value of a united mode actually has a mode which is one of
+the constituent modes of the union. So there are no \textbf{new}
+values for a united mode.  \verb|u| identifies a value which is
+either an \verb|INT| or a \verb|STRING|.  Because \ixtt{random}
+yields a pseudo-random number, it is not possible to determine when
+the program is compiled (that is, at  \textbf{compile-time}) which
+mode the conditional clause yields.  As a result, all we can say is
+that the underlying mode of \verb|u| is either \verb|INT| or
+\verb|STRING|.  We shall see later how to determine that underlying
+mode.\footnote{Note that an Algol~68 union is quite different from a
+C~union. The latter is simply a remapping of a piece of memory. In an
+Algol~68 union, where the underlying value is kept is the business of
+the compiler and it cannot be remapped by the programmer.}
+
+Because a united mode does not introduce new values, there are no
+denotations for united modes, although denotations may well exist for
+the constituent modes.
+
+Almost any mode can be a constituent of a united mode.  For example,
+here is a united mode containing a procedure mode and \verb|VOID|:
+\begin{verbatim}
+   MODE PROID = UNION(PROC(REAL)REAL,VOID)
+\end{verbatim}
+\noindent
+and here is a declaration using it:
+\begin{verbatim}
+   PROID pd = EMPTY
+\end{verbatim}
+\noindent
+The only limitation on united modes is that none of the constituent
+modes may be \ix{firmly related} (see the section \hyref{rout-idops})
+and a united mode cannot appear in its own declaration. The following
+declaration is wrong because a value of one of the constituent modes
+can be deprocedured in a firm \hx{context}{context!firm} to yield a
+value of the united mode:
+\begin{verbatim}
+   MODE WRONG = UNION(PROC WRONG,INT)
+\end{verbatim}
+
+Names for values with united modes are declared in exactly the same way
+as before. Here is a declaration for such a name using a local
+\hx{generator}{generator!local}:
+\begin{verbatim}
+   REF UNION(BOOL,INT) un = LOC UNION(BOOL,INT);
+\end{verbatim}
+\noindent
+The \hx{abbreviated declaration}{declaration!abbreviated} gives
+\begin{verbatim}
+   UNION(BOOL,INT) un;
+\end{verbatim}
+\noindent
+Likewise, we could declare a name for the mode \verb|STRINT|:
+\begin{verbatim}
+   STRINT sn;
+\end{verbatim}
+\noindent
+In other words, objects of united modes can be declared in the same way
+as other objects.
+
+\begin{exercise}
+\item Write a mode declaration for the united mode \verb|BINT| whose
+constituent modes are \verb|BOOL| and \verb|INT|.
+\ans \verb|MODE BINT = UNION(BOOL,INT)|
+'
+\item Write an identity declaration for a value of mode \verb|BINT|.
+\ans \verb|BINT b = TRUE|
+'
+\item What is wrong with the mode declaration
+\begin{verbatim}
+   MODE UB = UNION(REF UB,INT,BOOL)
+\end{verbatim}
+\indent \ans One of the constituent modes of the union is
+firmly-related to the united mode. In other words, in a firm context,
+\verb|REF UB| can be dereferenced to \verb|UB|.
+'
+\item Declare a name for a mode united from \verb|INT|, \verb|[]INT| and
+\verb|[,]INT|. \ans \verb|UNION(INT,[]INT,[,]INT) mint|
+'
+\end{exercise}
+
+\Section{United modes in procedures}{union-proc}
+We can now partly address the problem of the parameters for
+\ixtt{print} and \ixtt{read}.  If we extend the answer to the last
+exercise, we should be able to construct a united mode which will
+accept all the modes accepted by those two procedures.  In fact, the
+united modes used are almost the same as the two following
+declarations:
+\begin{verbatim}
+   MODE SIMPLOUT = UNION(CHAR, []CHAR,
+                         INT,  []INT,
+                         REAL, []REAL,
+                         COMPL,[]COMPL,
+                         BOOL, []BOOL,
+                        ),
+
+        SIMPLIN  = UNION(REF CHAR, REF[]CHAR,
+                         REF INT,  REF[]INT,
+                         REF REAL, REF[]REAL,
+                         REF COMPL,REF[]COMPL,
+                         REF BOOL, REF[]BOOL,
+                        );
+\end{verbatim}
+\noindent
+As you can see, the mode \ixtt{SIMPLIN} used for \verb|read| is
+united from modes of names.
+
+The modes \ixtt{SIMPLOUT} and \verb|SIMPLIN| are
+a little more complicated than this because they include modes we have
+not yet met (see chapters~9 and~11), but you now have the basic idea.
+
+The uniting coercion is available in a
+\hx{firm context}{context!firm}.  This means that operators which
+accept operands with united modes will also accept operands whose
+modes are any of the constituent modes.  We shall return to this in
+the next section.
+
+Here is an example of the uniting coercion in a call of the procedure
+\verb|print|.  If \verb|a| has mode \verb|REF INT|, \verb|b| has mode
+\verb|[]CHAR| and \verb|c| has mode \verb|PROC REAL|, then the call
+\begin{verbatim}
+   print((a,b,c))
+\end{verbatim}
+\noindent
+causes the following \hx{to}{coercion!deproceduring}
+\hx{happen}{coercion!dereferencing}:
+\begin{enumerate}
+\item \verb|a| is dereferenced to mode \verb|INT| and then united to
+mode \verb|SIMPLOUT|.
+\item \verb|b| is united to mode \verb|SIMPLOUT|.
+\item \verb|c| is deprocedured to produce a value of mode \verb|REAL|
+and then united to mode \verb|SIMPLOUT|.
+\item The three elements are regarded as a row-display for a
+\verb|[]SIMPLOUT|.
+\item \verb|print| is called with its single parameter.
+\end{enumerate}
+\verb|print| uses a \hx{\textbf{conformity clause}}{clause!conformity}
+(see next section) to extract the actual value from each element in
+the row.
+
+In section \hyref{rout-chinstr}, we gave the declaration of a
+procedure identified as \verb|char in string|.  The header of that
+procedure was
+\begin{verbatim}
+   PROC char in string=
+      (CHAR ch,REF INT pos,[]CHAR s)BOOL:
+\end{verbatim}
+\noindent
+The procedure yielded \verb|TRUE| if \verb|ch| was present in \verb|s|,
+in which case \verb|pos| contained the position. Otherwise, the
+procedure yielded \verb|FALSE|. The same procedure could be written to
+yield the position of \verb|ch| in \verb|s| if it is present, and
+\ixtt{VOID} if not:
+\begin{verbatim}
+   PROC ucis = (CHAR ch,[]CHAR s)
+                    UNION(INT,VOID):
+\end{verbatim}
+\noindent
+The body of the procedure has been left as an exercise.
+
+\begin{exercise}
+\item A procedure has the header
+\begin{verbatim}
+   PROC pu = ([]UNION(CHAR,[]CHAR) up)VOID:
+\end{verbatim}
+\noindent
+Explain what happens to the parameters if it is called by the phrase
+\begin{verbatim}
+   pu((CHAR: REPR(ABS"a"+1),LOC[4]CHAR))
+\end{verbatim}
+\indent \ans The first parameter is deprocedured to mode \verb|CHAR|
+before being united.  The second is dereferenced to mode
+\verb|[]CHAR| and then united.  The two values of the united mode are
+regarded as a row-display and the procedure is then called.  The
+second parameter is an example of an anonymous name---no identifier
+is attached.
+'
+\item Write the body of the procedure \verb|ucis|
+given in the text.  \ans \ %
+\begin{verbatim}
+   PROC ucis=(CHAR ch,[]CHAR s)
+                  UNION(INT,VOID):
+
+   IF   INT p = ch FIND s;  p >= LWB s
+   THEN p
+   ELSE EMPTY
+   FI
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Conformity clauses}{union-conf}
+In the last section, we discussed the consequences of the
+\hx{uniting}{coercion!uniting} coercion; that is, how values of
+various modes can be united to values of united modes.  This raises
+the question of how a value of a united mode can be extracted since
+its constituent \hx{mode}{mode!constituent} cannot be determined at
+compile-time.  There is no de-uniting coercion in Algol~68.  The
+constituent mode or the value, or both, can be determined using a
+variant of the case clause discussed in chapter~4
+(see section~\hyref{choice-case}). It is called a
+\hx{\textbf{conformity clause}}{clause!conformity}. For our
+discussion, we shall use the declaration of \verb|u| in
+section~\hyref{union-mode} (\verb|u| has mode \verb|STRINT|).
+
+The constituent mode of \verb|u| can be determined by the following:
+\begin{verbatim}
+   CASE u IN
+      (INT):    print("u is an integer")
+      ,
+      (STRING): print("u is a string")
+   ESAC
+\end{verbatim}
+\noindent
+If the constituent mode of \verb|u| is \verb|INT|, the first case
+will be selected. Notice that the mode \hx{selector}{mode!selector}
+is enclosed in parentheses and followed by a colon.  Otherwise, the
+conformity clause is just like the case clause (in fact, it is
+sometimes called a \ix{conformity case clause}).  This particular
+example could also have been written
+\begin{verbatim}
+   CASE u
+   IN
+      (STRING): print("u is a string")
+   OUT
+      print("u is an integer")
+   ESAC
+\end{verbatim}
+\noindent
+This is the only circumstance when a \verb|CASE| clause can have one
+choice. Usually, however, we want to extract the value. A slight
+modification is required:
+\begin{verbatim}
+   CASE u IN
+      (INT i):
+         print(("u identifies the value",i))
+      ,
+      (STRING s):
+         print(("u identifies the value ",s))
+   ESAC
+\end{verbatim}
+\noindent
+In this example, the mode selector and \ix{identifier} act as the
+left-hand side of an
+\hx{identity declaration}{declaration!identity!CASE@\texttt{CASE}}.
+The identifier can be used in the following \ix{unit} (or
+\hx{enclosed clause}{clause!enclosed}).
+
+The two kinds of conformity clause can be mixed. For example, here is
+one way of using the procedure \verb|ucis|:
+\begin{verbatim}
+   CASE ucis(c,s) IN
+      (VOID):
+         print("The character was not found"),
+      (INT p):
+         print(("The position was",p))
+   ESAC
+\end{verbatim}
+
+We mentioned in the last section that operators with united-mode
+operands can be declared. Here is one such:
+\begin{verbatim}
+   MODE IC = UNION(INT,CHAR);
+   OP * = (IC a,b)IC:
+   CASE a IN
+      (INT ai):
+         (b|(INT bi): ai*bi,
+            (CHAR bc): ai*bc),
+      (CHAR ac):
+         (b|(INT bi): ac*bi,
+            (CHAR bc): ABS ac*ABS bc)
+   ESAC
+\end{verbatim}
+\noindent
+In each of the four cases, the resulting product is united to the mode
+\verb|IC|.
+
+You can have more than one mode in a particular case. For example:
+\begin{verbatim}
+   MODE ICS = UNION(INT,CHAR,STRING);
+   OP * = (ICS a,INT b)ICS:
+   CASE a
+   IN
+      (UNION(STRING,CHAR) ic):
+         (ic|(CHAR c): c*b,(STRING s): s*b),
+      (INT n): n*b
+   ESAC
+\end{verbatim}
+\noindent
+Note that conformity clauses do not usually have an \verb|OUT| clause
+because the only way of extracting a value is by using the
+\verb|(MODE id):| construction. However, they do have their uses. See
+the standard prelude for more examples of conformity clauses.
+
+Although \ixtt{read} and \ixtt{print} use united modes in their call,
+you cannot read a value of a united mode or print a value of a united
+mode (remember that united modes do not introduce new values). You
+have to read a value of a constituent \hx{mode}{mode!constituent}
+and then unite it, or extract the value of a constituent mode and
+print it.
+
+\begin{exercise}
+\item The modes
+\begin{verbatim}
+   MODE IRC = UNION(INT,REAL,COMPL),
+        MIRC= UNION([]INT,[]REAL,[]COMPL)
+\end{verbatim}
+\noindent
+are used in this and the following exercises.
+
+Write a procedure which takes a single parameter of mode \verb|MIRC|
+and which yields the sum of all the elements of its parameter as a
+value with mode \verb|IRC|.
+\ans \ %
+\begin{verbatim}
+   PROC p = (MIRC m)IRC:
+   CASE m IN
+      ([]INT i): (INT sum:=0;
+                  FOR j FROM LWB i TO UPB i
+                  DO sum+:=i[j] OD;
+                  sum),
+      ([]REAL r):(REAL sum:=0;
+                  FOR j FROM LWB r TO UPB r
+                  DO sum+:=r[j] OD;
+                  sum),
+      ([]COMPL c):(COMPL sum:=0;
+                  FOR j FROM LWB c TO UPB c
+                  DO sum+:=c[j] OD;
+                  sum)
+   ESAC
+\end{verbatim}
+'
+\item Write the body of the operator \verb|*| whose header is
+declared as
+\begin{verbatim}
+   OP * = (IRC a,b)IRC:
+\end{verbatim}
+\noindent
+Use nested conformity clauses. Remember that there are 9 separate
+cases. \ans \ %
+\begin{verbatim}
+   OP * = (IRC a,b)IRC:
+   CASE a IN
+      (INT i):  CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC,
+      (REAL i): CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC,
+      (COMPL i):CASE b IN
+                   (INT j):   i*j,
+                   (REAL j):  i*j,
+                   (COMPL j): i*j
+                ESAC
+   ESAC
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Summary}{union-summ}
+United modes introduce no new values. A united mode can have any mode
+as one of its constituents except a mode which can be firmly coerced to
+itself. The uniting coercion is available in firm contexts. Because the
+values supplied to \verb|print| or \verb|read| are united, the context
+of the parameter of those procedures is firm. A conformity clause is
+used to extract the constituent mode or value. The mode \verb|VOID| can
+be one of the constituents of a united mode and is useful to signal an
+exceptional yield from a procedure. United modes are used in a variety
+of ways.
+
+\begin{exercise}
+\item Write a declaration for the united mode \verb|CRIB| whose constituent
+modes are \verb|CHAR|, \verb|REAL|, \verb|INT| and \verb|BOOL|.
+\ans \verb|MODE CRIB = UNION(CHAR,REAL,INT,BOOL)|
+'
+\item Write a declaration for the operator \verb|UABS| which has a single
+operand of mode \verb|CRIB| and which yields the absolute value of its
+operand. \ans \ %
+\begin{verbatim}
+   OP UABS = (CRIB c)UNION(INT,REAL):
+   CASE c IN
+      (CHAR a):   ABS a,
+      (REAL a):   ABS a,
+      (INT a):    ABS a,
+      (BOOL a):   ABS a
+   ESAC
+\end{verbatim}
+'
+\item Write four formul{\ae} which use \verb|UABS| and a denotation for each
+of the constituent modes of \verb|CRIB|.
+\ans \verb|UABS "c"; UABS -4.0; UABS -3; UABS TRUE|
+'
+\end{exercise}

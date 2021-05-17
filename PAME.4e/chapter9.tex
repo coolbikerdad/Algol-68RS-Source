@@ -1,0 +1,2032 @@
+% $Log: chapter9.tex,v $
+% Revision 1.8  2004-11-07 17:15:51  sian
+% Got rid of an editing bug in chapter 9
+%
+% Revision 1.7  2004/11/07 16:00:10  sian
+% Removed all references to PLUS, MINUS and TIMES
+%
+% Revision 1.6  2003/05/31 13:02:41  sian
+% Removal of compiled libraries and binaries
+%
+% Revision 1.5  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Transput}{chapix}
+At various points you have been reading external values from the
+keyboard and displaying internal values on the screen. This chapter
+addresses the means whereby an Algol~68 program can obtain external
+values from other sources and send internal values to places other
+than the screen.  \textbf{straightening} is the only new language
+construct involved and all the matters discussed are available in
+the \ix{standard prelude}.
+
+Algol 68 transput gives the first taste of
+``\ix{event-driven programming}''.
+In effect, all programs are event-driven, but simple programs are
+driven only by the originating event: that is, the initiation of the
+program.  In other words, simple programs, once started, run to
+completion, unless, of course, they contain errors. Event-driven
+programs, however, are dependent on the occurrence of events which
+are outwith the control of the program. We shall be examining later
+the kinds of event which can affect your programs if they read or
+write data.
+
+\Section{Books, channels and files}{trans-books}
+In Algol~68 terms, external values are held in a \bfix{book}. Books
+have various properties. They usually have an
+\hx{identification string}{identification}. Some books can be read,
+some written to and some permit both \ix{reading} and \ix{writing}.
+Some books allow you to \hx{browse}{browsing}: that is, they allow
+you to start anywhere and read (or write) from that point on.  If
+browsing is allowed, you can \ix{restart} at the beginning. Some
+books allow you to store external values in text form (human-readable
+form) only, while others allow you to store values in a compact
+internal form known as \bfix{binary}.  In the latter form, values are
+stored more or less in the same form as they are held in the program.
+The values will not usually be human-readable, being more suited to
+fast access by computer programs.
+
+In \ix{operating-system} terms, Algol~68 books are called
+``\ix{files}'' (just to confuse you, of course), but a book has a
+wider meaning than an operating-system file.\footnote{In Linux, a
+file has the mode, more-or-less, \texttt{REF BOOK}.} When reading
+external values from the \ix{keyboard}, your program is reading data
+from a read-only \hx{book}{book!read-only}.  When printing data,
+your program is writing data to a write-only
+\hx{book}{book!write-only}.  When accessing a device, such as
+\verb|/dev/ttyS2|, to which you can attach a modem, your program can
+both read from and write to the book, but it cannot browse in it.
+
+The \bfix{data} (as external values are called) in a book, or the
+data to be put in a book, travels between the book and your program
+via a \textbf{channel}.  Three principal channels are provided in the
+\ix{standard prelude}: \ixtt{stand in channel},
+\ixtt{stand out channel} and \ixtt{stand back channel}.  The first is
+used for books which can only be read (they are ``\ix{read-only}''),
+the second for books which can only be written to (they are
+``\ix{write-only}'') and the last for books which permit both reading
+and writing.  This classification is a little over-simplified.  Many
+books permit both reading and writing, but you may only want your
+program to read it. The three standard channels mentioned are all
+``buffered''. This means that when you, for example, write data to a
+book, the data is collected in memory until a fixed amount has been
+transput, when the collection is written to the book in its entirety.
+The standard channels use a buffer of 4096 bytes.  The mode of a
+channel is \ixtt{CHANNEL} and is declared in the standard prelude.
+
+Your program keeps track of where you are in a book, which book is
+being accessed and whether you have come to the end of the book by
+means of a special structure which has the mode \ixtt{FILE}. This is
+a complicated structure declared in the standard prelude. The
+internals of values of mode \verb|FILE| are likely to change from
+time to time, but the methods of using them will remain the same.
+
+\Section{Reading books}{trans-readbook}
+\hx{Before}{reading!books} you can read the contents of an existing
+book, you need to connect the book to your program. The
+procedure \ixtt{open} with the header
+\begin{verbatim}
+   PROC open = (REF FILE f,
+                STRING idf,
+                CHANNEL chan)INT:
+\end{verbatim}
+\noindent
+performs that function.  \verb|open| yields zero if the
+connection is established and non-zero otherwise. Here is a program
+fragment which establishes communication with a read-only book whose
+identification is \verb|testdata|:
+\begin{verbatim}
+   FILE inf;
+
+   IF open(inf,"testdata",stand in channel)/=0
+   THEN
+      print(("Cannot open book testdata",
+             newline));
+      exit(1)
+   FI
+\end{verbatim}
+\noindent
+Notice that the program displays a short message on the screen if for
+any reason the book cannot be opened and then terminates with a
+suitable error number. The procedure \verb|exit| is not standard
+Algol~68, but is provided by a system routine whose declaration is in
+the standard prelude issued with the a68toc compiler.
+
+After a book has been opened, data can be read from the book using
+the procedure \ixtt{get} which transforms external values into
+internal values like \ixtt{read} (you will meet \verb|read| again
+shortly). It has the header
+\begin{verbatim}
+   PROC get=(REF FILE f,[]SIMPLIN items)VOID:
+\end{verbatim}
+\noindent
+The mode \ixtt{SIMPLIN} is declared in the standard prelude as
+\begin{verbatim}
+   MODE SIMPLIN=
+      UNION(
+       REF CHAR, REF[]CHAR,  REF STRING,
+       REF BOOL, REF[]BOOL,
+   
+       REF LONG BITS,        REF[]LONG BITS,
+       REF BITS,             REF[]BITS,
+       REF SHORT BITS,       REF[]SHORT BITS,
+       REF SHORT SHORT BITS,
+                        REF[]SHORT SHORT BITS,
+   
+       REF LONG INT,         REF[]LONG INT,
+       REF INT,              REF[]INT,
+       REF SHORT INT,        REF[]SHORT INT,
+       REF SHORT SHORT INT,
+                        REF[]SHORT SHORT INT,
+   
+       REF REAL,             REF[]REAL,
+       REF SHORT REAL,       REF[]SHORT REAL,
+   
+       REF COMPL,            REF[]COMPL,
+       REF SHORT COMPL,      REF[]SHORT COMPL,
+            
+       STRAIGHT SIMPLIN
+      ),
+\end{verbatim}
+\noindent
+The mode \verb|BITS| is covered in chapter 11 together with
+\verb|LONG| and \verb|SHORT| modes. As you can see, all the
+constituent modes of the union are the modes of names, except for the
+\verb|STRAIGHT| \verb|SIMPLIN| and the \verb|PROC(REF|
+\verb|FILE)VOID|. The \verb|PROC| mode lets you use routines like
+\ixtt{newpage} and \ixtt{newline} as one of the parameters. The
+actual header of \verb|newline| is
+\begin{verbatim}
+   PROC newline = (REF FILE f)VOID:
+\end{verbatim}
+\noindent
+and you can call it outwith \ixtt{get} if you want.
+On input, the rest of the current line is skipped and a new line
+started. The position in the book is at the start of the new line, just
+before the first character of that line. Here is a program fragment
+which opens a book and then reads the first line and makes a name of
+mode \verb|REF STRING| to refer to it. After reading the string,
+\verb|newline| is called explicitly:
+\begin{verbatim}
+   FILE inf;
+   open(inf,"book",stand in channel);
+   STRING line;  get(inf,line);  newline(inf)
+\end{verbatim}
+\noindent
+This could equally well have been written
+\begin{verbatim}
+   FILE inf;
+   open(inf,"book",stand in channel);
+   STRING line;  get(inf,(line,newline))
+\end{verbatim}
+\noindent
+There is no reason why you should not declare your own procedures
+with mode \verb|PROC(REF FILE)VOID|. Here is an example:
+\begin{verbatim}
+   PROC nl3 = (REF FILE f)VOID:
+      TO 3 DO newline(f) OD;
+\end{verbatim}
+\noindent
+This procedure could then be used in \verb|get|, for example:
+\begin{verbatim}
+   STRING line1, line2;
+   get(inf,(line1,nl3,line2))
+\end{verbatim}
+\noindent
+where \verb|line2| would be separated by 2 skipped lines from
+\verb|line1|.
+
+\hypertarget{trans-straight}{}\label{trans-straight}The \ixtt{STRAIGHT} operator converts any
+structure or multiple into a row of values of the constituent fields
+or elements. This means that \verb|get| can read directly any
+structure or multiple (or even rows of structures or multiples).
+
+There are four names of mode \verb|REF FILE| declared in the standard
+prelude. One of these is identified by \ixtt{stand in}. The procedure
+\ixtt{read} which you have already used is declared as
+\begin{verbatim}
+   PROC read=([]SIMPLIN items)VOID:
+      get(stand in,items)
+\end{verbatim}
+\noindent
+in the standard prelude. As you can see, it gets data from
+\verb|stand in|. If you want to, you can use \ixtt{get} with
+\verb|stand in| instead of \verb|read|. The file \verb|stand in| is
+already open when your program starts and should not be
+closed\footnote{Unless you know what you are doing!}. Note that input
+from \verb|stand in| is unbuffered, that is, it does not use the
+channel \verb|stand| \verb|in| \verb|channel|.
+
+When you have finished reading data from a book, you should sever the
+connection between the book and your program by calling the procedure
+\ixtt{close}. This closes the book. Its header is
+\begin{verbatim}
+   PROC close=(REF FILE f)VOID:
+\end{verbatim}
+
+\begin{exercise}
+\item Write a program called \verb|list| which will read lines from a
+text book until a zero length line is read.  The program should
+display each line on the screen on separate lines.
+\ans \ %
+\begin{verbatim}
+   PROGRAM list CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE f;
+      IF   open(f,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open textbook");
+         exit(1)
+      FI;
+
+      STRING s;
+      WHILE get(f,(s,newline));  UPB s /= 0
+      DO
+         print((s,newline))
+      OD;
+
+      close(f)
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will read a positive integer from a text
+book and which will then read that number of numbers (integer or
+real) from the book and display their total.
+\ans \ %
+\begin{verbatim}
+   PROGRAM ex9 2 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE f;
+
+      IF   open(f,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open textbook");
+         exit(1)
+      FI;
+
+      REAL r, sum:=0, INT n;  get(f,n);
+
+      TO n DO get(f,r); sum+:=r OD;
+      print(sum);  close(f)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Writing to books}{trans-writbook}
+You should use the \ixtt{establish} procedure to create a new book.
+Here is a program fragment which creates a new book called
+\verb|results|:
+\begin{verbatim}
+   FILE outf;
+
+   IF establish(outf,
+                "results",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      print(("Cannot establish book results",
+             newline));
+      exit(1)
+   FI
+\end{verbatim}
+\noindent
+As you can see, \verb|establish| has a similar header to \texttt{open}.
+What are the integers used for? The header for \verb|establish| is
+\begin{verbatim}
+   PROC establish = (REF FILE f,
+                     STRING idf,
+                     CHANNEL chann,
+                     INT p,l,c)INT:
+\end{verbatim}
+\noindent
+The \verb|p|, \verb|l| and \verb|c| in \verb|establish| determine the
+maximum number of pages, lines and characters in the book which is
+being created. Values of \verb|0| for all three integers mean that
+the file should be established with zero length. However, they are
+ignored by the \texttt{stand out channel} in the QAD standard prelude
+provided with the \hx{a68toc}{a68toc!establish@\texttt{establish}}
+compiler. 
+
+The procedure used to write data to a book is \ixtt{put}. Its header
+is
+\begin{verbatim}
+   PROC put=(REF FILE f,[]SIMPLOUT items)VOID:
+\end{verbatim}
+\noindent
+You can examine the source of the standard prelude to see how the
+mode \verb|SIMPLOUT| is declared.
+
+Again, \ixtt{newline} and \ixtt{newpage} can be used independently of
+\verb|put| as in the following fragment:
+\begin{verbatim}
+   FILE outf;
+   IF establish(outf,
+                "newbook",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish newbook",
+           newline));
+      exit(2)
+   ELSE
+      put(outf,("Data for newbook",newline));
+      FOR i TO 1000 DO put(outf,i) OD;
+      newline(outf);
+      close(outf)
+   FI
+\end{verbatim}
+\noindent
+On output, the newline character is written to the book.
+
+\verb|newpage| behaves just like \verb|newline| except that a form
+feed character is searched for on input, and written on output.
+
+The procedure \verb|establish| can fail if the disk you are writing to
+is full or you do not have write access (in a network, for example) in
+which case it will return a non-zero value.
+
+When you have completed sending data to a book, you must close it
+with the \ixtt{close} procedure. This is particularly important with
+books you write to because the channel is buffered as explained
+above. Using \verb|close| ensures that any remaining data in the
+buffer is flushed to the book.
+
+The procedure \ixtt{print} uses the \verb|REF FILE| name
+\ixtt{stand out}. So
+\begin{verbatim}
+   print(("Your name",newline))
+\end{verbatim}
+\noindent
+is equivalent to
+\begin{verbatim}
+   put(stand out,("Your name",newline))
+\end{verbatim}
+\noindent
+Again, \verb|stand out| is open when your program is started and it
+should not be closed. Transput via \verb|stand out| is unbuffered.
+You cannot read from \verb|stand out|, nor write to \verb|stand in|.
+The procedure \verb|write| is synonymous with \verb|print|.
+
+\begin{exercise}
+\item Change the second program in the last set of exercises to put its
+total into a newly-created book whose identification is
+\verb|result|. \ans \ %
+\begin{verbatim}
+   PROGRAM ex9 3 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf,outf;
+
+      IF   open(inf,
+                "textbook",
+                stand in channel)/=0
+      THEN
+         print("cannot open textbook");
+         exit(1)
+      ELIF establish(outf,
+                     "result",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create result");
+         exit(2)
+      FI;
+
+      REAL sum:=0, r, INT n;
+
+      get(inf,n);
+      TO n
+      DO
+         get(inf,r);  sum+:=r
+      OD;
+      put(outf,sum);
+      close(inf);  close(outf)
+   END
+   FINISH
+\end{verbatim}
+'
+\item Adapt Eratosthenes' Sieve (see section~\hyref{name-indiv}) to
+out\-put all the prime numbers less than 10,000 into a book called
+\verb|primes|. \ans \ %
+\begin{verbatim}
+   PROGRAM ex9 4 CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size = 10 000;
+      [2:size]BOOL flags;
+
+      FOR i
+      FROM LWB flags TO UPB flags
+      DO flags[i]:=TRUE OD;
+
+      FOR i
+      FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k
+            FROM i+i BY i TO UPB flags
+            DO
+               flags[k]:=FALSE
+            OD
+         FI
+      OD;
+
+      #Now the file is needed#
+      FILE f;
+      IF   establish(f,
+                     "primes",
+                      stand out channel,
+                      0,0,0)/=0
+      THEN
+         print("Cannot create primes");
+         exit(1)
+      FI;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN put(f,(i,newline))
+         FI
+      OD;
+
+      close(f)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{String terminators}{trans-term}
+One of the really useful facilities available for reading data from
+books is that of being able to specify when the reading of a string
+should terminate. Usually, this is set as the end of the line only.
+However, using the procedure \ixtt{make term}, the
+\ix{string terminator} can be a single character or any one of a set
+of characters. The header of \verb|make term| is
+\begin{verbatim}
+   PROC make term=(REF FILE f,STRING term)VOID:
+\end{verbatim}
+\noindent
+so if you want to read a line word by word, defining a word as any
+sequence of non-space characters, you can make the string terminator a
+space by writing
+\begin{verbatim}
+   make term(inf,blank)
+\end{verbatim}
+\noindent
+because \verb|blank| (synonymous with \verb*|" "|) is rowed in the
+\hx{strong context}{context!strong} of a parameter to \verb|[]CHAR|.
+This will not remove the \ix{end-of-line} as a terminator because the
+character \verb|lf| is always added whatever characters you specify.
+You should remember that when a string is read, the string terminator
+is available for the next read---it has \emph{not} been read by the
+previous read (but see \hyref{trans-bin}).
+
+\begin{exercise}
+\item Write a program called \verb|copy| which copies its input text
+book to its output text book, stopping when a blank line is read (all
+blanks or zero length). The input book is called \verb|inbook| and the
+output book \verb|outbook|.\hypertarget{trans-term-a}{}\label{trans-term-a}\ans Notice that the
+processing of a line is done entirely within the \verb|WHILE| clause.
+\begin{verbatim}
+   PROGRAM ex9 5 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf, outf;
+
+      IF   open(inf,
+                "inbook",
+                stand in channel)/=0
+      THEN
+         print("Cannot open inbook");
+         exit(1)
+      ELIF establish(outf,
+                     "outbook",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook");
+         exit(2)
+      FI;
+
+      STRING line;
+
+      WHILE
+         get(inf,(line,newline));
+         put(outf,(line,newline));
+         IF UPB line = 0
+         THEN FALSE
+         ELSE line /= UPB line * blank
+         FI
+      DO SKIP OD;
+
+      close(inf);  close(outf)
+   END
+   FINISH
+\end{verbatim}
+'
+\item Rewrite the program from exercises in section~\hyref{name-ex5-23} using
+\verb|make term|. The data should be read from a book called
+\verb|lines| and written to a book called \verb|words|. Write one word
+to a line. Terminate the \verb|lines| with an asterisk (\verb|*|) on a
+line by itself. \ans \ %
+\begin{verbatim}
+   PROGRAM ex9 6 CONTEXT VOID
+   USE transput
+   BEGIN
+      FILE inf, outf;
+
+      IF   open(inf,
+                "lines",
+                stand in channel)/=0
+      THEN
+         print("Cannot open book lines");
+         exit(1)
+      ELIF establish(outf,
+                     "words",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create book words");
+         exit(2)
+      FI;
+
+      []CHAR terminators=" *"+cr+lf;
+      make term(inf,terminators);
+
+      STRING word, CHAR ch:=blank;
+
+      WHILE
+         get(inf,word);
+         IF ch/=blank
+         THEN ch PLUSTO word
+         FI;
+
+         WHILE
+            get(inf,ch);
+         CO String terminator,
+            but cr/lf ignored CO
+            ch = blank
+         DO SKIP OD;  #Skip spaces#
+         put(outf,(word,newline));
+         ch /= "*"
+      DO SKIP OD;
+
+      close(inf);  close(outf)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Events}{trans-event}
+Algol 68 transput is characterised by its use of events. In the
+limited transput supplied with the
+\hx{a68toc}{a68toc!events} compiler,
+only four kinds of events are detected. These are:
+\begin{enumerate}
+\item The end of the file when reading. This is called the
+``\ix{logical file end}''.
+\item The end of the file when writing. This is called the
+``\ix{physical file end}''.
+\item A value error.
+\item A character error.
+\end{enumerate}
+The default action when an event occurs depends on the event.
+However, the default action can be replaced by a programmer-defined
+action using one of the ``on''-proced\-ures.
+
+\Subsection{Logical file end}{trans-logi}
+When the logical end of a file has been detected, the default action
+is to terminate the program immediately. All open files will be
+closed by the operating system, but any buffered output files will
+lose any data in the buffer. A programmer-supplied action must be a
+procedure with the header
+\begin{verbatim}
+   (REF FILE f)BOOL:
+\end{verbatim}
+\noindent
+The yield should be \verb|TRUE| if some action has been taken to
+remedy the end of the file, in which case transput is re-attempted,
+or \verb|FALSE|, when the default action will be taken.
+
+The procedure \verb|on logical file end| has the header
+\begin{verbatim}
+   PROC on logical file end=
+      (REF FILE f,
+       PROC(REF FILE)BOOL p)VOID:
+\end{verbatim}
+\noindent
+and an example will help explain its use. Here is a program which
+will display the contents of its text input file and print a message
+at its end.
+\begin{verbatim}
+   PROGRAM readfile CONTEXT VOID
+   USE standard
+   IF FILE inf; []CHAR infn="textbook";
+      open(inf,infn,stand in channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot open ",
+           infn,newline));
+      exit(1)
+   ELSE
+      on logical file end(inf,
+         (REF FILE f)BOOL:
+            (write(("End of ",
+                    idf(f),
+                    " read",newline));
+             close(f);  FALSE));
+      STRING line;
+      DO
+         get(inf,(line,newline));
+         write((line,newline))
+      OD
+   FI
+   FINISH
+\end{verbatim}
+\noindent
+The anonymous procedure provided as the second parameter to
+\verb|on logical file end| prints an informative message and closes
+the book before yielding \verb|FALSE|. Since in this case all we want
+is for the program to end when the input has been read, the default
+action is fine. Notice also that the \verb|DO| loop simply repeats
+the reading of a line until the \verb|logical file end| procedure is
+called. The procedure \verb|idf| is described in section
+\hyref{trans-other}.
+
+You should be careful if you do any transput on the parameter
+\verb|f| in the anonymous routine otherwise you could get an infinite
+loop (a loop which never ends). Also, because the
+\verb|on logical file end| procedure assigns its procedure parameter
+to its \verb|REF FILE| parameter, you should be wary of using
+\verb|on logical file end| in limited ranges. The way out of this
+problem is to make a local copy of the \verb|REF FILE| parameter as
+in:
+\begin{verbatim}
+   BEGIN
+      FILE loc f:=stand in;
+      on logical file end(
+           f,(REF FILE f)BOOL: ...);
+        ...
+   END
+\end{verbatim}
+
+Any piece of program which will yield an object of mode
+\verb|PROC(REF FILE)BOOL| in a strong context is suitable as the
+second parameter of \verb|on logical file end|.
+
+If you want to reset the action to the default action, use the phrase
+\begin{verbatim}
+   on logical file end(f,no file end)
+\end{verbatim}
+
+\Subsection{Physical file end}{trans-phys}
+The physical end of a file is met on writing if, for example, the
+disk is full. It can also occur when using the \verb|mem channel|
+(see section \hyref{trans-intern}). The default action closes all
+open files (but the buffers of buffered files will not be flushed to
+disk) and terminates the program with an exit value of 255.
+
+A replacement procedure should have the mode
+\begin{verbatim}
+   PROC(REF FILE)BOOL
+\end{verbatim}
+\noindent
+and it should yield \verb|TRUE| if the event has been remedied in
+some way, in which case transput will be re-attempted, and
+\verb|FALSE| otherwise (when the default action will be elaborated).
+
+The default procedure can be replaced with a procedure defined by the
+programmer using the procedure \texttt{on physical file end} which has
+the header:
+\begin{verbatim}
+   PROC on physical file end =
+      (REF FILE f,
+       PROC(REF FILE)BOOL p)VOID:
+\end{verbatim}
+
+\Subsection{Value error}{trans-val}
+This event is caused by the following circumstances:-
+\begin{enumerate}
+\item If an integer is expected, then the value read exceeds
+\verb|max int|.
+\item If a real number is expected, then the value read exceeds
+\verb|max real|.
+\item If a complex number is expected, then the value read for either
+the real part or the imaginary part exceeds \verb|max real|.
+\end{enumerate}
+The procedure \verb|on value error| lets the programmer provide
+a prog\-ram\-mer-def\-ined procedure whose header must be
+\begin{verbatim}
+   (REF FILE f)BOOL:
+\end{verbatim}
+\noindent
+although any identifier could replace the \verb|f|. Transput on the
+file \verb|f| within the procedure should be avoided (but see
+\verb|backspace| below), but any other transput is allowable, but try
+to ensure that a value error won't occur!
+
+If the programmer-supplied routine yields \verb|TRUE|, transput
+continues, otherwise an error message is issued to \verb|stand|
+\verb|err| and the program aborted with an exit value of \verb|247|.
+
+\Subsection{Char error}{trans-char}
+This event can occur when reading a number if the number is entirely
+absent so that the first character is neither a sign nor a digit. In
+this case a default procedure is called having the header
+\begin{verbatim}
+   (REF FILE f,REF CHAR c)BOOL:
+\end{verbatim}
+\noindent
+The default procedure can be replaced with a prog\-ram\-mer-def\-ned
+procedure using the procedure \verb|on char error|.
+
+The char error procedure is called with the \verb|c| referring to a
+suggested value for the next character. The replacement character
+must be a member of a particular set of characters. The default value
+is \verb|0|. If the procedure returns \verb|FALSE| the default
+suggested character will be used, otherwise the value referred to by
+\verb|c| will be used. Thus the programmer-supplied procedure can not
+only change the default suggested character, but can also perform
+such other actions as are deemed necessary (such as logging the
+error).
+
+The event can also occur when reading the digits before a possible
+\verb|"."| for real numbers and the digits after the \verb|"."|. For
+complex numbers, after the real part, an \verb|i| or \verb|I| is
+expected and its non-appearance will cause the \verb|char error|
+procedure to be executed. The default suggestion is \verb|i|, but can
+be replaced by another character and optional actions.
+
+For a \verb|BITS|\footnote{This mode is described in section
+\hyref{adv-BITS}} value, whenever a character which is neither \verb|flip|
+nor \verb|flop| is met, the \verb|char error| procedure is called
+with \verb|flop| as the suggested value. Thus the available suggested
+character sets are:-
+\begin{enumerate}
+\item For digits: $0\ldots9$
+\item For exponent: \verb|e E| $\backslash$
+\item For plus i times: \verb|i I|
+\item For flip or flop: \verb|FT| (uppercase only) respectively
+\end{enumerate}
+
+\begin{exercise}
+\item Write a program whose input book has the identification
+\verb|inbook| and which contains lines of differing length. Use
+\verb|on logical file end| to specify a procedure which establishes
+the output book \verb|outbook|, writes the average length and closes
+it and then yields \verb|FALSE|. \ans If the
+\verb|on logical file end| procedure yields
+\verb|FALSE|, the standard prelude causes an error message to be
+displayed and the program itself exits with an equivalent error
+number. Here is the code for the program:-
+\begin{verbatim}
+   PROGRAM tt CONTEXT VOID
+   USE standard
+   IF FILE inf;
+      STRING line;  INT n,sum:=0;
+      open(inf,
+           "inbook",
+            stand in channel)/=0
+   THEN
+      print(("Cannot open inbook",
+             newline));
+      exit(1)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+         IF FILE ouf;
+            establish(ouf,
+                      "outbook",
+                      stand out channel,
+                      0,0,0)/=0
+         THEN
+            print(("Cannot establish ",
+                   "outbook",newline));
+            exit(2); SKIP
+         ELSE
+            put(ouf,(sum/n,newline));
+            close(ouf);  FALSE
+         FI);
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         n:=i;  sum+:=UPB line
+      OD
+   FI  
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{The command line}{trans-cmd}
+When you execute a program at the \ix{command prompt}, you type the
+identification of the program and then press return.  You can specify
+parameters (sometimes called \hx{\textbf{arguments}}{argument}) for
+the program after the program identification.  These can then be
+accessed by the program to modify its activities.
+
+Hitherto, the identifications of books have always been written into
+the actual code. In the last exercise, the input book was called
+\verb|inbook| and the output book \verb|outbook|. If your program
+could be given the identifications of the books whenever you executed
+the program, then it could have a much wider applicability.
+
+The command line is available to the program via the channel
+\hxtt{arg channel}{arg channel}. Here is a small program which reads
+its first argument and prints it on the screen:
+\begin{verbatim}
+   PROGRAM arg1 CONTEXT VOID
+   USE standard
+   IF FILE args;  open(args,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the command line",
+           newline));
+      stop
+   ELSE
+     on logical file end(arg,
+        (REF FILE f)BOOL:
+           (put(stand error,
+                ("No parameters",newline));
+            FALSE));
+     STRING id;
+     get(arg,id);  write((id,newline))
+   FI
+   FINISH
+\end{verbatim}
+\noindent
+Some points to note:
+\begin{enumerate}
+\item \verb|stand error| is an output \verb|FILE| which is usually used
+for error messages.
+\item The identification field in the call to \verb|open| is ignored
+by \hxtt{arg channel}{arg channel}. In the example, it is written as
+the empty string.
+\item \ixtt{stop} is equivalent to \verb|exit(0)|.
+\item In Linux, the first parameter is always the full path of the
+identification of the program.
+\end{enumerate}
+You can only read via the \hxtt{arg channel}{arg channel} (using
+\ixtt{get}). \ixtt{make term} has already been set to make the string
+terminator \ixtt{blank} (the last argument is always followed by a
+space) so you can read the individual parameters from the command line
+by reading strings.  However, you should note that when you have read a
+string, the next character will be the terminator of the string. So
+when you have read a string, you will need to skip all characters which
+could possibly terminate the reading of a string (known as
+\ix{terminators}) otherwise the next read of a string will yield the
+\ix{null string} (denoted by \verb|""|). The procedure \ixtt{skip
+terminators} with header
+\begin{verbatim}
+   PROC skip terminators=(REF FILE f)VOID:
+\end{verbatim}
+\noindent
+is used for this purpose.
+
+\begin{exercise}
+\item Modify exercise \verb|ex9.5| (see \hyref{trans-term-a}) to
+get the identifiers of its input and output books from the command
+line (remember that the first argument is always the program id, so
+use a \verb|LOC STRING| for it).  Remember to cater for the end of
+the input file. \ans In the following solution, note how
+\texttt{skip} \texttt{term\-in\-ators} is called immediately after
+reading the first argument (the full path of the program):-
+\begin{verbatim}
+   PROGRAM ex9 8 CONTEXT VOID
+   USE standard
+   IF FILE arg, inf, ouf;
+      STRING line, infn, oufn;
+      INT n,sum:=0;
+
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the ",
+           "program arguments",
+           newline));
+        exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Insufficient arguments",
+              newline));
+         stop;  SKIP));
+      get(arg,(LOC STRING,skip terminators,
+               infn,skip terminators,
+                oufn));
+      open(inf,infn,stand in channel)/=0
+   THEN
+      print(("Cannot open ",infn,newline));
+      exit(2)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        IF establish(ouf,
+                     oufn,
+                     stand out channel,
+                     0,0,0)/=0
+        THEN
+           print(("Cannot establish ",
+                  oufn,
+                  newline));
+           exit(3); SKIP
+        ELSE
+           put(ouf,("Average=",sum/n,
+                    newline));
+           close(ouf);
+           FALSE
+        FI);
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         n:=i;  sum+:=UPB line
+      OD
+   FI 
+   FINISH
+\end{verbatim}
+'
+\item Write a program to replace all the spaces in its input book
+with the asterisk and write out the resulting lines to its output
+book, the book identifiers being given on the command line.
+\ans Notice that the physical file end of the output file has also
+been covered:-
+\begin{verbatim}
+   PROGRAM ex9 9 CONTEXT VOID
+   USE standard
+   IF FILE arg, inf, ouf;
+      STRING line, infn, oufn;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the arguments",
+           newline));
+      exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Insufficient arguments",
+              newline));  stop;  SKIP));
+      get(arg,(LOC STRING,
+               skip terminators,
+               infn,skip terminators,
+               oufn));
+      open(inf,infn,stand in channel)/=0
+   THEN
+      print(("Cannot open ",infn,newline));
+      exit(2)
+   ELIF
+      establish(ouf,
+                oufn,
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      print(("Cannot establish ",oufn,
+             newline));
+             exit(3)
+   ELSE
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(ouf);  close(inf);
+         stop;  SKIP));
+      on physical file end(ouf,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Write error on ",idf(ouf),
+              newline));
+         exit(4); SKIP));
+      DO
+         get(inf,(line,newline));
+         FOR i FROM LWB line TO UPB line
+         DO
+            REF CHAR li=line[i];
+            IF li=blank THEN li:="*" FI
+         OD;
+         put(ouf,(line,newline))
+      OD
+   FI 
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Environment strings}{trans-env}
+In Linux, if, at the command prompt in a Bash shell, you key
+\verb|set| followed by return, you will get a listing of the values
+of all the \hx{environment strings}{environment string} defined in
+your session. The value of the environment string \verb|PATH| gives
+all the paths that the operating system will search when you try to
+execute a program.
+
+Each string is identified by what is called an \textbf{environment
+variable} which behaves rather like a name of mode \verb|REF STRING|
+except that each string is terminated with a \hxtt{nul ch}{nul ch}.
+You can open a book containing the environment string using
+\ixtt{env channel}. For example:
+\begin{verbatim}
+   FILE p;  open(p,"PATH",env channel)
+\end{verbatim}
+\noindent
+The open will fail if \verb|PATH| has not been defined, so
+a plain \ixtt{open} (as shown in the above example)
+would be better replaced by
+\begin{verbatim}
+   FILE p;
+   IF open(p,"PATH",env channel)/=0
+   THEN #code to take emergency action#
+   ELSE #code to perform the usual actions#
+   FI
+\end{verbatim}
+\noindent
+If you now use \ixtt{make term} to make the
+colon \ixtt{:} the string terminator, you can get the
+individual paths using \ixtt{get}:
+\begin{verbatim}
+   make term(p,":"+nul ch);
+   STRING path;
+   on logical file end(p,
+    (REF FILE f)BOOL:
+     (GOTO eof;  SKIP));
+   DO
+      get(p,(skip terminators,path));
+      IF UPB path >= LWB path
+      THEN write((path,newline))
+      FI
+   OD;
+   eof:
+   close(p);
+\end{verbatim}
+\noindent
+You should close the book after using it. Notice the use of a
+\verb|GOTO| followed by a \ix{label}.  The actual label, which looks
+just like an identifier. is followed by a \hx{colon}{:@\texttt{:}}.
+
+\begin{exercise}
+\item Write a program which will display the individual paths in the
+\verb|PATH| environment string, one to a line, on the screen.
+\ans \ %
+\begin{verbatim}
+    PROGRAM ex9 10 CONTEXT VOID
+    USE standard
+    IF FILE env;
+       open(env,"PATH",env channel)=0
+    THEN
+       on logical file end(env,
+        (REF FILE e)BOOL: (stop; SKIP));
+       make term(env,":"+nul ch);
+       STRING s;
+       DO
+          get(env,s);
+          IF UPB s >= LWB s
+          THEN print((s,newline))
+          FI;
+          skip delimiters(env)
+       OD;
+       close(env)
+    FI
+    FINISH
+\end{verbatim}
+'
+\item Write a program which will read some arguments from its command
+line, each argument consisting of the identifier of an environment
+string terminated by "/" followed by a non-blank terminator. Using
+this data, read the environment string and display its constituent
+parts on the screen, one to a line. Allow for the possibility that
+the string might not end with the terminator (the code given in the
+answer caters for that possibility). Try an environment string
+which exists and one which doesn't.
+\ans \ %
+\begin{verbatim}
+   PROGRAM ex9 11 CONTEXT VOID
+   USE standard
+   IF FILE arg;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access arguments",
+           newline));
+      exit(1)
+   ELSE
+      on logical file end(arg,
+       (REF FILE a)BOOL: (stop;  SKIP));
+      get(arg,(LOC STRING,
+               LOC CHAR,
+               skip terminators));
+      DO
+         make term(arg,"/");
+         STRING env name;
+         CHAR terminator:=nul ch;
+         get(arg,
+             (env name,
+              skip terminators,
+              terminator));
+         IF FILE env;
+            open(env,
+                 env name,
+                 env channel)/=0
+         THEN
+            print((env name," undefined",
+                   newline))
+         ELSE
+            make term(env,
+                      terminator+nul ch);
+            STRING s;
+            on logical file end(
+               env,
+               (REF FILE f)BOOL:
+                 (GOTO continue; SKIP));
+            DO
+               get(env,s);
+               IF UPB s >= LWB s
+               THEN print((s,newline))
+               FI;
+               skip terminators(env)
+            OD;
+            continue:
+            close(env)
+         FI;
+         make term(arg,blank);
+         skip terminators(arg)
+      OD
+   FI
+   FINISH
+\end{verbatim}
+\noindent
+Notice the addition of \verb|nul ch| to cater for the lack of a
+specific terminator in the environment string.
+'
+\item At the command line, by using the command
+\begin{verbatim}
+   ABC="12 14 16"
+\end{verbatim}
+\noindent
+you create (using \verb|bash|) an environment string identified by
+\verb|ABC|. Now write a program which will read the individual
+numbers from \verb|ABC| and print their total. Try changing the value
+of \verb|ABC| to give different numbers (not in the program). Include
+a test in your program to determine whether \verb|ABC| is present in
+the environment (verb|open| will fail if it isn't) and terminate your
+program with a useful message if not. \ans \ %
+\begin{verbatim}
+    PROGRAM ex9 12 CONTEXT VOID
+    USE standard
+    IF FILE abc;
+        open(abc,"ABC",env channel)/=0
+    THEN
+        print(("Environment string ABC",
+              "is undefined",newline));
+        stop
+    ELSE
+        INT sum:=0, n;
+        on logical file end(
+         abc,
+         (REF FILE f)BOOL:
+          (close(f);
+           print(("Total=",sum,newline));
+           stop;  SKIP));
+       DO
+          get(abc,n);
+          sum+:=n
+       OD
+    FI
+    FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Writing reports}{trans-conv}
+One of the problems of using the rather primitive facilities given
+so far for the output of real and integer numbers is that although
+they allow numbers to be printed in columns, the column widths are
+fixed.  You might not always want 18 decimal places. To print reports
+where numbers must be neatly tabulated, it is necessary to have some
+other means of controlling the size of the resulting strings. The
+procedures \texttt{whole}, \texttt{fixed} and \texttt{float} provide
+this capability.
+
+The procedure \ixtt{whole} has the header
+\begin{verbatim}
+   PROC whole = (NUMBER v, INT width)STRING:
+\end{verbatim}
+\noindent
+and takes two parameters. The first is a real or integer value (modes
+\verb|REAL| or \verb|INT|)\footnote{\texttt{NUMBER} is defined for
+more modes than \texttt{REAL} and \texttt{INT} which you will meet in
+chapter~11.} and the second is an integer which tells \verb|whole|
+the field width of the output number (the space in your output book
+required to accommodate a value is often called a \bfix{field}). If
+\verb|width| is zero, then the number is printed with the minimum
+possible width and this will be wider for larger numbers. A positive
+value for \verb|width| will give numbers preceded by a "+" if
+positive and a "-" if negative and the number output right-justified
+within the field with spaces before the sign. A negative value for
+\verb|width| will only provide a minus sign for negative numbers and
+the width will be \verb|ABS width|.
+
+Try writing a program with the following fragment included:
+\begin{verbatim}
+   []INT ri = (0,99,-99,9 999,99 999);
+   []CHAR wh pr = "Parameter for whole is";
+   
+   FOR wi FROM -6 BY 3 TO 6
+   DO
+      print((wh pr,wi,newline));
+      FOR i TO UPB ri
+      DO
+         write((whole(ri[i],wi),newline))
+      OD
+   OD
+\end{verbatim}
+\noindent
+Notice that where the integer is wider than the available space, the
+output field is filled with the character denoted by
+\ixtt{error char} (which is declared in the standard prelude as the
+asterisk (\verb|*|) with mode \verb|CHAR|), so it is wise to ensure
+that your output field is large enough to accommodate the largest
+number you might want to print.
+
+If you give a real number to \ixtt{whole}, it calls
+the procedure \verb|fixed| with parameters \verb|width| and \verb|0|.
+
+The procedure \ixtt{fixed} has the header
+\begin{verbatim}
+   PROC fixed = (NUMBER v,
+                 INT width, after)STRING:
+\end{verbatim}
+\noindent
+and takes three parameters.  The first two are the same as those for
+\verb|whole| and the third specifies the number of decimal places
+required.  The rules for \verb|width| are the same as the rules for
+\verb|width| for \verb|whole|.
+
+When you want to print numbers in \ix{scientific format} (that is,
+with an exponent), you should use \ixtt{float} which takes four
+parameters and has the header
+\begin{verbatim}
+    PROC float = (NUMBER v,
+                  INT width, after, exp)STRING:
+\end{verbatim}
+\noindent
+The first three are the same as the parameters for \verb|fixed|,
+while the fourth is the width of the exponent field.  The version of
+\verb|float| supplied in the transput library uses \verb|e| to
+separate the exponent from the rest of the number. Thus the call
+\begin{verbatim}
+   print(("[",float(pi*10,8,2,-2),"]"))
+\end{verbatim}
+\noindent
+produces the output \verb|[+3.14e 1]|. The parameter \verb|exp| obeys
+the same rules as \verb|width|.
+
+Note that the transput of data in Algol 68 is so organised that values
+output by an Algol~68 program can be input by another (or the same)
+program.
+
+Here are some exercises which test you on your understanding of
+\ixtt{whole}, \ixtt{fixed} and \ixtt{float}.
+
+\begin{exercise}
+\item The monthly rainfall for a particular location is given by the
+following figures:
+\begin{verbatim}
+    6.54  12.3   10.1   13.83  5.04  9.15
+   14.34  16.38  13.84  10.45  8.49  7.57
+\end{verbatim}
+\noindent
+Write a program which will print the figures vertically, each preceded
+by the name of the month. The months and the figures should line up
+vertically, the months left-justified, the figures with decimal points
+aligned. \ans Notice how the size of the month denotation is used to
+ensure that the rainfall is aligned appropriately.
+\begin{verbatim}
+   PROGRAM ex9 13 CONTEXT VOID
+   USE standard
+   BEGIN
+   []STRING months=
+       ("January","February","March",
+        "April","May","June","July",
+        "August","September",
+        "October","November",
+        "December");
+
+   []REAL rainfall=
+       ( 6.54, 12.3,  10.1,  13.83,
+         5.04, 9.15,  14.34, 16.38,
+         13.84, 10.45, 8.49, 7.57);
+
+   FOR m TO UPB months
+   DO
+      STRING mm=months[m];
+      print((mm,(12-UPB mm)*blank,
+             fixed(rainfall[m],-5,2),
+             newline))
+   OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will print the square roots of all the
+integers from 1 to 100 to 4 decimal places. Each number should be
+preceded by the corresponding integer. So, for example, the program
+should print \verb*| 2  1.4142| as a column-pair. Print the whole table
+in four columns with 25 entries in each column, the numbers 1--25 being
+in the first column. \ans The difficult part is calculating which
+number to print at each position.
+\begin{verbatim}
+   PROGRAM ex9 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      print(("Table of square roots ",
+             "1 to 100",
+             newline,newline));
+
+      FOR i TO 25
+      DO
+         FOR j TO 4
+         DO
+            INT number = (j-1)*25+i;
+            print((whole(number,-6),
+                   fixed(sqrt(number),
+                         -8,4)))
+         OD;
+         print(newline)
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will list the terms in the series $\pi$,
+$\pi^2$, $\pi^3$, $\ldots$, $\pi^{10}$. Each value should be written in
+scientific notation with 6 decimal places, and should be preceded by
+the value of the power ({\it i.e.}, the numbers 1 to 10). Use a field
+width of 12. \ans \ %
+\begin{verbatim}
+   PROGRAM ex9 15 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL pi power:=1;
+      print(("Table of powers of pi",
+             " 1 to 10",
+           newline,newline));
+
+      FOR i TO 10
+      DO
+        pi power*:=pi;
+        print((whole(i,-3),"  ",
+               float(pi power,
+                     12,6,2),
+               newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Binary books}{trans-bin}
+In section~\hyref{trans-books}, it was mentioned that some books
+contain data in a compact form which is not usually human-readable.
+Most large books, especially those containing design figures in the
+engineering sciences as well as books containing the payroll data for
+a number of employees, will be stored in this form.  They are called
+binary \hx{books}{book!binary}.
+
+Algol~68 allows you to write anything to binary books, just as for
+text books. Indeed, you can write an integer and a character to a
+binary book and then read back the data as a character followed by an
+integer.  The results may not be particularly meaningful, but you can
+do it.
+
+The only difference between transput to, or from, binary books is
+that instead of using the procedures \ixtt{put} and \ixtt{get}, you
+use the procedures \ixtt{put bin} and \ixtt{get bin}. The modes
+accepted by these procedures are identical with those accepted by
+\verb|put| and \verb|get| respectively except that you cannot
+transput procedures with mode
+\begin{verbatim}
+   PROC(REF FILE)BOOL
+\end{verbatim}
+\noindent
+Here is a
+program which will output the data produced by the program in the
+last exercise:
+\begin{verbatim}
+   PROGRAM binary CONTEXT VOID
+   USE standard
+   BEGIN
+     FILE f;
+
+     IF establish(f,
+                  "pipowers",
+                  stand out channel)/=0
+     THEN
+       put(stand error,
+           ("Cannot create pipowers",
+            newline));
+       stop
+     FI;
+
+     FOR i TO 10
+     DO
+       put bin(f,(i,pi**i))
+     OD;
+     close(f)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Run the program and then look at the book it has produced. Compare it
+with the data produced by the program in the last exercise.
+
+Values of mode \verb|REF STRING| can be read by \ixtt{get bin}, but
+you should remember to set the string terminator using the procedure
+\ixtt{make term}. However, you should note that the string terminator
+will \textit{always} include the character \ixtt{lf}. Furthermore, if
+\ixtt{set possible} is \ixtt{FALSE} for the \ixtt{REF FILE} on which
+transput is being performed, the terminator will have been read when
+the routine \ixtt{get bin} returns. If \ixtt{set possible} is
+\ixtt{TRUE} for that \ixtt{REF FILE}, then the terminator will not
+have been read.
+
+Another aspect of binary books is that of being able to
+\hx{browse}{browsing}. The principal procedure provided for this
+purpose is \ixtt{set} which has the header
+\begin{verbatim}
+   PROC set=(REF FILE f,INT p,l,c)VOID:
+\end{verbatim}
+\noindent
+The last three parameters specify the position in the book where you
+want to start browsing, whether reading or writing. The QAD transput
+provided with the \hx{a68toc}{a68toc!set@\texttt{set}} compiler
+ignores the \verb|p| and \verb|l| parameters because it regards a
+file as consisting of one page of one line.\footnote{The start of a
+book in the QAD transput is zero.}
+
+There are two other related procedures.  One is
+\ixtt{reset} which has the header
+\begin{verbatim}
+   PROC reset=(REF FILE f)VOID:
+\end{verbatim}
+\noindent
+and is equivalent to \verb|set(f,0)|. One possible use of this
+procedure is to output data to a book, then use \verb|reset| followed
+by \verb|get| to read the data from the book. The sort of book used
+in this way is often called a \bfix{work file} (in operating system
+terms). Such a book contains data of use while a program is being
+elaborated, but is deleted at the end of the program.  In fact, every
+program has such a book whose controlling \verb|FILE| is called
+\verb|stand back|. It uses the \verb|stand back channel| and is
+deleted when the program has finished. However, you can write to it,
+reset it, then read the contents and copy them to another book.  Note
+that the procedure \verb|read bin| is equivalent to
+\verb|get bin(stand back,...)| and the procedure \verb|write bin| is
+equivalent to \verb|put bin(standback,...)|.
+
+The other related procedure is \ixtt{logical end} which has the header
+\begin{verbatim}
+   PROC logical end = (REF FILE f)INT:
+\end{verbatim}
+\noindent
+and yields the value of the position at the end of the book, which is
+the size of the book. The position can be set to the end of the book by
+writing
+\begin{verbatim}
+   set(f,logical end(f))
+\end{verbatim}
+\noindent
+Here is a procedure which opens an existing book and sets the writing
+position to its end, then writes data to the end of the book:
+\begin{verbatim}
+   PROC debug=(REF FILE dbg,[]SIMPLOUT st)VOID:
+   (
+     open(dbg,idf(dbg),stand back channel);
+     set(dbg,logical end(dbg));
+     put(dbg,st);
+     close(dbg)
+   )
+\end{verbatim}
+\noindent
+We shall use this procedure in chapter~12 to store data about the
+running of a program while we are developing it. Notice that textual
+data is written to the book even though the procedures \verb|set| and
+\verb|logical end| are used.  The point is that binary and textual
+data can be mixed in any book which allows \ix{binary transput}.
+
+In the QAD standard prelude, the current position in a book can be
+obtained from the procedure \ixtt{current pos} which has the header
+\begin{verbatim}
+   PROC current pos = (REF FILE f)POS:
+\end{verbatim}
+\noindent
+This particular procedure is very useful if you want to store the
+book position of the beginning of a group of data in a book (such a
+group is often called a \bfix{record}). In the QAD
+standard prelude, \verb|POS| is a synonym for \verb|INT|.
+
+\begin{exercise}
+\item Write a program which creates a binary book containing the
+first 1000 whole numbers. Use \verb|set| to read every 17th number
+and display them on the screen, one to a line. \ans To write this
+program, you need to know how many bytes Algol 68 uses to store an
+integer in a binary book. In the program below, that number is
+presumed to be identified by \verb|int bin bytes|. You will need to
+write a short program to output a couple of integers to a binary book
+and then see how long it is (and you might find its contents of
+interest).
+\begin{verbatim}
+   PROGRAM ex9 16 CONTEXT VOID
+   USE standard
+   BEGIN
+   FILE work;
+
+   IF   establish(work,
+                  "ex9 16.tmp",
+                  stand back channel,
+                  0,0,0)/=0
+   THEN
+      print("Cannot create workbook");
+      exit(1)
+   FI;
+
+   FOR i TO 1000 DO put bin(work,i) OD;
+
+   INT int bin bytes=?;
+   CO Your value replaces ? CO
+
+   FOR i FROM 17 BY 17 TO 1000
+   DO
+      set(work,0,0,(i-1)*int bin bytes);
+      INT n;  get bin(work,n);
+      print((n,newline))
+   OD;
+
+   close(work)
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program to read a book containing text and write each
+individual word to one book, and the position of the start of each
+word and the length of the word to another book. Both output books
+should be written using \verb|put bin|. \ans Reading the words should
+not present any problems to you. The only new bit is the output.
+However, for the sake of completeness, here is the whole program.
+\begin{verbatim}
+   PROGRAM ex9 17 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE inf, out1, out2;
+
+      IF open(inf,
+              "inbook",
+              stand in channel)/=0
+      THEN
+         print("Cannot open inbook");
+         exit(1)
+      ELIF establish(out1,
+                     "outbook1",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook1");
+         exit(2)
+      ELIF establish(out2,
+                     "outbook2",
+                     stand out channel,
+                     0,0,0)/=0
+      THEN
+         print("Cannot create outbook2");
+         exit(3)
+      FI;
+
+      make term(inf, blank+cr+lf);
+
+      STRING word; CHAR ch:=blank;
+
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(out1);
+         close(out2);
+         close(f);
+         stop;  SKIP));
+
+      DO
+         get(inf,(word,
+                  skip terminators));
+
+         IF UPB word > 0
+         THEN
+            put bin(out2,
+                    (current pos(out1),
+                     UPB word));
+            put bin(out1,word)
+         FI
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Internal books}{trans-intern}
+Sometimes it is desirable to convert information from binary to text
+forms and then manipulate the resulting values. Conversely, when
+performing data entry (that is, reading data from the keyboard), it is
+usually better to perform the actual data entry in character format and
+then convert to internal values rather than converting the external
+data to internal values directly. The means of accomplishing this sort
+of specialised transput is provided by internal
+\hx{books}{book!internal}.
+
+Unfortunately, the QAD transput provided with the \ix{a68toc}
+compiler does not provide the usual Algol~68 mechanism for internal
+books. However, a book consisting of a single line can be established
+using the \verb|mem channel|. Here is an example:
+\begin{verbatim}
+   PROGRAM memch CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE mf;
+      establish(mf,"",mem channel,1,1,36);
+      FOR i TO 3 DO put(mf,i**3) OD;
+      print((file buffer(mf)[:current pos(mf)],
+             newline));
+      close(mf)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+When establishing a memory book using the \verb|mem channel|, both the
+\verb|p| and the \verb|l| parameters should be \verb|1| and the \verb|c|
+parameter should be positive indicating the length of the line. All the
+transput procedures mentioned may be used on memory books. The procedure
+\verb|file buffer| yields the internal buffer of a file, but uses a
+mode we have not yet met (see chapter~13: Standard Prelude). The
+procedure \verb|current pos| gives the current position of its
+\verb|REF FILE| parameter. For examples of files opened using the
+\verb|mem channel|, see the example program \verb|lf| described in
+sections~\hyref{dev-lf} to~\hyref{dev-dry}.
+
+\Section{Other transput procedures}{trans-other}
+The procedure \ixtt{idf} has the header
+\begin{verbatim}
+   PROC idf=(REF FILE f)[]CHAR:
+\end{verbatim}
+\noindent
+and yields the identification of the book handled by the file \verb|f|.
+
+There are two other ways of closing a file. One is \ixtt{scratch} and
+the other is \ixtt{lock}. Here are their headers:-
+\begin{verbatim}
+   PROC scratch=(REF FILE f)VOID:
+   PROC lock=(REF FILE f)VOID:
+\end{verbatim}
+\noindent
+The procedure \texttt{scratch} deletes the file once it is closed. It
+is often used with work files. The procedure \texttt{lock} closes its
+file and then locks it so that it cannot be opened without some
+system action. In the QAD transput supplied with the
+\hx{a68toc}{a68toc!lock@\texttt{lock}}
+compiler, \texttt{lock} removes all permissions from the file so
+that it cannot be accessed without first using the program
+\texttt{chmod}.
+
+\begin{exercise}
+\item Write a program to print the rainfall figures given in an
+earlier exercise. Start your report with a suitable heading. \ans A
+useful wrinkle is to end your report with the words
+\verb|END OF REPORT| so that your reader knows that there are no
+pages of the report which could have been lost. In a professionally
+written program, you would put a page number and the date of the
+report, but we have not yet covered how that can be done (see
+chapter~12).
+\begin{verbatim}
+   PROGRAM ex9 18 CONTEXT VOID
+   USE standard
+   IF []STRING
+        months =
+         ("January","February","March",
+          "April","May","June",
+          "July","August","September",
+          "October","November","December");
+      []REAL
+        rainfall =
+         ( 6.54, 12.30, 10.10, 13,83,
+           5.04,  9.15, 14.34, 16.38,
+          13.84, 10.45, 8.49,   7.57);
+      FILE prn;
+      establish(prn,
+                "rainfall.out",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish rainfall.out",
+           newline));  stop
+   ELSE
+      put(prn,
+          ("Rainfall figures in 1995",
+           newline,newline,
+           "Month",7*blank,
+           "Rainfall in mm",
+           newline));
+
+      FOR m TO UPB months
+      DO
+        STRING mm = months[m];
+        put(prn,
+            (mm,(12-UPB mm)*blank,
+             fixed(rainfall[m],-5,2),
+             newline))
+      OD;
+      put(prn,
+          (newline,
+           "END OF REPORT",
+           newline));
+      close(prn)
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will read a text file and print each line
+preceded by a line number. \ans You will need to get the
+identification of the file from the argument line.
+\begin{verbatim}
+   PROGRAM ex9 19 CONTEXT VOID
+   USE standard
+   IF STRING in idf;  FILE arg, inf, prn;
+      open(arg,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access arguments",
+           newline));
+      exit(1)
+   ELIF
+      on logical file end(arg,
+       (REF FILE f)BOOL:
+        (put(stand error,
+             ("Usage: tt idf",
+              newline));
+         stop;  SKIP));
+      get(arg,(LOC STRING,skip terminators,
+               in idf));
+      close(arg);
+      open(inf,in idf,stand in channel)/=0
+   THEN
+       put(stand error,
+           ("Cannot open ",in idf,
+            newline));
+      exit(2)
+   ELIF
+      establish(prn,"tt.out",
+                stand out channel,
+                0,0,0)/=0
+   THEN
+      put(stand error,
+          ("Cannot establish tt.out",
+           newline));
+      exit(3)
+   ELSE
+      STRING line;
+      on logical file end(inf,
+       (REF FILE f)BOOL:
+        (close(f);  close(prn);
+         stop;  SKIP));
+
+      FOR i
+      DO
+         get(inf,(line,newline));
+         put(prn,(whole(i,-6),": "));
+         IF UPB line > 0
+         THEN put(prn,line)
+         FI;
+         newline(prn)
+      OD
+   FI
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Summary}{trans-summ}
+External values (usually called data) are stored in books. A program
+uses an internal structure, called a file (of mode \verb|FILE|), to
+keep track of the process of transferring data to or from books. The
+link between them is controlled by a channel.
+
+A number of procedures are provided in the standard prelude to
+facilitate the transfer of data to and from books, as well as changing
+the position recorded by a file within a book.
+
+Books can be created and written to, or opened and read from, or both
+read from and written to. A file should be closed to sever the link
+between itself and its corresponding book, and to ensure that any data
+storage areas (usually called buffers) are flushed to the storage
+medium.
+
+Formatting of numbers can be performed with the procedures
+\verb|whole|, \verb|fixed| and \verb|float|. This facilitates the
+production of reports.
+
+String terminators make it easier to read values of mode \verb|STRING|.
+They are set with the procedure \verb|make term|.
+
+The command line can be read just like any other book (text only) and
+environment variables can be read.
+
+\begin{exercise}
+\item Write a program to read real numbers from the keyboard, and
+write them to the screen in scientific notation and 3 decimal places.
+Continue until zero is read. \ans \ %
+\begin{verbatim}
+   PROGRAM ex9 20 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL r;
+
+      WHILE read(r); r/=0.0
+      DO
+         print((float(r,-12,3,-2),newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Using the mode \verb|EMPLOYEE| declared in
+section~\hyref{struc-mult}, write a program to read the employee
+records from a binary book, and write a report of the name of each
+employee, her or his net pay for the current week and the total net
+pay and number of employees read. In the binary book, each string is
+preceded by the length of that string as an integer. Get the book idf
+and the week number from the command line. \ans This program is not
+all that difficult. Take it slowly, step by step.  Although reading
+an employee record only appears once in the program, it is better to
+write it as a procedure so as not to obscure the main logic.
+Likewise, printing each line of the report is also declared as a
+procedure. Notice how the given solution checks for errors.
+\begin{verbatim}
+   PROGRAM ex9 21 CONTEXT VOID
+   USE standard
+   BEGIN
+      FILE arg, emp, prn;
+      STRING emp idf;
+      INT week:=0;
+
+      IF open(arg,"",arg channel)/=0
+      THEN
+        put(stand error,
+           ("Cannot access the arguments",
+            newline));
+        exit(1)
+      ELIF
+        on logical file end(arg,
+         (REF FILE f)BOOL:
+         (put(stand error,
+             ("Usage: tt emp-book week-no",
+              newline));
+          exit(2); SKIP));
+        get(arg,
+           (LOC STRING,LOC CHAR,
+            emp idf,week));
+        week < 1 OR week > 53
+      THEN
+         put(stand error,
+             ("Invalid week number",
+              newline));
+         exit(3)
+      ELIF open(emp,
+                emp idf,
+                stand in channel)/=0
+      THEN
+        put(stand error,
+           ("Cannot open ",emp idf,
+            newline));
+        exit(4)
+      ELIF
+        establish(prn,
+                  "report",
+                  stand out channel,
+                  0,0,0)/=0
+      THEN
+        put(stand error,
+           ("Cannot establish report",
+            newline));
+        exit(5)
+      FI;
+
+      MODE
+        EMPLOYEE=STRUCT(STRING name,
+                        [2]STRING address,
+                        STRING dept,
+                               ni code,
+                               tax code,
+                        REAL basic,
+                             overtime,
+                        [52]REAL
+                           net pay,tax);
+
+      PROC get emp=(REF FILE f,
+                    REF EMPLOYEE e)VOID:
+      BEGIN
+        [80]CHAR s;
+
+        PROC get str=[]CHAR:
+        (
+           INT len;  get bin(f,len);
+           [len]CHAR s;
+           get bin(f,s);
+           s
+        ); \#get str\#
+
+        IF (name OF e:=get str) /= ""
+        THEN
+          FOR i TO UPB address OF e
+          DO
+            (address OF e)[i]:=get str
+          OD;
+          dept OF e:=get str;
+          ni code OF e:=get str;
+          tax code OF e:=get str;
+          get bin(f,(basic OF e,
+                     overtime OF e,
+                     net pay OF e,
+                     tax OF e))
+        FI
+      END #get emp#;
+
+      PROC put emp=(REF FILE f,
+                    REF EMPLOYEE e)VOID:
+        put(f,(name OF e,
+               (40-UPB name OF e)*blank,
+                fixed((net pay OF e)[week],
+                       -8,2),
+                newline));
+
+      INT line:=60, page:=0;
+
+      PROC heading = (REF FILE f)VOID:
+      IF line = 60
+      THEN line:=0; #reset the line count#
+        put(f,
+            (newpage,
+             "Report of net pay for week ",
+             whole(week,0),
+             40*blank,"Page ",
+             whole(page+:=1,0),
+             newline,newline,
+             "Employee name",
+             28*blank,"Net pay",
+             newline,newline))
+      FI #heading#;
+
+      EMPLOYEE employee;
+      REAL total pay:=0; INT n:=0;
+
+      on logical file end(emp,
+       (REF FILE f)BOOL:
+        (put(prn,
+             ("Total net pay for ",
+              whole(n,0),
+              " employees =",
+              fixed(total pay,-11,2),
+              newline,
+              newline,
+              "End of report",newline));
+        close(f);  close(prn);  stop;
+        SKIP));
+
+      DO
+         heading(prn);
+         get emp(emp,employee);
+
+        IF name OF employee /= ""
+        THEN
+           total pay+:=
+            (net pay OF employee)[week];
+           n+:=1;
+           #count of total employees#
+           put emp(prn,employee);
+           line+:=1
+        FI
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}

@@ -1,0 +1,50 @@
+\setlength{\unitlength}{0.00087489in}
+%
+% $Log: ch11-7.epic,v $
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+{\renewcommand{\dashlinestretch}{30}
+\begin{picture}(2364,2967)(0,-10)
+\drawline(282,2937)(1002,2937)(1002,2577)
+	(282,2577)(282,2937)
+\drawline(1632,2937)(2352,2937)(2352,2577)
+	(1632,2577)(1632,2937)
+\drawline(282,2037)(1002,2037)(1002,1677)
+	(282,1677)(282,2037)
+\drawline(642,2577)(642,2037)
+\drawline(612.000,2157.000)(642.000,2037.000)(672.000,2157.000)
+\drawline(642,1677)(642,1137)
+\drawline(612.000,1257.000)(642.000,1137.000)(672.000,1257.000)
+\dottedline{45}(687,1137)(687,777)
+\drawline(282,1137)(1227,1137)(1227,777)
+	(282,777)(282,1137)
+\drawline(1137,957)(1857,957)
+\drawline(1737.000,927.000)(1857.000,957.000)(1737.000,987.000)
+\drawline(1992,2577)(1992,1362)(957,1362)(957,957)
+\drawline(927.000,1077.000)(957.000,957.000)(987.000,1077.000)
+\put(327,2622){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}head}}}}}
+\put(1047,1947){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RRQ}}}}}
+\put(1677,2622){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}tail}}}}}
+\put(1137,2847){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RRRQ}}}}}
+\put(327,822){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}fan}}}}}
+\put(732,822){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}next}}}}}
+\put(1902,912){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}nilq}}}}}
+\put(1272,1047){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}RQ}}}}}
+\dottedline{45}(552,372)(552,12)
+\drawline(12,372)(822,372)(822,12)
+	(12,12)(12,372)
+\drawline(507,777)(192,372)
+\drawline(241.992,485.140)(192.000,372.000)(289.353,448.304)
+\put(12,57){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}"Jim"}}}}}
+\put(642,57){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}1}}}}}
+\put(867,282){\makebox(0,0)[lb]{\smash{{{\SetFigFont{12}{14.4}{\ttdefault}{\mddefault}{\updefault}FAN}}}}}
+\end{picture}
+}

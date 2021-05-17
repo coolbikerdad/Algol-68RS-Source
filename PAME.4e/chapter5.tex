@@ -1,0 +1,1563 @@
+% $Log: chapter5.tex,v $
+% Revision 1.4  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Names}{chapv}
+Previous chapters dealt with values that have always been known when
+the program was written.  If a program is to be able to react to its
+environment, it must be able to convert external values into internal
+values and then manipulate them.  Analogous to \verb|print|, the
+conversion can be done by \ixtt{read} which constructs internal
+values from external character sequences. In order to manipulate such
+converted values, we need some way of referring to them. Algol~68 can
+generate values which can refer to other values.  This kind of
+value is called a \bfix{name}. Although a name has a value, it is
+quite different from the value referred to. The difference is rather
+like your name: your name refers to you, but is quite distinct from
+you.
+
+For example, suppose \verb|read| is presented with the character
+sequence ``\verb|123G|'' and is expecting an integer. \verb|read| will
+convert the digits into the number ``one hundred and twenty-three'',
+held in a special internal form called
+\hx{``2's-complement binary''}{2's-complement binary}.
+To manipulate that value, a name must be generated to refer to it.
+The mode of a name is called a ``reference mode''.
+
+A name which can refer to a value of mode \verb|INT| is said to have
+the mode \verb|REF INT|. Likewise, we can create names with modes
+\begin{verbatim}
+   REF BOOL    REF[]CHAR    REF[,]REAL
+\end{verbatim}
+\noindent
+As you can see, \verb|REF| can precede any mode.  It can also include
+a mode already containing \verb|REF|.  Thus it is possible to
+construct modes such as
+\begin{verbatim}
+   REF REF INT
+   REF[]REF REAL
+   REF[]REF[]CHAR
+   REF REF REF BOOL
+\end{verbatim}
+\noindent
+but we shall defer discussion of these latter modes to chapter~11.
+
+Names are created using \hx{\textbf{generators}}{generator}.  There
+are two kinds of generator: \hx{local}{generator!local} and
+\hx{global}{generator!global}.  The extent to which a name is valid
+is called its \bfix{scope}.  The scope of a local
+\hx{name}{local!name} is restricted to the smallest enclosing clause
+which contains declarations.  The scope of a global name extends to
+the whole program.  In general, values have scope, identifiers have
+\ix{range}. We shall meet global generators in chapters~6 and~11.
+
+The phrase \verb|LOC INT| generates a name of mode \verb|REF INT|
+which can refer to a value of mode \verb|INT|.\footnote{Historically,
+programmers were more interested in the value referred to than the
+name (Algol~68 was the first language to distinguish clearly between
+a name and the value referred to), so the generator is followed by
+the mode of the value to which the name will refer.} The \ixtt{LOC}
+stands for local. It is quite reasonable to write the phrase
+\begin{verbatim}
+   read(LOC INT)
+\end{verbatim}
+\noindent
+Unfortunately, the created name is an anonymous name in the sense
+that it has no identifier so that once the \verb|read| has completed,
+the name disappears. We need some way of linking an identifier with
+the generated name so that we can access the name after \verb|read|
+has finished. This is done with an identity declaration. Here is an
+identity \hx{declaration}{declaration!identity!LOC@\texttt{LOC}} with
+a local \hx{generator}{REF@\texttt{REF}}:
+\begin{verbatim}
+   REF INT a = LOC INT
+\end{verbatim}
+\noindent
+The value identified by \verb|a| has the mode \verb|REF INT| because
+the phrase \verb|LOC INT| generates a name of mode \verb|REF INT|. Thus
+it is a name, and it can refer to a value (as yet undefined) of mode
+\verb|INT| (the value referred to always has a mode of one less
+\verb|REF|). So now, we can write
+\begin{verbatim}
+   read(a)
+\end{verbatim}
+\noindent
+After that phrase has been elaborated, \verb|a| identifies a name which
+now refers to an integer.
+
+Names can also be declared using a predeclared name on the right-hand
+side of the identity declaration. Here is another identity declaration
+using \verb|a|:
+\begin{verbatim}
+   REF INT b = a
+\end{verbatim}
+\noindent
+In this declaration, \verb|b| has the mode \verb|REF INT| so it
+identifies a name. \verb|a| also has the mode \verb|REF INT| and
+therefore also identifies a name. The identity declaration makes
+\verb|b| identify the same name as \verb|a|. This means that if the
+name identified by \verb|a| refers to a value, then the name identified
+by \verb|b| (the same name) will always refer to the same value.
+
+\Section{Assignment}{name-assign}
+The process of causing a name to refer to a value is called
+\bfix{assignment}. Using the identifier declared above, we
+can write
+\begin{verbatim}
+   a := 3
+\end{verbatim}
+\noindent
+We say ``a assign 3''.  Note that the mode of the name identified by
+\verb|a| is \verb|REF INT|, and the mode of the denotation \verb|3|
+is \verb|INT|.  After the assignment, the name identified by \verb|a|
+refers to the value denoted by \verb|3|.
+
+Suppose now we want the name identified by \verb|a| to refer to the
+value denoted by \verb|4| (this may seem pedantic, but as you will
+see below, it is necessary to distinguish between the denotation of a
+value and that value itself).  We write
+\begin{verbatim}
+   a := 4
+\end{verbatim}
+\noindent
+Let us juxtapose these two assignments:
+\begin{verbatim}
+   a := 3
+     ;
+   a := 4
+\end{verbatim}
+\noindent
+If you look carefully at the two assignments, a number of things
+spring to mind. Firstly, an assignment consists of three parts: on
+the left-hand side is an identifier of a name, in the middle is the
+\bfix{assignment token}, and on the right-hand side is a denotation.
+Secondly, the left-hand side of the two assignments is the same
+identifier: \verb|a|.  Since the identifier is the same, the value
+must be the same.\footnote{Provided that both identifiers appear in
+the same range.}  That is, in the two assignments, \verb|a| is
+synonymous with a value which \textit{does not change}. The value is a
+\ix{name} and has the mode \verb|REF INT| (in this case).  Thus the
+value of the left-hand side of an assignment is a name.
+
+Thirdly, the values on the right-hand side of the two assignments
+differ. Firstly, \verb|a| is assigned the value denoted by \verb|3|,
+then (after the \ix{go-on} symbol), \verb|a| is assigned
+the value denoted by \verb|4|.
+
+After the second assignment, \verb|a| refers to \verb|4|.  Of course,
+when we say ``\verb|a| refers to'', we mean ``the name identified by
+\verb|a| refers to''. What has happened to the value \verb|3|? To
+understand this, we need to look a little more closely at what we
+mean by the value \verb|3|. The denotation \verb|3| represents the
+number three. Now, of course, the number three exists independently
+of a computer program. When the digit \verb|3| is elaborated in an
+Algol~68 program, an \bfix{instance} of the number three is created.
+Likewise, elaborating the digit \verb|4| creates an instance of the
+number four.  When \verb|a| is assigned an instance of the value
+four, the instance of the value three disappears. This property of
+assignment is very important. Because an assignment causes data to
+disappear, it is dangerous to use. You have to be careful that the
+data which disappears is not data you wanted to keep. So the instance
+of a value can disappear, but the value still exists (like the number
+three).
+
+It is worth reiterating that however many times a name is assigned a
+value, the value of the name remains unchanged. It is the value
+referred to which is superseded. Outwith the realm of computers, if
+an individual is assigned to a department of an organisation, clearly
+the department hasn't changed. Only its members have changed.
+
+When an identifier for a name has been declared, the name can be made
+to refer to a value immediately after the declaration.  For
+\hx{example}{REF@\texttt{REF}}
+\begin{verbatim}
+   REF REAL x = LOC REAL := pi
+\end{verbatim}
+\noindent
+where \verb|pi| is the value declared in the \ix{standard prelude}.
+\verb|LOC REAL| generates a name of mode \verb|REF REAL|.
+
+The right-hand side of an assignment is a strong
+\hx{context}{context!strong} so \hx{widening}{coercion!widening} is
+allowed. Thus we can write
+\begin{verbatim}
+   x := 3
+\end{verbatim}
+\noindent
+where the \verb|3| is widened to \verb|3.0| before being assigned to
+\verb|x|. In reality, the value denoted by \verb|3| is not changed to
+the value denoted by \verb|3.0|: it is replaced by the new value.
+There is an important principle here. It is called the
+``\hx{principle of value integrity}{value integrity!principle of}'':
+once an
+instance of a value has been created, it does not change until such
+time as it disappears.  Thus, in Algol~68, every value is a
+\ix{constant}.  Every \ix{coercion} defined in Algol~68
+replaces a \ix{value} of one mode with a related value of
+another mode.
+
+\Subsection{Copying values}{name-copy}
+Here is another identity declaration with an \ix{initial assignment}:
+\begin{verbatim}
+   REF INT c = LOC INT := 5
+\end{verbatim}
+\noindent
+Using the identifier \verb|a| declared earlier, we can write
+\begin{verbatim}
+   a := c
+\end{verbatim}
+\noindent
+and say ``a assign c''. The name on the left-hand side of the
+assignment has mode \verb|REF INT|, so a value which has mode
+\verb|INT| is required on the right-hand side, but what has been
+provided is a name with mode \verb|REF INT|. Fortunately, there is a
+coercion which replaces a name with the value to which it refers. It
+is called \hx{\textbf{dereferencing}}{coercion!dereferencing} and is
+allowed in a \hx{strong context}{context!strong}.  In the above
+assignment, the name identified by \verb|c| is dereferenced yielding
+an instance of the value five which is a copy of the instance
+referred to by \verb|c|.  That new instance is assigned to \verb|a|.
+It is important to remember that the process of dereferencing yields
+a \emph{new} instance of a value.
+
+Try the following program:
+\begin{verbatim}
+   PROGRAM assign CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT a = LOC INT,
+              b = LOC INT := 7;
+      print(("b=",b,newline));
+      print("Please key 123G:"); read(b);
+      a := b;
+      print(("a now refers to",a,newline,
+             "b now refers to",b,newline))
+   END
+   FINISH
+\end{verbatim}
+\noindent
+This should convince you that dereferencing involves copying.
+
+Every construct in Algol 68 has a value except an identity
+declaration. We said above that the value of the left-hand side of an
+assignment is a name. In fact, the value of the whole of the
+assignment is the value of the left-hand side. Because this is a
+name, it can be used on the right-hand side of another assignment.
+For example:
+\begin{verbatim}
+   a := b := c
+\end{verbatim}
+\noindent
+You should note that an assignment is not an operator. The assignments
+are performed from \emph{right to left}: firstly, \verb|c| is
+dereferenced and the resulting value assigned to \verb|b|. Then
+\verb|b| is dereferenced and the resulting value is assigned to
+\verb|a|.
+
+\Subsection{Assigning operators}{name-assops}
+The following assignment
+\begin{verbatim}
+   a := a
+\end{verbatim}
+\noindent
+does not do anything useful, but serves to remind us that the name
+identified by \verb|a| on the right-hand side of the assignment is
+dereferenced, and the resulting value is assigned to \verb|a|. However,
+\verb|a| now refers to a new instance of the value it previously
+referred to and the previous instance has now disappeared.
+
+Now consider the phrases
+\begin{verbatim}
+   c := 5; a := c+1
+\end{verbatim}
+\noindent
+The right-hand side of the second assignment is now a formula. The
+name identified by \verb|c| is now in a firm
+\hx{context}{context!firm} (it is the left-operand of the \verb|+|
+operator).  Fortunately, \hx{dereferencing}{coercion!dereferencing}
+is also allowed in a firm context.  Thus the value of \verb|c| (a
+name with mode \verb|REF INT|) is replaced in the formula by a copy
+of the value to which it refers (\verb|5|), which is added to
+\verb|1|, and \verb|a| is assigned the new value (\verb|6|).  We say
+``a is assigned c plus one''.
+
+What about the phrase
+\begin{verbatim}
+   a := a+1
+\end{verbatim}
+\noindent
+In exactly the same way as the previous phrase, the name on the
+right-hand side is dereferenced, the new value created is added to
+\verb|1|, and then the same name is assigned the new value.
+
+One of the features of assignment is that the elaboration of the two
+sides is performed \hx{collaterally}{elaboration!collateral}. This
+means that the order of elaboration is undefined.  This does not matter
+in the last example because the value of the name identified by
+\verb|a| is the same on the two sides of the assignment. Remember that
+the value of \verb|a| is a name with mode \verb|REF INT|.  It is the
+value to which \verb|a| referred which was superceded.
+
+Assignments of this kind are so common that a special operator has been
+devised to perform them. The above assignment can be
+written
+\begin{verbatim}
+   a +:= 1
+\end{verbatim}
+\noindent
+and is read ``a plus-and-assign one''. The operator has the
+alternative representation \ixtt{PLUSAB}.\footnote{\texttt{PLUSAB}
+stands for ``plus-and-becomes''. When Algol 68 was first designed,
+people were more concerned with the values referred to than the
+names, so \texttt{PLUSAB} was intended to describe what happens to
+the value referred to. Bearing in mind the principle of value
+\protect\hx{integrity}{principle of value integrity}, the value
+referred to by \texttt{a} does not become anything, but is replaced by
+its value plus 1.} Note that the left-hand operand must be a name.
+The right-hand operand must be any \ix{unit} which yields a value of
+the appropriate mode in a \hx{firm}{context!firm} context.
+
+The operator \verb|+:=| is defined for a left-operand of mode
+\verb|REF| \verb|INT| or \verb|REF| \verb|REAL|, and a right-operand
+of mode \verb|INT| or \verb|REAL| respectively.  The yield of the
+operator is the value of the left-operand (the name).  If the
+left-operand has mode \verb|REF REAL|, the right-operand can also
+have mode \verb|INT|.  No widening occurs in this case, the operator
+having been declared for operands having these modes. Because the
+operator yields a name, that name can be used as the operand for
+another assigning operator. For example
+\begin{verbatim}
+   x +:= 3.0 *:= 4.0
+\end{verbatim}
+\noindent
+which results in \verb|x| referring to \verb|4.0*(x+3.0)|. The formula
+is elaborated in left-to-right order because the operators have the
+same priority. The operators are more efficient than writing out the
+assignments in full.
+
+There are four other operators like \verb|+:=|.  They are \verb|-:=|,
+\verb|*:=|, \verb|/:=|,
+\verb|%:=| and \verb|%*:=|.  Their alternative
+representations are respectively \ixtt{MINUSAB}, \ixtt{TIMESAB},
+\ixtt{DIVAB}, \ixtt{OVERAB} and \ixtt{MODAB}.  The operators
+\verb|OVERAB| and \verb|MODAB| are only declared for operands with
+modes \verb|REF| \verb|INT| and \verb|INT|.  The
+\ix{priority} of all the operators is~1.
+
+The \ix{assignment operators} are operators, not assignments
+(although they perform an assignment), so that the previous example
+is not an assignment, but a formula.
+
+The right-hand side of an assignment can be any \ix{unit} which
+yields a value whose mode has one less \verb|REF| than the mode of the
+name on the left-hand side.  Names whose mode contains more than one
+\verb|REF| will be considered in chapter~11.
+
+\begin{exercise}
+\item The following identity declarations
+\begin{verbatim}
+   REF CHAR s = LOC CHAR,
+   REF INT  i = LOC INT,
+   REF REAL r = LOC REAL
+\end{verbatim}
+\noindent
+hold in this and the following exercises.\footnote{The
+\protect\ix{a68toc} compiler requires that you write semicolons
+instead of commas to separate these three declarations.} What is the
+mode of \verb|i|? \ans \verb|REF INT|
+'
+\item After the assignment \verb|r := -2.7| has been elaborated, what is
+the mode of the value referred to by \verb|r|? \ans \verb|REAL|
+'
+\item What is wrong with the assignment \verb|i := r| and how would you
+correct it? \ans The right-hand side of the identity declaration
+should yield a value of mode \verb|INT|. Insert \verb|ENTIER| or
+\verb|ROUND| before the \verb|r|.
+'
+\end{exercise}
+
+\Section{Assignments in formul\ae}{name-assform}
+Since an assignment yields a name, it can be used in a formula.
+However, the assignment must be converted into an enclosed
+\hx{clause}{clause!enclosed} (using parentheses or \verb|BEGIN|
+and \verb|END|) ensuring that the assignment is elaborated first. For
+example, in
+\begin{verbatim}
+   3*(a := c+4)+2
+\end{verbatim}
+\noindent
+if \verb|c| refers to \verb|3|, the value of the formula will be
+\verb|23| with mode \verb|INT|, \verb|a| will refer to \verb|7|, the
+value of the assignment is a name of mode \verb|REF INT| and \verb|c|
+will still refer to \verb|3|. Remember that assignment is not an
+operator.
+
+Here is an example of two assignments in a conditional clause:
+\begin{verbatim}
+   IF a<2 THEN x := 3.2 ELSE x := -5.0 FI
+\end{verbatim}
+\noindent
+This can be written with greater efficiency as
+\begin{verbatim}
+   x := IF a < 2 THEN 3.2 ELSE -5.0 FI
+\end{verbatim}
+
+The left-hand side of an assignment has a
+\hx{\textbf{soft}}{context!soft} context. In a soft context,
+dereferencing is not allowed (it is the only context in which
+dereferencing is not allowed). In the following phrase, the
+conditional \hx{clause}{clause!conditional} on the left yields a
+name which is then assigned the value of the right-hand side:
+\begin{verbatim}
+   IF a < 2 THEN x ELSE y FI := 3.5
+\end{verbatim}
+\noindent
+In the next assignment, a conditional clause appears on both sides of the
+assignment:
+\begin{verbatim}
+   (a<2|x|y) := (b<2|x|y)
+\end{verbatim}
+\noindent
+The result depends on the values referred to by both \verb|a| and
+\verb|b| as much as on the values referred to by both \verb|x| and
+\verb|y|.
+
+\begin{exercise}
+\item What is wrong with the following program fragment?
+\begin{verbatim}
+   REF REAL x = LOC REAL,
+            y = LOC REAL := 3.5;
+   y := 4.2+x
+\end{verbatim}
+\indent\ans No value has been assigned to \verb|x| when the second
+assignment is elaborated.
+'
+\item If \verb|x| refers to \verb|3.5| and \verb|y| refers to
+\verb|-2.5|, what is the mode and value yielded by the following
+phrases:
+\begin{subex}
+\item \verb|x := -y| \subans A name with mode \verb|REF REAL|.
+'
+\item \verb|ABS y| \subans The real number denoted by \verb|2.5| with
+mode \verb|REAL|.
+'
+\end{subex}
+\item What does \verb|x| refer to after
+\begin{verbatim}
+   x := 1.5;  x PLUSAB 2.0 DIVAB 3.0
+\end{verbatim}
+\noindent
+(try it in a small program). \ans \verb|1.166666|$\ldots$
+'
+\end{exercise}
+
+\Section{Multiple names}{name-mult}
+Here is an identity declaration for a name which can refer to a
+\ix{multiple}\hx{:}{REF@\texttt{REF}}:
+\begin{verbatim}
+   REF[]INT i7 = LOC[1:7]INT
+\end{verbatim}
+\noindent
+There are two things to notice about this declaration.  Firstly, the
+mode on the left-hand side is known as a \bfix{formal-declarer}.  It
+says what the mode of the name is, but it says nothing about how many
+elements there will be in any multiple to be assigned, nor what its
+bounds will be.  All the identity declarations for multiples in
+chapter~3 used formal-declarers on the left-hand side.  In fact, only
+formal-declarers are used on the left-hand side of \emph{any}
+identity \hx{declaration}{declaration!identity}.
+
+Secondly, the generator on the right-hand side is an
+\bfix{actual-declarer}. It specifies how many elements can be
+assigned. In fact, the \ix{trimmer} represents the \ix{bounds} of the
+multiple which can be assigned.  If the lower bound is \verb|1| it
+may be omitted, so the above declaration could well have been written
+\begin{verbatim}
+   REF[]INT i7 = LOC[7]INT
+\end{verbatim}
+\noindent
+which can be read as ``ref row of int i7 equals loc row of seven
+int''.  The bounds of a multiple do not have to start from \verb|1|
+as we saw in chapter~3. In this identity declaration
+\begin{verbatim}
+   REF[]INT i7 at 0 = LOC[0:6]INT
+\end{verbatim}
+\noindent
+the bounds of the multiple will be \verb|[0:6]|.
+
+\Section{Assigning to multiple names}{name-assmult}
+We can assign values to the elements of a multiple either
+individually or collectively.
+
+\Subsection{Individual assignment}{name-indiv}
+You may remember from chapter 3 that we can access an individual
+element of a multiple by specifying the subscript(s) of that element.
+For example, suppose that we wish to access the third element of
+\verb|i7| as declared in the last section. The rules of the language
+state that a subscripted element of a multiple name is itself a name.
+In fact, the elaboration of a slice of a multiple name creates a new
+name. Thus the mode of \verb|i7[3]| is \verb|REF INT|. We can assign a
+value to \verb|i7[3]| by placing the element on the left-hand side of
+an assignment:
+\begin{verbatim}
+   i7[3]:=4
+\end{verbatim}
+\noindent
+Unless you define a new identifier for the new name, it will cease to
+exist after the above assignment has been elaborated (see below for
+examples of this).
+
+Since each element of \verb|i7| has an associated name (created by
+slicing) of mode \verb|REF INT|, it can be used in a formula:
+\begin{verbatim}
+   i7[2]:=3*i7[i7[1]] + ENTIER(4.0/i7[3])
+\end{verbatim}
+\noindent
+As you can see, an element was used to compute a \ix{subscript}. It
+has been presumed that the value obtained after dereferencing lies
+between \verb|1| and \verb|7| inclusive. If this were not so, a
+run-time \hx{error}{error!run-time} would be generated. In the
+above assignment, all three elements on the right-hand side of the
+assignment would be \hx{dereferenced}{coercion!dereferencing}
+before being used in the formula.  Note that subscripting (or slicing
+or trimming) binds more tightly than any operator.  Thus, in the last
+term in the above example, \verb|i7| would be sliced first, then the
+yielded name dereferenced, and finally, the new value would be
+divided into \verb|4.0|.
+
+Here is a \verb|FOR| \hx{loop}{clause!loop} which assigns a value to
+each element of \verb|i7| individually:
+\begin{verbatim}
+   FOR e FROM LWB i7 TO UPB i7
+   DO
+      i7[e]:=e**3
+   OD
+\end{verbatim}
+\noindent
+Using the bounds interrogation operators is useful because:
+\begin{enumerate}
+\item The fact that the lower bound of \verb|i7| is \verb|1| is
+masked, but the formula \verb|LWB i7| ensures that the
+correct value is used.
+\item If the bounds of \verb|i7| are changed when the program is
+being maintained, the loop clause can remain unchanged. This simplifies
+the maintenance of Algol 68 programs.
+\item The compiler can omit bounds checking. For large multiples,
+this can speed up processing considerably.
+\end{enumerate}
+
+Here is a program which uses a name whose mode is
+\verb|REF[]BOOL|. It computes all the prime numbers less than 1000
+and is known as \ix{Eratosthenes' Sieve}:
+\begin{verbatim}
+   PROGRAM sieve CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size = 1000;
+
+      REF[]BOOL flags = LOC[2:size]BOOL;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         flags[i] := TRUE
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k
+            FROM 2*i BY i TO UPB flags
+            DO
+               flags[k] := FALSE
+               CO Remove multiples of i CO
+            OD
+         FI
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i] THEN print((i,blank)) FI
+      OD
+   END
+   FINISH
+\end{verbatim}
+
+\Subsection{Collective assignment}{name-coll}
+There are two ways of assigning values collectively.  Firstly, it can
+be done with a \hx{row-display}{row!display} or a \verb|[]CHAR|
+denotation. For example, using the declaration of \verb|i7| above:
+\begin{verbatim}
+   i7:=(4, -8, 11, ABS "K",
+        ABS TRUE, 0, ROUND 3.4)
+\end{verbatim}
+\noindent
+Notice that the bounds of both \verb|i7| and the row-display are
+\verb|[1:7]|. In the assignment of a multiple, the bounds of the
+multiple on the right-hand side must match the bounds of the multiple
+name on the left-hand side. If they differ, a fault is generated. If
+the bounds are known at compile-time, the compiler will generate an
+error message. If the bounds are only known at run-time (see section
+\hyref{name-dyn} on dynamic names), a run-time error will be
+generated. The \ix{bounds} can be changed using a trimmer or the
+\verb|@| symbol (or \ixtt{AT}). See chapter~3 for details.
+
+The second way of assigning to the elements of a multiple collectively
+is to use an identifier of a multiple with the required bounds. For
+example:
+\begin{verbatim}
+   []INT i3 = (1,2,3);
+   REF[]INT k = LOC[1:3]INT := i3
+\end{verbatim}
+\noindent
+The right-hand side has been assigned to the multiple name \verb|k|.
+
+As mentioned above, parts of a multiple can be assigned using
+\hx{slicing}{slice} or \ix{trimming}. For example, given the
+\hx{declarations}{REF@\texttt{REF}}
+\begin{verbatim}
+   REF[,]REAL x = LOC[1:3,1:3]REAL,
+              y = LOC[0:2,0:2]REAL
+\end{verbatim}
+\noindent
+and the assignment
+\begin{verbatim}
+   x:=((1,2,3),
+       (4,5,6),
+       (7,8,9))
+\end{verbatim}
+\noindent
+we can write
+\begin{verbatim}
+   y[2,0]:=x[3,2]
+\end{verbatim}
+\noindent
+The multiple name \verb|y| is sliced yielding a name of mode
+\verb|REF INT|. Then\footnote{But because the two sides of an
+assignment are elaborated collaterally, the RHS might be elaborated
+before the LHS or even in parallel.} the multiple name \verb|x| is
+sliced also yielding a name of mode \verb|REF INT| which is then
+dereferenced yielding a new instance of the value to which it refers
+(\verb|8|) which is then assigned to the new name on the LHS of the
+assignment.  Here is an identity-declaration which makes the new name
+permanent:
+\begin{verbatim}
+   REF INT y20 = y[2,0];  y20:=x[3,2]
+\end{verbatim}
+\noindent
+which has its uses (see below).
+
+Here are some examples of slicing with (implied) multiple assignments:
+\begin{verbatim}
+   y     := x[@0,@0];
+   y[2,] := x[ 1,@0];
+   y[,1] := x[ 2,@0]
+\end{verbatim}
+\noindent
+In the first example, the right-hand side is a slice of a name whose
+mode is \verb|REF[,]REAL|. Because the slice has no trimmers its mode
+is also \verb|REF[,]REAL|. Using the \verb|@| symbol, the lower bounds
+of both dimensions are changed to \verb|0|, ensuring that the bounds of
+the multiple name thus created match the bounds of the multiple name
+\verb|y| on the left. After the assignment (and the dereferencing),
+\verb|y| will refer to a copy of the multiple \verb|x| and the name
+created by the slicing will no longer exist.
+
+In the second \ix{assignment}, the multiple \verb|x| has
+been sliced yielding a name whose mode is \verb|REF[]REAL|.  It refers,
+in fact, to the first ``row'' of \verb|x|.  The \verb|@0| ensures that
+the \ix{lower bound} of the second dimension of \verb|x|
+is \verb|0|. The left-hand side yields a name of mode \verb|REF[]REAL|
+which refers to the last ``row'' of the multiple \verb|y|.  The name on
+the right-hand side is dereferenced. After the assignment \verb|y[2,]|
+will refer to a copy of the first ``row'' of \verb|x| and the name
+produced by the slicing will no longer exist.
+
+In the third assignment, the second ``row'' of \verb|x| is assigned to
+the second ``column'' of \verb|y|.  Again, the \verb|@0| construction
+ensures that the lower bound of the second dimension of \verb|x| is
+zero. After the assignment, the name created by the slicing
+will no longer exist.
+
+Notice how the two declarations for \verb|x| and \verb|y| have a common
+\ix{formal-declarer} on the left-hand side, with a
+comma between the two declarations. This is a common abbreviation. The
+comma means that the two declarations are elaborated collaterally (and
+on a parallel processing computer, possibly in parallel).
+
+It was stated in the section on names that names can be put on the
+right-hand side of an identity declaration.  This is particularly
+useful for accessing elements of rows.  Consider the following:
+\begin{verbatim}
+   REF[]INT r = LOC[100]INT;
+
+   FOR i FROM LWB r TO UPB r DO r[i]:=i*i OD;
+
+   FOR i FROM LWB r TO UPB r-1
+   DO
+      IF   REF INT ri=r[i], ri1=ri[i+1];
+           ri > ri1
+      THEN ri:=ri1
+      ELSE ri1:=ri
+      FI
+   OD
+\end{verbatim}
+\noindent
+This is another example of \ix{optimisation}, but in
+this case, we need names because the \verb|THEN| and \verb|ELSE|
+clauses contain assignments. Both \verb|ri| and \verb|ri1| are used
+thrice in the conditional \hx{clause}{clause!conditional}, but the
+multiple \verb|r| is only subscripted twice in each loop. In the
+condition following the \verb|IF|, both \verb|ri| and \verb|ri1| would
+be dereferenced (but not in the identity declarations).  The values of
+\verb|ri| and \verb|ri1| remain constant: the names are assigned new
+values.  You can see from the identity declarations that the modes of
+the names \verb|ri| and \verb|ri1| are both \verb|REF INT|.
+
+Here is a program fragment which uses a \verb|REF[]REAL| identity
+declaration for \hx{optimisation}{REF@\texttt{REF}}:
+\begin{verbatim}
+   REF[,]REAL m = LOC[3,4]REAL;   read(m);
+   
+   FOR i FROM 1 LWB m TO 1 UPB m
+   DO
+      REF[]REAL mi = m[i,];
+      FOR j FROM LWB mi TO UPB mi
+      DO
+         REF REAL mij = mi[j];
+         mij*:=mij
+      OD
+   OD;
+   
+   print((m,newline))
+\end{verbatim}
+\noindent
+As you can see, \ixtt{read} behaves just like
+\ixtt{print} in that a whole multiple can be read
+at one go (see chapter~3 for the use of \verb|print| with multiples).
+The only difference between the way \verb|read| is used and the way
+\verb|print| is used is that the values for \verb|read| must be names
+(or identifiers of names) whereas \verb|print| can use denotations or
+identifiers of names or identifiers which are not names.
+
+\begin{exercise}
+\item After the assignments of \verb|x| to \verb|y| discussed above,
+what is the final value of \verb|y| (careful)? \ans A name with mode
+\verb|REF[,]REAL|.
+'
+\item Given these declarations
+\begin{verbatim}
+   REF[,]INT m = LOC[3:5,-2:0]INT,
+   REF[]INT n = LOC[1:3]INT:=(1,2,3)
+\end{verbatim}
+\indent\begin{subex}
+\item What is wrong with the assignment \verb|m[1,]:=n|? \subans The
+bounds of the slice on the left-hand side of the assignment are
+\verb|[-2:0]|, but the bounds of \verb|n| are \verb|[1:3]|. The
+assignment will cause a run-time error.
+'
+\item How would you assign the second ``column'' of \verb|m| to its
+third ``row''? \subans You could write \verb|m[5,]:=m[,-1]|, but it
+is unlikely that you would get what you wanted because the second
+column overlaps the third row. Here is a solution guaranteed to work:-
+\begin{verbatim}
+   []INT temp = m[,-1];
+   m[5,]:=temp[@-2]
+\end{verbatim}
+'
+\end{subex}
+
+\item Modify Eratosthenes' Sieve to compute the
+\ith{365}{th} prime. \ans There is no known formula
+which will tell you how big the sieve must be to find the
+\ith{365}{th} prime; you just have to guess. A sieve with \verb|size|
+equal to 5000 suffices. You need a counter for the primes. The
+complete program is:-
+\begin{verbatim}
+   PROGRAM sieve CONTEXT VOID
+   USE standard
+   BEGIN
+      INT size=5000;
+      REF[]BOOL flags = LOC[2:size]BOOL;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         flags[i]:=TRUE
+      OD;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i]
+         THEN
+            FOR k FROM i*2 BY i TO UPB flags
+            DO
+               flags[k]:=FALSE
+               CO Remove multiples of i CO
+            OD
+         FI
+      OD;
+
+      REF INT count = LOC INT:=0;
+
+      FOR i FROM LWB flags TO UPB flags
+      DO
+         IF flags[i] ANDTH (count+:=1)=365
+         THEN print(i)
+         FI
+      OD
+   END
+   FINISH                                     
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Flexible names}{name-flex}
+In the previous section, we declared mutliple names. The bounds of
+the multiple to which the name can refer are included in the
+generator. In subsequent assignments, the bounds of the new multiple
+to be assigned must be the same as the bounds given in the generator.
+In Algol~68, it is possible to declare names which can refer to a
+multiple of any number of elements (including none) and, at a later
+time, can refer to a different number of elements. They are called
+\bfix{flexible} names. Here is an identity
+\hx{declaration}{declaration!identity!FLEX@\texttt{FLEX}} for a
+flexible \hx{name}{REF@\texttt{REF}}:
+\begin{verbatim}
+   REF FLEX[]INT fn = LOC FLEX[1:0]INT
+\end{verbatim}
+\noindent
+There are several things to note about this declaration.  Firstly,
+the mode of the name is not \verb|REF[]INT|, but \texttt{REF
+FLEX[]INT}.  The \ixtt{FLEX} means that the \ix{bounds} of the
+multiple to which the name can refer can differ from one assignment
+to the next.  Secondly, the bounds of the name generated at the time
+of the declaration are \verb|[1:0]|. Since the upper bound is less
+than the lower bound, the multiple is said to be
+\hx{\textbf{flat}}{multiple!flat}; in other words, it has no elements
+at the time of its declaration\footnote{The Revised Report mentions a
+``ghost element'' in this context (see section
+\protect\hyref{gram-flex} for details)}.  Thirdly, \verb|FLEX| is
+present on both sides of the identity declaration (but in the last
+section of this chapter we shall see a way round that).
+
+We can now assign multiples of integers to \verb|fn|:
+\begin{verbatim}
+   fn:=(1,2,3,4)
+\end{verbatim}
+\noindent
+The bounds of the multiple to which \verb|fn| now refers are
+\verb|[1:4]|. Again, we can write
+\begin{verbatim}
+   fn:=(2,3,4)
+\end{verbatim}
+\noindent
+Now the bounds of the multiple to which \verb|fn| refers are
+\verb|[1:3]|. We can even write
+\begin{verbatim}
+   fn:=7
+\end{verbatim}
+\noindent
+in which the right-hand side will be \hx{rowed}{coercion!rowing} to yield a
+one-dimen\-sional multiple with bounds \verb|[1:1]|, and
+\begin{verbatim}
+   fn:=()
+\end{verbatim}
+\noindent
+giving bounds of \verb|[1:0]|.
+
+In the original declaration of \verb|fn| the bounds were \verb|[1:0]|. The
+compiler will not ignore any bounds other than \verb|[1:0]|, but will
+generate a name whose initial bounds are those given. So the
+\hx{declaration}{FLEX@\texttt{FLEX}}
+\begin{verbatim}
+   REF FLEX[]INT fn1 = LOC FLEX[1:4]INT
+\end{verbatim}
+\noindent
+will cause \verb|fn1| to have the bounds \verb|[1:4]| instead of
+\verb|[1:0]|.
+
+The lower bound does not have to be \verb|1|. In this example,
+\begin{verbatim}
+   REF[]INT m1 = LOC[-1:1]INT;
+   FOR i FROM LWB m1 TO UPB m1 DO m1[i]:=i+3 OD;
+   REF FLEX[]INT f1 = LOC FLEX[1:0]INT := m1
+\end{verbatim}
+\noindent
+the bounds of \verb|f1| after the initial assignment are \verb|[-1:1]|.
+
+If a flexible name is sliced or trimmed, the resulting name is called
+a \bfix{transient name} because it can only exist so long as the
+flexible name stays the same size. Such names have a restricted use
+to avoid the production of names which could refer to nothing. For
+example, consider the declaration and assignation
+\begin{verbatim}
+   REF FLEX[]CHAR c1 = LOC FLEX[1:0]INT;
+    c1:="abcdef";
+\end{verbatim}
+\noindent
+Suppose now we have the declaration
+\begin{verbatim}
+   REF[]CHAR lc1=c1[2:4]; #WRONG#
+\end{verbatim}
+\noindent
+followed by this assignment:
+\begin{verbatim}
+   c1:="z";
+\end{verbatim}
+\noindent
+It is clear that \verb|lc1| no longer refers to anything meaningful.
+Thus transient names cannot be assigned without being dereferenced,
+nor given identifiers, nor used as parameters for a routine (whether
+operator or procedure).  However there is nothing to prevent them
+being used in an assignment.  For example,
+\begin{verbatim}
+   REF FLEX[]CHAR s=LOC[1:0]CHAR:=
+      "abcdefghijklmnopqrstuvwxyz";
+   s[2:7]:=s[9:14]
+\end{verbatim}
+\noindent
+where the name yielded by \verb|s[9:14]| is immediately dereferenced.
+Note that the bounds of a trim are fixed even if the value trimmed is a
+flexible name. So the assignment
+\begin{verbatim}
+   s[2:7]:="abc"
+\end{verbatim}
+\noindent
+would produce a run-time \hx{fault}{error!run-time}.
+
+\begin{exercise}
+\item The declaration
+\begin{verbatim}
+   REF FLEX[]CHAR s = LOC FLEX[1:0]CHAR
+\end{verbatim}
+\noindent
+applies to the following:
+\begin{subex}
+\item What is the value of \verb|s|? \subans A name of mode
+\verb|REF FLEX[]CHAR|.
+'
+\item After the assignment
+\begin{verbatim}
+   s:="aeiou"
+\end{verbatim}
+\noindent
+what are the \ix{bounds} of \verb|s|? \subans 1 and 5.
+'
+\end{subex}
+\end{exercise}
+
+\Section{The mode \texttt{STRING}}{name-string}
+The mode \ixtt{STRING} is defined in the \ix{standard prelude} as
+having the same mode as the expression
+\hx{\texttt{FLEX[1:0]CHAR}}{FLEX@\texttt{FLEX}}. That is, the
+identity \hx{declaration}{declaration!identity!REF@\texttt{REF}}
+\begin{verbatim}
+   REF STRING s = LOC STRING
+\end{verbatim}
+\noindent
+has exactly the same effect as the declaration
+\begin{verbatim}
+   REF FLEX[]CHAR s = LOC FLEX[1:0]CHAR
+\end{verbatim}
+\noindent
+You will notice that although the mode \hx{indicant}{mode!indicant}
+\verb|STRING| appears on both sides of the identity declaration for
+\verb|s|, in the second declaration the bounds are omitted on the
+left-hand side (the mode is a \ix{formal-declarer}) and kept on the
+right-hand side (the \ix{actual-declarer}).  Without getting into
+abstruse grammatical explanations, just accept that if you define a
+mode like \verb|STRING|, whenever it is used on the left-hand side of
+an identity declaration the compiler will ignore the bounds inherent
+in its definition.
+
+We can now write
+\begin{verbatim}
+   s:="String"
+\end{verbatim}
+\noindent
+which gives bounds of \verb|[1:6]| to \verb|s|.  We can
+\ix{slice} that row to get a value with mode \verb|REF CHAR|
+which can be used in a formula. If we want to change the bounds of
+\verb|s|, we must assign a value which yields a value of mode
+\verb|[]CHAR| to the whole of \verb|s| as in
+\begin{center}
+\texttt{s:="Another string"\quad\textrm{or}\quad s:=s[2:4]}
+\end{center}
+Wherever \verb|[]CHAR| appears in chapter~3, it may be safely
+replaced by \verb|STRING|. This is because it is only
+\hx{names}{name!flexible} which are flexible so the flexibility of
+\verb|STRING| is only available in \verb|REF STRING| declarations.
+
+There are two operators defined in the \ix{standard prelude} which
+use an operand of mode \verb|REF STRING|: \ixtt{PLUSAB}, whose left
+operand has mode \verb|REF STRING| and whose right operand has mode
+\verb|STRING| or \verb|CHAR|, and \ixtt{PLUSTO}, whose left operand
+has mode \verb|STRING| or \verb|CHAR| and whose right operand has
+mode \verb|REF STRING|.  Using the \ix{concatenation} operator
+\ixtt{+}, their actions can be summarised as follows:
+\begin{eqnarray*}
+   \hbox{\tt a PLUSAB b}&\equiv&\hbox{\enskip a:=a+b}\\
+   \hbox{\tt a PLUSTO b}&\equiv&\hbox{\enskip b:=a+b}
+\end{eqnarray*}
+Thus \verb|PLUSAB| concatenates \verb|b| onto the end of \verb|a|,
+and \verb|PLUSTO| concatenates \verb|a| to the beginning of \verb|b|.
+Their alternative representations are \verb|+:=| and \verb|+=:|
+respectively. For example, if \verb|a| refers to \verb|"abc"| and
+\verb|b| refers to \verb|"def"|, after \verb|a PLUSAB b|, \verb|a|
+refers to \verb|"abcdef"|, and after \verb|a PLUSTO b|, \verb|b|
+refers to \verb|"abcdefdef"| (assuming the \verb|PLUSAB| was
+elaborated first).
+
+\begin{exercise}
+\item Write a program which declares a name with mode \verb|REF|
+\verb|STRING| and then consecutively assigns the rows of characters
+\verb|"ab"|, \verb|"abc"|, upto the whole alphabet and prints each
+row on a separate line. Use a \verb|FOR| loop clause.  \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 11 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING ss = LOC STRING;
+      FOR c FROM ABS "a" TO ABS "z"
+      DO
+         ss:="a"-REPR c;  print((ss,newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item Declare a flexible name which can refer to a 2-dimen\-sional row
+whose elements have mode \verb|REAL|.  Assign a one-dimensional row
+whose elements are
+\begin{verbatim}
+   5.0 10.0 15.0 20.0
+\end{verbatim}
+\noindent
+Write the \verb|print| phrase which will display each bound on the screen
+followed by a space, all on one line. \ans \ %
+\begin{verbatim}
+   REF FLEX[,]REAL f=
+      LOC FLEX[1:0,1:0]REAL;
+   f:=(5.0,10.0,15.0,20.0);
+   print((1 LWB f,1 UPB f,
+          2 LWB f,2 UPB f))
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Reference modes in transput}{name-trans}
+Wherever previously we have used a value of mode \verb|INT| with
+\verb|print|, we can safely use a name with mode \verb|REF INT|, and
+similarly with all the other modes (such as \verb|[,]REAL|). This is
+because the \hx{parameters}{parameter} for \ixtt{print} (the
+identifiers or denotations used for \verb|print|) are in a firm
+\hx{context}{context!firm} and so can be
+\hx{dereferenced}{coercion!dereferencing} before being used.
+
+In the preamble to this chapter, \verb|print|'s counterpart
+\ixtt{read} was mentioned. It is now time to examine \verb|read| more
+closely. Generally speaking, values displayed with \verb|print| can
+be input with \verb|read|. The main differences are that firstly, the
+parameters for \verb|read| must be names. For example, we may write
+\begin{verbatim}
+   REF REAL r = LOC REAL;
+   read(r)
+\end{verbatim}
+\noindent
+and the program will skip spaces, tabs and end-of-line and new-page
+characters until it meets an optional sign followed by optional
+spaces and at least one digit, when it will expect to read a number.
+If an integer is present, it will be read, converted to the
+\ix{internal representation} of an integer and then
+\hx{widened}{coercion!widening} to a real.
+
+Likewise, \verb|read| may be used to read integers.  The plus and minus
+signs (\verb|+| and \verb|-|) can precede integers and reals.  Absence
+of a \ix{sign} is taken to mean that the number is positive. Any
+non-digit will terminate the reading of an integer except for a
+possible sign at the start. Reals can contain \verb|e| as in
+\verb|3.41e5|. It is best to ensure that each number is preceded by a
+sign so that the reading of any preceding number will be terminated by
+that sign.
+
+For a name of mode \verb|REF CHAR|, a single character will be read,
+\verb|newline| or \verb|newpage| being called if necessary. In fact,
+tabs and any other control characters (whose absolute value is less
+than \verb|ABS blank|) will also be skipped.
+
+If \verb|read| is used to read a \verb|[]CHAR| with fixed bounds as in
+\begin{verbatim}
+   REF[]CHAR sf = LOC[36]CHAR;
+   read(sf)
+\end{verbatim}
+\noindent
+then the number of characters specified by the bounds will be read,
+\ixtt{newline} and \ixtt{newpage} being called as needed. You can
+call \verb|newline| and \verb|newpage| explicitly to ensure that the
+next value to be input will start at the beginning of the next line
+or page.
+
+Just like \verb|print|, \verb|read| can take more than one parameter
+by enclosing them in a \hx{row-display}{row!display}.
+
+You should note that the end of a line or page will not terminate the
+reading of a number. So if you want to read a number from the
+keyboard, you should follow the number with a non-digit before
+pressing ``Enter''. In this case, you don't have to read a newline as
+well, but the ``Enter'' generates a newline and that newline will be
+pending in the input.\footnote{Console input is better handled using
+the \texttt{kbd channel} described in section
+\protect\hyref{stan-trchan}.}
+
+The only flexible name for which \verb|read| can be used is
+\verb|REF| \verb|STRING|. When reading values for \verb|REF|
+\verb|STRING|, the reading pointer will not go past the end of the
+current line.\footnote{See section \protect\hyref{trans-term} for
+details of string terminators.} If the reading position is already at
+the end of the line, the row will have no elements.  When reading a
+\verb|STRING|, \verb|newline| must be called explicitly for transput
+to continue.  The characters read are assigned to the name.
+
+\begin{exercise}
+\item Write a program to read two real numbers and then print their sum
+and product. \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 13 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF REAL a = LOC REAL,
+            b = LOC REAL;
+
+      print(Enter two real numbers->");
+      read((a,b,newline));
+      print(("Their sum is",a+b,newline,
+           "Their product is",a*b))
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will input text line by line (the lines
+being of different length) and which will then write out each line
+with the characters reversed. For example, the line
+\verb|"and so on"| will be displayed as \verb|"no os dna"|. Continue
+reading until a line of zero length is read. \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 14 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING line = LOC STRING;
+
+      DO
+        read((line,newline));
+        IF UPB line = 0
+        THEN stop #terminate the program#
+        ELSE
+          FOR i
+          FROM UPB line BY -1 TO LWB line
+          DO
+            print(line[i])
+          OD;
+          print(newline)
+        FI
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Dynamic names}{name-dyn}
+Hitherto, all the names which can refer to rows
+were declared with bounds whose values were given by integer
+denotations.  In fact, the bounds given on the right-hand side of the
+identity declaration can be any unit which yields an integer in a
+\textbf{meek} \hx{context}{context!meek}.  So it is quite reasonable
+to write
+\begin{verbatim}
+   REF INT size = LOC INT;  read(size);
+   REF[]INT a = LOC[1:size]INT
+\end{verbatim}
+\noindent
+or even
+\begin{verbatim}
+   REF[]INT r=
+      LOC[1:(REF INT i=LOC INT;
+             read(i);
+             i)]INT
+\end{verbatim}
+\noindent
+since an enclosed serial clause has the value of its last unit.  The
+value of the clause in the parentheses is a name of mode
+\verb|REF INT| and since the context of the clause is meek,
+\hx{dereferencing}{coercion!dereferencing} is allowed. The context is
+passed on to the last unit in the clause.  Thus the integer read by
+\verb|read| will be passed to the generator.
+
+A \hx{\textbf{dynamic}}{name!dynamic} name is one which can refer to
+a multiple whose bounds are determined at the time the program is
+elaborated. It means that you can declare names referring to
+multiples of the size you actually require, rather than the maximum
+size that you might ever need.
+
+\begin{exercise}
+\item Declare a name which can refer to a multiple of reals whose
+upper bound is determined by reading an integer from the keyoard.
+\ans \ %
+\begin{verbatim}
+REF[]REAL r=
+   LOC[(REF INT s=LOC INT; read(s); s)]REAL
+\end{verbatim}
+'
+\item Write a program which will read an integer which says how many
+integers follow it. Compute the sum of all the integers and print it.
+\ans \ %
+\begin{verbatim}
+   PROGRAM ex5 16 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT number=LOC INT;
+      read(number);
+
+      REF[]INT multiple=LOC[number]INT;
+      read(multiple);
+      REF INT sum=LOC INT:=0;
+
+      FOR i TO number
+      DO
+        sum+:=multiple[i]
+      OD;
+      print(sum)
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Loops revisited}{name-loop}
+In section \hyref{rep-rep}, we introduced the loop clause whose
+start, step and finish were specified by integer denotations.
+Instead of an integer, a unit which yields a value of mode \verb|INT|
+in a \hx{meek}{context!meek} context can be supplied.  The principle
+coercions not available in a meek context are rowing and widening.
+In practice, almost any unit yielding \verb|INT| will do. In
+particular, a name with mode \verb|REF INT| can be given.
+
+There is an extra construct which is extremely useful for controlling
+the execution of the \verb|DO|~$\ldots$~\verb|OD| loop.  It is very
+common to execute a loop while a particular condition holds.  For
+example, while integers are negative:
+\begin{verbatim}
+   WHILE
+      REF INT int=LOC INT; read(int); int < 0
+   DO
+      print((ABS int,newline))
+   OD
+\end{verbatim}
+\noindent
+In this example, no loop counter was needed and so the \verb|FOR id|
+part was omitted.  The phrase following the \ixtt{WHILE} must be an
+enquiry \hx{clause}{clause!enquiry} yielding \verb|BOOL|. In this
+case, an integer is read each time the loop is elaborated until a
+non-negative integer is read. The range of any declarations in the
+enquiry clause extends to the \verb|DO|~$\ldots$~\verb|OD| loop.
+
+It happens quite often that the \verb|WHILE| enquiry clause performs
+all the actions which need repeating and nothing is required in the
+\verb|DO| part. Since the loop clause must contain at least one unit,
+\ixtt{SKIP} can be used as in
+\begin{verbatim}
+   FOR i FROM LWB a TO UPB a
+   WHILE (sum+:=a[i]) <= max
+   DO
+      SKIP
+   OD
+\end{verbatim}
+\noindent
+The complete loop \hx{clause}{clause!loop} thus takes the form:
+\begin{verbatim}
+   FOR id FROM from-unit BY by-unit TO to-unit
+   WHILE boolean-enquiry-clause
+   DO
+      serial clause
+   OD
+\end{verbatim}
+
+\begin{exercise}
+\item Write a program which will read integers until zero is
+encountered.  The program should print the sums of the negative and
+positive integers. \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 17 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT neg = LOC INT:=0,
+              pos = LOC INT:=0;
+
+      WHILE
+         REF INT i=LOC INT;
+         read((i.newline));
+         i /= 0
+      DO
+         (i < 0|neg|pos) +:= i
+      OD;
+
+      print(("Sum of negative integers =",
+             neg,newline,
+             "Sum of positive integers =",
+             pos,newline))
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will read lines from the keyboard and
+then compute a unique code for each line as follows: if \verb|"did"|
+is read, compute the value of
+\begin{verbatim}
+   ABS"d" + ABS"i"*2 + ABS"d"*3
+\end{verbatim}
+\noindent
+Display the string and its corresponding number on the screen.
+Terminate the program when a zero-length line has been read (if the
+result exceeds \texttt{max int}, you will normally not get an error:
+just erroneous results---see section \hyref{stan-othop}). \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 18 CONTEXT VOID
+   USE standard
+   BEGIN
+      REF STRING line = LOC STRING;
+
+      WHILE
+         read((line,newline));
+         UPB line /= 0
+      DO
+        REF INT v=LOC INT:=0;
+
+        FOR i TO UPB line
+        DO
+          v+:=ABS line[i]*i
+        OD;
+
+        print((line,v,newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Abbreviated declarations}{name-abbr}
+You have now met many identity declarations. When declaring names, it
+is apparent that much of the declaration is repeated on both sides.
+For example:
+\begin{verbatim}
+   REF[]REAL r = LOC[10]REAL
+\end{verbatim}
+\noindent
+Declarations of names are very common in Algol~68 programs and
+abbreviated \hx{declarations}{declaration!abbreviated} are
+available. The above declaration can be written
+\begin{verbatim}
+   LOC[10]REAL r
+\end{verbatim}
+\noindent
+or, most commonly
+\begin{verbatim}
+   [10]REAL r
+\end{verbatim}
+\noindent
+An abbreviated declaration uses the \ix{actual-declarer} (the
+right-hand side of an identity declaration) followed by the
+identifier; and if the actual-declarer contains the generator
+\verb|LOC|, you can omit the \verb|LOC| (see
+section~\hyref{rout-rout} which explains actual-declarers and
+formal-declarers).
+
+Here are some of the declarations given as examples in this chapter
+rewritten in their abbreviated form:
+\begin{verbatim}
+   INT a;
+   REAL x:=pi;
+   CHAR s;
+   [7]INT i7;
+   [0:6]INT i7 at 0;
+   [3]INT k:=(1,2,3);
+   [3,3]REAL x; [0:2,0:2]REAL y;
+   FLEX[1:0]INT fn;
+   [36]CHAR sf;
+   [(INT i; read(i); i)]INT r
+\end{verbatim}
+\noindent
+It is important to note that identity declarations should not be
+mixed with abbreviated name declarations because the modes are quite
+different. For example, in
+\begin{verbatim}
+   REAL a:=2.4;
+   REAL b = a+2.1
+\end{verbatim}
+\noindent
+the mode of \verb|a| is \verb|REF REAL|, but the mode of \verb|b| is
+\verb|REAL|. In the abbreviated declaration of a name, the mode given
+is that of the value to which the name will refer (the
+actual-declarer).
+
+When you declare a new object, if you do not intend assigning to it,
+use an identity declaration. Only declare it as a name if you intend
+superseding the value to which it will refer. Remember that assignment
+can be dangerous because values are superseded.
+
+\begin{exercise}
+\item Write abbreviated declarations for the following:\newline
+\begin{subex}
+\item \verb|REF[]CHAR rc = LOC[1000]CHAR|
+\subans \verb|[100]CHAR rc|
+'
+\item \verb|REF FLEX[]INT fi = LOC FLEX[1:0]INT|
+\subans \verb|FLEX[1:0]INT fi|
+'
+\item \verb|REF BOOL b = LOC BOOL := TRUE|
+\subans \verb|BOOL b:=TRUE| 
+'
+\end{subex}
+\item Write full identity declarations for the following:\newline
+\begin{subex}
+\item \verb|INT a,b,c|
+\subans \verb|REF INT a=LOC INT, b=LOC INT, c=LOC INT|
+'
+\item \verb|REAL x;[5]CHAR y;[3,3]REAL z|
+\subans \verb|REF REAL x=LOC REAL;|\newline
+\verb|REF[]CHAR y=LOC[5]CHAR;|\newline
+\verb|REF[,]REAL z=LOC[3,3]REAL|
+'
+\item \verb|FLEX[1:0]CHAR s|
+\subans \verb|REF FLEX[]CHAR s=LOC FLEX[1:0]CHAR|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Summary}{name-summ}
+A name is a value whose mode always begins with the mode constructor
+\verb|REF|. A name can refer to a value whose mode starts with one
+less \verb|REF| than the mode of the name.  An assignment causes a
+name to refer to a value.  The value to which a name refers can be
+superseded using a further assignment.  An assignment is a kind of
+unit and can appear in a formula if it is enclosed by parentheses (or
+\verb|BEGIN| and \verb|END|).  Multiple assignments can be used to
+assign the same value to more than one name.
+
+A name can be generated using a local or global generator and can be
+made to refer to a value in the same phrase in which it is declared.
+
+Algol 68 provides flexible names as well as fixed names for
+multiples.  The mode indicant for \verb|FLEX[]CHAR| is defined in the
+standard prelude as \verb|STRING|.  Names for multiples can have
+bounds determined at run-time.
+
+\verb|read| will convert external character sequences into internal
+values.  Its parameters must be names or \verb|newline| or
+\verb|newpage|.
+
+Name declarations may be written as identity declarations or in an
+abbreviated form.
+
+Before continuing with chapter~6, it would be wise to revise the
+material in the first five chapters since these comprise the basis of
+the language.
+
+\begin{exercise}
+\item Declare a name to refer to a multiple of 1000 integers, first as
+an identity declaration, and secondly in abbreviated form.
+\ans \verb|REF[]INT m=LOC[1000]INT;| \verb|[1000]INT m|
+'
+\item Write a program which will compute the average of a number of
+salaries ({\it eg}, 1010.53) read from the keyboard until the number
+\verb|-1| is read. Display the average on the screen. \ans \ %
+\begin{verbatim}
+   PROGRAM ex5 22 CONTEXT VOID
+   USE standard
+   BEGIN
+      REAL sum:=0.0, salary, INT num:=0;
+
+      WHILE read(salary);  salary /= -1.00
+      DO
+        sum+:=salary;  num+:=1
+      OD;
+
+      print(("Average salary=",sum/num))
+   END
+   FINISH
+\end{verbatim}
+'
+\item Write a program which will read a line and then scan it,
+writing out the individual words on one line apiece. The program
+should read the line into a \verb|REF STRING| name, then remove
+leading and trailing spaces and add a space to the end. Use a
+boolean name called \verb|in word| and make it refer to \verb|FALSE|.
+\hypertarget{name-ex5-23}{}\label{name-ex5-23}
+As you step along the line, make \verb|in word| refer to \verb|FALSE|
+if you read a space and \verb|TRUE| otherwise. Keep a track of the
+length of the current word. Whenever the value \verb|in word| changes
+from \verb|TRUE| to \verb|FALSE|, extract the word using an
+appropriate trimmer and print it. Allow for there being more than one
+space between words. Ignore the possibility of commas, brackets etc.
+\ans When writing a program as involved as this, do not expect to get
+it right first time. In practice, a programmer adds fine details to a
+program after she has designed the main structure.
+\begin{verbatim}
+   PROGRAM ex5 23 CONTEXT VOID
+   USE standard
+   BEGIN
+      BOOL in word:=FALSE,
+      STRING line;
+      INT line start, line finish;
+      INT word start, word finish;
+
+      read((line,newline));
+      line start:=LWB line;
+      line finish:=UPB line;
+
+      WHILE line[line start]=blank
+                   &
+            line start<=UPB line
+      DO
+        line start+:=1
+      OD;
+
+      WHILE line[line finish]=blank
+                   &
+            line finish>=line start
+      DO
+        line finish-:=1
+      OD;
+
+      line:=line[line start:line finish]
+                       +blank;
+
+      FOR c FROM LWB line
+      WHILE c <= UPB line
+      DO
+        CHAR lc = line[c];
+
+        IF   lc /= blank & NOT in word
+        THEN word start:=c;  in word:=TRUE
+        ELIF lc = blank & NOT in word
+        THEN SKIP
+        ELIF lc /= blank & in word
+        THEN SKIP
+        ELSE #lc = blank & in word#
+          word finish:=c-1;
+          in word:=FALSE;
+          print((line[
+                  word start:word finish],
+                 newline))
+        FI
+      OD
+   END
+   FINISH
+\end{verbatim}
+\indent Notice that both \verb|word start| and \verb|word finish| are
+made to refer to new values before being used. This is a good check
+that you are writing the program properly. Notice also that the four
+possible states of the compound condition on line 26 are carefully
+spelled out on lines~28, 30 and~32.
+'
+\end{exercise}

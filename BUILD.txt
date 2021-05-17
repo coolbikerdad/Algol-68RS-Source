@@ -10,8 +10,8 @@ make: make
 ld, ar, ranlib: binutils
 gcc: gcc
 makeinfo, texindex: texinfo
-tex, texindex: texlive
-latex: texlive-latex-base
+tex, texindex: texlive texlive-extra-utils
+latex: texlive-latex-base texlive-latex-extra
 install-info: install-info
 dpkg-buildpackage: dpkg-dev debhelper
 libc6-dev: linux-libc-dev
@@ -20,7 +20,7 @@ ldconfig, cp, mv, rm, find, sh, tar: <installed by default>
 
 Install these original dependencies:
 
-$ sudo apt install fakeroot make binutils gcc texinfo texlive texlive-latex-base install-info dpkg-dev debhelper linux-libc-dev info
+$ sudo apt install fakeroot make binutils gcc texinfo texlive texlive-extra-utils texlive-latex-base texlive-latex-extra install-info dpkg-dev debhelper linux-libc-dev info
 -----
 
 macOS

@@ -1,0 +1,7 @@
+% makeindex style file for "Programming Algol 68 Made Easy"
+% Created by Sian Leitch -- BP21306-06-04
+preamble "\\begin{theindex}\n\\catcode`\\%=12"
+postamble "\n\n\\catcode`\\%=14\\end{theindex}\n"
+%encap_prefix "\\special{html:<a href=\""
+%encap_infix  "\">}"
+%encap_suffix "\\special{html:</a>}"

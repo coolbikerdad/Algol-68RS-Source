@@ -1,0 +1,45 @@
+% $Log: pame.tex,v $
+% Revision 1.4  2012/01/04 17:25:33  sian
+% Changed the author
+%
+% Revision 1.2  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\PassOptionsToPackage{pdftex}{hyperref}
+\documentclass[11pt,a4paper,oneside]{book}
+\pagestyle{headings}
+\usepackage{verbatim,epic,eepic}
+\usepackage{makeidx,pame}
+\usepackage{makeidx}
+\usepackage{hyperref}
+\makeindex
+\makeanswers
+\begin{document}
+\pagestyle{headings}
+\frontmatter
+\input{title}
+\input{index.see}
+\hylabel{toc}
+\tableofcontents
+\input{preface}
+\mainmatter
+\input{chapter1}
+\input{chapter2}
+\input{chapter3}
+\input{chapter4}
+\input{chapter5}
+\input{chapter6}
+\input{chapter7}
+\input{chapter8}
+\input{chapter9}
+\input{chapter10}
+\input{chapter11}
+\input{chapter12}
+\input{chapter13}
+\appendix
+\printanswers
+\backmatter
+\input{bibliography}
+\hylabel{index}
+\printindex
+\end{document}

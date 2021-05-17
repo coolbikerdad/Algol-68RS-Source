@@ -1,0 +1,1749 @@
+% $Log: chapter6.tex,v $
+% Revision 1.3  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Routines}{chapvi}
+Routines consist of two types: operators and procedures. They have
+much in common, so the first section covers their common aspects.
+These are followed by a section on operators and a section on
+procedures. The length of this chapter reflects the importance of
+routines in the language.
+
+\Section{Routines}{rout-rout}
+A \bfix{routine} is a number of encapsulated actions
+which can be elaborated in their entirety in other parts of the
+program. A routine has a well-defined mode. The value of a routine is
+expressed as a \hx{\textbf{routine denotation}}{denotation!routine}.
+Here is an example:
+\begin{verbatim}
+   ([]INT a)INT:
+   (
+      INT sum:=0;
+   
+      FOR i FROM LWB a TO UPB a DO sum+:=i OD;
+      sum
+   )
+\end{verbatim}
+\noindent
+In this example, the \bfix{header}\hx{ }{routine!header}of the
+routine is given by
+\begin{verbatim}
+   ([]INT a)INT:
+\end{verbatim}
+\noindent
+which could be read as ``with (parameter) row of \verb|INT| \verb|a|
+yielding \verb|INT|''.  The \hx{mode}{mode!routine} of the routine is
+given by the header, less the colon and any identifiers. So the mode
+of the above routine is
+\begin{verbatim}
+   ([]INT)INT
+\end{verbatim}
+\noindent
+We say that the routine takes one \textbf{parameter} of mode
+\verb|[]INT| and \hx{yields}{routine!yield} a value of mode
+\verb|INT|.
+
+As you can see from the \hx{\textbf{body}}{routine!body} of the
+routine (everything except the header), the routine yields the sum of
+the individual elements of the \ix{parameter}.  The body of a routine
+is a \ix{unit}. In this case, it is an enclosed
+\hx{clause}{clause!enclosed}.
+
+We have met parameters before in a different guise. The formal
+definition of an
+\hx{identity declaration}{declaration!identity!formal definition}
+is
+$$\hbox{\texttt{<formal-mode-param> = <actual-mode-param>}}$$
+The \hx{formal-mode-param}{parameter!formal} consists of an
+identifier preceded by a \ix{formal-mode-declarer} (referred to in
+the last chapter as a \ix{formal-declarer}). An
+\hx{actual-mode-param}{parameter!actual} is a piece of program which
+yields an internal object which henceforth is identified by the
+\ix{identifier}. For example, in the identity declaration
+\begin{verbatim}
+   []INT a = (2,3,5,7,11)
+\end{verbatim}
+\noindent
+\verb|[]INT a| is the formal (mode) parameter, \verb|[]INT| is the
+formal (mode) declarer, the identifier is \verb|a|, and the actual
+(mode) parameter is the \hx{row-display}{row!display}
+\verb|(2,3,5,7,11)|.  The word ``mode'' was placed in parentheses
+because it is common usage to omit it.  Henceforth, we shall talk
+about formal parameters and actual parameters.
+
+In the header of the above routine, \verb|a| is declared as a formal
+parameter.  The mode of \verb|a| is \verb|[]INT|.  At the time the
+routine is declared, \verb|a| does not identify a value.  That is why
+it is called a ``formal'' parameter.  It is only when the routine is
+used that \verb|a| will identify a value.  We'll come to that later.
+Any identifier may be used for the formal parameter of a routine.
+
+In the body of the routine, \verb|a| is treated as though it has a
+value. Since its mode is \verb|[]INT|, it is a multiple and so it
+can be sliced to access its individual elements.
+
+The body of the routine written above consists of an enclosed
+\hx{clause}{clause!enclosed}. In this case, the enclosure consists
+of the parentheses \verb|(| and \verb|)|, but it might well have been
+written using \ixtt{BEGIN} and \ixtt{END}. Inside the enclosure is a
+\hx{serial clause}{clause!serial} consisting of three phrases. The
+first is a declaration with an \ix{initial assignment}.  Although an
+assignment yields a name, an identity declaration with an initial
+assignment, even an abbreviated one, does not.  This is the only
+exception.
+
+The second phrase is a \verb|FOR| \hx{loop clause}{clause!loop}
+which yields \verb|VOID| (see section~\hyref{rout-VOID}).  The third
+phrase consists of the identifier \verb|sum| which yields its name
+of mode \verb|REF INT|.
+
+Now, according to the header of the routine, the routine must yield a
+value of mode \verb|INT|.  The \hx{context}{routine!context} of the
+body of a routine is strong.  \hylabel{rout-cont}Although a serial
+clause cannot be coerced, the context of the serial clause is passed
+to the last phrase of that clause.  In this case, we have a value of
+mode \verb|REF INT| which, in a \hx{strong context}{context!strong},
+can be coerced to a value of mode \verb|INT| by
+\hx{dereferencing}{coercion!dereferencing}.
+
+\begin{exercise}
+\item What is the formal definition of an identity declaration?
+\ans An identity declaration is
+\begin{verbatim}
+<formal-mode-param> = <actual-mode-param>
+\end{verbatim}
+'
+\item Why is the parameter of a routine denotation called a formal
+parameter? \ans Because it is an identifier with a mode, but no
+associated value.
+'
+\item In the routine denotation
+\begin{verbatim}
+   (REAL r)INT: ENTIER r;
+\end{verbatim}
+\indent\begin{subex}
+\item What is the mode of the formal parameter? \subans \verb|REAL|
+'
+\item What is the mode of the value yielded? \subans \verb|INT|
+'
+\item What is the context of the body of the routine? \subans Strong
+'
+\item If the value of \verb|r| were \verb|-4.6|, what value
+would the routine yield? \subans \verb|-5|
+'
+\end{subex}
+\item Write a routine which takes a parameter of mode \verb|[]INT| and
+yields a value of mode \verb|[]CHAR|, where each element of the result
+yields the character equivalent of the corresponding element in the
+parameter (use \verb|FOR| and \verb|REPR|). \ans Using a loop:-
+\begin{verbatim}
+   ([]INT i)[]CHAR:
+   (
+      [LWB i:UPB i]CHAR s;
+
+      FOR n FROM LWB i TO UPB i
+      DO
+      s[n]:=REPR ii
+      OD;
+      s
+   )
+\end{verbatim}
+'
+\end{exercise}
+
+\Subsection{Routine modes}{rout-modes}
+In general, a routine may have any number of parameters, including
+none, as we shall see. The mode of the parameters may be any mode,
+and the value yielded may be any mode. The modes written for the
+parameters and the yield are always formal declarers, so no bounds
+are used if the modes of the parameters or yield involve multiples.
+
+Here is a possible header of a more complicated
+\hx{routine}{routine!header}:
+\begin{verbatim}
+   (INT i,REF[,]CHAR c,REAL a,REAL b)BOOL:
+\end{verbatim}
+\noindent
+A minor abbreviation would be possible in this case. The
+\begin{verbatim}
+   REAL a,REAL b
+\end{verbatim}
+\noindent
+could be written \verb|REAL a,b| giving
+\begin{verbatim}
+   (INT i,REF[,]CHAR c,REAL a,b)BOOL:
+\end{verbatim}
+\noindent
+Notice that the parameters are separated by commas.  This means that
+when the routine is used, the actual parameters are evaluated
+\hx{collaterally}{collateral!elaboration}.  We shall see later that
+this is important when we consider
+\hx{\textbf{side-effects}}{side-effect}.
+
+The order in which parameters are written in the header is of no
+particular significance.
+
+The mode of the routine whose header is given above is
+\begin{verbatim}
+   (INT,REF[,]CHAR,REAL,REAL)BOOL
+\end{verbatim}
+\noindent
+(``with int ref row row of car real real yielding bool'').
+
+\Subsection{Multiples as parameters}{rout-multpar}
+Since a \hx{formal parameter}{parameter!formal} which is a multiple
+has no bounds written in it, any multiple having that mode could be
+used as the \hx{actual parameter}{parameter!actual}. This means that
+if you need to know the bounds of the actual multiple, you will need to
+use the \ix{bounds interrogation} operators. For
+example, here is a \hx{routine denotation}{denotation!routine} which
+finds the smallest element in its multiple parameter:
+\begin{verbatim}
+([]INT a)INT:
+(
+   INT min:=a[LWB a];
+
+   FOR i FROM LWB a TO UPB a
+   DO
+       min:=min MIN a[i]
+   OD;
+   min
+)
+\end{verbatim}
+
+\Subsection{Names as parameters}{rout-namepar}
+The second parameter in the more complicated routine header given in
+section \hyref{rout-modes} had the mode \verb|REF[,]CHAR|. When a
+parameter is a name, the body of the routine can have an assignment
+which makes the name refer to a new value. For example, here is a
+routine denotation which assigns a value to its parameter:
+\begin{verbatim}
+   (REF INT a)INT:  a:=2
+\end{verbatim}
+\noindent
+Notice that the \ix{unit} in this case is a single \ix{phrase} and so
+does not need to be enclosed. Here is a routine denotation which
+has two parameters and which yields a value of mode \verb|BOOL|:
+\begin{verbatim}
+   (REF[]CHAR rc,[]CHAR c)BOOL:
+   IF UPB rc - LWB rc /= UPB c - LWB c
+   THEN FALSE
+   ELSE rc[:]:=c[:];  TRUE
+   FI
+\end{verbatim}
+\noindent
+Here, the body is a \hx{conditional clause}{clause!conditional}
+which is another kind of \hx{enclosed clause}{clause!enclosed}. Note
+the use of trimmers to ensure that the \ix{bounds} of the multiples
+on each side of the assignment match.
+
+If a flexible name could be used as an actual parameter, then
+the mode of the formal parameter must include the mode constructor
+\ixtt{FLEX}. For example,
+\begin{verbatim}
+   (REF FLEX[]CHAR s)INT:
+   (CO Code to compute the number of words CO)
+\end{verbatim}
+\noindent
+Of course, in this example, the mode of \verb|s| could have been
+given as \verb|REF STRING|.
+
+\Subsection{The mode \texttt{VOID}}{rout-VOID}
+A routine must yield a value of some mode, but it is possible to
+throw away that value using the \hx{voiding}{coercion!voiding}
+coercion. The mode \ixtt{VOID} has a single value whose denotation is
+\ixtt{EMPTY}. In practice, because the context of the yield of a
+routine is strong, use of \verb|EMPTY| is usually unnecessary (but
+see section \hyref{union-proc}). Here is another way of writing the
+last routine in the previous \hx{section}{stop@\texttt{stop}}:
+\begin{verbatim}
+   (REF[]CHAR rc,[]CHAR c)VOID:
+   IF UPB rc - LWB rc /= UPB c - LWB c
+   THEN
+      print(("Bounds mismatch",newline));
+      stop
+   ELSE rc[:]:=c[:]
+   FI
+\end{verbatim}
+\noindent
+This version produces an emergency error message and terminates the
+program prematurely (see section \hyref{stan-stop} for details of
+\verb|stop|).  Since the yield is \verb|VOID|, any value the
+conditional clause might yield will be thrown away. A \verb|FOR| loop
+yields \verb|EMPTY| and a semicolon voids the previous unit.
+Declarations yield no value, not even \verb|EMPTY|.
+
+\Subsection{Routines yielding names}{rout-yname}
+Since the \ix{yield} of a routine can be a value of any mode, a
+routine can yield a \ix{name}, but there is a restriction: the name
+yielded must have a scope larger than the body of the routine.  This
+means that any names declared to be \emph{local}, cannot be passed
+from the routine. Names which exist outwith the scope of the routine
+can be passed via a parameter and yielded by the routine. For
+example, here is a routine denotation which yields the name
+passed by such a parameter:
+\begin{verbatim}
+   (REF INT a)REF INT:  a:=2
+\end{verbatim}
+\noindent
+Compare this routine with the first routine denotation in
+section~\hyref{rout-namepar}.
+
+In chapter 5, we said that a new name can be declared using the
+generator \verb|LOC|. For example, here is an identity declaration
+for a name:
+\begin{verbatim}
+   REF INT x = LOC INT
+\end{verbatim}
+\noindent
+The \ix{range} of the identifier \verb|x| is the smallest enclosed
+clause in which it has been declared.  The \ix{scope} of the value it
+identifies is limited to that smallest enclosed clause because the
+generator used is the \hx{\textbf{local generator}}{generator!local}
+\ixtt{LOC}. Here is a routine which tries to yield a name declared
+within its body:
+\begin{verbatim}
+   (INT a)REF INT:
+     (REF INT x = LOC INT:=a;  x) #wrong!#
+\end{verbatim}
+\noindent
+This routine is wrong because the scope of the name identified by
+\verb|x| is limited to the body of the routine. Note, however, the
+\hx{a68toc}{a68toc!scope checking} Algol~68 compiler provides neither
+compile-time nor run-time \ix{scope checking} so that it is possible
+to yield a locally declared name. However, the rest of the program
+would be undefined---you might or might not get meaningful things
+happening.  When scopes are checked, this sort of error cannot occur.
+
+However, there is a way of yielding a name declared in a routine.
+This is achieved using a \hx{global generator}{generator!global}. If
+\verb|x| above were declared \hx{as}{HEAP@\texttt{HEAP}}
+\begin{verbatim}
+   REF INT x = HEAP INT
+\end{verbatim}
+\noindent
+or, in abbreviated form, \verb|HEAP INT x|, then the scope of the name
+identified by \verb|x| would be from its declaration to the end of the
+program even though the range of the \emph{identifier} \verb|x| is
+limited to the body of the routine:
+\begin{verbatim}
+   (INT a)REF INT:  (HEAP INT x:=a;  x)
+\end{verbatim}
+\noindent
+Notice that the mode of the yield is still \verb|REF INT|. All that
+has changed is the scope of the value yielded. Of course, you would
+not be able to identify the yielded name using \verb|x|, but we'll
+come to that problem when we deal with how routines are used. Notice
+that the global generator is written \verb|HEAP| instead of
+\verb|GLOB| as you might expect. This is because global generators
+use a different method of allocating storage for names with global
+scope and, historically, this different method is recorded in the
+mode constructor.
+
+The difference between range and scope is that identifiers have
+range, but values have scope. Furthermore,
+\hx{denotations}{denotation} have global scope.
+
+\begin{exercise}
+\item Write the header of a routine with a parameter of mode
+\verb|REF REAL| and which yields a value of mode \verb|REAL|.
+\ans \verb|(REF REAL id)REAL:|
+'
+\item Write the header of a routine which takes two parameters each of
+which is a name of mode \verb|REF CHAR|, and yields a name of mode
+\verb|REF CHAR|. \ans \verb|(REF CHAR a,b)REF CHAR:|
+'
+\item Write a routine which takes a parameter of mode \verb|STRING| and
+yields a value of mode \verb|[]STRING| consisting of the words of the
+parameter (use your answer to exercises in section \hyref{name-ex5-23}).
+\ans \ %
+\begin{verbatim}
+   (STRING s)[]STRING:
+   BEGIN
+      FLEX[1:0]STRING r:="";
+         #rowing coercion#
+      BOOL in word:=FALSE;
+      INT st:=LWB s,fn:=UPB s;
+
+      WHILE s[st]=blank & st<=UPB line
+      DO
+        st+:=1
+      OD;
+
+      WHILE s[fn]=blank & fn>=st
+      DO
+       fn-:=1
+      OD;
+
+      STRING ss:=s[st:fn]+blank;
+
+      FOR c FROM LWB ss UNTIL c > UPB ss
+      DO
+         CHAR ssc=ss[c];
+
+         IF   ssc/=blank & NOT in word
+         THEN st:=c;  in word:=TRUE
+         ELIF ssc=blank & NOT in word
+         THEN SKIP
+         ELIF ssc/=blank & in word
+         THEN SKIP
+         ELSE #ssc=blank & in word#
+            fn:=c-1;  in word:=FALSE;
+            [UPB r+1]STRING rr;
+            rr[:UPB r]:=r;
+            rr[UPB rr]:=ss[st:fn];
+            r:=rr
+        #The word has been added to r#
+         FI
+      OD;
+
+      r[2:]  #Omit the null string#
+   END
+\end{verbatim}
+'
+\end{exercise}
+
+\Subsection{Parameterless routines}{rout-nopar}
+A routine can have no parameters. In the header, the parentheses
+normally enclosing the \hx{formal parameter}{parameter!formal}
+\textbf{list} (either one parameter, or more than one separated by
+commas) are also omitted.  Here is a routine with no parameters and
+which yields a value of mode \verb|INT|:
+\begin{verbatim}
+   INT: 2*3**4 - ENTIER 36.5
+\end{verbatim}
+\noindent
+It would be more usual to use identifiers which had been declared in
+some enclosing range. For example,
+\begin{verbatim}
+   INT: 2*a**4 - ENTIER b
+\end{verbatim}
+\noindent
+Routines which have no parameters and yield no value are fairly
+common.  For example,
+\begin{verbatim}
+   VOID:  print(2)
+\end{verbatim}
+\noindent
+Strictly speaking, there is one value having the mode \ixtt{VOID},
+but there's not a lot you can do with it. In practice, \verb|VOID|
+routines usually use identifiers declared in an enclosing range (they
+are called identifiers global to the routine). For
+\hx{example}{identifier!global}:
+\begin{verbatim}
+   VOID: (x:=a;  x<=2|print(x)|print("Over 2"))
+\end{verbatim}
+\noindent
+where the body is an abbreviated conditional clause, and \verb|x| and
+\verb|a| have been declared globally with appropriate modes.
+
+Assignment of values to names declared globally\footnote{The phrase
+``names declared globally'' is intended to mean here that the names
+have been declared in a range which encloses the routine, not that
+\texttt{HEAP} has necessarily been used in the declaration. We use
+the phrase ``a global name'' in the latter case.} to the routine is
+known as a \bfix{side-effect}. We shall deal with side-effects when
+we describe how routines are used, and we shall show why side-effects
+are undesirable.  If you write parameterless routines, it is
+preferable not to put any assignments to globally-declared names in
+them. In fact, it would be safer to say: ``In a routine, don't assign
+to names not declared in the routine or not provided as parameters''.
+Side-effects are messy and are usually a sign of badly designed
+programs.  It is better to use a parameter (or an extra parameter)
+using a name, and then assign to that name.  This ensures that values
+can only get into or out of your routines via the header, and results
+in a much cleaner design.  Cleanly designed programs are easier to
+write and easier to maintain.
+
+\begin{exercise}
+\item Write the header of a routine which yields a value of mode
+\verb|REAL|, but takes no parameters. \ans \verb|REAL:|
+'
+\item Write a routine of mode \verb|VOID| which prints
+\begin{verbatim}
+   Hi, there
+\end{verbatim}
+\noindent
+on your screen. \ans \verb|VOID: print("Hi, there")|
+'
+\end{exercise}
+
+\Section{Operators}{rout-ops}
+In the preamble to this chapter, it was mentioned that routines
+consist of two kinds: procedures and operators. See
+section~\hyref{rout-procs} for details of procedures.
+
+An operator has a \hx{mode}{operator!mode} and a
+\hx{value}{operator!value} (its routine
+\hx{denotation}{denotation!routine}) and, if dyadic, a
+\hx{priority}{operator!priority}.
+The parameters to routines which are defined as operators are called
+\hx{operands}{operand}. Monadic operators, while not having a
+priority, behave as though they had a priority greater than any
+\hx{dyadic operator}{operator!dyadic} and take one operand and
+\hx{yield}{operator!yield} a value of some mode.
+
+Here is an identity declaration of the
+\hx{monadic operator}{operator!monadic} \verb|B|:
+\begin{verbatim}
+   OP(INT)INT B = (INT a)INT: a
+\end{verbatim}
+\noindent
+There are several points to note.
+\begin{enumerate}
+\item The mode of the operator is \verb|OP(INT)INT|. That is,
+it takes a single operand of mode \verb|INT| and yields a value of
+mode \verb|INT|.
+\item The \hx{symbol}{operator!symbol} for the operator looks
+like a \hx{mode indicant}{mode!indicant}.  It isn't a mode
+indicant, but obeys the same rules (starts with an uppercase letter
+and possibly continues with uppercase letters or digits, and no
+spaces are allowed inside the symbol).
+\item The right-hand side of the identity
+\hx{declaration}{declaration!identity!routine} is a routine
+denotation.  A special identity declaration is used for operators:
+instead of the mode of the operator, the mode constructor \ixtt{OP}
+is used followed by the operator symbol. The abbreviated declaration
+of the operator \verb|B| is
+\begin{verbatim}
+        OP B = (INT a)INT: a
+\end{verbatim}
+\end{enumerate}
+
+Chapter 2 described how operators are used in formul\ae{}. A possible
+formula using \verb|B| could be
+\begin{verbatim}
+   B 2
+\end{verbatim}
+\noindent
+which would yield \verb|2|.
+
+\Subsection{Identification of operators}{rout-idops}
+This section is more difficult than preceding sections and could be
+omitted on a first reading. You are unlikely to fall afoul of what is
+described here unless you are declaring many new operators.
+
+One of the most useful properties of operators is that there can be
+more than one declaration of the same operator symbol using an
+operand having a different mode. This is called
+\hx{``operator overloading''}{overloading}.
+How does the compiler know which version of the operator to use?
+Before answering this question, consider the following program
+fragment:
+\begin{verbatim}
+    1 BEGIN
+    2    OP D = (INT a)INT:   a+2;
+    3    OP D = (REAL a)REAL: a+2.0;
+    4    REAL x:=1.5, a:=-2.0; INT i:=4;
+    5
+    6    x:=IF  OP D = (REF REAL a)REF REAL:
+    7                      a+:=2.0;
+    8           ENTIER(D a:=x) > i
+    9       THEN D i
+   10       ELSE D x
+   11       FI;
+   12
+   13    OP D = (REF REAL a)REF REAL:  a+:=3.0;
+   14    x:=D a
+   15 END
+\end{verbatim}
+\noindent
+The numbers on the left-hand side are not part of the program. As you
+can see, there are four declarations of \verb|D|: one with an
+\verb|INT| operand, one with a \verb|REAL| operand and two with a
+\verb|REF REAL| operand. If you try compiling this you will get the
+error
+\begin{verbatim}
+        ERROR (146) more than one version of D
+\end{verbatim}
+\noindent
+for the last declaration. There are two points to be made here.
+\begin{enumerate}
+\item Outside the conditional \hx{clause}{clause!conditional},
+there are three declarations of \verb|D|: on lines 2, 3 and 13. Now,
+an operator is used in a formula and the context of the operand of an
+operator is firm. Of the coercions we have met so far, only one,
+namely \hx{dereferencing}{coercion!dereferencing}, is allowed in
+a \hx{firm context}{context!firm}.  If you look at the assignment
+on line~14, you can see that the mode of the operand of \verb|D| is
+\verb|REF REAL| (from the declaration of \verb|a| on line~4).  Now a
+value of mode \verb|REF REAL| is \ix{firmly coercible} to \verb|REAL|
+(by dereferencing).  So there are two declarations of \verb|D| which
+could be used: the declaration on line~3 and the declaration on
+line~13 (the \ix{range} of the declaration on line~6 is confined to
+the conditional clause).  According to the rules for the
+identification of operators (see below), the compiler would not be
+able to distinguish between the two declarations.  Hence the error
+message.
+\item Why did the identical declaration of \verb|D| on line~6 not
+cause a similar error message? Answer: because the declaration on
+line~6 is at the start of a new range: the enclosed clause starting
+on line~6 and extending to the \verb|FI| on line~11.  Since that is a
+new range, any operator declarations with a mode which is
+\bfix{firmly related} to the mode of an operator declared in an outer
+range makes the declaration in the outer range inaccessible. Thus,
+the assignment on line~8 will use the version of \verb|D| declared on
+line~6, the \verb|D| on line~9 identifies the \verb|D| declared on
+line~2, and the \verb|D| on line~10 again uses the \verb|D| declared
+on line~6.
+\end{enumerate}
+
+Thus, in determining which operator to use, the compiler firstly
+finds a declaration whose mode can be obtained from the operands in
+question using any of the coercions allowed in a firm context
+(chapter~10 will state all the coercions allowed). Secondly, it will
+use the declaration in the smallest range enclosing the formula.
+
+The declaration of an object is known as its
+\hx{\textbf{defining occurrence}}{occurrence!defining}. Where the
+object is used is called its
+\hx{\textbf{applied occurrence}}{occurrence!applied}.  In
+practice, it is rare to find like operator declarations in nested
+ranges.
+
+\begin{exercise}
+\item This and the following exercise use the following program
+fragment:
+\begin{verbatim}
+    1 IF
+    2    OP T = (INT a)INT:  a*a;
+    3    OP T = (CHAR a)INT: ABS a * ABS a;
+    4    INT p:=3, q:=4; CHAR c:=REPR 3;
+    5    T p < T c
+    6 THEN
+    7    OP T = (REF INT a)REF INT: a*:=a;
+    8    IF T 4 < T q
+    9    THEN "Yes"
+   10    ELSE T REPR 2
+   11    FI
+   12 ELSE T c > T q
+   13 FI
+\end{verbatim}
+\noindent
+There are 3 defining occurrences of the operator \verb|T| on lines 2,
+3 and~7. There are 7 applied occurrences of the operator (on lines 5,
+8, 10 and~12). Which defining occurrence is used for each applied
+occurrence? \ans This table summaries the occurrences:-
+\begin{center}
+\begin{tabular}{|r|l|c|}\hline
+      &\multicolumn{2}{c|}{Occurrences}\\ \hline
+Line  &Applied&Defining\\ \hline
+ 5    &\texttt{T p}&2\\
+ 5    &\texttt{T c}&3\\
+ 8    &\texttt{T 4}&2\\
+ 8    &\texttt{T q}&7\\
+10    &\texttt{T REPR 2}&3\\
+12    &\texttt{T c}&3\\
+12    &\texttt{T q}&2\\ \hline
+\end{tabular}
+\end{center}
+'
+\item What is the mode and value yielded by
+\begin{subex}
+\item \verb|T q| on line 8 \subans A name of mode \verb|REF INT|.
+'
+\item \verb|T q| on line 12 \subans The integer denoted by \verb|16| of
+mode \verb|INT|.
+'
+\item \verb|T c| on line 12 \subans The integer nine of mode
+\verb|INT|.
+'
+\item \verb|T REPR 2| on line 10 \subans The integer four of mode
+\verb|INT|.
+'
+\end{subex}
+\item What is wrong with these two declarations occurring in the same
+range:
+\begin{verbatim}
+   OP TT = ([]INT a)[]INT:
+           FOR i FROM LWB a TO UPB a
+           DO print(a[i]*3) OD;
+   OP TT = (REF[]INT a)[]INT:
+           FOR i FROM LWB a TO UPB a
+           DO print(a[i]*3) OD
+\end{verbatim}
+\indent\ans The two declarations are firmly related because, in a
+firm context, a name of mode \verb|REF[]INT| can be dereferenced to a
+multiple of mode \verb|[]INT|.
+'
+\end{exercise}
+
+\Subsection{Operator usage}{rout-opuse}
+Before we go on to dyadic operators, there is one more point to
+consider. Given the operator declaration
+\begin{verbatim}
+   OP PLUS2 = (REAL a)REAL:  a+2.0
+\end{verbatim}
+\noindent
+what is the mechanism by which the formal parameter gets its value?
+Firstly, we must remember that a particular version of the operator is
+chosen on the basis of firmly \hx{relatedness}{firmly related}. In
+other words, only coercions allowed in a
+\hx{firm context}{context!firm} can determine which declaration
+of the operator to use.  Secondly, in elaborating the formula
+\begin{verbatim}
+   PLUS2 x
+\end{verbatim}
+\noindent
+where \verb|x| has the mode \verb|REF REAL|, the compiler elaborates
+the identity declaration
+\begin{verbatim}
+   REAL a = x
+\end{verbatim}
+\noindent
+where \verb|REAL a| is the formal \hx{parameter}{parameter!formal}.
+Since the context of the right-hand side of an identity declaration
+is strong, any of the strong coercions would normally be allowed (all
+coercions, including dereferencing).  However, because the version of
+the operator was chosen on the basis of firmly relatedness, the
+coercions available in a strong context which are not available in a
+firm context (that is, widening and rowing) are not available in the
+context of an operand.  If an operand of mode \verb|INT| is supplied
+to an operator requiring a \verb|REAL|, the compiler will flag an
+error: widening would not occur. This is the only exception to the
+rule that the right-hand side of an identity declaration is a
+\hx{strong context}{context!strong!exception}.
+
+It was pointed out in section~\hyref{rout-yname} that a routine can
+yield a name.  An operator does not usually yield a name because
+subsequent use of the name usually involves dereferencing and using
+the value the name refers to.  However, here is an operator
+declaration which yields a name of a multiple which is used in a
+subsequent phrase:
+\begin{verbatim}
+   OP NAME = (INT a)REF[]INT:
+               (HEAP[2]INT x:=(a,a);  x);
+   REF[]INT a = NAME 3
+\end{verbatim}
+\noindent
+After the elaboration of the identity declaration, the name could be
+accessed wherever necessary.
+
+\begin{exercise}
+\item Given the declarations
+\begin{verbatim}
+   OP M3 = (INT i)INT:  i-3;
+   OP M3 = ([]INT i)[]INT:
+           FORALL n IN i DO n-3 OD;
+   INT i:=1,[3]INT j:=(1,2,3)
+\end{verbatim}
+\noindent
+which operator declarations would be used for the following
+formul\ae{}
+\begin{subex}
+\item \verb|M3 i| \subans 1.
+'
+\item \verb|M3 j[2]| \subans 1.
+'
+\item \verb|M3 j| \subans 2.
+'
+\item \verb|M3 j[:2]| \subans 2.
+'
+\end{subex}
+\end{exercise}
+
+\Subsection{Dyadic operators}{rout-dyad}
+The only differences between monadic and \hx{dyadic}{operator!dyadic}
+operators are that the latter have a \hx{priority}{operator!priority}
+and take two operands. Therefore the routine denotation used for a
+dyadic operator has two formal parameters. The priority of a dyadic
+operator is declared using the indicant \ixtt{PRIO}:
+\begin{verbatim}
+   PRIO HMEAN = 7; PRIO WHMEAN = 6
+\end{verbatim}
+\noindent
+The declaration of the priority of the operator uses an integer
+denotation in the range 1 to 9 on the right-hand side.
+
+Consecutive priority \hx{declarations}{declaration!priority} do
+not need to repeat the \verb|PRIO|, but can be abbreviated in the
+usual way.  The priority declaration relates to the operator
+\hx{symbol}{operator!symbol}.  Hence the same operator cannot
+have two different priorities in the same range, but there is no
+reason why an operator cannot have different priorities in different
+ranges.  A priority declaration does not count as a declaration when
+determining the \ix{scope} of a local name.
+
+If an existing operator symbol is used in a new declaration, the
+priority of the new operator must be the same as the old if it is in
+the same range, so the priority declaration should be omitted.
+
+The \hx{identification}{operator!dyadic!identification} of dyadic
+operators proceeds exactly as for monadic operators except that the
+most recently declared priority in the same range is used to
+determine the order of \hx{elaboration}{elaboration!order of} of
+operators in a formula.  Again, two operators using the same symbol
+cannot be declared in the same range if they have firmly
+\hx{related}{firmly related} modes (see section~\hyref{rout-idops}).
+
+These declarations apply to the remainder of this section:
+\begin{verbatim}
+   PRIO HMEAN = 7, WHMEAN = 6;
+   OP HMEAN  = (REAL a,b)REAL:
+                  2.0/(1.0/a+1.0/b);
+   OP WHMEAN = (REAL a,b)REAL:
+                  2.0/(1.0/a+2.0/b)
+\end{verbatim}
+\noindent
+If \verb|HMEAN| appears in the formula
+\begin{verbatim}
+   x HMEAN y
+\end{verbatim}
+\noindent
+where \verb|x| and \verb|y| both have mode \verb|REF REAL|, the
+compiler constructs the identity
+\hx{declarations}{declaration!identity!routine call}
+\begin{verbatim}
+   REAL a = x, REAL b = y
+\end{verbatim}
+\noindent
+Notice that the two identity declarations are elaborated
+\hx{collaterally}{elaboration!collateral} (due to the comma
+separating them), which could be important (see below).  If \verb|x|
+refers to \verb|2.5| and \verb|y| refers to \verb|3.5|, the formula
+will yield
+\begin{verbatim}
+   2.0/(1.0/2.5 + 1.0/3.5)
+\end{verbatim}
+\noindent
+which is $2.91\dot6$. Likewise, the formula
+\begin{verbatim}
+   x WHMEAN y
+\end{verbatim}
+\noindent
+would yield $2\cdot058\,823\,529\,411\,76$. Now consider the formula
+\begin{verbatim}
+   (x+:=1.0) WHMEAN (x+:=1.0)
+\end{verbatim}
+\noindent
+which cause the value referred to by \verb|x| to be incremented twice
+as a \ix{side-effect}. The resulting identity declarations are
+\begin{verbatim}
+   REAL a = (x+:=1.0), REAL b = (x+:=1.0)
+\end{verbatim}
+\noindent
+The definition of Algol 68 says that the operands of a dyadic operator
+should be elaborated collaterally, so the order of elaboration is
+unknown. Suppose \verb|x| refers to \verb|1.0| before the formula is
+elaborated. There are three cases:
+\begin{enumerate}
+\item The identity declaration for \verb|a| is elaborated first,
+giving \verb|a=2.0| and \verb|b=3.0|. The formula will yield
+$1.714\,285\,714$.
+\item The identity declaration for \verb|b| is elaborated first,
+giving \verb|b=2.0| and \verb|a=3.0|. The formula will yield $1.5$.
+\item The identity declarations are elaborated in parallel. In this
+case, the result could be \hx{indeterminate}{indeterminate result}.
+\end{enumerate}
+If you compile a program using a68toc with the declaration for
+\verb|WHMEAN| and try to compute the formula given above, you get the
+result \verb|+1.5000000000000000| which suggests that case~2
+holds.
+
+If \verb|x| refers to \verb|1.0|, then the formula
+\begin{verbatim}
+   1.0/(x+:=1.0) + 1.0/(x+:=1.0)
+\end{verbatim}
+\noindent
+yields \verb|+.83333333333333339e +0| which is correct provided that
+the two operands are elaborated sequentially. The moral of all this
+is: avoid side-effects like the plague.
+
+What happens if the identifier of an actual
+\hx{parameter}{parameter!actual} is the same as the \ix{identifier}
+of the formal \hx{parameter}{parameter!formal}? There is no clash.
+Consider the identity declaration
+\begin{verbatim}
+   INT a = a
+\end{verbatim}
+\noindent
+where the \verb|a| on the left-hand side is the formal parameter for
+a routine denotation, and the \verb|a| on the right-hand side is an
+actual parameter declared in some surrounding range. The formal
+parameter occurs at the start of a new range. Within that range, the
+identifier \verb|a| in the outer range becomes inaccessible, but at
+the moment that the identity declaration is being elaborated, the
+formal parameter is made to identify the value of the actual
+parameter which, of course, is not an identifier. So go ahead and use
+identical identifiers for formal parameters and actual parameters.
+
+\Subsection{Operator symbols}{rout-opsym}
+\hx{Most}{operator!symbol} of the operators described in chapters
+2 to~5 used symbols rather than upper-case letters.  You may use any
+combination of the \verb|<=>*/:| symbols (and any number of them)
+except \verb|:=|, \verb|:=:| and \verb|:/=:| (the latter two are
+described in chapter~11).  Any of the symbols \verb|+-?&%| can only
+start a compound symbol. Of course, they can stand on their own for
+an operator. In chapter~11, you will find the \verb|<<| and \verb|>>|
+operators described as well as more declarations for existing
+operators.  Here are some declarations of operators using the above
+rules:
+\begin{verbatim}
+   OP *** = (INT a)INT: a*a*a;
+   OP %< = (CHAR c)CHAR: (c<" "|" "|c);
+   OP -:: = (CHAR c)INT: (ABS c-ABS"0")
+\end{verbatim}
+
+We have now covered everything about operators in the language.
+
+\begin{exercise}
+\item Why are side-effects undesirable? \ans These reasons are the
+most important:-
+\begin{enumerate}
+\item Because their actions are not clear from the program code.
+\item They can cause indeterminate states to occur.
+\end{enumerate}
+'
+\item What is wrong with these operator symbols:
+\begin{subex}
+\item \verb|M*| \subans You cannot mix letters and symbols.
+'
+\item \verb|%+/| \subans The symbol should start with \verb|+| which
+has already been declared as a monadic operator.
+'
+\item \verb|:=:| \subans This symbol is used for the identity
+relation (see section \hyref{adv-idrel}) and is not an operator.
+'
+\end{subex}
+\item Declare an operator using the symbol \verb|PP| which will add
+\verb|1| to the value its \verb|REF INT| operand refers to, and which
+will yield the name of its parameter.
+\ans \verb|OP PP = (REF INT a)REF INT:  a+:=1|
+'
+\end{exercise}
+
+\Section{Procedures}{rout-procs}
+The second way of using routines is to declare them as
+\hx{procedures}{procedure}. We have seen that an operator can be
+declared and used, have a mode and a value (its routine denotation),
+but apart from having an operator symbol, it cannot be identified with
+an identifier in the way that a name or a denotation of a \verb|CHAR|
+value can.  Procedures are quite different.
+
+Firstly, here are some general remarks on the way procedures differ
+from operators.  The \hx{mode}{procedure!mode} of a procedure
+always starts with the mode constructor \ixtt{PROC}.  A procedure can
+have any number of parameters, including none.  Two procedures having
+the same identifier cannot be declared in the same range (so
+``\ix{overloading}'' is not allowed).  When a procedure is used, its
+parameters, if any, are in a strong context. This means that rowing
+and widening are available.
+
+Procedures are declared using the mode constructor \verb|PROC|. Here is
+a procedure which creates a range of characters:
+\begin{verbatim}
+   PROC(CHAR,CHAR)[]CHAR range =
+      (CHAR a,b)[]CHAR:
+      BEGIN
+         CHAR aa,bb;
+
+         (a<=b|aa:=a; bb:=b|aa:=b; bb:=a);
+
+         [ABS aa:ABS bb]CHAR r;
+
+         FOR i
+         FROM LWB r TO UPB r
+         DO
+            r[i]:=REPR i
+         OD;
+         r
+      END
+\end{verbatim}
+\noindent
+This procedure identity declaration resembles the declaration for a
+multiple: much of the mode is repeated on the right-hand side and the
+\ix{formal-declarer} on the left-hand side has no identifiers for the
+modes of the parameters.  Notice that the modes of the parameters
+must be repeated in the formal-declarer, but that the mode of the
+procedure on the right-hand side can contain the usual abbreviation.
+Here is the abbreviated header:
+\begin{verbatim}
+   PROC range = (CHAR a,b)[]CHAR:
+\end{verbatim}
+
+The formal-declarer is important for creating synonyms:
+\begin{verbatim}
+  PROC(REAL)REAL sine = sin
+\end{verbatim}
+
+Two or more procedure declarations can be separated by commas, even if
+the procedures have different modes. Consider, for example:
+\begin{verbatim}
+   PROC pa = (INT i)INT:  i*i,
+        pb = (INT i)CHAR: REPR(i*i),
+        pc = (INT i)REAL: (i=0|0|1/i)
+\end{verbatim}
+
+\Subsection{Parameterless procedures}{rout-npprocs}
+Procedures can have no parameters. Suppose the following names have
+been declared:
+\begin{verbatim}
+   INT i,j
+\end{verbatim}
+\noindent
+Here is a procedure with mode \verb|PROC INT| which yields an
+\verb|INT|:
+\begin{verbatim}
+   PROC INT p1 = INT: i:=3+j
+\end{verbatim}
+\noindent
+A procedure can be invoked or \hx{called}{procedure!call} by writing
+its identifier.  For example, the procedure \verb|p1| would be called
+by
+\begin{verbatim}
+   p1
+\end{verbatim}
+\noindent
+or
+\begin{verbatim}
+   INT a = p1
+\end{verbatim}
+\noindent
+The right-hand side of this identity declaration requires a value of
+mode \verb|INT|, but it has been given a unit of mode
+\verb|PROC INT|.  This is converted into a value of mode \verb|INT|
+by the coercion known as \textbf{deproceduring}. This
+\hx{coercion}{coercion!deproceduring} is available in every context
+(even \hx{soft}{context!soft}).
+
+Have you realised that \verb|print| must be the identifier of a
+procedure? Well done! However, we cannot talk about its parameters yet
+because we don't know enough about the language.
+
+Here is another procedure which yields a name of mode \verb|REF INT|.
+The mode of the procedure is \verb|PROC REF INT|:
+\begin{verbatim}
+   PROC p2 = REF INT: IF i < 0 THEN i ELSE j FI
+\end{verbatim}
+\noindent
+and assumes that the names identified by \verb|i| and \verb|j| had
+already been declared. Here is an identity declaration which uses
+\verb|p2|:
+\begin{verbatim}
+   REF INT i or j = p2
+\end{verbatim}
+\noindent
+Because \verb|p2| yields a name, it can be used on the left-hand side
+of an assignment:
+\begin{verbatim}
+   p2:=4
+\end{verbatim}
+\noindent
+Here, \verb|4| will be assigned to \verb|i| or \verb|j| depending on
+the value \verb|i| refers to. The left-hand side of an assignment has
+a soft \hx{context}{context!soft} in which only the deproceduring
+coercion is allowed.
+
+In procedures \verb|p1| and \verb|p2|, the identifier \verb|i| had
+been declared globally to the procedures. Assignment to such an
+identifier is, as already stated, a \ix{side-effect}.  Here is
+another procedure of mode \verb|PROC INT| which uses a global
+identifier, but does not assign to it:
+\begin{verbatim}
+   PROC p3 = REAL:
+   (
+      [i]REAL a;  read((a,newline));
+      REAL sum:=0.0;
+
+      FOR i FROM LWB a TO UPB a
+      DO
+         sum+:=a[i]
+      OD;
+
+      sum
+   )
+\end{verbatim}
+\noindent
+and here is a call of \verb|p3|:
+\begin{verbatim}
+   print(p3)
+\end{verbatim}
+\noindent
+In the identity declaration
+\begin{verbatim}
+   REAL r = p2
+\end{verbatim}
+\noindent
+\verb|p2| is deprocedured to yield a name of mode \verb|REF INT|,
+dereferenced to yield an \verb|INT|, and then widened to yield a
+\verb|REAL|.  All these coercions are available in a strong
+\hx{context}{context!strong} (the right-hand side of an identity
+declaration).
+
+The call of a procedure can appear in a formula without parentheses.
+Here is an example:
+\begin{verbatim}
+   p2:=p1 * ROUND p3
+\end{verbatim}
+\noindent
+If we call the procedure \verb|p1|, declared above, its value does not
+have to be used.  For example, in
+\begin{verbatim}
+   p1;
+\end{verbatim}
+\noindent
+the value yielded by \verb|p1| has been \hx{voided}{coercion!voiding}
+by the following semicolon after the procedure had been called.
+
+In the section on routines, we introduced the mode \ixtt{VOID}. Here
+is a procedure yielding \verb|VOID|:
+\begin{verbatim}
+   PROC p4 = VOID:  print(p3)
+\end{verbatim}
+\noindent
+and a possible use:
+\begin{verbatim}
+   ; p4;
+\end{verbatim}
+\noindent
+where the semicolons show that the call stands on its own.
+
+When a parameterless \hx{procedure}{procedure!parameterless} yields
+a multiple, the call of that procedure can be \hx{sliced}{slice}
+to get an individual element.  For example, suppose we declare
+\begin{verbatim}
+   PROC p5 = [,]REAL:
+   (
+      [i,j]REAL a;
+      read((a,newline));
+      a
+   )
+\end{verbatim}
+\noindent
+where \verb|i| and \verb|j| were declared above, and then call
+\verb|p5| in the formula
+\begin{verbatim}
+   REAL x = p5[i-3,j] * 2
+\end{verbatim}
+\noindent
+When \verb|p5| is called, it yields a two-dimensional multiple of mode
+\verb|[,]REAL| which is then sliced using the two
+\hx{subscripts}{subscript} (assuming that \verb|i-3| is within the
+bounds of the first dimension) to yield a value of mode \verb|REAL|,
+which is then used in the formula.
+
+Procedure \verb|p2|, declared above, yielded a name declared globally
+to the procedure. As explained in the sections on routines, a
+procedure cannot yield a locally-generated name. However, if the name
+is generated using \ixtt{HEAP}, then the name can be yielded as in
+\hx{\texttt{p6}:}{procedure!yield}
+\begin{verbatim}
+   PROC p6 = REF INT: (HEAP INT i:=3;  i)
+\end{verbatim}
+\noindent
+Here is a call of \verb|p6| where the yielded name is captured with an
+identity declaration:
+\begin{verbatim}
+   REF INT global int = p6
+\end{verbatim}
+\noindent
+Then \verb|print(global int)| will display \verb|3|.
+
+The yield of a procedure can be another procedure. Consider this
+program fragment:
+\begin{verbatim}
+   PROC q2 = INT: max int % 2,
+        q3 = INT: max int % 3,
+        q4 = INT: max int % 4,
+        q5 = INT: max int % 5;
+
+   INT i;  read((i,newline));
+
+   PROC q = PROC INT:
+      CASE i+1 IN q2,q3,q4 OUT q5 ESAC
+\end{verbatim}
+\noindent
+Procedure \verb|q| will yield one of the predeclared procedures
+depending on the value of \verb|i|. Here, the yielded procedure will
+not be deprocedured because the mode required is a procedure.
+
+One parameterless procedure is provided in the \ix{standard prelude}.
+Its identifier is \ixtt{random}, and when called returns the next
+pseudo-random real number of a series. If called a large number of
+times, the numbers yielded are uniformly distributed in the range
+$\left[0,1\right)$.
+
+\begin{exercise}
+\item Write a procedure which assigns a value to a name declared
+globally to the procedure. \ans \verb|PROC p = VOID:  a:=3|
+'
+\item Write a procedure which reads an integer from the keyboard, then
+declares a dynamic name of a multiple of one dimension, and reads that
+number of integers from the keyboard. Now compute the sum of all the
+integers, and yield its value as the yield of the procedure.
+\ans \ %
+\begin{verbatim}
+   PROC p = INT:
+   BEGIN
+      [(INT i; read((i,newline)); i)]INT a;
+      read(a);
+      INT sum:=0;
+
+      FOR i TO UPB a DO sum+:=a[i] OD;
+      sum
+   END
+\end{verbatim}
+'
+\item Write a procedure which yields the name of a two dimensional
+multiple containing characters read from the keyboard. The mode of
+the multiple should be \verb|REF[,]CHAR|. \ans \ %
+\begin{verbatim}
+   PROC p = REF[,]CHAR:
+   (
+      HEAP[3,20]CHAR n;
+      read((n,newline));
+      n
+   )
+\end{verbatim}
+'
+\end{exercise}
+
+\Subsection{Procedures with parameters}{rout-parprocs}
+\hx{Parameters}{procedure!parameters} of procedures can have any
+mode (including procedures).  Unlike operators, procedures can have
+any number of parameters.  The parameters are written as a
+\hx{parameter}{parameter!list} {\bf list} which consists of one
+parameter, or two or more separated by commas.
+
+Here is a procedure with a single parameter:
+\begin{verbatim}
+   PROC(INT)CHAR p7 = (INT i)CHAR: REPR(i>0|i|0)
+\end{verbatim}
+\noindent
+This is a full identity declaration for \verb|p7|. It can be
+abbreviated to
+\begin{verbatim}
+   PROC p7 = (INT i)CHAR: REPR(i>0|i|0)
+\end{verbatim}
+\noindent
+The mode of \verb|p7| is \verb|PROC(INT)CHAR|. That is, \verb|p7| is a
+procedure with a single integer parameter and yielding a character.
+Here is a \hx{call}{procedure!call} of \verb|p7|:
+\begin{verbatim}
+   CHAR c = p7(-3)
+\end{verbatim}
+\noindent
+Note that the single parameter is written between
+\ix{parentheses}. Since the context of an actual
+\hx{parameter}{parameter!actual} of a procedure is strong, a name of
+mode \verb|REF INT| could be used:
+\begin{verbatim}
+   CHAR c = p7(i)
+\end{verbatim}
+\noindent
+or
+\begin{verbatim}
+   CHAR c = p7(ai[j])
+\end{verbatim}
+\noindent
+where \verb|ai| has mode \verb|REF[]INT| and \verb|j| has mode
+\verb|INT| or \verb|REF INT| or \verb|PROC INT| (or even
+\verb|PROC REF INT|).
+
+Here is a procedure which takes three parameters:
+\begin{verbatim}
+   PROC char in string =
+      (CHAR c,REF INT p,STRING s)BOOL:
+   (
+      BOOL found:= FALSE;
+      FOR k FROM LWB s TO UPB s
+      WHILE NOT found
+      DO
+         (c = s[k] | i:=k; found:= TRUE)
+      OD;
+      found
+   )
+\end{verbatim}
+\noindent
+\hypertarget{rout-chinstr}{}\label{rout-chinstr}
+The procedure (which is in the standard prelude) tests whether a
+character is in a string, and if it is, returns its position in the
+parameter \verb|p|. The procedure yields \verb|TRUE| if the character
+is in the string, and \verb|FALSE| if not. Here is a possible call of
+the procedure:
+\begin{verbatim}
+   IF INT p;  char in string(char,"abcde",p)
+   THEN ...
+\end{verbatim}
+\noindent
+where \verb|char| was declared in an outer range. Notice that the
+\verb|REF INT| parameter of \verb|char in string| is not assigned a
+new value if the character is not found in the string.
+
+When calling a procedure, the call must supply the same number
+of actual parameters, and in the same order, as there are formal
+\hx{parameters}{parameter!formal} in the procedure declaration.
+
+If a multiple is one of the formal parameters, a
+\hx{row-display}{row!display} can be supplied as an actual parameter
+(remember that a row-display can only occur in a strong
+\hx{context}{context!strong}).  In this case, the row-display counts
+as a single parameter, but the number of elements in the row-display
+can differ in successive calls since the bounds of the multiple can
+be determined by the procedure using the bounds interrogation
+operators.  Here is an example:
+\begin{verbatim}
+   PROC pb = ([]INT m)INT:
+   (INT sum:=0;
+    FOR i FROM LWB m TO UPB m DO sum+:= m[i] OD;
+    sum)
+\end{verbatim}
+\noindent
+and here are some calls of \verb|pb|:
+\begin{verbatim}
+   pb((1,2,3))   pb((2,3,5,7,11,13))
+\end{verbatim}
+
+Again, procedures with parameters can assign to, or use, globally
+declared names and other values, but it is better to include the name
+in the header of the procedure. Here is a procedure which reads data
+into a globally declared multiple using that multiple as a
+\hx{parameter}{read@\texttt{read}}:
+\begin{verbatim}
+   PROC rm = (REF[]REAL a)VOID:
+      read((a,newline))
+\end{verbatim}
+\noindent
+It could now be called by
+\begin{verbatim}
+   rm(multiple)
+\end{verbatim}
+\noindent
+where \verb|multiple| had been previously declared as having mode
+\verb|REF[]REAL|.
+
+As described in section~\hyref{rout-namepar}, a \ix{flexible name} can
+be used as an actual parameter provided that the formal parameter has
+also been declared as being flexible.  For example, here is a
+procedure which takes a single parameter of mode \verb|REF STRING|
+and which yields an \hx{\texttt{INT}}{STRING@\texttt{STRING}}:
+\begin{verbatim}
+   PROC read line = (REF STRING s)INT:
+   (
+      read((s,newline));
+      UPB s #LWB is 1#
+   )
+\end{verbatim}
+\noindent
+\verb|read line| reads the next line of characters from the keyboard,
+assigns it to its parameter, which is a flexible name, and yields the
+length of the line.
+
+\begin{exercise}
+\item Write a procedure which takes a \verb|REF REAL| parameter,
+divides the value it refers to by $\pi$, multiplies it by~180,
+assigns the final value to its parameter, and yields the parameter
+(that is, its name). \ans \ %
+\begin{verbatim}
+   PROC p=(REF REAL r)REF REAL:
+      r:=r/pi*180
+\end{verbatim}
+'
+\item Write a procedure which takes two parameters: the first should
+have mode \verb|STRING| and the second mode \verb|INT|. Display the
+string on the screen the number of times given by the integer. If the
+integer is negative, display a newline first and then use the
+absolute value (use the operator \verb|ABS|) of the integer. Yield
+the mode \verb|VOID|. \ans \ %
+\begin{verbatim}
+   PROC p = (STRING s,INT i)VOID:
+   (
+      INT ii = IF i < 0
+               THEN print(newline); ABS i
+               ELSE i
+               FI;
+      TO ii DO print(s) OD
+   )
+\end{verbatim}
+'
+\item Write a procedure, identified as \verb|num in multiple|, which
+does for an integer what \verb|char in string| does for a character.
+\ans \ %
+\begin{verbatim}
+   PROC num in multiple=(INT i,
+                         []INT m,
+                         REF INT p)BOOL:
+   (
+      INT pos:=LWB m - 1;
+
+      FOR j FROM LWB m TO UPB m
+      WHILE pos < LWB m
+      DO
+         (i=m[j]|pos:=j)
+      OD;
+
+      IF pos < LWB m
+      THEN FALSE
+      ELSE p:=pos; TRUE
+      FI
+   )
+\end{verbatim}
+'
+\end{exercise}
+
+\Subsection{Procedures as parameters}{rout-procpar}
+Here is a procedure which takes a procedure as a parameter:
+\begin{verbatim}
+   PROC sum = (INT n,PROC(INT)REAL p)REAL:
+   (
+      REAL s:=0;
+      FOR i TO n DO s+:=p(i) OD;
+      s
+   )
+\end{verbatim}
+\noindent
+Notice that the mode of the procedure
+\hx{parameter}{parameter!procedure} is a formal \hx{mode}{mode!formal} so no
+identifier is required for its \verb|INT| parameter in the header of
+the procedure \verb|sum|. In the loop clause, the procedure is called
+with an actual parameter.
+
+When a parameter must be a procedure, there are two ways in which it
+can be supplied. Firstly, a predeclared procedure
+\hx{identifier}{procedure!identifier} can be supplied, as in
+\begin{verbatim}
+   PROC pa = (INT a)REAL: 1/a;
+   sum(34,pa)
+\end{verbatim}
+\noindent
+Secondly, a \hx{routine denotation}{denotation!routine} can be
+supplied:
+\begin{verbatim}
+   sum(34,(INT a)REAL: 1/a)
+\end{verbatim}
+\noindent
+A routine denotation is a \hx{unit}{unit}.  In this case, the routine
+denotation has the mode \verb|PROC(INT)REAL|, so it can be used in
+the call of \verb|sum|.  Notice also that, because the routine
+denotation is an actual parameter, its header includes the identifier
+\verb|a|.  In fact, routine denotations can be used wherever a
+procedure is required, so long as the denotation has the required
+mode.  The routine denotation given in the call is on the right-hand
+side of the implied identity declaration of the elaboration of the
+parameter.  It is an example of an \bfix{anonymous} routine
+denotation.
+
+\begin{exercise}
+\item Given the declaration of \verb|sum| in the text, what is
+the value of:
+\begin{subex}
+\item \verb|sum(4,(INT a)REAL: a)| \subans \verb|10.0|
+'
+\item \verb|sum(2,(INT b)REAL: 1/(5*b))| \subans \verb|0.3|
+'
+\item \verb|sum(0,pa)| (\verb|pa| is declared in the text) \subans
+\verb|0.0|.
+'
+\end{subex}
+\end{exercise}
+
+\Subsection{Recursion}{rout-rec}
+One of the fun aspects of using procedures is that a procedure can
+call itself. This is known as \bfix{recursion}. For example, here is
+a simplistic way of calculating a factorial:
+\begin{verbatim}
+   PROC factorial = (INT n)INT:
+      (n=1|1|n*factorial(n-1))
+\end{verbatim}
+\noindent
+Try it with the call
+\begin{verbatim}
+   factorial(7)
+\end{verbatim}
+\noindent
+Here is another recursively defined procedure which displays an
+integer on the screen in minimum space:
+\begin{verbatim}
+   PROC ai = (INT i)VOID:
+   IF   i < 0  THEN print("-");  ai(ABS i)
+   ELIF i < 10 THEN print(REPR(i+ABS"0"))
+   ELSE ai(i%10);  ai(i MOD 10)
+   FI
+\end{verbatim}
+\noindent
+In each of these two cases, the procedure includes a test which
+chooses between a \ix{recursive call} and phrases
+which do not result in a recursive call. This is necessary because,
+otherwise, the procedure would never complete. Neither of these
+procedures uses a locally declared value. Here is one which does:
+\begin{verbatim}
+   PROC new fact = (INT i)INT:
+   IF INT n:=i-1;   n = 1
+   THEN 2
+   ELSE i*new fact(n)
+   FI
+\end{verbatim}
+\noindent
+The example is somewhat artificial, but illustrates the point. If
+\verb|new fact| is called by, for example, \verb|new fact(3)|, then
+in the first call, \verb|n| will have the value \verb|2|, and
+\verb|new fact| will be called again with the parameter equal to
+\verb|2|.  In the second call, \verb|n| will be \verb|1|, but this
+\verb|n| this time round will be a new \verb|n|, with the first
+\verb|n| inaccessible (it being declared in an \ix{enclosing range}).
+\verb|new fact| will yield \verb|2|, and this value will be used in
+the formula on line~4 of the procedure.  The first call to
+\verb|new fact| will then exit with the value~\verb|6|.
+
+Apart from being fun, recursive procedures can be an efficient way of
+programming a particular problem. Chapter~11 deals with, amongst other
+topics, recursive modes, and there, recursive programming comes into
+its own.
+
+A different form of recursion, known as \bfix{mutual recursion}, is
+exemplified by two procedures which call each other. You have to
+ensure there is no circularity. The principal difficulty of how to
+use a procedure before it has been declared is overcome by first
+declaring a procedure name and then assigning a routine denotation to
+the procedure name after the other procedure has been declared. Here
+is a simple example:\footnote{A compiler which implements the
+Algol~68 defined by the Revised Report would not have to resort to
+this device because the declaration of each procedure would be
+available everywhere in the enclosing range (but see
+section~\hyref{rout-other}).}
+\begin{verbatim}
+   PROC(INT)INT pb;
+   PROC pa = (INT i)INT: (i>0|pb(i-1)|i);
+   pb:=(INT i)INT: (i<0|pa(i+1)|i);
+\end{verbatim}
+\noindent
+Then \verb|pa(4)| would yield \verb|3| and \verb|pa(-4)| would yield
+\verb|-4|. Similarly, \verb|pb(4)| would yield \verb|4| and
+\verb|pb(-4)| would yield \verb|-3|. Notice that the right-hand side of
+the assignment is an anonymous routine denotation.
+
+\begin{exercise}
+\item Write a recursive procedure to reverse the order of letters in a
+value of mode \verb|[]CHAR|. It should yield a value also of mode
+\verb|[]CHAR|. \ans \ %
+\begin{verbatim}
+   PROC reverse = ([]CHAR s)[]CHAR:
+   (SIZE s=1|s|s[UPB s]+reverse(s[:UPB s-1]))
+\end{verbatim}
+'
+\item Write two mutually recursive procedures which take an
+integer parameter and which yield an \verb|INT|. The first should call
+the second if the parameter is odd, and the second should call the
+first if the parameter is even. The alternative option should yield the
+square of the parameter for the first procedure and the cube of the
+parameter for the second procedure. Use \verb|square| and \verb|cube|
+as the procedure identifiers. \ans \ %
+\begin{verbatim}
+   PROC(INT)INT cube;
+
+   PROC square=(INT p)INT:
+      (ODD p|cube(p)|p^2);
+   cube:=(INT p)INT: (ODD p|p^3|square(p))
+\end{verbatim}
+\noindent
+'
+\end{exercise}
+
+\Subsection{Standard procedures}{rout-stan}
+The \ix{standard prelude} contains the declarations of more than 60
+procedures, most of them concerned with transput (see chapter nine).
+A number of procedures, all having the mode
+\begin{verbatim}
+   PROC(REAL)REAL
+\end{verbatim}
+\noindent
+are declared in the standard prelude and yield the values of common
+mathematical functions. These are \ixtt{sqrt}, \ixtt{exp}, \ixtt{ln},
+\ixtt{cos}, \ixtt{sin}, \ixtt{tan}, \ixtt{arctan}, \ixtt{arcsin} and
+\ixtt{arccos}.  Naturally, you must be careful to ensure that the
+actual parameter for \verb|sqrt| is non-negative, and that the actual
+parameter for \verb|ln| is greater than zero.  The procedures
+\verb|cos|, \verb|sin| and \verb|tan| expect their \verb|REAL|
+parameter to be in radians.
+
+New procedures using these predeclared procedures can be declared:
+\begin{verbatim}
+   PROC sinh =
+      (REAL x)REAL: (exp(x) + exp(-x))/2
+\end{verbatim}
+\noindent
+A variety of pseudo-random numbers can be produced using
+\verb|random int|. The mode of the procedure \ixtt{random int} is
+\begin{verbatim}
+   PROC(INT)INT
+\end{verbatim}
+\noindent
+and yields a pseudo-random integer greater than or equal to one, and
+less than or equal to its integer parameter.  For example, here is a
+procedure which will compute the percentage of each possible die
+throw in $10\,000$ such throws:
+\begin{verbatim}
+   PROC percentage = []REAL:
+   (
+      PROC throw = INT: random int(6);
+
+      [6]REAL result:=(0,0,0,0,0,0);
+
+      TO 10 000 DO result[throw]+:=1 OD;
+
+      FOR i FROM LWB result TO UPB result
+      DO result[i] /:= 10 000 OD;
+
+      result
+   )
+\end{verbatim}
+\noindent
+Notice that \verb|percentage| has another procedure (\verb|throw|)
+declared within it. There is no limit to such
+\hx{nesting}{procedure!nesting}. 
+
+\Subsection{Other features of procedures}{rout-other}
+Since a procedure is a value, it is possible to declare values whose
+modes include a procedure mode. For example, here is a
+multiple of \hx{procedures}{procedure!multiple}:
+\begin{verbatim}
+   []PROC(REAL)REAL pr = (sin,cos,tan)
+\end{verbatim}
+\noindent
+and here is a possible call:
+\begin{verbatim}
+   pr[2](2)
+\end{verbatim}
+\noindent
+which yields $-0.416\,146\,836\,5$. We could also declare a procedure
+which could be called with the expression
+\begin{verbatim}
+   pr(2)[2]
+\end{verbatim}
+\noindent
+but this is left as an exercise.
+
+Similarly, names of procedures can be declared and can be quite
+useful.  Instead of declaring
+\begin{verbatim}
+   PROC pc = (INT i)PROC(REAL)REAL: pr[i]
+\end{verbatim}
+\noindent
+using \verb|pr| declared above, with a possible call of \verb|pc(2)|
+we could write
+\begin{verbatim}
+   PROC(REAL)REAL pn:=pr[i]
+\end{verbatim}
+\noindent
+and then use \verb|pn| instead of \verb|pc|. The advantage of this
+would be that \verb|pr| would be subscripted only once instead of
+whenever \verb|pc| is elaborated. Furthermore, another procedure
+could be assigned to \verb|pn| and the procedure it refers to again
+called.  Using \verb|pn| would usually involve
+\hx{dereferencing}{coercion!dereferencing}.
+
+There are scoping problems involved with procedure
+\hx{names}{procedure!name}. Although the scope of a denotation is
+global, procedure denotations may include an identifier whose range
+is not global. For this reason, the scope of a procedure denotation
+is limited to the smallest enclosing clause containing a declaration
+of an identifier or mode or operator indicant which is used in the
+procedure denotation.
+
+For example, in this program fragment
+\begin{verbatim}
+   PROC REAL pp;  REAL y;
+   BEGIN
+      REAL x:=3.0;
+      PROC p = REAL:  x:=4.0;
+      print(p);
+      pp:=p; CO wrong CO
+      print(x)
+   END;
+   print(("pp=",pp)) #wrong#
+\end{verbatim}
+\noindent
+the assignment in line~6 is wrong because the scope of the right-hand
+side is less than the scope of the left-hand side. Unfortunately, the
+\hx{a68toc}{a68toc!scope checking} compiler does not perform scope
+checking and so will not flag the incorrect assignment.
+
+There are times when \ixtt{SKIP} is useful in a procedure declaration:
+\begin{verbatim}
+   PROC p = REAL:
+   IF x<0
+   THEN print("Negative parameter"); stop; SKIP
+   ELSE sqrt(x)
+   FI
+\end{verbatim}
+\noindent
+The yield of the procedure is \verb|REAL|, so each part of the
+conditional \hx{clause}{clause!conditional} must yield a value of
+mode \verb|REAL|.  The construct \verb|stop| yields \verb|VOID|, and
+even in a strong \hx{context}{context!strong}, \verb|VOID| cannot be
+coerced to \verb|REAL|.  However, \verb|SKIP| will yield an undefined
+value of any required mode.  In this case, \verb|SKIP| yields a value
+of mode \verb|REAL|, but the value is never used, because the program
+is terminated just before.
+
+Grouping your program into procedures helps to keep the logic simple
+at each level.  Nesting procedures makes sense when the nested
+\hx{procedures}{procedure!nesting} are used only within the outer
+procedures.  This topic is covered in greater depth in chapter~12.
+
+\Section{Summary}{rout-summ}
+The fact that this is one of the longer chapters in the book reflects
+the importance of routines in Algol~68 programs. Every formula uses
+operators, and procedures enable a program to be written in small
+chunks and tested in a piecewise manner.
+
+A routine denotation forms the basis of both operators and
+procedures.  Routine denotations have a well-defined mode, the value
+being the denotation itself. A routine can declare identifiers within
+its body, including other routines (whether operators or procedures).
+
+Operators can have one or two operands (as the parameters are called)
+and usually yield a value of some mode other than \verb|VOID|. Dyadic
+operators have a priority of~1 to~9. Firmly related operators cannot be
+declared in the same range. The operator symbol can be a bold indicant
+(like a mode indicant) or one of or a combination of various symbols.
+
+Procedures can have none or more parameters of any mode, and can
+yield a value of any mode (including \verb|VOID|). Procedures can
+call themselves: this is known as recursion.
+
+Rows of procedures, names of procedures and other modes using
+procedure modes can all be declared and, on occasion, can be useful.
+
+Here are some exercises which cover some of the topics discussed in
+this rather long chapter.
+
+\begin{exercise}
+\item At the time of the call of a procedure or operator, what is the
+relationship between the formal parameters and the actual parameters?
+\ans They form the two sides of an identity declaration.
+'
+\item Write an operator which will find the largest element in its
+two-dimensional row-of-reals parameter. \ans \ %
+\begin{verbatim}
+   OP LARGEST = ([,]REAL a)REAL:
+   (
+      REAL largest:=a[1 LWB a,2 LWB a];
+
+      FOR i FROM 1 LWB a TO 1 UPB a
+      DO
+         FOR j FROM 2 LWB a TO 2 UPB a
+         DO
+            largest:=largest MAX a[i,j]
+         OD
+      OD;
+      largest
+   )
+\end{verbatim}
+'
+\item Write a procedure, identified by \verb|pr|, which can be called by the
+phrase \verb|pr(2)[2]|. \ans \ %
+\begin{verbatim}
+   PROC pr = (INT n)REF[]INT: HEAP[n]INT
+\end{verbatim}
+'
+\item Write a procedure which computes the length of a line read from the
+keyboard. \ans \ %
+\begin{verbatim}
+   PROC leng = INT:
+   (STRING s;
+    read((s,newline));
+    UPB s)
+\end{verbatim}
+'
+\end{exercise}

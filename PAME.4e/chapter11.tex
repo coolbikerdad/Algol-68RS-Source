@@ -1,0 +1,1945 @@
+% $Log: chapter11.tex,v $
+% Revision 1.7  2004-11-07 16:00:10  sian
+% Removed all references to PLUS, MINUS and TIMES
+%
+% Revision 1.6  2003/05/31 13:02:41  sian
+% Removal of compiled libraries and binaries
+%
+% Revision 1.5  2003/04/23 08:57:31  sian
+% Debian release 1.5
+%
+% Revision 1.4  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Advanced constructs}{chapxi}
+We have now covered most of Algol 68.  All that remains is the
+identity relation, the parallel clause, the mode \verb|BITS|,
+completers, different precisions of numbers and means of accessing
+operating system facilities. Most of these are deceptively simple.
+The identity relation is used with modes containing multiple
+\verb|REF|s which take up the greater part of this chapter.  The
+\verb|BITS| mode and the parallel clause are introduced in later
+sections. Different numerical precisions and access to operating
+system facilities is mainly covered in chapter~12. We start with
+access to the machine word.
+\newpage
+
+\Section{Bits, bytes and words}{adv-words}
+In our discussion of \hx{plain values}{value!plain} (values of
+modes \verb|CHAR|, \verb|INT|, \verb|REAL|, and \verb|BOOL|), we have
+omitted saying how these values are stored in computer memory for one
+important reason: Algol~68 is a high-level programming language. A
+high-level programming language is one in which the concepts of
+computer programming are not expressed in terms of a computer, its
+instructions and its memory, but in terms of high-level concepts such
+as values and modes. Basically, the manner in which integers and
+characters and so on are stored in the computer are not our business.
+However, since programs written in Algol~68 need to access the
+operating system, it is useful to know something about \ix{memory},
+whether the main memory of the computer or the storage memory found
+on hard disks and other devices.
+
+Computer memory consists of millions of \textbf{bits} (short for binary
+digits) which are grouped together as \bfix{bytes} or \bfix{words}.
+A bit can take two values: 0 and 1.  A word is 16, 24, 32, 36, 60, 64
+or~72 bits ``wide'', and a byte is 6, 8 or~9 bits ``wide''. Almost
+all microcomputers use 8-bit bytes.  Microcomputers using the Intel
+Pentium processor (or compatibles) or later chips, use a 32-bit word
+and an 8-bit byte.  Generally speaking, a byte is used to store a
+character and a word is used to store an integer.  Real numbers are
+much more complicated than integers and we shall not describe how
+they are stored in memory.  Before we can understand about the
+equivalences of values of mode \verb|CHAR| and bytes, and values of
+mode \verb|INT| and words, we need to say something about
+\hx{\textbf{radix arithmetic}}{radix!arithmetic}.  If this is
+something you already know, please skip the next section.
+
+\Subsection{Radix arithmetic}{adv-radix}
+Our ordinary arithmetic uses the ten digits 0, 1, $\ldots$, 9 and
+expresses numbers in powers of ten. Thus the number 1896 consists of
+1 thousand, 8 hundreds, 9 tens and 6 units. This could be written
+$$1896=1\times1000+8\times100+9\times10+6\times1$$
+Remembering that 100 is ten squared ($10^2$) and 1000 is ten cubed
+($10^3$), we could rewrite this equation as
+$$1896=1\times10^3+8\times10^2+9\times10^1+6\times10^0$$
+As you can see, the powers of ten involved are 3, 2, 1 and 0. When we
+write whole numbers, we understand that the digits we use represent
+powers of ten. We say that the base, or \bfix{radix}, of our
+arithmetic is ten, which is why it is frequently referred to as
+``decimal arithmetic'' (\ix{decimal} is derived from the Latin word
+for ten).
+
+Now it is quite meaningful to develop an arithmetic having a different
+radix. For example, suppose we use two as the radix. We should express
+our numbers in terms of powers of two and they would be written using
+the digits 0 and 1 only. In an arithmetic of radix two, when we write a
+number, each digit would represent a power of two. For example, the
+number 101 would mean
+$$101=1\times2^2+0\times2^1+1\times2^0$$
+in an exactly analogous way to the number 1896 in decimal arithmetic.
+In fact, the decimal equivalent of 101 would be $4+0+1=5$ (in decimal).
+Here is another example:
+\begin{eqnarray*}
+1101&=1\times2^3+1\times2^2+0\times2^1+1\times2^0\\
+    &=8+4+0+1\\
+    &=13\,\hbox{(thirteen, in decimal)}
+\end{eqnarray*}
+We could then construct addition and multiplication tables as follows:
+$$\hbox{%
+    \begin{tabular}{|c|cr|} \hline
+      $+$ &0&1\\*[2pt] \hline
+      0   &0&1\\
+      1   &1&10\\*[2pt] \hline
+    \end{tabular}\qquad\qquad
+    \begin{tabular}{|c|cc|} \hline
+      $\times$ &0&1\\*[2pt] \hline
+      0        &0&0\\
+      1        &0&1\\*[2pt] \hline
+    \end{tabular}}
+$$
+As you can see from the addition table, $1+1=10$ (take row~2 and
+column~2).  When you read this equation, you must say ``one-zero'' for
+the number after the equals symbol. ``Ten'' means ten$+$zero units
+which this number definitely is not. The number 10 in radix 2 means
+``two$+$0 units'' which is what you would expect for the sum of 1
+and~1.
+
+Two radices of particular use with computers are sixteen and two.
+Arithmetic with a radix of sixteen is called \bfix{hexadecimal} and
+arithmetic with a radix of two is called \bfix{binary}.
+
+In \hx{hexadecimal arithmetic}{hexadecimal!arithmetic}, the digits 0
+to 9 are used, but digits are also required for the numbers ten to
+fifteen. The first six letters of the alphabet are used for the
+latter six numbers. They are commonly written in upper-case, but in
+Algol~68 they are written in lower-case for a reason which will
+become apparent in a later section. Thus the ``digits'' used for
+hexadecimal arithmetic are
+$$\hbox{\verb|0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f|}$$
+
+Addition and multiplication tables could be constructed for
+hexadecimal arithmetic on the same lines as those for radix two
+arithmetic. You should note that when writing a number containing
+more than one digit with a radix other than ten, the radix is
+commonly written (in decimal) as follows:
+$$2\times3=12_4$$
+Thus, in hexadecimal arithmetic, we could write
+$$7\times9=3\hbox{f}_{16}$$
+and there are some exercises at the end of this section in which you
+can try your hand at hexadecimal and other arithmetics.  Writing
+numbers in hexadecimal is sometimes called
+``\hx{hexadecimal notation}{hexadecimal!notation}''.
+
+A byte consists of eight binary digits and can take any value from
+$00000000_2$ to $11111111_2$.  The equivalent decimal value can be
+obtained by rewriting it as the sum of descending powers of two:
+\begin{eqnarray*}
+10011011_2&=&1\times2^7+1\times2^4+1\times2^3+1\times2^1+1\times2^0\\
+          &=&128+16+8+2+1\,\hbox{(in decimal)}\\
+          &=&155_{10}
+\end{eqnarray*}
+The exercises at the end of this section will give you some practice
+in this kind of conversion.
+
+If you compare the number of digits used to express the same number,
+you will find that hexadecimal arithmetic uses the least. For
+example, the decimal number 135 can be written
+\begin{eqnarray*}
+    135&=&87_{16}\\
+       &=&2013_4\\
+       &=&10000111_2
+\end{eqnarray*}
+\hx{When}{radix!conversion} converting numbers written in binary to
+hexadecimal, the simplest way is to split the binary number into two
+groups of 4 bits and then convert each group into one hexadecimal
+digit.  Thus \verb|00101011| can be split into \verb|0010| and
+\verb|1011|, and their hexadecimal equivalents are \verb|2| and
+\verb|b|.  If you intend accessing machine words, it would certainly be
+a good idea to learn the binary equivalents of the 16 hexadecimal
+digits \verb|0-f|.  To help you, here is the procedure
+\ixtt{itostr} which converts a positive value of
+mode \verb|INT| to a value of mode \verb|STRING| (with minimum width)
+using any radix from 2 to 16:
+\begin{verbatim}
+   []CHAR digits="0123456789abcdef"[@0];
+   
+   PROC itostr=(INT n#umber#,r#adix#)STRING:
+   IF n < r
+   THEN digits[n]
+   ELSE itostr(n%r,r)+digits[n MOD r]
+   FI
+\end{verbatim}
+\noindent
+Notice how its recursive definition simplifies the code.
+
+\begin{exercise}
+\item Using the procedure \verb|itostr|, write a program which will
+display the 16 integers between 0 and 15 (decimal) in decimal,
+hexadecimal and binary (the binary equivalent should be displayed as 4
+bits) in three columns. \ans \ %
+\begin{verbatim}
+   PROGRAM ex11 1 CONTEXT VOID
+   USE standard
+   BEGIN
+      []CHAR digits =
+            "0123456789abcdef"[@0];
+
+      PROC itostr = (INT n,r#adix#)STRING:
+      IF n<r
+      THEN digits[n]
+      ELSE itostr(n%r,r)+digits[n%*r]
+      FI;
+
+      print(("Table of numbers 0--15",
+             newline,newline,
+             "Dec. Hex. Binary",newline));
+
+      FOR i FROM 0 TO 15
+      DO
+         STRING bin = itostr(i,2),
+                dec = itostr(i,10),
+                hex = digits[i];
+                #only one digit#
+         print(((4-UPB dec)*blank,
+                dec,3*blank,hex,
+                4*blank,(4-UPB bin)*"0",
+                bin,newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\item For each of the following, rewrite the number in the given radix:
+\begin{subex}
+\item $94_{10}\Rightarrow16$ \subans \begin{eqnarray*}
+94_{10}&=&5\times16^1+14\times16^0\\
+       &=&5\hbox{e}_{16}
+\end{eqnarray*}
+'
+\item $13_{10}\Rightarrow2$ \subans \begin{eqnarray*}
+13_{10}&=&1\times2^3+1\times2^2+0\times2^1+1\times2^0\\
+       &=&1101_2
+\end{eqnarray*}
+'
+\item $1111\,1001_2\Rightarrow16$ \subans \begin{eqnarray*}
+1111\,1001_2&=&\hbox{f}9_{16}
+\end{eqnarray*}
+'
+\item $3\hbox{e}1_{16}\Rightarrow 10$ \subans \begin{eqnarray*}
+3\hbox{e}1_{16}&=&3\times16^2+\hbox{e}\times16^1+1\times16^0\\
+               &=&3\times256+14\times16+1\\
+               &=&768+224+1\\
+               &=&993_{10}
+\end{eqnarray*}
+'
+\item $2\hbox{c}_{16}\Rightarrow2$ \subans $2\hbox{c}_{16}=0010\,1100_2$.
+'
+\item $10101_2\Rightarrow10$ \subans \begin{eqnarray*}
+10101_2&=&1\times2^4+1\times2^2+1\times2^0\\
+       &=&16+4+1\\
+       &=&21_{10}
+\end{eqnarray*}
+'
+\end{subex}
+\item Express the value of each of the following using the radix of that
+exercise:
+\begin{subex}
+\item $101_2+110_2$ \subans $1011_2$
+'
+\item $35_{16}+\hbox{ae}_{16}$ \subans $\hbox{e}3_{16}$
+'
+\item $17_8+37_8$ \subans $56_8$
+'
+\end{subex}
+\end{exercise}
+
+\Section{The mode \texttt{BITS}}{adv-BITS}
+A value occupying a machine word has the mode \ixtt{BITS}. The number
+of binary digits in one machine word is given by the \ix{environment
+enquiry} (see section~\hyref{stan-enq}) \ixtt{bits width} which, for
+the \hx{a68toc}{a68toc!bits width@\texttt{bits width}} compiler is
+\verb|32|. A \verb|BITS| value can be denoted in four different ways
+using \hx{denotations}{denotation!BITS@\texttt{BITS}} written with
+radices of 2, 4, 8 or~16. Thus the declarations
+\begin{verbatim}
+   BITS a = 2r 0000 0000 0000 0000
+               0000 0010 1110 1101
+   BITS b = 4r 0000 0000 0002 3231
+   BITS c = 8r  000 0000 1355
+   BITS d = 16r 0000 02ed
+\end{verbatim}
+\noindent
+are all equivalent because they all denote the same value.  Notice
+that the \ix{radix} precedes the \verb|r| and is written in decimal.
+Notice also that the numbers can be written with spaces, or newlines,
+in the middle of the number. However, you cannot put a comment in the
+middle of the number. Since a \ix{machine word} contains 32 bits,
+each denotation should contain 32 digits in radix 2, 16 digits in
+radix 4, 11 digits in radix 8 and 8 digits in radix 16, but it is
+common practice to omit digits on the left of the denotation whose
+value is zero.  Thus the declaration for \verb|d| could have been
+written
+\begin{verbatim}
+   BITS d = 16r2ed
+\end{verbatim}
+\noindent
+When discussing values of mode \verb|BITS| where the values of more
+significant bits is important, full denotations like the above may be
+more appropriate.
+
+\subsection*{Monadic operators for \texttt{BITS}}\hylabel{adv-mbitops}
+There are many operators for \verb|BITS| values.  Firstly, the
+monadic operator \ixtt{BIN} takes an \verb|INT| operand and yields
+the equivalent value with mode \verb|BITS|.  The operator \ixtt{ABS}
+converts a \verb|BITS| value to its equivalent with mode \verb|INT|.
+The \ixtt{NOT} operator which you first met in chapter~4
+(section~\hyref{choice-bops}) takes a \verb|BITS| operand and yields a
+\verb|BITS| value where every bit in the operand is reversed.  Thus
+\begin{verbatim}
+   NOT 2r 1000 1110 0110 0101
+          0010 1111 0010 1101
+\end{verbatim}
+\noindent
+yields
+\begin{verbatim}
+       2r 0111 0001 1001 1010
+          1101 0000 1101 0010
+\end{verbatim}
+\noindent
+Notice that spaces have been used to make these binary denotations
+more comprehensible. \verb|NOT| is said to be a \bfix{bit-wise
+operator} because its action on each bit is independent of the value
+of other bits.
+
+\subsection*{Dyadic operators for \texttt{BITS}}\hylabel{adv-dbitops}
+\ixtt{AND} and \ixtt{OR} (both of which you also met in chapter~4)
+both take two \verb|BITS| operands and yield a \verb|BITS| value.
+They are both bit-wise operators and their actions are summarised as
+follows:
+$$\begin{tabular}{|c|c|c|c|} \hline
+Left Operand&Right Operand&\tt AND&\tt OR\\*[2pt] \hline
+      0     &       0     &    0  &   0\\*
+      0     &       1     &    0  &   1\\*
+      1     &       0     &    0  &   1\\*
+      1     &       1     &    1  &   1\\*[2pt] \hline
+\end{tabular}$$
+For \verb|OR|, the yield of
+\begin{verbatim}
+   2r 100110 OR 2r 10101
+\end{verbatim}
+\noindent
+is \verb|2r 110111|. The priority of \verb|AND| is 3 and the priority
+of \verb|OR| is~2.
+
+The \verb|AND| operator is particularly useful for extracting parts
+of a machine word. For example, suppose you have a \ixtt{BITS} value
+where the least-significant 8 bits are equivalent to a character. You
+could write
+\begin{verbatim}
+   CHAR c = REPR ABS (b AND 16rff)
+\end{verbatim}
+\noindent
+Here, the operators \ixtt{REPR} and \ixtt{ABS} do not generate
+mach\-ine-code instructions, but merely satisfy the compiler that the
+modes are correct. This sort of formula is, in fact, very efficient
+in Algol~68.
+
+It is possible to extract a single bit from a word using the operator
+\ixtt{ELEM} which has the header
+\begin{verbatim}
+   (INT n,BITS t)BOOL:
+\end{verbatim}
+\noindent
+For example, given the declaration
+\begin{verbatim}
+   BITS bi = 16r 394a 2716
+\end{verbatim}
+\noindent
+then each hexadecimal digit represents 4 bits: the \verb|3| occupies
+bit positions 1--4, the \verb|9| occupies bit positions 5--8, the
+\verb|4|, bit positions 9--12, and so on. Suppose we want the third bit
+(the leftmost bit is bit-1). The following declaration is valid:
+\begin{verbatim}
+   BOOL bit3 = 3 ELEM bi
+\end{verbatim}
+\noindent
+Thus, if the third bit is a \verb|1|, the declaration will give the
+value \verb|TRUE| for bit 3.  In fact, \verb|3| written in
+\ix{binary} is $0011_2$, so bit 3 is \verb|1|. Thus
+\begin{verbatim}
+   2 ELEM bi
+\end{verbatim}
+\noindent
+would yield \verb|FALSE|. The priority of \verb|ELEM| is~7.
+
+Incidentally, notice that in Algol~68 the most significant bit in a
+machine word is bit-1 and the least significant bit is bit-32. This
+strongly suggests that computers in the 1960's were ``big-endian''.
+Intel microprocessors and other compatible processors are
+``little-endian''\footnote{These terms come from the book by Jonathan
+Swift entitled ``Gulliver's Travels'' and they refer to the habit of
+some people of eating boiled eggs at the ``big'' end or the
+``little'' end!}. Because the \ix{a68toc} compiler translates
+Algol~68 programs into~C programs, it is quite possible for the
+Algol68toC system to be implemented on a ``big-endian''
+microprocessor, such as the Motorola 68000-series. A ``big-endian''
+processor stores a machine word as four bytes (each of 8-bits) with
+the most significant byte at the lowest memory address.
+``Little-endian'' processors store the least significant byte at the
+lowest memory address. Whatever kind of microprocessor is used to
+elaborate your programs, the most significant bit of the word is
+bit-1 and the least significant bit is bit-32 in Algol~68.
+
+\hx{The}{shift operators} dyadic operators \ixtt{SHL} and \ixtt{SHR}
+shift a machine word to the left or to the right respectively by the
+number of bits specified by their right operand. Their priority is
+\verb|8|. To illustrate their action we shall suppose that they all
+operate on the \verb|BITS| value \verb|16r 89ab cdef|.  Both the shifts
+are by four bits which is equivalent to one hexadecimal digit (4 bits
+is half a byte and is commonly called a \ix{nibble}: yes, software
+engineers do possess a sense of humour!).
+
+The result of shifting the above value by 4 bits is given by the
+following table:
+$$\begin{tabular}{|c|c|c|}
+    \hline
+    \multicolumn{3}{|c|}{Original value = \texttt{16r 89ab cdef}}
+      \\ \hline\hline
+    Operator&Bits shifted&Yield
+      \\ \hline
+    \texttt{SHL}&\ 4&\texttt{9abc def0}\\
+    \texttt{SHL}&-4&\texttt{089a bcde}\\
+    \texttt{SHR}&\ 4&\texttt{089a bcde}\\
+    \texttt{SHR}&-4&\texttt{9abc def0}
+      \\ \hline
+  \end{tabular}$$
+When shifting left (\verb|SHL|), bits shifted beyond the most
+significant part of the word are lost. New bits shifted in from the
+right are always zero. When shifting right (\verb|SHR|), the reverse
+happens. Note that the number of bits shifted should be in the range
+$[-32,+32]$. For \verb|SHL|, if the number of bits to be shifted is
+negative, the \verb|BITS| value is shifted to the right and likewise
+for \verb|SHR|.  The header for \verb|SHL| is
+\begin{verbatim}
+   OP SHL = (BITS b,INT i)BITS:
+\end{verbatim}
+\noindent
+and correspondingly for \verb|SHR|. The value \verb|b| is the value
+to be shifted and the integer \verb|i| is the number of bits to
+shift.  \verb|UP| and \verb|DOWN| are synonyms for \verb|SHL| and
+\verb|SHR| respectively. The priorities of \verb|SHL| and \verb|SHR|
+are both 8.
+
+As well as the operators \verb|=| and \verb|/=| (which have the usual
+meaning), the operators \verb|<=| and \verb|>=| are also defined for
+mode \verb|BITS|. The formula
+\begin{verbatim}
+   s >= t
+\end{verbatim}
+\noindent
+yields \verb|TRUE| only if for all bits in \verb|t| that are \verb|1|,
+the corresponding bits in \verb|s| are also \verb|1|. This is
+sometimes regarded as ``s implies t''. Contrariwise, the
+formula
+\begin{verbatim}
+   s <= t
+\end{verbatim}
+\noindent
+yields \verb|TRUE| only if for all bits in \verb|t| which are \verb|0|,
+the corresponding bits in \verb|s| are also \verb|0|. Likewise, this
+is sometimes regarded as ``\verb|NOT t| implies \verb|s|''.
+
+\begin{exercise}
+\item Given the declarations
+\begin{verbatim}
+   BITS a = 16r 1111 1111,
+        b = 16r 89ab cdef
+\end{verbatim}
+\noindent
+what is the value of each of the following:
+\begin{subex}
+\item \verb|a AND b| \subans \verb|16r 0101 0101|
+'
+\item \verb|a OR b| \subans \verb|16r 99bb ddff|
+'
+\item \verb|NOT a OR b| [Hint: convert each value to radix 2 and then
+combine] \subans \verb|16r 6745 2301|
+'
+\item \verb|a = b| \subans \verb|FALSE|
+'
+\end{subex}
+\item What is the value of
+\begin{subex}
+\item \verb|16rab SHL 3| \subans \verb|16r 558|
+'
+\item \verb|16rba SHR 3| \subans \verb|16r 17|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Overlapping slices}{adv-overlap}
+\hx{What}{slice!overlapping}\hx{happens}{trimming} if two
+trimmed multiples overlap? For example, consider the program
+\begin{verbatim}
+   PROGRAM slices CONTEXT VOID
+   USE standard
+   BEGIN
+      [4]INT r;
+
+      PROC res = VOID:
+      FOR n FROM LWB r TO UPB r
+      DO r[n]:=n OD;
+
+      PROC mpr = ([]INT m)VOID:
+      (
+         FOR i FROM LWB m TO UPB m
+         DO
+            print((whole(m[i],0),blank))
+         OD;
+         print(newline)
+      ); #mpr#
+
+      res;
+      print("Original contents:");  mpr(r);
+
+      r[:UPB r-1]:=r[1+LWB r:];
+      print((newline,"r[:3]:=r[2:]",newline,
+             "Compiler does it: "));  mpr(r);
+      res;
+
+      FOR i FROM LWB r TO UPB r-1
+      DO r[i]:=r[i+1] OD;
+      print("Forwards loop:    "); mpr(r);
+      res;
+
+      FOR i FROM UPB r-1 BY -1 TO LWB r
+      DO r[i]:=r[i+1] OD;
+      print("Backwards loop:   "); mpr(r);
+      res;  r[1+LWB r:]:=r[:UPB r-1];
+      print((newline,"r[2:]:=r[:3]",newline,
+             "Compiler does it: "));  mpr(r);
+      res;
+
+      FOR i FROM 1+LWB r TO UPB r
+      DO r[i]:=r[i-1] OD;
+      print("Forwards loop:    "); mpr(r);
+      res;
+
+      FOR i FROM UPB r BY -1 TO 1+LWB r
+      DO r[i]:=r[i-1] OD;
+      print("Backwards loop:   "); mpr(r)
+   END
+   FINISH
+\end{verbatim}
+\noindent
+When compiled and executed, the program gives the following output:
+\begin{verbatim}
+   Original contents:1 2 3 4 
+   
+   r[:3]:=r[2:]
+   Compiler does it: 2 3 4 4 
+   Forwards loop:    2 3 4 4 
+   Backwards loop:   4 4 4 4 
+   
+   r[2:]:=r[:3]
+   Compiler does it: 1 1 2 3 
+   Forwards loop:    1 1 1 1 
+   Backwards loop:   1 1 2 3 
+\end{verbatim}
+\noindent
+Notice that lines 5 and 8 of the results are definitely wrong, but that
+the compiler gets it right both times. The lesson is, do not worry
+about overlapping multiples:  the compiler will ensure you get the
+effect you want.
+
+A different matter is when you want to replace a column of a square
+multiple with a row. Here, the overlap is more of a ``crossoverlap''.
+In this case you need to be careful---see the next exercise.
+
+\begin{exercise}
+\item Given a square two-dimensional multiple of integers, write a
+procedure which uses trimmers (not necessarily overlapping) to
+convert its columns to rows and its rows to columns.  For example:
+\begin{verbatim}
+   ((1,2,3),         ((1,4,7),
+    (4,5,6),   =>     (2,5,8),
+    (7,8,9))          (3,6,9))
+\end{verbatim}
+\noindent
+Your procedure should cater for any size of square multiple.
+\ans \ %
+\begin{verbatim}
+   PROC transpose=(REF[,]INT m)VOID:
+   IF   1 UPB m - 1 LWB m
+               =
+        2 UPB m - 2 LWB m
+   THEN #m is square#
+      REF[,]INT mm=m[@1,@1]; #a precaution#
+
+      FOR i TO 1 UPB mm - 1
+      DO
+         REF[]INT mr=mm[i,i+1:],
+                  mc=mm[i+1:,i];
+         []INT temp=mr;
+         mr:=mc;  mc:=temp
+      OD
+   FI
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Completers}{adv-exit}
+Sometimes it is desirable to have more than one possible end-point of
+a serial clause. This often happens when a loop needs to be
+prematurely terminated so that a surrounding serial clause can yield
+a value which is unexpected. A \bfix{completer} is so-called because
+it provides a completion point for a
+\hx{serial clause}{clause!serial}.  A completer can be placed
+wherever a semicolon (the \hx{go-on symbol}{;@\texttt{;}}) can appear
+except in enquiry clauses (whether BOOL enquiry clauses or INT
+enquiry clauses). It consists of the construct \ixtt{EXIT} followed
+by a \bfix{label} and a colon (\verb|:|). A label is formed with the
+same rules as for an identifier and should not be the same as any
+identifier in the current \ix{range}. Here is an example of a
+completer:
+\begin{verbatim}
+   EXIT label:
+\end{verbatim}
+\noindent
+The label must be referenced by a
+\hx{\texttt{GOTO}}{clause!GOTO@\texttt{GOTO}} clause within the same
+serial clause in which the completer occurs, or in an inner clause
+(not necessarily serial). Here is an example of such a completer:
+\begin{verbatim}
+   a:=(INT i;  read((i,newline));
+       IF i < 0 THEN GOTO negative FI;
+       sqrt(i) EXIT
+   negative:
+       sqrt(-i)
+      )
+\end{verbatim}
+\noindent
+The example is artificial, but serves to illustrate the use of a
+completer.
+
+A completer can sometimes save the declaration of a boolean name. For
+example, here is a procedure without a completer:
+\begin{verbatim}
+   PROC is in str = (STRING t, CHAR c)BOOL:
+   (
+      BOOL found := FALSE;
+   
+      FOR n FROM LWB t TO UPB t
+      WHILE ~found
+      DO
+         found:=c = t[n]
+      OD;
+   
+      found
+   );
+\end{verbatim}
+\noindent
+Here is the procedure with a completer:
+\begin{verbatim}
+   PROC is in str = (STRING t,CHAR c)BOOL:
+   (
+      FOR n FROM LWB t TO UPB t
+      DO
+         IF c = t[n] THEN GOTO found
+      OD;
+      FALSE EXIT
+   found:
+      TRUE
+   )
+\end{verbatim}
+
+In fact, \verb|GOTO| clauses are valid almost anywhere in Algol~68.
+They are particularly useful when it is required to jump out of nested
+clauses. Let us reconsider the program \verb|echo| in
+section~\hyref{trans-logi} with a \verb|GOTO| clause:
+\begin{verbatim}
+   PROGRAM echo CONTEXT VOID
+   USE standard
+   BEGIN
+   FILE args;
+   IF open(args,"",arg channel)/=0
+   THEN
+      put(stand error,
+          ("Cannot access the arguments",
+           newline));
+      stop
+   ELSE
+      FILE ff:=args;
+      on logical file end(
+         ff,
+         (REF FILE f)BOOL:
+            close(f);  GOTO end;  FALSE));
+      DO
+         STRING arg;
+         get(ff,(skip terminators,arg));
+         print((arg,newline))
+      OD;
+   end:
+      print(("End of arguments",newline))
+   FI
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Use of \verb|GOTO| clauses should be confined to exceptions because
+otherwise they can destroy the natural structure of your programs
+making them much more difficult to understand and maintain.
+
+\Section{References to names}{adv-refref}
+The idea that a mode can contain more than one \ixtt{REF}, or that a
+mode might be \verb|REF[]REF[]CHAR| was broached at the start of
+chapter~5 and mentioned in section~\hyref{gram-deref}. The time has now
+come to address this topic fully.
+
+Any mode which starts with \verb|REF| is the mode of a
+\ix{name}. The value to which a name refers has a mode with one
+\verb|REF| less.  Since names are values in their own right, there is
+no reason at all why a name should not refer to a name.  For example,
+suppose we declare
+\begin{verbatim}
+   INT x,y
+\end{verbatim}
+\noindent
+then the mode of both \verb|x| and \verb|y| is \verb|REF INT|. We
+could also declare
+\begin{verbatim}
+   REF INT xx, yy
+\end{verbatim}
+\noindent
+so that \verb|xx| and \verb|yy| both have the mode
+\hx{\texttt{REF REF INT}}{REF REF@\texttt{REF REF}}.
+
+Now, according to the definition of an \ix{assignment}
+(see section~\hyref{gram-quat}), it is perfectly legitimate to write
+\begin{verbatim}
+   xx:=x
+\end{verbatim}
+\noindent
+without any dereferencing because the identifier on the left has mode
+\verb|REF REF INT| and the identifier on the right has mode
+\verb|REF INT|.  Leaving aside for the moment of how useful such
+declarations and assignments might be (and they are very useful,
+essential even), let us give our attention to the mechanics. We could
+assign \verb|y| to \verb|xx| and a value to \verb|y| with the double
+assignment
+\begin{verbatim}
+   xx:=y:=3
+\end{verbatim}
+\noindent
+Again, \hx{no dereferencing}{coercion!dereferencing} is involved.
+Now, given that \verb|xx| refers to \verb|y| which refers to
+\verb|3|, how could we make \verb|y| refer to \verb|4|, say? Simple.
+Assign \verb|4| directly to \verb|y|. However, if the assignment to
+\verb|xx| was
+\begin{verbatim}
+   xx:=(random>0.8|x|y)
+\end{verbatim}
+\noindent
+we should not know which name \verb|xx| referred to. Finding out which
+name \verb|xx| refers to is the subject of the next section.
+
+You may remember that the context of the left-hand side of an
+assignment \hx{is soft}{context!soft} so no dereferencing is
+allowed. The way to coerce a name of mode \verb|REF REF INT| to a
+name of mode \verb|REF INT| is to use a cast:
+\begin{verbatim}
+   REF INT(xx):=4
+\end{verbatim}
+\noindent
+Note that the unit
+\begin{verbatim}
+   print(xx)
+\end{verbatim}
+\noindent
+will yield \verb|4| with \verb|xx| being dereferenced twice. There is
+nothing to stop us writing
+\begin{verbatim}
+   REF REF INT xxx:=xx
+\end{verbatim}
+\noindent
+with assignments like
+\begin{verbatim}
+   REF REF INT(xxx):=x
+   REF INT(xxx):=-2
+\end{verbatim}
+\noindent
+and we shall see in a later section that names with modes
+\verb|REF REF REF some-mode| have a use. Although you can use as many
+\verb|REF|s as you like, there does not seem to be any need for more
+than three.
+
+Now consider the assignments
+\begin{verbatim}
+   xx:=yy:=x:=4
+\end{verbatim}
+\noindent
+Both \verb|xx| and \verb|yy| refer to different
+\hx{instances}{instance} of the name \verb|x|, but when those
+instances are \hx{dereferenced}{coercion!dereferencing}, they both yield
+\verb|4|. This means that if we assign \verb|5| to \verb|x|, when
+\verb|xx| and \verb|yy| are dereferenced twice, they will both yield
+\verb|5|. We can represent this relationship by the diagram
+$$\vbox{\input{ch11-1.epic}}$$
+where \verb|RRI| and \verb|RI| stand for \verb|REF REF INT| and
+\verb|REF INT| respectively. Thus, although strictly speaking \verb|xx|
+and \verb|yy| refer to different instances of the name identified by
+\verb|x|, we shall regard them as both referring to \verb|x|.
+
+\begin{exercise}
+\item Given the declaration
+\begin{verbatim}
+   REF REAL xx:=LOC REAL
+\end{verbatim}
+\noindent
+how would you make the \ix{anonymous name} refer to
+\verb|120.5|? \ans Use a cast: \verb|REF REAL(xx):=120.5|
+'
+\item Write a declaration for \verb|rrq| which has the mode
+\verb|REF| \verb|REF| \verb|REF[]CHAR| and make it refer to an
+anonymous name which refers to an anonymous name which refers to a
+multiple of 10 characters. \ans \ %
+\begin{verbatim}
+   REF REF[]CHAR rrq;
+   []CHAR m = "ABCDEFGHIJ";
+   rrq:=LOC REF[]CHAR:=LOC[10]CHAR:=m[@1];
+\end{verbatim}
+'
+\item Write the declaration of a name which can refer to a
+\ix{flexible name} which can refer to a row of integers. In a
+separate assignment, assign the row-display
+\verb|(3,-2,4)| to your name. \ans \ %
+\begin{verbatim}
+   REF FLEX[]INT rfi;
+   rfi:=FLEX[1:0]INT:=(3,-2,4)
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Identity relations}{adv-idrel}
+Consider the declarations of the last section:
+\begin{verbatim}
+   INT x,y; REF INT xx,yy
+\end{verbatim}
+\noindent
+We had assigned a name to \verb|xx| with the assignment
+\begin{verbatim}
+   xx:=(random > 0.8|x|y)
+\end{verbatim}
+\noindent
+and we wished to ascertain whether \verb|xx| referred to \verb|x| or
+to \verb|y|. Unfortunately, we cannot use the equals operator
+\verb|=| for this purpose because its operands would be completely
+dereferenced and the underlying integers would be compared. Instead,
+we use an \hx{\textbf{identity relation}}{identity!relation} which is
+used exclusively for comparing names. The identity relation
+\begin{verbatim}
+   xx :=: x
+\end{verbatim}
+\noindent
+yields \verb|TRUE| if \verb|xx| refers to \verb|x|. The alternative
+representation of \ixtt{:=:} is \ixtt{IS}. The identity relation
+\begin{verbatim}
+   xx :/=: x
+\end{verbatim}
+\noindent
+yields \verb|TRUE| if \verb|xx| does not refer to \verb|x|. The
+alternative representation of \ixtt{:/=:} is
+\ixtt{ISNT}. Here is a short program which
+illustrates the difference between \verb|=| and \verb|IS|:
+\begin{verbatim}
+   PROGRAM test CONTEXT VOID
+   USE standard
+   BEGIN
+      REF INT xx, INT x:=2,y:=3;
+      TO 3
+      DO
+         xx:=(random>0.5|x|y);
+         print(("xx :=: x =",
+                (xx :=: x|"TRUE"|"FALSE"),
+                newline,"xx = ",xx,newline))
+      OD
+   END
+   FINISH
+\end{verbatim}
+\noindent
+If you want to compare the names that both \verb|xx| and \verb|yy|
+refer to, it is no good writing
+\begin{verbatim}
+   xx IS yy
+\end{verbatim}
+\noindent
+This always yields \verb|FALSE| because the names that \verb|xx| and
+\verb|yy| identify always differ (they were created using two local
+generators so the names are bound to be different). The point is that
+no automatic dereferencing takes place in an identity relation. To
+compare the names that both \verb|xx| and \verb|yy| refer to, you
+should place one side or both sides in a \ix{cast}:
+\begin{verbatim}
+   REF INT(xx) IS yy
+\end{verbatim}
+\noindent
+This will ensure that the right-hand side (in this case) is
+dereferenced to yield a name of the same mode as the left-hand side.
+This is because an identity relation is subject to \ix{balancing}:
+one side of the relation is in a \hx{soft context}{context!soft} and
+the other side is in a \hx{strong context}{context!strong}.  Given
+the cast on the left-hand side, the two sides of the
+\hx{identity relation}{identity!relation} would yield \verb|REF INT|
+and \verb|REF REF INT|.  Since no dereferencing is allowed in a soft
+context, it can be seen that the left-hand side is in the soft
+context and the right-hand side is in the strong context.
+
+The \verb|IS| and \verb|ISNT| in the identity relation are not
+operators. Since the identity relation is a \ix{quaternary} (see
+section~\hyref{gram-quat}), remember to enclose it in
+\ix{parentheses} if you want to use it in a formula:
+\begin{verbatim}
+   IF (field OF struct ISNT xx) & x>=-5
+   THEN field OF struct = 0
+   ELSE FALSE
+   FI
+\end{verbatim}
+
+\begin{exercise}
+\item The program fragment
+\begin{verbatim}
+   REF STRING ff, ss; STRING f, s;
+   f:="Joan of Arc";
+   s:="Robert Burns";
+   ff:=(random<0.1|f|s);
+   ss:=(ff IS f|s|f)
+\end{verbatim}
+\noindent
+applies to this and the following exercises.
+
+What are the modes of \verb|f| and \verb|ss|? \ans \verb|f| has the
+mode \verb|REF STRING| and \verb|ss| has the mode
+\verb|REF REF STRING|.
+'
+\item What does \verb|f| refer to? \ans The multiple of mode
+\verb|STRING| whose value is \texttt{"Joan of Arc"}.
+'
+\item Write a formula which compares the \ith{3}{rd} and \ith{4}{th}
+characters of the multiple \verb|f| refers to with the \ith{7}{th}
+and \ith{8}{th} characters of the multiple \verb|s| refers to. What
+are the modes of the operands of the operator?
+\ans \verb|f[3:4]=s[7:8]|. The modes are both \verb|STRING|.
+'
+\item Write an expression which compares the name referred to by
+\verb|ff| with the name referred to by \verb|ss|. \ans Here are three
+possible answers:
+\begin{verbatim}
+   REF STRING(ff) IS ss
+   ff IS REF STRING(ss)
+   REF STRING(ff) IS REF STRING(ss)
+\end{verbatim}
+\noindent
+You could also use \verb|ISNT|, \verb|:=:| or \verb|:/=:|.
+'
+\end{exercise}
+
+\Section{The value \texttt{NIL}}{adv-NIL}
+Sometimes it is desirable that a name of mode \verb|REF| \verb|REF|
+\verb|whatever| should not refer to a definite name (see, for
+example, the discussion of queues below). This can be arranged by
+making it refer to \ixtt{NIL} which is the only denotation of a name.
+The mode of \verb|NIL| is \verb|REF whatever|. For example, consider
+\begin{verbatim}
+   REF[]CHAR rc=NIL;
+   REF INT ri=NIL
+\end{verbatim}
+\noindent
+The first \verb|NIL| has the mode \verb|REF[]CHAR| and the second has
+the mode \verb|REF INT|.
+
+Given the declaration
+\begin{verbatim}
+   REF INT xx:=NIL
+\end{verbatim}
+\noindent
+the mode of \verb|NIL| is \verb|REF INT|. However, although
+\verb|NIL| is a name, you cannot assign to it. That is, the assignment
+\begin{verbatim}
+   REF INT(xx):=4
+\end{verbatim}
+\noindent
+would cause the run-time error
+\begin{verbatim}
+   Segmentation fault
+\end{verbatim}
+\noindent
+and, very likely, a core dump, when using the
+\hx{a68toc}{a68toc!NIL@\texttt{NIL}} compiler.
+
+Nor can you use \verb|NIL| in a formula if that would involve
+dereferencing.  The only use of \verb|NIL| is for determining, by
+using an identity relation, that a name refers to it.  However, we
+shall see in the sections on queues and trees that this is a vital
+function.
+
+Now consider the declaration
+\begin{verbatim}
+   REF REF INT rrri;
+\end{verbatim}
+\noindent
+where the mode of \verb|rrri| is \verb|REF REF REF INT|. We could make
+\verb|rrri| refer to \verb|NIL| directly using the assignment
+\begin{verbatim}
+   rrri:=NIL
+\end{verbatim}
+\noindent
+whence the mode of \verb|NIL| is \verb|REF REF INT|. Or we could use a
+\verb|NIL| of mode \verb|REF INT| by using an anonymous name:
+\begin{verbatim}
+   rrri:=LOC REF INT:=NIL
+\end{verbatim}
+\noindent
+whence the mode of the anonymous name is \verb|REF REF INT|. In the
+identity relation
+\begin{verbatim}
+   rrri IS NIL
+\end{verbatim}
+\noindent
+how can we tell which \verb|NIL| is in use? Of course, we could use a
+cast for \verb|rrri|, but there is a simpler and more useful way. First
+we declare
+\begin{verbatim}
+   REF INT nil ri = NIL
+\end{verbatim}
+\noindent
+then \ix{balancing} will ensure that the
+\hx{identity relation}{identity!relation}
+\begin{verbatim}
+   rrri IS nil ri
+\end{verbatim}
+\noindent
+gives the required answer with \verb|rrri| being dereferenced twice.
+Alternatively, with the declaration
+\begin{verbatim}
+   REF REF INT nil rri = NIL
+\end{verbatim}
+\noindent
+we can ensure that the identity relation
+\begin{verbatim}
+   rrri IS nil rri
+\end{verbatim}
+\noindent
+will also be elaborated correctly. We shall see in the sections on
+queues and trees that the declaration of \verb|nil ri| is more useful.
+
+Now consider the declarations
+\begin{verbatim}
+   INT x:=ENTIER(random * 6), y;
+   REF INT xx,yy;
+   PROC x or y = REF INT: (random>0.8|x|y)
+\end{verbatim}
+\noindent
+and the identity relation
+\begin{verbatim}
+   CASE randint(3) IN xx,x or y, NIL ESAC
+                   IS
+   CASE y IN x, SKIP, yy ESAC
+\end{verbatim}
+\noindent
+The balancing of the identity relation includes balancing of the
+\hx{case clauses}{clause!case}. The modes yielded are
+\begin{tabbing}
+\indent\=\verb|x or y|\qquad\=\kill
+\+\verb|xx|\>\verb|REF REF INT|\\
+\verb|x or y|\>\verb|PROC REF INT|\\
+\verb|NIL|\>\verb|REF whatever|\\
+\verb|x|\>\verb|REF INT|\\
+\verb|SKIP|\>who knows?\\
+\verb|yy|\>\verb|REF REF INT|
+\end{tabbing}
+In a soft context, these modes become:
+\begin{tabbing}
+\indent\=\verb|x or y|\qquad\=\qquad\=\kill
+\+\+\+\verb|REF REF INT|\\
+\verb|REF INT|\\
+\verb|REF whatever|\\
+\verb|REF INT|\\
+who knows?\\
+\verb|REF REF INT|
+\end{tabbing}
+Thus the left-hand side is the soft context and the right-hand side (of
+the identity relation) is the strong context (remember that \verb|SKIP|
+is only allowed in a strong context), and the final modes are all
+\verb|REF INT|. In practice, it is rare that identity relations are so
+complicated.
+
+\begin{exercise}
+\item Given the declarations
+\begin{verbatim}
+   FILE f1:=stand in, f2;
+   REF FILE cur file:=f2;
+   PROC p = REF FILE:
+      (cur file IS f1|f1|f2)
+\end{verbatim}
+\noindent
+what is the value of
+\begin{subex}
+\item \verb|cur file:=f2| \subans A name of mode \verb|REF REF FILE|.
+'
+\item \verb|cur file :/=: stand in|
+\subans \verb|TRUE|\qquad\verb|BOOL|.
+'
+\item \verb|p:=f1| \subans A name of mode \verb|REF FILE|.
+'
+\item \verb|p:=:f1| \subans \verb|FALSE|\qquad\verb|BOOL|.
+'
+\end{subex}
+\item Given the declarations of exercise 1, what is the mode of
+\verb|NIL| in
+\begin{subex}
+\item \verb|cur file:=NIL| \subans \verb|REF FILE|
+'
+\item \verb|REF REF FILE ff:=NIL| \subans \verb|REF REF FILE|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Queues}{adv-queues}
+\hx{Consider}{queues} the problem of representing a queue.  We shall
+suppose that the queue is at a football match and that each fan in the
+queue has a name, in the ordinary sense, and a ticket number.  Rather
+than just present the solution to this problem, we shall discuss the
+problem in detail and show why the solution is what it is.
+
+A suitable mode for the fan would be\ixtt{FAN}:
+\begin{verbatim}
+   MODE FAN = STRUCT(STRING name,INT ticket)
+\end{verbatim}
+\noindent
+but what would be a suitable declaration for a queue? At first sight,
+it would appear that a \hx{flexible name}{name!flexible} which can
+refer to a multiple of fans would be suitable:
+\begin{verbatim}
+   MODE QUEUE = FLEX[1:0]FAN
+\end{verbatim}
+\noindent
+but there are difficulties. Firstly, the only way a new fan could be
+added to the queue would be to assign a whole new multiple to a name
+(in the Algol~68 sense) referring to the queue:
+\begin{verbatim}
+   QUEUE q; q:=q+FAN("Jim",1)
+\end{verbatim}
+\noindent
+assuming that the operator \verb|+| has been declared with the header
+\begin{verbatim}
+   OP + = ([]QUEUE a,FAN b)[]QUEUE:
+\end{verbatim}
+\noindent
+If the queue were long, this would be very inefficient. Secondly, given
+a particular fan, how would we find the fan behind him or her? Knowing
+the subscript of the fan would seem to be the answer, but what happens
+if someone joins the queue somewhere in front of the fan in question?
+Given that there might be several fans under consideration, the program
+would have to update all the relevant subscripts and keep a record of
+which subscripts would be relevant.
+
+The solution is to represent a queue as a
+\hx{recursive structure}{structure!recursive}:
+\begin{verbatim}
+   MODE QUEUE=STRUCT(FAN fan,REF QUEUE next)
+\end{verbatim}
+\noindent
+Then a queue with two fans in it could be represented by the diagram
+$$\vbox{\input{ch11-2.epic}}$$
+where the mode of each box is \ixtt{QUEUE} and
+\verb|F| and \verb|RQ| stand for \verb|FAN| and \verb|REF QUEUE|
+respectively.  Notice that the \verb|next| field of the first structure
+refers to the structure on its right.  The \verb|next| field of the
+second structure does not refer to anything.
+
+From the declaration of the mode \verb|QUEUE|, we can see that the
+\verb|next| field of the structure is a name with mode
+\verb|REF QUEUE|. It would appear that it is possible to construct a
+queue in the way depicted by the last diagram: each \verb|next| field
+of each structure would refer to the next structure (of mode
+\verb|QUEUE|) and the last \verb|next| field would have the mode
+\verb|REF QUEUE| and value \verb|NIL|.
+
+Now consider adding another \verb|QUEUE| to the right-hand end of the
+queue. We immediately run into a difficulty. The value of the
+\verb|next| field of the last \verb|QUEUE| is \verb|NIL| with mode
+\verb|REF QUEUE|. However, we cannot assign to \verb|NIL|, nor can we
+replace the \ix{name} \ixtt{NIL} with another
+name to make it refer to a new \verb|QUEUE|. The reason is that a name
+of mode \verb|REF QUEUE| can only be replaced by another name of mode
+\verb|REF QUEUE| if the first name is referred to by a name of mode
+\verb|REF REF QUEUE|. In other words, instead of making the structures
+have mode \verb|QUEUE|, we should make them have mode \verb|REF QUEUE|.
+In section~\hyref{struc-field}, on field selection, we pointed out that
+the modes of the fields of a structure name are all preceded by a
+\verb|REF|. This also applies to a recursively-defined structure. In
+this case, the mode of the \verb|next| field becomes
+\verb|REF REF QUEUE| and could refer to \verb|NIL| (with mode
+\verb|REF QUEUE|) or to another structure of mode \verb|REF QUEUE|. We
+can depict this as
+$$\vbox{\input{ch11-3.epic}}$$
+where \verb|RQ|, \verb|RRQ| and \verb|RF| represent the modes
+\verb|REF QUEUE|, \verb|REF| \verb|REF| \verb|QUEUE| and
+\verb|REF FAN| respectively.
+
+Now let us consider how such a queue could be created. Since the length
+of the queue at the time the program is written is unknown (and will
+change as fans join or leave the queue), it is not possible to have an
+identifier for each structure forming the queue. Instead, we can create
+anonymous names using a \ix{generator}. However, we must be
+able to refer to the queue in order to manipulate it. Let us declare a
+name, identified by \verb|head|, to refer to the beginning of the
+queue:
+\begin{verbatim}
+   REF QUEUE head:=NIL
+\end{verbatim}
+\noindent
+We have made it refer to \ixtt{NIL} (with mode
+\verb|REF QUEUE|) because the queue is currently empty. Using the
+suggestion of the last section, we shall declare
+\begin{verbatim}
+   REF QUEUE nilq = NIL;
+   REF QUEUE head:=nilq
+\end{verbatim}
+\noindent
+where \verb|head| has the mode \verb|REF REF QUEUE|.
+
+Let us assign the first fan to the queue:
+\begin{verbatim}
+   head:=LOC QUEUE:=(("Jim",1),nilq)
+\end{verbatim}
+\noindent
+We can represent this by the diagram
+$$\vbox{\input{ch11-4.epic}}$$
+We can now assign another fan to the queue:
+\begin{verbatim}
+   next OF head:=LOC QUEUE:=(("Fred",2),nilq)
+\end{verbatim}
+\noindent
+Let us be quite clear what is happening here. The mode of \verb|head|
+is \verb|REF REF QUEUE|. It is a name which refers to a name so it has no
+fields. We can select \hx{fields}{field selection} only from a
+\verb|QUEUE| or a \verb|REF QUEUE|. However, the context of a
+\ix{selection} is \hx{weak}{context!weak}(see
+section~\hyref{gram-coercions}) and so only weak-dereferencing is
+\hx{allowed}{coercion!weakly-dereferencing}. Thus in
+\begin{verbatim}
+   next OF head
+\end{verbatim}
+\noindent
+\verb|head| is dereferenced to mode \verb|REF QUEUE| and the
+\verb|next| field selected (with mode \verb|REF REF QUEUE|). The
+anonymous name \verb|LOC QUEUE| has mode \verb|REF QUEUE|, so the
+structure display (with mode \verb|QUEUE|) is assigned to it, and it
+in turn is assigned to \verb|next OF head| without dereferencing.
+This means that the \verb|nilq| which \verb|next OF head| referred to
+after the first fan \verb|("Jim",1)| was added to the queue has been
+replaced by the second \verb|LOC| \verb|QUEUE| which is what we
+wanted. We can now depict the queue by
+$$\vbox{\input{ch11-5.epic}}$$
+We could now extend the queue by writing
+\begin{verbatim}
+   next OF next OF queue:=LOC QUEUE
+\end{verbatim}
+\noindent
+but since we do not know how long the queue might become, clearly we
+cannot go on writing
+\begin{verbatim}
+   next OF next OF ...
+\end{verbatim}
+\noindent
+What we need is some way of referring to the tail of the queue without
+lots of selections. Because the tail of the queue always has mode
+\verb|REF REF QUEUE| (it is the \verb|next| field of a
+\verb|REF QUEUE|), what we need is a name of mode
+\verb|REF REF REF QUEUE| (yes, three \verb|REF|s). Here it is:
+\begin{verbatim}
+   REF REF QUEUE tail;
+\end{verbatim}
+\noindent
+but again we run into a difficulty (the last one). When the queue is
+empty, \verb|head| refers to \verb|nilq|, but what does \verb|tail|
+refer to since we cannot select from \verb|nilq| (because it is
+\verb|NIL|)? The solution is to make \verb|head| have the mode
+\verb|REF REF REF QUEUE| as well as \verb|tail| and generate a name
+of mode \verb|REF REF QUEUE| to refer to \verb|nilq|! (bear with it,
+we're almost there):
+\begin{verbatim}
+   tail:=head:=LOC REF QUEUE:=nilq
+\end{verbatim}
+\noindent
+In this triple assignment, only \verb|head| is dereferenced. We can
+depict this as
+$$\vbox{\input{ch11-6.epic}}$$
+Now we can assign the first fan to the head of the queue:
+\begin{verbatim}
+   REF REF QUEUE(head):=LOC QUEUE:=
+         (("Jim",1),nilq))
+\end{verbatim}
+\noindent
+and make \verb|tail| refer to the tail of the queue with
+\begin{verbatim}
+   tail:=next OF head
+\end{verbatim}
+\noindent
+in which \verb|head| is dereferenced twice, but the
+\ix{selection} is not dereferenced at all. The queue can
+now be depicted as shown below.
+$$\vbox{\input{ch11-7.epic}}$$
+A queue is one example of what is called a
+\bfix{linked-list}.
+
+\begin{exercise}
+\item Extend the queue by assigning another \verb|REF QUEUE| to
+\verb|tail|. \ans \begin{verbatim}
+REF REF QUEUE(tail):=
+        LOC QUEUE:=(("Barbara",3),nilq)
+\end{verbatim}
+'
+\item Now make \verb|tail| refer to the tail of the queue again.
+\ans \verb|tail:=next OF tail|
+'
+\item Has the name referred to by \verb|head| changed after adding the
+new \verb|REF QUEUE|? \ans No.
+'
+\end{exercise}
+
+\Section{The procedure \texttt{add fan}}{adv-addfan}
+We are now ready to develop a procedure to add a fan to the end of the
+queue. Clearly, there are two different situations: an empty queue and
+a non-empty queue. Although we only need \verb|tail| to extend the
+queue, we need \verb|head| to determine whether the queue is empty. So
+here is the header:
+\begin{verbatim}
+   PROC add fan = (REF REF REF QUEUE head,tail,
+                   REF FAN fan)VOID:
+\end{verbatim}
+\noindent
+Firstly, we need to test whether the queue is empty:
+\begin{verbatim}
+   IF head IS nilq
+\end{verbatim}
+\noindent
+Remember that the mode of \verb|head| is \verb|REF REF REF QUEUE|, so
+in the \hx{identity relation}{identity!relation} \verb|head| is
+\hx{dereferenced}{coercion!dereferencing} twice.
+
+Secondly, if the queue is empty, we assign an
+\hx{anonymous}{name!anonymous}
+\verb|REF QUEUE| to the name \verb|head| refers to and assign
+\verb|(fan,nilq)| to the \verb|REF QUEUE|:
+\begin{verbatim}
+   THEN REF REF QUEUE(head):=
+            LOC QUEUE:=(fan,nilq)
+\end{verbatim}
+\noindent
+but this will not work because the scope of the \verb|LOC QUEUE| is
+limited to the routine denotation. We must use a global generator:
+\begin{verbatim}
+   THEN REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq)
+\end{verbatim}
+\noindent
+Then we have to ensure that \verb|tail| refers to the tail of the queue:
+\begin{verbatim}
+   tail:=next OF head
+\end{verbatim}
+\noindent
+If the queue is not empty, we assign an anonymous \verb|REF|
+\verb|QUEUE| to the name that \verb|tail| points to:
+\begin{verbatim}
+   ELSE REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq)
+\end{verbatim}
+\noindent
+and make \verb|tail| refer to the new tail:
+\begin{verbatim}
+   tail:=next OF tail
+\end{verbatim}
+\noindent
+Here is the complete procedure:
+\begin{verbatim}
+   PROC add fan = (REF REF REF QUEUE head,tail,
+                   REF FAN fan)VOID:
+   IF head IS nilq
+   THEN #the queue is empty#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF head
+   ELSE
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   FI #add fan#
+\end{verbatim}
+
+\begin{exercise}
+\item It looks as though \verb|add fan| could be
+\hx{optimised}{optimisation}. Re\-write the body of \verb|add|
+\verb|fan| so that the overall structure is
+\begin{verbatim}
+   tail:=next OF (REF REF QUEUE
+      CO IF ... FI  plus two assignments CO
+                 )
+\end{verbatim}
+\indent \ans \ %
+\begin{verbatim}
+   PROC add fan=(REF REF REF QUEUE
+                    head,tail,
+                 REF FAN fan)VOID:
+      tail:=next OF (REF REF QUEUE
+             (head IS nilq|head|tail):=
+                HEAP QUEUE:=(fan,nilq))
+\end{verbatim}
+'
+\item Write a program containing the necessary declarations and loop to
+create a queue containing 1000 fans---alternate the names of the fans
+between \verb|Iain| and \verb|Fiona| and increment the ticket
+numbers by 1. Compile and run the program to check that there are no
+errors (no output will be produced). \ans \ %
+\begin{verbatim}
+   PROGRAM ex11 20 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE FAN = STRUCT(STRING name,
+                        INT ticket),
+         QUEUE = STRUCT(FAN fan,
+                        REF QUEUE next);
+
+      REF QUEUE nilq = NIL;
+
+      PROC add fan=(REF REF REF QUEUE
+                        head,tail,
+                    REF FAN fan)VOID:
+         tail:=next OF
+                (REF REF QUEUE
+                  (head IS nilq|head|tail)
+                     :=HEAP QUEUE
+                     :=(fan,nilq);
+
+      REF REF QUEUE head,tail;
+      head:=tail:=LOC REF QUEUE:=nilq;
+
+      FOR q TO 1000
+      DO
+         add fan(head,tail,
+                 LOC FAN:=(IF ODD q
+                           THEN "Iain"
+                           ELSE "Fiona"
+                           FI,
+                           q))
+      OD
+   END
+   FINISH
+\end{verbatim}
+\noindent The generator \verb|LOC FAN| is used because \verb|add fan|
+requires a parameter of mode \verb|REF FAN|. The scope of the
+generated name is from the declarations of \verb|head| and
+\verb|tail| to the end of the program because there are no identity
+declarations in the \verb|FOR| loop clause (therefore it is not a
+range).
+'
+\end{exercise}
+
+\Section{More queue procedures}{adv-mqproc}
+\hx{We}{queue procedures} can now address three more procedures: how
+to insert a fan into a queue, how to remove a fan from the queue, and
+how to print the queue. Let us take the printing procedure first. Here
+it is:
+\begin{verbatim}
+   PROC print queue = (REF REF QUEUE head)VOID:
+   IF head IS nilq
+   THEN print(("NIL",newline))
+   ELSE print((newline,
+               "(",name OF fan OF head,",",
+               whole(ticket OF fan OF head,0),
+               ")=>"));
+        print queue(next OF head)
+   FI
+\end{verbatim}
+\noindent
+By not using the triple \verb|REF| name for the head of the queue, we
+can use \ix{recursion} to simplify the procedure. Recursion is common
+in procedures for \hx{linked-lists}{linked-list}.
+
+Inserting a fan is a little more difficult. There are several
+possibilities: the queue can be empty or non-empty. If it is
+non-empty, the fan can be inserted at the head of the queue, or if
+there are at least two fans in the queue, the fan could be inserted
+somewhere between the head and the tail. The question is, how many
+parameters are required for the procedure? Clearly, we need
+\verb|head| to determine whether the queue is empty, \verb|tail| to
+be updated in case it is or if the fan is to be added to the end of
+the queue. Here is a possible header:
+\begin{verbatim}
+   PROC insert fan=(REF REF REF QUEUE head,tail,
+                    REF FAN fan)VOID:
+\end{verbatim}
+\noindent
+We need a criterion for determining where in the queue a fan should be
+inserted. Here is one: the fans should be inserted in the order of
+ticket number (using a queue is not an efficient way of doing this, but
+this criterion will do for our purposes). Here is \verb|insert fan|
+with a diagram to help you understand it:
+\begin{verbatim}
+   PROC insert fan=(REF REF REF QUEUE head,tail,
+                    REF FAN fan)VOID:
+   IF   head IS nilq
+   THEN #the queue is empty#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF head
+   ELIF ticket OF fan < ticket OF fan OF head
+   THEN
+      #insert the fan at the head of the queue#
+      REF REF QUEUE(head):=
+            HEAP QUEUE:=(fan,head)
+   ELIF next OF head IS nilq
+   THEN #add the fan after the head#
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   ELIF REF QUEUE marker:=head;
+      WHILE
+         IF (next OF marker ISNT nilq)
+         THEN
+            ticket OF fan
+                  >
+            ticket OF fan OF next OF marker
+         ELSE FALSE
+         FI
+      DO marker:=next OF marker OD;
+      next OF marker IS nilq
+   THEN
+   #add the fan to the end of the queue#
+      REF REF QUEUE(tail):=
+            HEAP QUEUE:=(fan,nilq);
+      tail:=next OF tail
+   ELSE
+   CO insert the fan between `marker'
+      and `next of marker' CO
+      next OF marker:=
+            HEAP QUEUE:=(fan,next OF marker)
+   FI
+\end{verbatim}
+\noindent
+$$\vbox{\input{ch11-8.epic}}$$
+There are three lines where you need to look carefully at the modes and
+values involved:
+\begin{itemize}
+\item the line which ends in \verb|(fan,head)|,
+\item the line which ends in \verb|(fan,next OF marker)|,
+\item the line containing the \verb|>| operator.
+\end{itemize}
+Discussion of this procedure completes our examination
+\hx{of}{linked-list} \ix{queues}.
+\begin{exercise}
+\item In the procedure \verb|insert fan|, explain the circumstances
+in which the loop will terminate. \ans Because \verb|marker| has mode
+\verb|REF REF QUEUE|, it is made to refer to each \verb|REF QUEUE|
+name in the linked-list. The condition
+\begin{verbatim}
+   next OF marker ISNT nilq
+\end{verbatim}
+\noindent
+ensures that \verb|marker| is not currently referring to the last
+\verb|REF QUEUE| in the list. The loop will terminate when
+\verb|marker| refers to the last \verb|REF QUEUE| in the list or the
+number of the ticket of the fan to be inserted in the queue does not
+exceed the number of the ticket of the fan referred to by
+\verb|marker|.
+\medskip
+If the operator \verb|AND| had been used, both operands would have been
+elaborated before the operator; in which case, if the left operand
+had yielded \verb|FALSE|, elaboration of the right operand would have
+caused the run-time error \verb|"Selection from NIL"|.
+'
+\item Using the procedure \verb|print queue|, confirm that the
+procedure \verb|insert fan| works. \ans This can best be done by
+writing a program. Here is a possible solution:-
+\begin{verbatim}
+   PROGRAM ex11 22 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE FAN = STRUCT(STRING name,
+                        INT ticket),
+         QUEUE = STRUCT(FAN fan,
+                        REF QUEUE next);
+      REF QUEUE nilq = NIL;
+
+      PROC insert fan = . . .
+      . . .
+      PROC print queue = . . .
+      . . .
+      REF REF QUEUE head,tail;
+      head:=tail:=LOC REF QUEUE:=nilq;
+      INT max ticket = 1000;
+      INT tickets issued:=0;
+      [max ticket]BOOL ticket issued;
+
+      FOR i
+      FROM LWB ticket issued
+      TO UPB ticket issued
+      DO FALSE OD;
+
+      WHILE tickets issued < max ticket
+      DO
+         INT i=random int(max ticket);
+         IF REF BOOL ti=ticket issued[i];
+            NOT ti
+         THEN
+            ti:=TRUE;
+            insert fan(head,tail,HEAP FAN:=
+                       ((ODD i
+                        |"Iain"
+                        |"Fiona"
+                        ),i));
+            tickets issued+:=1
+         FI
+      OD #fans added to the queue#;
+
+      print queue(head)
+   END FINISH
+\end{verbatim}
+\noindent Instead of sending the output to \verb|stand out|, it would be
+better to direct it to an output book so that the results could be
+examined at leisure.  Alternatively, command line redirection could
+be used.  The use of \verb|ticket issued| ensures that unique ticket
+numbers are added to the queue since \verb|insert fan| does not cater
+explicitly for duplicate ticket numbers.
+'
+\item Write the procedure \verb|delete fan| which will delete a fan
+with a given ticket number from the queue. It should yield the fan if
+it has been deleted and \verb|FALSE| if it cannot be found. This
+diagram should help you:
+$$\vbox{\input{ch11-9.epic}}$$
+Include the procedure in a program and test it. \ans The procedure
+has to find the fan concerned and must keep track of the reference to
+that fan.
+\begin{verbatim}
+   PROC delete fan=(REF REF QUEUE q,
+                    INT t#icket#
+                   )UNION(REF FAN,BOOL):
+   IF   q IS nilq
+   THEN FALSE #empty queue#
+   ELIF next OF q IS nilq
+   THEN #last fan in the queue#
+      IF   ticket OF q = t
+      THEN REF FAN rf = q;
+         q:=nilq;  #delete last fan#
+         rf
+      ELSE FALSE
+      FI
+   ELIF ticket OF next OF q < t
+   THEN delete fan(next OF q,t)
+   ELIF ticket OF next OF q > t
+   THEN #not found# FALSE
+   ELSE REF FAN rf = next OF q;
+      next OF q:=next OF next OF q;
+      rf
+   FI #delete fan#;
+\end{verbatim}
+\noindent
+In the assignment, the mode of \verb|next OF q| is \verb|REF|
+\verb|REF| \verb|QUEUE|, so the mode of \verb|next OF next OF q| must
+be \verb|REF| \verb|QUEUE|. Look at the required dereferencing to see
+what is assigned to \verb|next OF q|.
+'
+\end{exercise}
+
+\Section{Trees}{adv-trees}
+Both queues and trees are examples of
+\hx{recursive structures}{structure!recursive}. Queues contain only
+one link between individual structures, trees contain at least two.
+%The concordance program described in the next chapter uses trees for
+%data storage.
+Trees are another kind of \ix{linked-list} and are
+interesting because they give more examples of how
+\hx{recursive procedures}{procedure!recursive} are used to manipulate
+recursively-defined data structures.
+
+There are two principal kinds of \hx{trees}{tree} in common use:
+B-trees and binary trees. \ix{B-trees} (sometimes called
+\bfix{balanced trees}) are too advanced to be described here.
+
+A binary tree consists of a number of forks, usually called
+\bfix{nodes}, which are linked with two links per node.
+
+Here is an example of a small tree:\par
+\vfill\goodbreak
+\noindent\vbox{\input{ch11-10.epic}}
+The topmost node is called the \bfix{root} (trees are
+usually depicted upside-down\footnote{The remainder of the intriguing
+limerick runs as follows:-
+\protect\begin{verse}
+Who ate sour apples and died.\protect\\
+The apples fermented inside the lamented\protect\\
+and made cider inside 'er inside.
+\protect\end{verse}}). Each node consists of three parts: the
+data which each node bears and left and right references which can
+refer to other nodes. In the small tree shown above, there are seven
+nodes on five levels. There are 4 nodes on the left branch of the root
+and 2 on the right, so that the tree is unbalanced.
+
+A binary tree is particularly suitable for the ordering of data: that
+is, for arranging data in a predefined order\footnote{but only if the
+tree is reasonably balanced}. In the previous section, in procedure
+\verb|insert fan|, we considered inserting a fan into a queue in
+ascending order of ticket number. This is an inefficient way of
+ordering data. For example, suppose there are 100 fans in the queue.
+Then, on average, we can expect to insert a fan halfway down the
+queue; which means 50 comparisons of ticket numbers. If the fans were
+stored as a balanced binary tree, the maximum number of comparisons
+would be only 7 (because $2^6 < 100 < 2^7$). For larger numbers, the
+difference between the two kinds of linked-list is even more marked.
+For 1000 fans, a queue would need 500 comparisons on average, whereas
+a balanced binary tree would need 10 at most. While it is true that
+these figures are minima (they assume that the tree is
+\hx{balanced}{tree!balanced}, that is, that there are as many nodes
+to the left of the root as to the right), nevertheless, on average, a
+binary tree is much more efficient than a queue for ordering
+data.
+
+Here is a typical mode declaration for a binary tree:
+\begin{verbatim}
+   MODE WORD = STRUCT(STRING wd,
+                      INT ct,
+                      REAL fq),
+        TREE = STRUCT(REF WORD w,
+                      REF TREE left,right);
+\end{verbatim}
+\noindent
+The mode of the data in the declaration of \verb|TREE| is \texttt{REF
+WORD} so that if an item of data is moved around, it is only the
+reference which is moved. This is more efficient than moving the data
+item itself.
+%The particular declarations given are those used in
+%the concordance program described in section~\hyref{dev-conc}.
+
+We shall give two example tree procedures: adding an item of data to
+the tree and printing the tree. We need to check whether the tree at
+some node is empty. For this, we use the declaration
+\begin{verbatim}
+   REF TREE leaf = NIL
+\end{verbatim}
+\noindent
+Here is the procedure \verb|add word|:
+\begin{verbatim}
+   PROC add word = (REF REF TREE root,
+                    REF WORD w)VOID:
+   IF   root IS leaf
+   THEN root:=HEAP TREE:=(w,leaf,leaf)
+   ELIF wd OF w < wd OF w OF root
+   THEN add word(left OF root,w)
+   ELIF wd OF w > wd OF w OF root
+   THEN add word(right OF root,w)
+   ELSE ct OF w OF root+:=1
+   FI
+\end{verbatim}
+\noindent
+The ordering relation in \verb|add word| is the alphabetical ordering
+of the string in each data item. When the string in the data item to be
+added to the tree has been found in the tree, the occurrence number is
+incremented by~1 (see the \verb|ELSE| clause above).
+%The procedure \verb|add word| can be found in the concordance program
+%(see section~\hyref{dev-conc}).
+Note the use of \ix{recursion}.
+
+Printing the tree follows a similar pattern, but when the ``root'' under
+consideration is a leaf, nothing happens:
+\begin{verbatim}
+   PROC print tree=(REF FILE f,
+                    REF REF TREE root)VOID:
+   IF   root ISNT leaf
+   THEN print tree(f,left OF root);
+        put(f,(wd OF w OF root,
+               ct OF w OF root,
+               newline));
+        print tree(f,right OF root)
+   FI
+\end{verbatim}
+\noindent
+As you can see, recursion is vital here. Although it is true that
+recursion can be avoided by using a loop, recursion is better because
+it clarifies the logic.
+
+The allocation and release of memory for linked-lists (including
+trees) are quite transparent to the program.  When a tree is read,
+and nodes possibly deleted, all the lost memory is collected every so
+often by a \bfix{garbage collector}.  You do not have to worry about
+the details of memory main\-ten\-ance---it is all done for you by the
+compiler and the run-time system.  If you write a program which
+relies heavily on global generators, then you should allocate extra
+memory to the heap (see the on-line information for details of how to
+use the Algol 68 compilation \hx{system}{memory control}).
+
+\begin{exercise}
+\item Write a program which reads a text book and creates a binary tree
+containing the number of occurrences of each of the letters A--Z and
+a--z (that is, case is significant). Print a report with the frequency
+of occurrence represented by a percentage of the total number of
+letters in the book to 2 decimal places. You should print the letters
+going downwards with 13 lines for each column: first the upper case
+letters, then the lower case. Only print lines for those letters which
+occur in the book (use \verb|mem channel| to build the complete table in
+memory before printing).\ans \ %
+\begin{verbatim}
+   PROGRAM ex11 24 CONTEXT VOID
+   USE standard
+   BEGIN
+      MODE
+      LETTER=STRUCT(CHAR c,INT o),
+      TREE=STRUCT(REF LETTER l,
+                  REF TREE left,right);
+
+      REF TREE leaf=NIL;
+      REF TREE root:=leaf;
+
+      PROC get letter=(REF FILE f)
+                        REF LETTER:
+      IF   CHAR ch;  get(f,ch);
+           ch>="A" & ch<="Z"
+                  OR
+           ch>="a" & ch<="z"
+      THEN HEAP LETTER:=(ch,1)
+      ELSE get letter(f) #skip non-letters#
+      FI #get letter#;
+
+      PROC add letter=
+            (REF REF TREE root,
+             REF LETTER let)VOID:
+      IF   root IS leaf
+      THEN root:=HEAP TREE:=(let,leaf,leaf)
+      ELIF c OF l OF root > c OF let
+      THEN add letter(left OF root,let)
+      ELIF c OF l OF root < c OF let
+      THEN add letter(right OF root,let)
+      ELSE o OF l OF root+:=1
+      FI #add letter#;
+
+      FILE inf, arg;
+      STRING in bk;
+
+      INT max row=13;
+      [max row,81]CHAR out page;
+      INT row:=max row, col:=0;
+
+      FOR i TO max row
+      DO
+         out page[i,:80]:=80*blank;
+         out page[i,81]:=lf
+      OD #initialise out page#;
+
+      INT num letters:=0;
+
+      PROC put letter=(REF LETTER let)VOID:
+      BEGIN
+         IF   row=max row
+         THEN col+:=1;  row:=1
+         ELSE row+:=1
+         FI;
+         FILE f;
+         establish(f,
+                   "",
+                   mem channel,
+                   1,1,20);
+         put(f,(c OF let,
+                fixed(o OF let/
+                        num letters*100,
+                      -7,2),blank*12));
+         out page[row,(col-1)*20+1:col*20]
+           :=file buffer(f);
+         close(f)
+      END #put letter#;
+
+      PROC print tree=
+            (REF REF TREE root)VOID:
+      IF   root ISNT leaf
+      THEN
+         print tree(left OF root);
+         IF o OF l OF root > 0
+         THEN put letter(l OF root)
+         FI;
+         print tree(right OF root)
+      FI #print tree#;
+
+      IF open(arg,"",arg channel)/=0
+      THEN
+         put(stand error,
+             ("Cannot access arguments",
+              newline));
+         stop
+      ELIF
+         on logical file end(arg,
+          (REF FILE f)BOOL:
+           (put(stand error,
+             ("Usage: tt in-book",
+              newline)); stop; SKIP));
+         get(arg,(LOC STRING,
+                  LOC CHAR,
+                  in bk));
+         open(inf,
+              in bk,
+              stand in channel)/=0
+      THEN
+         put(stand error,
+             ("Cannot open book ",in bk,
+              newline));
+         stop
+      ELSE
+         on logical file end(inf,
+          (REF FILE f)BOOL:
+           (
+            print tree(root);
+            print((
+               "Frequency of occurrence ",
+               "of letters in the book ",
+               idf(f),newline,
+               newline,out page,newline,
+               "Total letters read: ",
+               whole(num letters,0),
+               newline));
+            stop;  SKIP
+           ))
+      FI;
+
+      FOR i TO 26 #letters in the alphabet#
+      DO
+         add letter(
+            root,
+            HEAP LETTER:=
+             (REPR(ABS("A")-1+i),0));
+         add letter(
+            root,
+            HEAP LETTER:=
+             (REPR(ABS("a")-1+i),0))
+      OD #all letters are now in the tree#;
+
+      DO
+         add letter(root,get letter(inf));
+         num letters+:=1
+      OD
+   END
+   FINISH
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Parallel programming}{adv-par}
+Unfortunately, the a68toc compiler does not provide parallel
+programming, so this section has been removed from the third edition of
+this book.
+
+\Section{Summary}{adv-summ}
+A machine word is accessed using the mode \verb|BITS| and a number of
+operators. A value of mode \verb|BITS| can be denoted using binary,
+quaternary (radix 4), octal or hexadecimal digits.  Names which refer
+to names form the basis of self-referential modes (via \verb|STRUCT|
+and \verb|REF|) from which we can construct queues and trees.  Some of
+the basic procedures were covered which manipulate these data
+structures.

@@ -1,0 +1,2544 @@
+% $Log: chapter13.tex,v $
+% Revision 1.11  2012/01/04 17:20:06  sian
+% *** empty log message ***
+%
+% Revision 1.10  2005-01-28 20:26:18  sian
+% Minor changes.
+%
+% Revision 1.9  2005/01/28 17:11:04  sian
+% Altered the description of `establish' for `client socket channel' and
+% `server socket channel' so that the `c' parameter is used as the MTU.
+%%
+% Revision 1.8  2004/11/07 16:00:10  sian
+% Removed all references to PLUS, MINUS and TIMES
+%%
+% Revision 1.7  2003/05/31 13:02:41  sian
+% Removal of compiled libraries and binaries
+%%
+% Revision 1.6  2003/04/23 08:57:31  sian
+% Debian release 1.5
+%%
+% Revision 1.5  2002/06/20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Standard Prelude}{chapxiii}\catcode`\%=12
+The function of this chapter is to describe all the facilities in the
+standard prelude supplied with the Linux port of the
+\hx{a68toc}{a68toc!standard prelude}
+compiler. The standard prelude contains both implicit declarations
+(facilities provided by the compiler) and explicit declarations
+(those defined in, and made available by, the QAD standard
+prelude\footnote{QAD stands for ``quick-and-dirty'' and was supposed
+to represent the provided standard prelude. While it is not entirely
+standard (as far as Algol~68 is concerned), it was certainly not
+implemented quickly!}). They are classified and dealt with as follows:-
+\begin{enumerate}
+\item \textbf{Standard modes} \newline
+These are the modes defined by the Algol 68 Revised Report, which
+defines the language, plus modes required by the transput.
+\item \textbf{Environment enquiries} \newline
+Some of these are defined in the Revised Report.
+\item \textbf{Standard operators} \newline
+There are a large number of these, all defined in the Revised Report
+and classified by the modes of their operands. They are preceded by a
+subsection giving their priorities.
+\item\textbf{Other operators} \newline
+Some operators are provided which are not in the Revised Report. They
+are described in this section. However, operators peculiar to the
+a68toc implementation are described in the section on a68toc
+extensions.
+\item \textbf{Standard procedures} \newline
+Only those procedures not used in transput and process control are
+defined here. They all appear in the Revised Report.
+\item \textbf{Other procedures} \newline
+Procedures which appear neither in the Revised Report nor in any other
+section appear here.
+\item \textbf{\texttt{ALIEN} declarations}
+This section includes all the \ixtt{ALIEN} declarations made
+available by the standard prelude.
+\item \textbf{a68toc extensions}\newline
+All the extensions to the language are described in this section
+including modes, constructs, operators and procedures.
+\item \textbf{Process control} \newline
+These declarations provide control over the working of the
+floating-point unit, integer overflow and signal handling. They include
+declarations for controlling the Algol~68 garbage collector.
+\item \textbf{Transput} \newline
+This very large section provides specifications for all the transput
+declarations available in the Standard Prelude, but omits those
+operators and procedures which are intended for internal use only.
+\end{enumerate}
+See the bibliography for details of the \ix{Revised Report}.
+
+\Section{Standard modes}{stan-modes}
+Many of the modes available in the standard prelude are built from the
+standard modes of the language which are all defined in the Revised
+Report.
+\begin{enumerate}
+\item \ixtt{VOID} \newline
+This mode has one value: \verb|EMPTY|. It is mainly used as the yield
+of routines and in unions.
+\item \ixtt{BOOL} \newline
+ This mode has
+two values, namely \ixtt{TRUE} and
+\ixtt{FALSE}.
+\item \verb|INT| \newline
+This is the basic arithmetic mode. Various precisions are available:-
+\begin{enumerate}
+\item \ixtt{LONG INT} 64-bit integer
+\item \ixtt{INT} 32-bit integer
+\item \ixtt{SHORT INT} 16-bit integer
+\item \ixtt{SHORT SHORT INT} 8-bit integer
+\end{enumerate}
+\item \verb|REAL|\newline
+This mode is used mainly for approximate calculations although exact
+values can be manipulated provided that the number of significant
+digits does not exceed the precision of the mantissa (see section
+\hyref{stan-arithenq}). The following precisions are available:-
+\begin{enumerate}
+\item \ixtt{REAL} 64-bit real
+\item \ixtt{SHORT REAL} 32-bit real
+\end{enumerate}
+\item \verb|COMPL| \newline
+Strictly speaking, this is not a fundamental mode because it is
+regarded as a structure with two fields:-
+\begin{verbatim}
+   MODE COMPL = STRUCT(REAL re,im)
+\end{verbatim}
+\noindent
+However, the widening coercion will convert a \verb|REAL| value into a
+\verb|COMPL| value and \verb|COMPL| values are not straightened (see
+section~\hyref{stan-straight}). Like \verb|REAL|s, the following
+precisions are available:-
+\begin{enumerate}
+\item \ixtt{COMPL} 128-bit
+\item \ixtt{SHORT COMPL} 64-bit
+\end{enumerate}
+\item \ixtt{CHAR} \newline
+This mode is used for most character operations. See section
+\hyref{stan-enqchar} for further details.
+\item \verb|BITS| \newline
+This mode is equivalent to a computer word regarded as a group of bits
+(binary digits) numbered 1 to \verb|bits width| (see
+section \hyref{stan-intsz}). Various precisions are available:-
+\begin{enumerate}
+\item \ixtt{LONG BITS} 64-bit
+\item \ixtt{BITS} 32-bit
+\item \ixtt{SHORT BITS} 16-bit
+\item \ixtt{SHORT SHORT BITS} 8-bit
+\end{enumerate}
+\item \ixtt{BYTES} \newline
+The Revised Report describes the mode, but the a68toc compiler does not
+implement it.
+\item \ixtt{STRING} \newline
+This mode is defined as
+\begin{verbatim}
+   MODE STRING = FLEX[1:0]CHAR
+\end{verbatim}
+\noindent
+and is provided with a shorthand construct for denotations of such
+values (see section~\hyref{rep-mult}).
+\end{enumerate}
+
+\Section{Environment enquiries}{stan-enq}
+Algol 68 was the first programming language to contain declarations
+which enable a programmer to determine the characteristics of the
+implementation. The enquiries are divided into a number of different
+groups. The actual values of the Linux port of the a68toc compiler
+are placed in square brackets. Those defined in the Revised Report
+are marked with (RR).
+
+\Subsection{Arithmetic enquiries}{stan-arithenq}
+These enquiries are so numerous that they are further subdivided.
+
+\Subsubsection{Enquiries about precisions}{stan-prec}
+Any number of \verb|LONG| or \verb|SHORT| can be given in the mode
+specification of numbers, but only a few such modes are distinguishable
+in any implementation. The following environment enquiries tell which
+modes are distinguishable. Note particularly that there are more
+distinguishable precisions available for \verb|INT| and \verb|BITS|
+than there are for \verb|REAL| and \verb|COMPL| in the
+\hx{a68toc}{a68toc!precisions} implementation.
+\begin{enumerate}
+\item \hxtt{INT int lengths}{int lengths} (RR) $[2]$ \newline
+$1+$ the number of extra lengths of integers.
+\item \hxtt{INT int shorths}{int shorths} (RR) $[3]$ \newline
+$1+$ the number of short lengths of integers.
+\item \hxtt{INT real lengths}{real lengths} (RR) $[1]$ \newline
+$1+$ the number of extra lengths of real numbers.
+\item \hxtt{INT real shorths}{real shorths} (RR) $[2]$ \newline
+$1+$ the number of short lengths of real numbers.
+\item \hxtt{INT bits lengths}{bits lengths} (RR) $[2]$ \newline
+$1+$ the number of extra lengths of \verb|BITS|.
+\item \hxtt{INT bits shorths}{bits shorths} (RR) $[3]$ \newline
+$1+$ the number of short lengths of \verb|BITS|.
+\item \hxtt{INT bytes lengths}{bytes lengths} (RR) $[0]$ \newline
+Bytes are not implemented by the
+\hx{a68toc}{a68toc!BYTES@\texttt{BYTES}} compiler.
+\item \hxtt{INT bytes shorths}{bytes shorths} (RR) $[0]$ \newline
+Bytes are not implemented by the a68toc compiler.
+\end{enumerate}
+
+\Subsubsection{Enquiries about ranges}{stan-ranges}
+\begin{enumerate}
+\item \verb|SHORT SHORT INT| \ixtt{short short max int} (RR) $[127]$\newline
+The maximum value of mode \verb|SHORT SHORT INT|.
+\item \hxtt{SHORT INT short max int}{short max int} (RR) $[32\,767]$ \newline
+The maximum value of mode \verb|SHORT INT|.
+\item \hxtt{INT max int}{max int} (RR) $[2\,147\,483\,647]$ \newline
+The maximum value of mode \verb|INT|.
+\item \hxtt{LONG INT long max int}{long max int} (RR)\newline
+$[9\,223\,372\,036\,854\,775\,807]$ \newline
+The maximum value of mode \verb|LONG INT|.
+\item \hxtt{SHORT REAL short min real}{short min real} $[0.117\,55e-37]$ \newline
+The smallest representable short real. It should not be confused with
+\verb|short small real|.
+\item \hxtt{SHORT REAL short max real}{short max real} (RR) $[0.340\,28e+39]$ \newline
+The largest short real value storable.
+\item \hxtt{SHORT REAL short small real}{short small real} (RR)\newline
+$[1.192\,09e-7]$\newline
+The smallest short real which, when added to $1.0$ makes a discernible
+difference.
+\item \hxtt{REAL min real}{min real}
+ $[0.197\,626\,258\,336\,50e-322]$\hfil \newline
+The smallest representable real. It should not be confused with
+\verb|small real|.
+\item \hxtt{REAL max real}{max real}
+ (RR) $[0.179\,769\,313\,486\,23e+309]$\hfil\newline
+The largest real value storable.
+\item \hxtt{REAL small real}{small real}
+ (RR) $[0.222\,044\,604\,925\,031e-15]$\hfil\newline
+The smallest real which, when added to $1.0$, makes a discernible
+difference.
+\item \hxtt{INT bytes per bits}{bytes per bits} (RR) $0$
+\end{enumerate}
+
+\Subsubsection{Internal sizes of modes}{stan-intsz}
+\begin{enumerate}
+\item \hxtt{INT short short int width}{short short int width} $[3]$
+\newline
+The maximum number of decimal digits expressible by a value of mode
+\verb|SHORT SHORT INT|.
+\item \hxtt{INT short int width}{short int width} $[5]$ \newline
+The maximum number of decimal digits expressible by a value of mode
+\verb|SHORT INT|.
+
+\item \hxtt{INT int width}{int width} $[10]$
+\newline
+The maximum number of decimal digits expressible by a value of mode
+\verb|INT|.
+\item \hxtt{INT long int width}{long int width} $[19]$ \newline
+The maximum number of decimal digits expressible by a value of mode
+\verb|LONG INT|.
+\item \hxtt{INT short short bits width}{short short bits width}
+(RR) $[8]$ \newline
+The number of bits required to hold a value of mode
+\verb|SHORT SHORT BITS|.
+\item \hxtt{INT short bits width}{short bits width} (RR) $[16]$ \newline
+The number of bits required to hold a value of mode \verb|SHORT BITS|.
+\item \hxtt{INT bits width}{bits width} (RR) $[32]$ \newline
+The number of bits required to hold a value of mode \verb|BITS|.
+\item \hxtt{INT long bits width}{long bits width} (RR) $[64]$ \newline
+The number of bits required to hold a value of mode \verb|LONG BITS|.
+\item \hxtt{INT bytes width}{bytes width}
+(RR) $[0]$ \newline
+The mode \verb|BYTES| is not implemented.
+\item \hxtt{INT short real precision}{short real precision} $[24]$
+\newline
+The number of bits used for the mantissa of a short real.
+\item \hxtt{INT short real width}{short real width} $[6]$ \newline
+The maximum number of significant decimal digits in a small real.
+\item \hxtt{INT short min exp}{short min exp} $[-125]$ \newline
+The minimum exponent of a short real.
+\item \hxtt{INT short max exp}{short max exp} $[128]$ \newline
+The maximum exponent of a short real.
+\item \hxtt{INT short exp width}{short exp width} $[2]$\newline
+The maximum number of decimal digits in the exponent of a short real.
+This can be less than the number of digits occupied by
+\verb|short max exp| because any decimal digit can be represented. For
+example, 99 but not 999.
+\item \hxtt{INT real precision}{real precision} $[53]$ \newline
+The number of bits used for the mantissa of a real.
+\item \hxtt{INT real width}{real width}
+$[15]$ \newline
+The maximum number of significant decimal digits in a real.
+\item \hxtt{INT min exp}{min exp} $[-1021]$\newline
+The minimum exponent of a real.
+\item \hxtt{INT max exp}{max exp} $[1024]$\newline
+The maximum exponent of a real.
+\item \hxtt{INT exp width}{exp width} $[3]$\newline
+The maximum number of decimal digits in the exponent of a real. See
+also \verb|short exp width|.
+\end{enumerate}
+
+\Subsubsection{Sizes used in binary transput}{stan-binary}
+These values give the sizes of each mode when transput using
+\ixtt{put bin} or \ixtt{get bin}.
+\begin{enumerate}
+\item \hxtt{INT long bits bin bytes}{long bits bin bytes} $[8]$
+\item \hxtt{INT bits bin bytes}{bits bin bytes} $[4]$
+\item \hxtt{INT short bits bin bytes}{short bits bin bytes} $[2]$
+\item \hxtt{INT short short bits bin bytes}{short short bits bin bytes} $[1]$
+\item \hxtt{INT bool bin bytes}{bool bin bytes} $[4]$
+\item \hxtt{INT long int bin bytes}{long int bin bytes} $[8]$
+\item \hxtt{INT int bin bytes}{int bin bytes} $[4]$
+\item \hxtt{INT short int bin bytes}{short int bin bytes} $[2]$
+\item \hxtt{INT short short int bin bytes}{short short int bin bytes}
+$[1]$
+\item \hxtt{INT real bin bytes}{real bin bytes} $[8]$
+\item \hxtt{INT short real bin bytes}{real bin bytes} $[4]$
+\item \hxtt{INT compl bin bytes}{compl bin bytes} $[16]$
+\item \hxtt{INT short compl bin bytes}{short compl bin bytes} $[8]$
+\item \hxtt{INT char bin bytes}{char bin bytes} $[1]$
+\end{enumerate}
+
+\Subsubsection{Particular arithmetic values}{stan-arithval}
+\begin{enumerate}
+\item \hxtt{REAL infinity}{infinity}\newline
+Defined by the C mathematics library as \verb|HUGE_VAL|.
+\item \hxtt{SHORT REAL short pi}{short pi} $[3.14159]$
+\item \hxtt{REAL pi}{pi} $[3.141\,592\,653\,589\,79]$
+\item \hxtt{REAL log2}{log2} $[0.301\,029\,995\,663\,981]$\newline
+This is the value of $\log_{10}2$.
+\end{enumerate}
+
+\Subsection{Character set enquiries}{stan-enqchar}
+The \hx{a68toc}{a68toc!charset} implementation of Algol 68 is
+bedevilled by the peculiar limitations of the C~programming language
+in which a character is actually an integer and indistinguishable
+from such. Furthermore, a~C `character' is a signed integer,
+equivalent to a value of mode \verb|SHORT SHORT INT|. Thus~C
+`characters' range from $-128$ to $+127$.  Algol~68, on the other
+hand, has the mode \verb|CHAR| which, at a high level, is distinct
+from values of both mode \verb|INT| and mode \verb|SHORT SHORT INT|.
+The absolute value of Algol~68 characters range from $0$ to the value
+of \verb|max abs char|. Furthermore, the operator \verb|REPR| will
+convert any \verb|INT| upto \verb|max abs char| to a character. Be
+warned that the~C value of \verb|REPR 225|, for example, is $-31$!
+What character is represented by \verb|REPR 225| will depend on the
+character set used by the displaying device. An ISO 8859-1 character
+set, for example, will display `\'a'. The environment enquiries in
+this section are limited to a range enquiry and the values of
+commonly required characters.
+\begin{enumerate}
+\item \hxtt{INT max abs char}{max abs char}
+(RR) $[255]$ \newline
+The largest positive integer which can be represented as a character.
+\item \hxtt{CHAR null character}{null character}
+(RR) $[\mbox{\texttt{REPR 0}}]$
+\item \hxtt{CHAR nul ch}{nul ch}
+$[\mbox{\texttt{REPR 0}}]$ \newline
+This is a synonym for \verb|null character|.
+\item \hxtt{CHAR blank}{blank}
+(RR) $[\mbox{\texttt{REPR 32}}]$ \newline
+This is a space character.
+\item \hxtt{CHAR error char}{error char}
+(RR) $[\ast]$ \newline
+This character is used by the conversion routines for invalid values.
+\item \hxtt{CHAR flip}{flip} (RR) $[\mbox{T}]$
+\newline
+This character is used to represent \verb|TRUE| as an external value.
+\item \hxtt{CHAR flop}{flop} (RR) $[\mbox{F}]$
+\newline
+This character is used to represent \verb|FALSE| as an external value.
+\item \hxtt{CHAR cr}{cr}
+$[\mbox{\texttt{REPR 13}}]$ \newline
+This character is sometimes used as a line terminator, usually in
+association with \verb|lf|.
+\item \hxtt{CHAR lf}{lf}
+$[\mbox{\texttt{REPR 10}}]$  \newline
+This character terminates lines on Linux.
+\item \hxtt{CHAR ff}{ff}
+$[\mbox{\texttt{REPR 12}}]$ \newline
+This character is the ``form-feed'' character often used for
+continuous stationery.
+\item \hxtt{CHAR tab ch}{tab ch}
+$[\mbox{\texttt{REPR 9}}]$ \newline
+This character is used to provide crude formatting of text files,
+particularly those which mimic documents produced by typewriters.
+
+\item \hxtt{CHAR esc}{esc}
+$[\mbox{\texttt{REPR 27}}]$ \newline
+This character is mainly used to introduce ``escape sequences'' which
+control the format and colour of output on Linux virtual terminals
+(VTs) and \textit{xterm} windows.\footnote{See the file
+\texttt{/usr/share/doc/xterm/ctlseqs.txt.gz} for the latter.}
+\item \hxtt{CHAR eof char}{eof char}
+$[\mbox{\texttt{REPR 26}}]$ \newline
+This character was used to denote the end of a plain text file in the
+MS-DOS operating system.
+\end{enumerate}
+
+\Section{Standard operators}{stan-ops}
+The number of distinct operators is vastly increased by the
+availability of \verb|SHORT| and \verb|LONG| modes. Thus it is
+imperative that some kind of shorthand be used to describe the
+operators. Following the subsection on the method of description are
+sections devoted to operators with classes of operands. The end of this
+section contains tables of all the operators.
+
+\Subsection{Method of description}{stan-opsmeth}
+Where an operator has operands and yield which may include \verb|LONG|
+or \verb|SHORT|, the mode is written using \verb|L|. For example,
+\begin{verbatim}
+   OP + = (L INT, L INT)L INT:
+\end{verbatim}
+\noindent
+is a shorthand for the following operators:-
+\begin{verbatim}
+   OP + = (LONG INT,LONG INT)LONG INT:
+   OP + = (INT,INT)INT:
+   OP + = (SHORT INT,SHORT INT)SHORT INT:
+   OP + = (SHORT SHORT INT,SHORT SHORT INT)
+                SHORT SHORT INT:
+\end{verbatim}
+\noindent
+Ensure that wherever \verb|L| is replaced by \verb|SHORT|s or
+\verb|LONG|s, it should be replaced by the same number of \verb|SHORT|s
+or \verb|LONG|s throughout the definition of that operator. This is
+known as ``consistent substitution''. Note that any number of
+\verb|SHORT|s or \verb|LONG|s can be given in the mode of any value
+whose mode accepts such constructs (\verb|INT|, \verb|REAL|,
+\verb|COMPL| and \verb|BITS|), but the only modes which can be
+distinguished are those specified by the environment enquiries in
+section~\hyref{stan-prec}. However, you should note that even though
+values of modes \verb|LONG REAL| and \verb|LONG LONG REAL| cannot be
+distinguished internally, the Algol~68 compiler still regards them as
+having unique modes and you will need to use the \verb|LENG| operator
+to convert a value of mode \verb|LONG REAL| to a value of mode
+\verb|LONG LONG REAL|.
+
+The priority of an operator is independent of the mode of the
+operator and so is given in a separate subsection. Each operator is
+accompanied by a short description of its function.
+
+\Subsection{Standard priorities}{stan-prio}
+The priority of declarations of the standard operators can be changed
+in subsidiary ranges using the \ixtt{PRIO}
+declaration (see section~\hyref{rout-dyad}). Each of the following
+enumerated nine sections contains a list of those operators which
+have that priority.  Operators in parentheses are not defined in the
+Revised Report. See section~\hyref{stan-cont} for their details.
+\goodbreak
+\begin{enumerate}
+\item \verb|+:=|, \verb|-:=|, \verb|*:=|, \verb|/:=|,
+\verb|%:=|, \verb|%*:=|, \verb|+=:|\newline
+\ixtt{PLUSAB}, \ixtt{MINUSAB}, \ixtt{TIMESAB}, \ixtt{DIVAB},
+\ixtt{OVERAB}, \ixtt{MODAB}, \ixtt{PLUSTO}
+\item \ixtt{OR}
+\item \verb|&|, \ixtt{AND}
+\item \ixtt{=}, \ixtt{/=}, \verb|EQ|, \verb|NE|
+\item \ixtt{<}, \ixtt{<=}, \ixtt{>=}, \ixtt{>} \newline
+\verb|LT|, \verb|LE|, \verb|GE|, \verb|GT|
+\item \ixtt{-}, \ixtt{+},
+\item \ixtt{*}, \ixtt{/}, \verb|%|, \verb|%*|,\newline
+\ixtt{OVER}, \ixtt{MOD}, \ixtt{ELEM},
+\item \ixtt{**}, \verb|UP|, \verb|DOWN|, \ixtt{SHL},
+\ixtt{SHR}, \ixtt{LWB}, \ixtt{UPB}
+\item \verb|+*|, \ixtt{I}, (\ixtt{MIN}, \ixtt{MAX})
+\end{enumerate}
+
+\Subsection{Operators with row operands}{stan-optrow}
+Both monadic and dyadic forms are available. We shall use the mode
+\verb|ROW| to denote the mode of any multiple.
+\begin{enumerate}
+\item Monadic.\newline
+\hx{\texttt{OP LWB = (ROW)INT:}}{LWB@\texttt{LWB}!monadic}\newline
+\hx{\texttt{OP UPB = (ROW)INT:}}{UPB@\texttt{UPB}!monadic}\newline
+Yields the lower or upper bound of the first or only dimension of its
+operand.
+\item Dyadic.\newline
+\hx{\texttt{OP LWB = (INT n,ROW r)INT:}}{LWB@\texttt{LWB}!dyadic}\newline
+\hx{\texttt{OP UPB = (INT n,ROW r)INT:}}{UPB@\texttt{UPB}!dyadic}\newline
+Yields the lower or upper bound of the $n$-th dimension of the
+multiple \verb|r|.
+\end{enumerate}
+
+\Subsection{Operators with \texttt{BOOL} operands}{stan-opbool}
+\begin{enumerate}
+\item \hxtt{OP OR = (BOOL a,b)BOOL:}{OR}\newline
+Logical \verb|OR|.
+\item \verb|OP & = (BOOL a,b)BOOL:|\newline
+Logical \verb|AND| (synonym \ixtt{AND}).
+\item \hxtt{OP NOT = (BOOL a)BOOL:}{NOT}\newline
+Logical \verb|NOT|: \verb|TRUE| if \verb|a| is \verb|FALSE| and vice
+versa.
+\item \hxtt{OP = =(BOOL a,b)BOOL:}{=}\newline
+\verb|TRUE| if \verb|a| equals \verb|b| (synonym is \verb|EQ|).
+\item \hxtt{OP /= =(BOOL a,b)BOOL:}{/=}\newline
+\verb|TRUE| if \verb|a| not equal to \verb|b| (synonym is \verb|NE|).
+\item \hxtt{OP ABS = (BOOL a)INT:}{ABS}\newline
+\verb|ABS TRUE| is $1$ and \verb|ABS FALSE| is $0$.
+\end{enumerate}
+
+\Subsection{Operators with \texttt{INT} operands}{stan-opint}
+Most of these operators take values of any precision. The \verb|L|
+shorthand is used for those that can.
+
+\Subsubsection{Monadic operators}{stan-opintmon}
+Consistent substitution applies to all those operators in this section
+which use the \verb|L| shorthand: apart from \verb|LENG| and
+\verb|SHORTEN|, the precision of the yield is the same as the precicion
+of the operand.
+\begin{enumerate}
+\item \hx{\texttt{OP + = (L INT a)L INT:}}{+@\texttt{+}!monadic}\newline
+The identity operator. Does nothing.
+\item \hx{\texttt{OP - = (L INT a)L INT:}}{-@\texttt{-}!monadic}\newline
+The negation operator.
+\item \verb|OP ABS = (L INT a)L INT:|\newline
+The absolute value. \verb|ABS -3 = +3|
+\item \hxtt{OP SIGN = (L INT a)INT:}{SIGN}\newline
+Yields $-1$ for a negative operand, $+1$ for a positive operand and $0$
+for a zero operand.
+\item \hxtt{OP ODD = (L INT a)BOOL:}{ODD} \newline
+Yields \verb|TRUE| if the operand is odd.
+\item \hxtt{OP LENG = (L INT a)LONG L INT:}{LENG} \newline
+\verb|OP LENG = (SHORT L INT a)L INT:| \newline
+Converts its operand to the next longer precision. Note that you cannot
+use both \verb|SHORT| and \verb|LONG| in the same mode.
+\item \hxtt{OP SHORTEN = (L INT a)SHORT L INT:}{SHORTEN}
+\newline
+\verb|OP SHORTEN = (LONG L INT a)L INT:| \newline
+Converts its operand to the next shorter precision. If the value
+exceeds \verb|l max int| for the next shorter precision, the value will
+be truncated. This can lead to erroneous results. See also \verb|LENG|.
+\end{enumerate}
+
+\Subsubsection{Dyadic operators}{stan-opintdy}
+In this section, consistent substitution is used wherever the \verb|L|
+shorthand is used. For operators with mixed operands, see
+section~\hyref{stan-mixed}.
+\begin{enumerate}
+\item \hx{\texttt{OP + = (L INT a,L INT b)L INT:}}{+@\texttt{+}!dyadic}\newline
+Arithmetic addition: $a+b$. No check is made for integer overflow.
+\item \hx{\texttt{OP - = (L INT a,L INT b)L INT:}}{-@\texttt{-}!dyadic}\newline
+Arithmetic subtraction: $a-b$. No check is made for integer
+overflow.
+\item \hxtt{OP * = (L INT a,L INT b)L INT:}{*}\newline
+Arithmetic multiplication: $a\times b$. No check is made for
+integer overflow.
+\item \hxtt{OP / = (L INT a,L INT b)L REAL:}{/}\newline
+Arithmetic fractional division. Even if the result is a whole number
+(for example, $6/3$), the yield always has mode \verb|L REAL|. Where a
+result of mode \verb|L REAL| needs to be output, but cannot be output
+due to the limitations built into the definition of the mode
+\verb|SIMPLOUT|, the operators \verb|LENG| or \verb|SHORTEN| should be
+used. Floating-point overflow can be checked (see
+section \hyref{stan-fpov}).
+\item \verb|OP % = (L INT a,L INT b)L INT:|\newline
+Arithmetic integer division. Division by zero in the
+\hx{a68toc}{a68toc!division by zero}
+implementation produces a floating-point exception paradoxically
+(synonym \ixtt{OVER}).
+\item \hxtt{OP ** = (L INT a,INT b)L INT:}{**}\newline
+Computes $a^b$ for $b\geq0$.
+\item \verb|OP %* = (L INT a,L INT b)L INT:|\newline
+Arithmetic modulo (synonym \ixtt{MOD}). For example
+\begin{verbatim}
+   5 MOD 3 = 2
+\end{verbatim}
+\item \hxtt{OP +* = (L INT a,L INT b)L COMPL:}{+*}\newline
+Converts two integers into a complex number of the same precision
+(synonym \ixtt{I}).
+\item \hxtt{OP < = (L INT a,L INT b)BOOL:}{<}\newline
+Arithmetic ``less than'': $a<b$ (synonym \verb|LT|).
+\item \hxtt{OP <= = (L INT a,L INT b)BOOL:}{<=}
+\newline
+Arithmetic ``less than or equals'': $a\leq b$ (synonym \verb|LE|).
+\item \hxtt{OP >= = (L INT a,L INT b)BOOL:}{>=}\newline
+Arithmetic ``greater than or equals'': $a\geq b$ (synonym \verb|GE|).
+\item \hxtt{OP > = (L INT a,L INT b)BOOL:}{>}\newline
+Arithmetic ``greater than'': $a>b$ (synonym \verb|GT|).
+\item \hxtt{OP = = (L INT a,L INT b)BOOL:}{=}\newline
+Arithmetic equality: $a=b$ (synonym \verb|EQ|).
+\item \hxtt{OP /= = (L INT a,L INT b)BOOL:}{/=}\newline
+Arithmetic inequality: $a\neq b$ (synonym \verb|NE|).
+\end{enumerate}
+
+\Subsection{Operators with \texttt{REAL} operands}{stan-opreal}
+Most of these operators can have operands of any precision. The
+\verb|L| shorthand is used for them.
+
+\Subsubsection{Monadic operators}{stan-oprealmon}
+\begin{enumerate}
+\item \hx{\texttt{OP + = (L REAL a)L REAL:}}{+@\texttt{+}!monadic}\newline
+Arithmetic identity. Does nothing.
+\item \hx{\texttt{OP - = (L REAL a)L REAL:}}{-@\texttt{-}!monadic}\newline
+Arithmetic negation: $-a$.
+\item \hxtt{OP ABS = (L REAL a)L REAL:}{ABS}\newline
+The absolute value. \verb|ABS -3.0 = +3.0|
+\item \hxtt{OP SIGN = (L REAL a)INT:}{SIGN} \newline
+Yields $-1$ for negative operands, $+1$ for positive op\-erands and $0$ for
+a zero operand ($0.0$).
+\item \hxtt{OP ROUND = (REAL a)INT:}{ROUND} \newline
+Rounds its operand to the nearest integer. If the value ends with $.5$,
+it is rounded to the nearest even number. This is contrary to normal
+Linux C~library practice, but is an internationally accepted standard
+which ensures that rounding errors do not accumulate. The operator
+checks for integer overflow (see section~\hyref{stan-fpov} for details).
+\item \verb|OP ROUND = (L REAL a)L INT:|
+(for any precision except \verb|REAL|)\newline Rounds its operand to
+the nearest integer. Does not check integer overflow. If its operand
+exceeds \verb|l max int|, an erroneous result will ensue.
+\verb|ROUND| should be used for a \verb|REAL| operand if you want to
+check for integer overflow (see section~\hyref{stan-fpov} for details
+of floating-point overflow checking).
+\item \hxtt{OP ENTIER = (REAL a)INT:}{ENTIER}\newline
+Truncates its operand to the next lowest integer. The operator checks
+for integer overflow (see section~\hyref{stan-fpov} for details).
+\item \verb|OP ENTIER = (L REAL a)L INT:|
+(for any precision except \verb|REAL|) \newline
+Truncates its operand to the next lowest integer. The operator does not
+check integer overflow. If its operand exceeds \verb|l max int|, an
+erroneous result will ensue. Use \verb|ENTIER| for a \verb|REAL|
+operand if you want to check for integer overflow (see
+section~\hyref{stan-fpov} for details of floating-point overflow
+checking).
+\item \hxtt{OP LENG = (L REAL a)LONG L REAL:}{LENG}
+\newline
+\verb|OP LENG = (SHORT L REAL a)L REAL:| \newline
+Converts its operand to the next longer precision. Note that you cannot
+use both \verb|SHORT| and \verb|LONG| in the same mode.
+\item \hxtt{OP SHORTEN = (L REAL a)SHORT L REAL:}{SHORTEN}
+\newline
+\verb|OP SHORTEN = (LONG L REAL a)L REAL:| \newline
+Converts its operand to the next shorter precision. If a value exceeds
+\verb|l max real| for the next shorter precision, the value will be
+truncated leading to an erroneous result. The mantissa will always be
+truncated.
+\end{enumerate}
+
+\Subsubsection{Dyadic operators}{stan-oprealdy}
+In this section, consistent substitution is used wherever the \verb|L|
+shorthand appears. For operators with mixed operands, see
+section~\hyref{stan-mixed}.
+\begin{enumerate}
+\item \hx{\texttt{OP + = (L REAL a,L REAL b)L REAL:}}{+@\texttt{+}!dyadic} \newline
+Floating-point addition: $a+b$. Floating-point overflow will cause a
+trappable signal (see section~\hyref{stan-fpov}).
+\item \hx{\texttt{OP - = (L REAL a,L REAL b)L REAL:}}{-@\texttt{-}!dyadic} \newline
+Floating-point subtraction: $a-b$. Floating-point overflow will cause a
+signal which can be trapped (see section \hyref{stan-fpov}).
+\item \hxtt{OP * = (L REAL a,L REAl b)L REAL:}{*} \newline
+Floating-point multiplication: $a\times b$. Floating-point overflow
+will cause a signal which can be trapped (see section \hyref{stan-fpov}).
+\item \hxtt{OP / = (L REAL a,L REAL b)L REAL:}{/} \newline
+Floating-point divison: $a/b$. Floating-point overflow and
+divide-by-zero will cause a trappable signal (see
+section \hyref{stan-fpov}). Where a result of mode \verb|L REAL| needs to
+be output, but it cannot be output due to the limitations built into
+the definition of the mode \verb|SIMPLOUT|, the operators \verb|LENG|
+or \verb|SHORTEN| should be used.
+\item \hxtt{OP +* = (L REAL a,L REAL b)L COMPL:}{+*}\newline
+Converts two reals into a complex number of the same precision
+(synonym \ixtt{I}).
+\item \hxtt{OP < = (L REAL a,L REAL b)BOOL:}{<}\newline
+Floating-point ``less than'': $a<b$ (synonym \verb|LT|).
+\item \hxtt{OP <= = (L REAL a,L REAL b)BOOL:}{<=}\newline
+Floating-point ``less than or equals'': $a\leq b$ (synonym \verb|LE|).
+\item \hxtt{OP >= = (L REAL a,L REAL b)BOOL:}{>=}
+\newline(synonym \verb|GE|)\newline
+Floating-point ``greater than or equals'': $a\geq b$.
+\item \hxtt{|OP > = (L REAL a,L REAL b)BOOL:}{>}\newline
+Floating-point ``greater than'': $a>b$ (synonym \verb|GT|).
+\item \hxtt{OP = = (L REAL a,L REAL b)BOOL:}{=}\newline
+Floating-point equality: $a=b$ (synonym \verb|EQ|).
+\item \hxtt{OP /= = (L REAL a,L REAL b)BOOL:}{/=}\newline
+Floating-point inequality: $a\neq b$ (synonym \verb|NE|).
+\end{enumerate}
+
+\Subsection{Operators with \texttt{COMPL} operands}{stan-opcompl}
+Algol 68 is one of the few programming languages which have a
+built-in mode for complex numbers. It is complemented by a rich set
+of operators, some of which are only available for values of mode
+\verb|COMPL|. Again, consistent substitution is applicable to all
+operators using the \verb|L| shorthand.
+
+\Subsubsection{Monadic operators}{stan-opcomplmon}
+\begin{enumerate}
+\item \hxtt{OP RE = (L COMPL a)L REAL:}{RE}\newline
+Yields the real component: \verb|re OF a|.
+\item \hxtt{OP IM = (L COMPL a)L REAL:}{IM} \newline
+Yields the imaginary component: \verb|im OF a|.
+\item \hxtt{OP ABS = (L COMPL a)L REAL:}{ABS} \newline
+Yields $\sqrt{\mbox{\texttt{RE}}\,a^2+\,\mbox{\texttt{IM}}\,a^2}$.
+\item \hxtt{OP ARG = (L COMPL a)L REAL:}{ARG} \newline
+Yields the argument of the complex number.
+\item \hxtt{OP CONJ = (L COMPL a)L COMPL:}{CONJ} \newline
+Yields the conjugate complex number.
+\item \hx{\texttt{OP + = (L COMPL a)L COMPL:}}{+@\texttt{+}!monadic} \newline
+Complex identity. Does nothing.
+\item \hx{\texttt{OP - = (L COMPL a)L COMPL:}}{-@\texttt{-}!monadic} \newline
+Complex negation.
+\item \hxtt{OP LENG = (L COMPL a)LONG L COMPL:}{LENG} \newline
+\verb|OP LENG = (SHORT L COMPL a)L COMPL:| \newline
+Converts its operand to the next longer precision. Note that you
+cannot use both \verb|SHORT| and \verb|LONG| in the same mode.
+Unfortunately, although \hx{a68toc}{a68toc!LENG@\texttt{LENG}} will
+translate a program containing this operator apparently without
+errors, the resulting C~file will not compile. The error produced
+will be ``conversion to non-scalar type requested''. You should use
+the following code instead:-
+\begin{verbatim}
+   (LENG RE z,LENG IM z)
+\end{verbatim}
+\item \hxtt{OP SHORTEN = (L COMPL a)SHORT L COMPL:}{SHORTEN} \newline
+\verb|OP SHORTEN = (LONG L COMPL a)L COMPL:| \newline
+Converts its operand to the next shorter precision. Note that you
+cannot use both \verb|SHORT| and \verb|LONG| in the same mode.
+Unfortunately, the \hx{a68toc}{a68toc!SHORTEN@\texttt{SHORTEN}}
+translator will generate incorrect code (see the note for the
+operator \verb|LENG|). Use the following code instead:-
+\begin{verbatim}
+   (SHORTEN RE z,SHORTEN IM z)
+\end{verbatim}
+\noindent
+If either of the components of the complex number exceeds
+\verb|l max real| for the next shorter precision, an erroneous result
+will ensue, but no error will be generated.
+\end{enumerate}
+
+\Subsubsection{Dyadic operators}{stan-opcompldy}
+The remarks in section~\hyref{stan-oprealdy} concerning
+floating-point overflow apply doubly here.
+\begin{enumerate}
+\item \hx{\texttt{OP + = (L COMPL a,L COMPL b)L COMPL:}}{+@\texttt{+}!dyadic}
+\newline
+Floating-point addition for both components.
+\item \hx{\texttt{OP - = (L COMPL a,L COMPL b)L COMPL:}}{-@\texttt{-}!dyadic}
+\newline
+Floating-point subtraction for both components.
+\item \hxtt{OP * = (L COMPL a,L COMPL b)L COMPL:}{*} \newline
+Standard complex multiplication with floating-point arithmetic.
+\item \hxtt{OP / = (L COMPL a,L COMPL b)L COMPL:}{/} \newline
+Standard complex division with floating-point arithmetic.
+\item \hxtt{OP = = (L COMPL a,L COMPL b)BOOL:}{=}\newline
+Complex equality with floating-point arithmetic (synonym \verb|EQ|).
+\item \hxtt{OP /= = (L COMPL a,L COMPL b)BOOL:}{/=}\newline
+Complex inequality with floating-point arithmetic (synonym \verb|NE|).
+\end{enumerate}
+
+\Subsection{Operators with mixed operands}{stan-mixed}
+Consistent substitution is applicable to all operators using the
+\verb|L| shorthand. Additional shorthands are used as follows:-
+\begin{itemize}
+\item The shorthand \verb|P| stands for
+\hx{+}{+@\texttt{+}!dyadic}, \verb|-|, \verb|*| or \verb|/|.
+\item The shorthand \verb|R| stands for
+\ixtt{<}, \ixtt{<=}, \verb|=|, \verb|/=|, \ixtt{>=}, \ixtt{>},\newline
+or \verb|LT|, \verb|LE|, \verb|EQ|, \verb|NE|, \verb|GE|, \verb|GT|.
+\item The shorthand \verb|E| stands for \verb|=| \verb|/=|,\newline
+or \verb|EQ| or \verb|NE|.
+\end{itemize}
+\medskip
+\begin{enumerate}
+\item \verb|OP P = (L INT a,L REAL b)L REAL:|
+\item \verb|OP P = (L INT a,L COMPL b)L COMPL:|
+\item \verb|OP P = (L REAL a,L COMPL b)L COMPL:|
+\item \verb|OP P = (L REAL a,L INT b)L REAL:|
+\item \verb|OP P = (L COMPL a,L INT b)L COMPL:|
+\item \verb|OP P = (L COMPL a,L REAL b)L COMPL:|
+\item \verb|OP R = (L INT a,L REAL b)BOOL:|
+\item \verb|OP R = (L REAL a,L INT b)BOOL:|
+\item \verb|OP E = (L INT a,L COMPL b)BOOL:|
+\item \verb|OP E = (L REAL a,L COMPL b)BOOL:|
+\item \verb|OP E = (L COMPL a,L INT b)BOOL:|
+\item \verb|OP E = (L COMPL a,L REAL b)BOOL:|
+\item \hxtt{OP ** = (L REAL a,INT b)L REAL:}{**}\newline
+\verb|OP ** = (L COMPL a,INT b)L COMPL:|\newline
+Exponentiation: $a^b$ (synonym \texttt{UP}).
+\item \hxtt{OP +* = (L INT a,L REAL b)L COMPL:}{+*}
+\newline
+\verb|OP +* = (L REAL a,L INT b)L COMPL:|\newline
+(synonym \texttt{I})
+\end{enumerate}
+
+\Subsection{Operators with \texttt{BITS} operands}{stan-opbits}
+Consistent substitution applies to all operators using the \verb|L|
+shorthand.
+
+\Subsubsection{Monadic operators}{stan-opbitsmon}
+\begin{enumerate}
+\item \hxtt{OP BIN = (L INT a)L BITS:}{BIN} \newline
+Mode conversion which does not change the internal value.
+\item \hxtt{OP ABS = (L BITS a)L INT:}{ABS} \newline
+Mode conversion which does not change the internal value.
+\item \hxtt{OP NOT = (L BITS a)L BITS:}{NOT} \newline
+Yields the bits obtained by inverting each bit in the operand. That is,
+$0$ goes to $1$, $1$ goes to $0$.
+\item \hxtt{OP LENG = (L BITS a)LONG L BITS:}{LENG} \newline
+\verb|OP LENG = (SHORT L BITS a)L BITS:| \newline
+Converts a bits value to the next longer precision by adding zero bits
+to the more significant end. Note that you cannot use both \verb|SHORT|
+and \verb|LONG| in the same mode.
+\item \hxtt{OP SHORTEN = (L BITS a)SHORT L BITS:}{SHORTEN} \newline
+\verb|OP SHORTEN = (LONG L BITS a)L BITS:|\newline
+Truncates a bits value to a value of the next shorter precision. The
+more significant bits are simply ignored.
+\end{enumerate}
+
+\Subsubsection{Dyadic operators}{stan-opbitsdy}
+\begin{enumerate}
+\item \verb|OP & = (L BITS a,L BITS b)L BITS:|\newline
+(synonym \ixtt{AND})\newline
+The logical ``and'' of each pair of binary digits in $a$ and $b$.
+\item \hxtt{OP OR = (L BITS a,L BITS b)L BITS:}{OR} \newline
+The logical ``or'' of each pair of binary digits in $a$ and $b$.
+\item \hxtt{OP SHL = (L BITS a,INT b)L BITS:}{SHL}\newline
+The left operand shifted left by the number of bits specified by the
+right operand. New bits shifted in are all zero. If the right operand is
+negative, shifting is to the right (synonym \verb|UP|).
+\item \hxtt{OP SHR = (L BITS a,INT b)L BITS:}{SHR}\newline
+(synonym \verb|DOWN|)
+\item \hxtt{OP ELEM = (INT a,L BITS b)BOOL:}{ELEM} \newline
+Yields \verb|TRUE| if bit $a$ is $1$.
+\item \hxtt{OP = = (L BITS a,L BITS b)BOOL:}{=} \newline
+Logical equality (synonym \verb|EQ|).
+\item \hxtt{OP /= = (L BITS a,L BITS b)BOOL:}{/=} \newline
+Logical inequality (synonym \verb|NE|).
+\item \hxtt{OP <= = (L BITS a,L BITS b)BOOL:}{<=}\newline
+Yields \verb|TRUE| if each bit in the left operand implies the
+corresponding bit in the right operand (synonym \verb|LE|).
+\item \hxtt{OP >= = (L BITS a,L BITS b)BOOL:}{>=}\newline
+Yields \verb|TRUE| if each bit in the right operand implies the
+corresponding bit in the left operand (synonym \verb|GE|).
+\end{enumerate}
+
+\Subsection{Operators with \texttt{CHAR} operands}{stan-opchar}
+The shorthands in section~\hyref{stan-mixed} apply here.
+\begin{enumerate}
+\item \hxtii{OP ABS = (CHAR a)INT:}{ABS}{CHAR} \newline
+The integer equivalent of a character.
+\item \hxtt{OP REPR = (INT a)CHAR:}{REPR} \newline
+The reverse of \verb|ABS|. The operand should be in the range
+\verb|[0:max abs char]|.
+\item \hx{\texttt{OP + = (CHAR a,CHAR b)STRING:}}{+@\texttt{+}!dyadic!CHAR@\texttt{CHAR}}\newline
+The character $b$ is appended to the character $a$ (concatenation).
+\item \verb|OP E = (CHAR a,CHAR b)BOOL:| \newline
+\hxrtii{Comparison}{=}{CHAR} \hxrtii{of}{/=}{CHAR}
+\hxrtii{the}{<}{CHAR} \hxrtii{arithmetic}{<=}{CHAR}
+\hxrtii{equivalents}{>}{CHAR} \hxrtii{of}{>=}{CHAR}
+$a$ and $b$.
+\end{enumerate}
+
+\Subsection{Operators with \texttt{STRING} operands}{stan-opstr}
+\begin{enumerate}
+\item \hxtii{OP + = (STRING a,STRING b)STRING:}{+}{STRING}
+\newline
+String $b$ is appended to string $a$ (concatenation).
+\item \verb|OP + = (CHAR a,STRING b)STRING:| \newline
+String $b$ is appended to character $a$.
+\item \verb|OP + = (STRING a,CHAR b)STRING:| \newline
+Character $b$ is appended to string $a$.
+\item \hxtii{OP * = (INT a,STRING b)STRING:}{*}{STRING}\newline
+Yields $a$ lots of string $b$ concatenated.
+\item \verb|OP * = (STRING a,INT b)STRING:| \newline
+Yields $b$ lots of string $a$ concatenated.
+\item \verb|OP * = (INT a,CHAR b)STRING:| \newline
+Yields $a$ lots of character $b$ concatenated.
+\item \verb|OP * = (CHAR a,INT b)STRING:| \newline
+Yields $b$ lots of character $a$ concatenated.
+\item \hxtii{OP < = (STRING a,STRING b)BOOL:}{<}{STRING}\newline
+The absolute value of each character of $a$ is compared with the
+absolute value of the corresponding character in $b$ (for the purpose
+of the comparison, the lower bounds of both strings are regarded as
+equal to $1$). If the strings are equal upto the end of the shorter of
+the strings, then the longer string is the greater
+(synonym \verb|LT|).
+\item \hxtii{OP <= = (STRING a,STRING b)BOOL:}{<=}{STRING}\newline
+(synonym \verb|LE|)\newline
+The text for the operator \verb|<| in this section applies.
+\item \hxtii{OP >= = (STRING a,STRING b)BOOL:}{>=}{STRING}\newline
+(synonym \verb|GE|)\newline
+The text for the operator \verb|<| in this section applies.
+\item \hxtii{OP > = (STRING a,STRING b)BOOL:}{>}{STRING}
+\newline (synonym \verb|GT|)\newline
+The text for the operator \verb|<| in this section applies.
+\item \hxtii{OP = = (STRING a,STRING b)BOOL:}{=}{STRING}\newline
+If the strings differ in length, they are unequal, else they are
+compared as for the operator \verb|<| in this section
+(synonym \verb|EQ|).
+\item \hxtii{OP /= = (STRING a,STRING b)BOOL}{/=}{STRING}\newline
+(synonym \verb|NE|)\newline
+If the strings differ in length, they are unequal, else they are
+compared as for the operator \verb|<| in this section.
+\item \verb|OP E = (STRING a,CHAR b)BOOL:| \newline
+\verb|OP E = (CHAR a,STRING b)BOOL:| \newline
+\hxrtii{The}{<}{STRING} \hxrtii{shorthand}{<=}{STRING}
+\hxtii{E}{>}{STRING} \hxrtii{as}{>=}{STRING} described in
+section~\hyref{stan-mixed} applies for these cases.
+\end{enumerate}
+
+\Subsection{Assigning operators}{stan-opass}
+Consistent substitution applies to all operators containing the
+\verb|L| shorthand.
+\begin{enumerate}
+\item \verb|+:=| (synonym \ixtt{PLUSAB}) \newline
+The operator is a shorthand for \verb|a:=a+b|.\newline
+\begin{tabular}{|l|l||l|}\hline
+  Left operand    &Right operand &Yield\\ \hline
+  \texttt{REF L INT}   &\texttt{L INT}     &\texttt{REF L INT}\\
+  \texttt{REF L REAL}  &\texttt{L INT}     &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L INT}     &\texttt{REF L COMPL}\\
+  \texttt{REF L REAL}  &\texttt{L REAL}    &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L REAL}    &\texttt{REF L COMPL}\\
+  \texttt{REF L COMPL} &\texttt{L COMPL}   &\texttt{REF L COMPL}\\
+  \texttt{REF STRING}  &\texttt{CHAR}      &\texttt{REF STRING}\\
+  \texttt{REF STRING}  &\texttt{STRING}    &\texttt{REF STRING}\\ \hline
+\end{tabular}
+\item \verb|+=:| (synonym \ixtt{PLUSTO}) \newline
+The operator is a shorthand for \verb|b:=a+b|.\newline
+\begin{tabular}{|l|l||l|}\hline
+  Left operand    &Right operand &Yield\\ \hline
+  \texttt{STRING}      &\texttt{REF STRING}&\texttt{REF STRING}\\
+  \texttt{CHAR}        &\texttt{REF STRING}&\texttt{REF STRING}\\ \hline
+\end{tabular}
+\item \verb|-:=| (synonym \ixtt{MINUSAB})\newline
+The operator is a shorthand for \verb|a:=a-b|.\newline
+\begin{tabular}{|l|l||l|}\hline
+  Left operand    &Right operand &Yield\\ \hline
+  \texttt{REF L INT}   &\texttt{L INT}     &\texttt{REF L INT}\\
+  \texttt{REF L REAL}  &\texttt{L INT}     &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L INT}     &\texttt{REF L COMPL}\\
+  \texttt{REF L REAL}  &\texttt{L REAL}    &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L REAL}    &\texttt{REF L COMPL}\\
+  \texttt{REF L COMPL} &\texttt{L COMPL}   &\texttt{REF L COMPL}\\ \hline
+\end{tabular} \newline
+\item \verb|*:=| (synonym \ixtt{TIMESAB})\newline
+The operator is a shorthand for \verb|a:=a*b|.\newline
+\begin{tabular}{|l|l||l|}\hline
+  Left operand    &Right operand &Yield\\ \hline
+  \texttt{REF L INT}   &\texttt{L INT}     &\texttt{REF L INT}\\
+  \texttt{REF L REAL}  &\texttt{L INT}     &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L INT}     &\texttt{REF L COMPL}\\
+  \texttt{REF L REAL}  &\texttt{L REAL}    &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L REAL}    &\texttt{REF L COMPL}\\
+  \texttt{REF L COMPL} &\texttt{L COMPL}   &\texttt{REF L COMPL}\\
+  \texttt{REF STRING}  &\texttt{INT}       &\texttt{REF L COMPL}\\ \hline
+\end{tabular} \newline
+\item \verb|/:=| (synonym \ixtt{DIVAB})\newline
+The operator is a shorthand for \verb|a:=a/b|.\newline
+\begin{tabular}{|l|l||l|}\hline
+  Left operand    &Right operand &Yield\\ \hline
+  \texttt{REF L REAL}  &\texttt{L INT}     &\texttt{REF L REAL}\\
+  \texttt{REF L REAL}  &\texttt{L REAL}    &\texttt{REF L REAL}\\
+  \texttt{REF L COMPL} &\texttt{L INT}     &\texttt{REF L COMPL}\\
+  \texttt{REF L COMPL} &\texttt{L REAL}    &\texttt{REF L COMPL}\\
+  \texttt{REF L COMPL} &\texttt{L COMPL}   &\texttt{REF L COMPL}\\ \hline
+\end{tabular} \newline
+\item \verb|OP %:= = (REF L INT a,L INT b)REF L INT:|\newline
+(synonym \ixtt{OVERAB})\newline
+The operator is a shorthand for \verb|a:=a%b|.
+\item \verb|OP %*:= = (REF L INT a,L INT b)REF L INT:|\newline
+(synonym \ixtt{MODAB})\newline
+The operator is a shorthand for \verb|a:=a%*b|.
+\end{enumerate}
+
+\Subsection{Other operators}{stan-othop}
+This section contains those operators which appear neither in the
+Revised Report nor in the section concerning a68toc extensions
+(section~\hyref{stan-a68toc}).
+\begin{enumerate}
+\item \hx{\texttt{OP \&* = (REAL r,INT e)REAL:}}{&*@\texttt{\&*}}\newline
+Multiply \verb|r| by $2^e$. The routine does not use multiplication,
+but simply increments the exponent of \verb|r| accordingly.
+\item \hxtii{OP ELEM = (INT a)BITS:}{ELEM}{BITS}\newline
+The operator yields a value with all bits zero except the bit specified
+by the operand.
+\item \hxtt{OP MIN = (L INT a,L INT b)L INT:}{MIN}
+\newline
+\verb|OP MIN = (L REAL a,L REAL b)L REAL:| \newline
+\verb|OP MIN = (L INT a,L REAL b)L REAL:| \newline
+\verb|OP MIN = (L REAL a,L INT b)L REAL:| \newline
+The lesser of the two operands.
+\item \hxtt{OP MAX = (L INT a,L INT b)L INT:}{MAX}
+\newline
+\verb|OP MAX = (L REAL a,L REAL b)L REAL:| \newline
+\verb|OP MAX = (L INT a,L REAL b)L REAL:| \newline
+\verb|OP MAX = (L REAL a,L INT b)L REAL:| \newline
+The greater of the two operands.
+\item \hxtt{OP VALID = (REAL r)BOOL:}{VALID}\newline
+Whether the real value \verb|r| is a valid real in terms of the IEEE
+standard.
+\end{enumerate}
+
+\Section{Standard procedures}{stan-proc}
+These mainly consist of mathematical procedures. All the procedures
+associated with interfacing with alien procedures appear in the a68toc
+section and all the transput procedures appear in the transput section.
+Procedures associated with floating-point, process and
+garbage-collector control appear in section~\hyref{stan-cont}.
+
+\Subsection{Mathematical procedures}{stan-math}
+Strictly speaking, there are as many precisions of each of the
+mathematical functions as there are for real numbers. However, in the
+standard prelude provided with the a68toc compiler, the only extra
+precision implemented is that for \verb|short real|. The \verb|L|
+shorthand is used to simplify the list of procedures. All these
+procedures depend on the corresponding C~library functions, so consult
+the manual pages for details.
+\begin{enumerate}
+\item \hxtt{PROC l sqrt = (L REAL x)L REAL:}{sqrt} \newline
+\hxrt{Yields}{short sqrt} the square root of $x$ provided that $x\geq0$.
+\item \hxtt{PROC l exp = (L REAL x)L REAL:}{exp} \newline
+\hxrt{Yields}{short exp} $e^x$ if such a value exists.
+\item \hxtt{PROC l ln = (L REAL x)L REAL:}{ln} \newline
+\hxrt{Yields}{short ln} the natural (or Napierian) logarithm of $x$
+provided that $x>0$, otherwise the procedure fails and \verb|errno|
+is set (see section~\hyref{stan-cont} for details).
+\item \hxtt{PROC l log = (L REAL x)L REAL:}{log} \newline
+\hxrt{Yields}{short log} the logarithm of \verb|x| to base 10.
+\item \hxtt{PROC l cos = (L REAL x)L REAL:}{cos} \newline
+\hxrt{Yields}{short cos} the cosine of $x$, where $x$ is in radians.
+\item \hxtt{PROC l arccos = (L REAL x)L REAL:}{arccos}
+\newline
+\hxrt{Yields}{short arccos} the inverse cosine of $x$ as a value
+between \verb|L 0| and \verb|2 l pi| inclusive. If \verb|ABS x > 1|
+then the procedure yields an erroneous result, but \verb|errno| is
+set (see section~\hyref{stan-cont} for details).
+\item \hxtt{PROC l sin = (L REAL x)L REAL:}{sin}
+\newline
+\hxrt{Yields}{short sin} the sine of $x$, where $x$ is in radians.
+\item \hxtt{PROC l arcsin = (L REAL x)L REAL:}{arcsin}
+\newline
+\hxrt{Yields}{short arcsin} the inverse sine of $x$ as a value
+between \verb|L 0| and \verb|2 l pi| inclusive. If \verb|ABS x > 1|
+then the procedure yields an erroneous result, but \verb|errno| is
+set (see section~\hyref{stan-cont} for details).
+\item \hxtt{PROC l tan = (L REAL x)L REAL:}{tan}\newline
+\hxrt{Yields}{short tan} the tangent of $x$, where $x$ is in radians.
+\item \hxtt{PROC l arctan = (L REAL x)L REAL:}{arctan}
+\newline
+\hxrt{Yields}{short arctan} the inverse tangent of $x$ as a value
+between \verb|L 0| and \verb|2 l pi| inclusive.
+\item \hxtt{PROC next random = (REF INT a)REAL:}{next random} \newline
+The next \verb|INT| value after $a$ in a pseudo-random sequence
+uniformly distributed in the range \verb|L 0| to \verb|max int| is
+assigned to $a$. The yield $x$ is in the range $0\leq x<1$ obtained by
+a uniform mapping of $a$.
+\item \hxtt{INT last random}{last random} \newline
+\hxtt{LONG INT long last random}{long last random} \newline
+Names initialised to fixed values and used by other random procedures
+as a seed.
+\item \hxtt{PROC random = REAL:}{random} \newline
+A call of \verb|next random(last random)|.
+\item \hxtt{PROC short random = SHORT REAL:}{short random}\newline
+As for \verb|random| with the yield shortened.
+\item \hxtt{PROC l random int = (L INT n)L INT:}{random int}\newline
+\hxrt{Yields}{long random int} \hxrt{a}{short random int}
+\hxrt{pseudo-random}{short short random int} sequence of
+integers in the range $1\leq x\leq n$.
+\end{enumerate}
+
+\Subsection{Other procedures}{stan-procoth}
+The procedures \verb|whole|, \verb|fixed| and \verb|float| are
+dealt with in the transput section (\hyref{stan-trans}).
+\begin{enumerate}
+\item \hxtt{PROC l bits pack = ([]BOOL a)L BITS:}{bits pack}\newline
+\hxrt{Packs}{long bits pack} \verb|l bits width|
+\hxrt{booleans}{bits pack} \hxrt{into}{short bits pack}
+\hxrt{a}{short short bits pack} value of mode \verb|L BITS|.
+\item \hxtt{PROC char in string =}{char in string}\newline
+      \verb|       (CHAR c,REF INT i,STRING s)BOOL:|\newline
+If the character $c$ occurs in the string $s$, the procedure yields
+\verb|TRUE| and assigns the position of $c$ in $s$ to $i$, otherwise it
+yields \verb|FALSE| when no assignment to $i$ takes place.
+\end{enumerate}
+
+\Subsection{\texttt{ALIEN} declarations}{stan-decalien}
+This section contains all those values which are declared as
+\verb|ALIEN| values, but which are not mentioned in the Revised
+Report.
+\begin{enumerate}
+\item \ixtt{erange err} is one Linux system error used in the QAD
+standard prelude.
+\item The following integer values are used in the transput.
+\begin{enumerate}
+\item \hxtt{INT posix seek cur}{posix seek cur}\newline
+Used in \verb|posix lseek| to specify the current position.
+\item \hxtt{INT posix seek end}{posix seek end}\newline
+Used in \verb|posix lseek| to specify the end of the file.
+\item \hxtt{INT posix seek set}{posix seek set}\newline
+Used in \verb|posix lseek| to specify a direct offset.
+\end{enumerate}
+\item These values are used in the manipulation of the \ixtt{kbd channel}.
+\begin{enumerate}
+\item \hxtt{INT termios vtime}{termios vtime}\newline
+The offset in the \verb|termios| structure.
+\item \hxtt{INT termios vmin}{termios vmin}\newline
+The offset in the \verb|termios| structure.
+\item \hxtt{INT tcsanow}{tcsanow}\newline
+Used in the call to \ixtt{linux tc set attr}.
+\item \hxtt{INT isig}{isig}\newline
+Used in the call to \ixtt{linux tc set attr}.
+\item \hxtt{INT icanon}{icanon}\newline
+Used in the call to \ixtt{linux tc set attr}.
+\item \hxtt{INT echo}{echo}\newline
+Used in the call to \ixtt{linux tc set attr}.
+\end{enumerate}
+\item \ixtt{nil func ptr} has mode \verb|CPTR| and is used to provide
+a \verb|NIL| pointer to C functions.
+\item \ixtt{null c charptr} is equivalent to the C value \verb|NULL|.
+\item \ixtt{prelude} is a dummy declaration used to access the
+parameters provided to a program when called. It should not be used.
+\item The signal names in Linux are given in the following table:
+\begin{center}
+\begin{tabular}{|l|l|l|l|}
+\hline
+sighup  & sigstkflt & sigint  & sigchld \\ \hline
+sigquit & sigcont   & sigill  & sigstop \\ \hline
+sigtrap & sigtstp   & sigabrt & sigttin \\ \hline
+sigbus  & sigttou   & sigfpe  & sigurg  \\ \hline
+sigkill & sigxcpu   & sigusr1 & sigxfsz \\ \hline
+sigsegv & sigvtalrm & sigusr2 & sigprof \\ \hline
+sigpipe & sigwinch  & sigalrm & sigio   \\ \hline
+sigterm & sigpwr    &         &         \\ \hline
+\end{tabular}
+\end{center}
+See \verb|signal(7)| for details of each signal.
+\item \ixtt{errno} identifies a value of mode \verb|REF INT| and
+contains the error number of the latest Linux system error.
+\end{enumerate}
+
+\Subsection{\texttt{ALIEN} routines}{stan-procalien}
+All the \verb|ALIEN| routines made available by the QAD standard
+prelude can be found in this section. No attempt has been made to
+give details of their function: consult the ``man'' pages on your
+Linux system for that (the appropriate page is given after the header
+of each routine with the section of the Linux programming manual
+given in parentheses). The \verb|ALIEN| declarations have been
+classified by the first word of their identifiers which gives the
+standard which specifies them. For example, the routine \ixtt{bsd
+mkstemp} is specified by the BSD4.4 standard.
+
+Many of the routines are used in the definition of other,
+higher-level routines. They are made available so that implementers
+of other preludes will not have to redefine them.
+
+\Subsubsection{Routines conforming to Ansi C}{stan-ansi}
+\begin{enumerate}
+\item \hxtt{PROC(INT)INT ansi raise}{ansi raise}\newline
+See \verb|raise(3)|.
+\item \hxtt{PROC(INT,CPTR)CPTR ansi signal}{ansi signal}\newline
+See \verb|signal(2)|.
+\item \hxtt{PROC(VECTOR[]CHARJ)REAL ansi strtod}{ansi strtod}\newline
+See \verb|strtod(3)|.
+\end{enumerate}
+
+\Subsubsection{Routines conforming to BSD4.4}{stan-bsd}
+\begin{enumerate}
+\item \hxtt{PROC(INT,VECTOR[]CHAR,REF INT)INT bsd accept}{bsd accept}\newline
+See \verb|accept(2)|.
+\item \hxtt{PROC(INT,VECTOR[]CHAR,INT)INT bsd bind}{bsd bind}\newline
+See \verb|bind(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR,INT)INT bsd chmod}{bsd chmod}\newline
+See \verb|chmod(2)|.
+\item \hxtt{PROC(INT,VECTOR[]INT,INT)INT bsd connect}{bsd connect}\newline
+See \verb|connect(2)|.
+\item \hxtt{PROC(INT,INT)INT fchmod}{fchmod}\newline
+See \verb|fchmod(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR)CCHARPTRPTR bsd gethostbyname}{bsd gethostbyname}\newline
+See \verb|gethostbyname(3)|.
+\item \hxtt{PROC(VECTOR[]CHAR,REF BITS)INT bsd inet aton}{bsd inet aton}\newline
+See \verb|inet_aton(3)|.
+\item \hxtt{PROC(INT)INT bsd is a tty}{bsd is a tty}\newline
+See \verb|isatty(3)|.
+\item \hxtt{PROC(INT,INT)INT bsd listen}{bsd listen}\newline
+See \verb|listen(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR)INT bsd mkstemp}{mkstemp}\newline
+See \verb|mkstemp(3)|.
+\item \hxtt{PROC(VECTOR[]CHAR,VECTOR[]CHAR,REAL,INT,INT)INT bsd real snprintf}{bsd real snprintf}\newline
+Although the underlying routine can be used for the transput of any
+plain value, it is used here for the transput of a \verb|REAL| only.
+See \verb|snprintf(3)|.
+\item \hxtt{PROC(INT,INT)INT bsd shutdown}{bsd shutdown}\newline
+See \verb|shutdown(2)|.
+\item \hxtt{PROC(INT,INT,INT)INT bsd socket}{bsd socket}\newline
+See \verb|socket(2)|.
+\end{enumerate}
+
+\Subsubsection{Routines conforming to an ISO standard}{stan-iso}
+\begin{enumerate}
+\item \hxtt{PROC(CPTR)INT iso at exit}{iso at exit}\newline
+See \verb|atexit(3)|.
+\end{enumerate}
+
+\Subsubsection{Routines peculiar to Linux}{stan-linux}
+\begin{enumerate}
+\item \hxtt{PROC(CPTR,CSTR)INT linux on exit}{linux on exit}\newline
+See \verb|on_exit(3)|.
+\item \hxtt{PROC(INT,CCHARPTR)INT linux tc get attr}{linux tc get attr}\newline
+See \verb|tcgetattr(3)|.
+\item \hxtt{PROC(INT,BITS,CCHARPTR)INT linux tc set attr}{linux tc set attr}\newline
+See \verb|tcsetattr(3)|.
+\end{enumerate}
+
+\Subsubsection{Routines conforming to POSIX}{stan-posix}
+\begin{enumerate}
+\item \hxtt{PROC(INT)INT posix close}{posix close}\newline
+See \verb|close(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR,INT)INT posix creat}{posix creat}\newline
+See \verb|creat(2)|.
+\item \hxtt{PROC(INT)VOID posix exit}{posix exit}\newline
+See \verb|exit(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR)CSTR posix get env}{posix getenv}\newline
+See \verb|getenv(3)|.
+\item \hxtt{PROC INT posix getpid}{posix getpid}\newline
+See \verb|getpid(2)|.
+\item \hxtt{PROC(INT,INT,INT)INT posix lseek}{posix lseek}\newline
+See \verb|lseek(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR,INT,INT)INT posix open}{posix open}\newline
+See \verb|open(2)|.
+\item \hxtt{PROC(INT,VECTOR[]CHAR,INT)INT posix read}{posix read}\newline
+See \verb|read(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR,VECTOR[]CHAR)INT posix rename}{posix rename}\newline
+See \verb|rename(2)|.
+\item \hxtt{PROC(INT)CSTR posix strerror}{posx strerror}\newline
+See \verb|strerror(3)|.
+\item \hxtt{PROC(CSTR)INT posix strlen}{posix strlen}\newline
+See \verb|strlen(3)|.
+\item \hxtt{PROC(REF INT)INT posix time}{posix time}\newline
+See \verb|time(2)|.
+\item \hxtt{PROC(VECTOR[]CHAR)INT posix unlink}{posix unlink}\newline
+See \verb|unlink(2)|.
+\item \hxtt{PROC(INT,VECTOR[]CHAR,INT)INT posix write}{posix write}\newline
+See \verb|write(2)|.
+\end{enumerate}
+
+\Subsubsection{Local routines}{stan-local}
+\begin{enumerate}
+\item \hxtt{PROC(REF SHORT BITS)VOID get fpu cw}{get fpu cw}\newline
+Gets the control word of the floating point unit.
+\item \hxtt{PROC(SHORT BITS)VOID set fpu cw}{set fpu cw}\newline
+Sets the control word of the floating point unit.
+\item \hxtt{PROC(REAL,REF INT)VOID ph round}{ph round}\newline
+Rounds a \verb|REAL| to an \verb|INT|.
+\end{enumerate}
+
+\Section{a68toc extensions}{stan-a68toc}
+The a68toc manual describes the language restrictions of the
+translator. Chapter~3 contains details of the \verb|FORALL|
+construct.  This section is intended to document those extensions
+used in the QAD standard prelude.
+
+\Subsection{Modes peculiar to a68toc}{stan-ctmodes}
+The principal extensions to Algol 68 modes are the introduction of
+multiple modes whose housekeeping overhead is less than the standard
+row modes.
+\begin{enumerate}
+\item \verb|STRUCT n MODE|\newline
+This mode is called an \hx{``indexable structure''}{indexable
+structure}.  The $n$, a non-negative integer, is built into the mode
+and must be an integer denotation. The base mode can be any mode. It
+is equivalent to a C~language ``array''.  Here is a list of modes
+used in the QAD standard prelude which are either indexable
+structures or references to such:-
+\begin{enumerate}
+\item \hxtt{CSTR=REF STRUCT 16000000 CHAR}{CSTR}\newline
+This is a reference mode and is equivalent to the C~type \verb|char *|.
+It is used in the \verb|ALIEN| (see section \hyref{dev-ALIEN})
+definitions of \verb|linux getenv|, for example, to reference
+data.
+\item \hxtt{CCHARPTRPTR=REF STRUCT 16000000 CSTR}{CCHARPTRPTR}\newline
+Again, this is a reference mode and is equivalent to the C~type
+\verb|char **|. It is used to access the program's arguments.
+\end{enumerate}
+A considerable number of operators use indexable structures for
+converting values of one mode to another using memory mapping (see
+section \hyref{stan-ctbiop}).
+\item \verb|VECTOR[n]MODE| \newline
+The \ixtt{VECTOR} mode has less overhead than a row mode because its
+lower bound is always one. It is commonly used to provide strings to
+C procedures. The following modes are defined using \verb|VECTOR|:-
+\begin{enumerate}
+\item \hxtt{STR=VECTOR[0]CHAR}{STR}\newline
+Due to the way in which C~multiples are defined (without bounds), the
+mode \verb|STR| can be used for any length \verb|VECTOR|.
+\item \hxtt{RVC=REF STR}{RVC}\hypertarget{stan-RVC}{}\label{stan-RVC}\newline
+This mode is used in a number of operators, such as
+\begin{verbatim}
+   OP MAKERVC = ([]CHAR s)RVC:
+\end{verbatim}
+\noindent
+It is also used to construct other modes such as \verb|BOOK| (see
+section \hyref{stan-trans}).
+\end{enumerate}
+\item Coercions provided by a68toc\newline
+A value of mode \verb|STRUCT n MODE| can be coerced directly to a value
+of mode \verb|VECTOR[]MODE|. Likewise, a value of the latter mode can
+be coerced to a value of mode \verb|[]MODE|. Therefore, preferably use
+the mode \verb|[]MODE| for a parameter to a procedure.
+\item Other modes used by a68toc\newline
+Some modes are provided to make interfacing with C~library procedures
+easier. Here are the ones provided by the QAD standard prelude:-
+\begin{enumerate}
+\item \hxtt{CPTR=REF BITS}{CPTR}\newline
+This mode is equivalent to the C~type \verb|void *|.
+\item \hxtt{CINTPTR=REF INT}{CINTPTR}\newline
+Equivalent to the C~type \verb|int *|.
+\item \hxtt{CCHARPTR=REF CHAR}{CCHARPTR}\newline
+Equivalent to the C~type \verb|char *|.
+\item \hxtt{GCPARAM=STRUCT(STR name,INT value)}{GCPARAM}\newline
+Used to access parameters of the garbage-coll\-ector (see section
+\hyref{stan-gc} below).
+\item \hxtt{PDESC=STRUCT(CPTR cp,CSTR env)}{PDESC}
+\newline
+This represents the structure created by a68toc for every Algol~68
+procedure. The field \verb|cp| contains the actual memory address of
+the procedure and the field \verb|env| contains data used by the
+procedure.
+\item \verb|VDESC=STRUCT(CCHARPTR data,BITS gc,|\newline
+\hxtt{             INT upb)}{VDESC}\newline
+This mode represents the housekeeping overhead of a \verb|VECTOR|.
+The \verb|data| field is the actual memory address of the start of
+the data and the \verb|upb| field is the upper bound of the vector.
+The \verb|gc| field is used by the garbage-collector (the heap
+manager).
+\end{enumerate}
+\end{enumerate}
+
+\Subsection{a68toc constructs}{stan-ctcons}
+This section describes those constructs which are either peculiar to
+a68toc or which are in some way different from standard Algol~68.
+\begin{enumerate}
+\item \verb|FORALL|\newline
+\verb|FORALL| is described in section \hyref{rep-FORALL}.
+
+\item \ixtt{ALIEN} and \ixtt{CODE}\newline
+Both \verb|ALIEN| and \verb|CODE| are described in the a68toc manual.
+\verb|ALIEN| is also described in section \hyref{dev-ALIEN}. All
+\verb|ALIEN| declarations used in the QAD standard prelude appear in
+the file \verb|spaliens.a68| which you should consult for further
+details.  You should note that the \verb|ALIEN| declarations were
+established by trying various modes until a definition was found
+which a68toc translated to a compilable C~source file. The
+declarations for \verb|get fpu cw|, \verb|set fpu cw| and the like,
+use the \verb|__asm__| construct of the GNU C~compiler: this provides
+a means of incorporating short sequences of assembler instructions
+into a C~program. This is platform-specific. Consult the node \verb|Extended| \verb|Asm| in info
+file \verb|gcc.info| for details.
+
+As described in the a68toc manual, source files may contain either a
+\ixtt{PROGRAM} module or a \ixtt{DECS} module. The latter may contain
+declarations and \verb|CODE| clauses only. See the file
+\verb|transput.a68|, lines 1185--92, for an example of how to execute
+code when a \verb|DECS| module is being elaborated.
+
+\item \ixtt{USE} lists\newline
+The \verb|USE| list of a \verb|DECS| or a \verb|PROGRAM| module
+generates calls to the relevant initialiser \verb|PROC|s (see the
+generated C~file for \verb|standard.a68| for an example) in the reverse
+order of the given modules. Therefore, if the order matters, ensure
+that the \verb|USE| clause mentions each module in the proper order.
+
+\item The \hx{default case}{CASE default@\texttt{CASE} default} in a
+\verb|CASE| clause\newline
+If in a \verb|CASE| clause, whether a simple \verb|CASE| or a
+conformity \verb|CASE| clause (one which determines the mode of the
+value in its enquiry clause), the default clause can occur, then you
+must include at least \verb|OUT SKIP|, otherwise you will get a
+run-time fault.
+\item \ixtt{BIOP 99}\newline
+In Algol~68, a \verb|UNION| (see section \hyref{union-mode}) is a
+well-defined mode composed of constituent modes. A value of one of the
+constituent modes may be assigned to a name of the united mode and only
+that value (with its original mode) can be extracted. In the
+C~language, however, a ``free union'' or just ``union'' is a piece of
+memory which can have different interpretations. The \verb|BIOP 99|
+construct enables the operand of an operator using it to be
+re-interpreted as a value of the mode given in the yield. for example,
+the operator \verb|FLAT| declared as
+\begin{verbatim}
+   OP(REAL)STRUCT 8 CHAR FLAT = BIOP 99;
+\end{verbatim}
+\noindent
+accepts a \verb|REAL| parameter which, as the yield, is regarded as an
+indexable structure of 8 characters each of which can be accessed
+separately. See section \hyref{stan-ctbiop} for operators using this
+construct.
+\end{enumerate}
+
+\Subsection{Operators}{stan-ctops}
+These are largely operators using the \verb|BIOP 99| construct, but
+there are a number of other operators which ease the task of
+interfacing with C~library procedures.
+
+\Subsubsection{Operators using \texttt{BIOP 99}}{stan-ctbiop}
+Most of the operators used in the QAD standard prelude which are
+defined using the \verb|BIOP 99| construct are for internal use only.
+In the following list, the full declaration
+\begin{verbatim}
+   OP(CPTR)CSTR TOCSTR = BIOP 99;
+\end{verbatim}
+\noindent
+is abbreviated to
+\begin{verbatim}
+   OP TOCSTR=(CPTR)CSTR:
+\end{verbatim}
+
+Here is a list of operators using the \verb|BIOP 99| construct which
+are made available by the QAD standard prelude:-
+\begin{enumerate}
+\item \hxtt{OP CCHARPTRTOCSTR=(CCHARPTR)CSTR:}{CCHARPTRTOCSTR}\newline
+This operator is used to define the \verb|on exit| procedure.
+\item \hxtt{OP CSTRTOCCHARPTR=(CSTR)CCHARPTR:}{CSTRTOCCHARPTR}\newline
+This operator converts in the opposite direction.
+\item \hxtt{OP TOCPTR=(INT)CPTR:}{TOCPTR}
+\item \hxtt{OP TOCSTR=(CPTR)CSTR:}{TOCSTR}
+\item \hxtt{TOPDESC=(PROC VOID)PDESC:}{TOPDESC}\newline
+This operator provides a means of getting the address of a procedure
+and is used to provide the identifier of an Algol~68 procedure which
+must be elaborated by an \verb|ALIEN| procedure (such as a C~library
+routine).\newline
+\verb|OP TOPDESC=(PROC(INT,CPTR)VOID)PDESC:|\newline
+\verb|OP TOPDESC=(PROC(INT)VOID)PDESC:|\newline
+\verb|OP TOPDESC=(PROC(INT,RVC)PDESC:|\newline
+You can define as many \verb|TOPDESC| operators as you wish with
+operands of procedures you will need. You will certainly need more
+definitions of \verb|TOPDESC| if you write wrapper procedures for X
+Window System procedures which have procedural parameters. See the file
+\verb|transput.a68| for details of how this operator is used.
+\item \hxtt{OP TORPDESC=(REF PROC VOID)RPDESC:}{RPDESC}\newline
+This operator converts a reference to a \verb|PROC VOID| to a
+reference to a value of mode \verb|PDESC|.
+\item \hxtt{OP TOVDESC=(STR)VDESC:}{TOVDESC}\newline
+This operator provides a means of getting the address of the
+\verb|STR| in a form suitable as a parameter to C~library routines.
+\item \hxtt{OP TOVBDESC=(VECTOR[]BITS)VBDESC}{TOVBDESC}\newline
+This operator provides a means of getting the address of the
+\verb|VECTOR[]BITS|.
+\item \hxtt{OP TOVIDESC=(VECTOR[]INT)VIDESC}{TOVIDESC}\newline
+Exactly as for the previous routine, but for a \verb|VECTOR[]INT|.
+\end{enumerate}
+
+\Subsubsection{Other operators}{stan-ctothops}
+Here is a list of operators not using the \verb|BIOP 99|
+construct:-
+\begin{enumerate}
+\item \hxtt{OP CPTRTORVC=(CPTR)RVC:}{CPTRTORVC}\newline
+Used to cast the C~type \verb|void *| to the type \verb|char *|.
+\item \hxtt{OP CSTRTORVC=(CSTR)RVC:}{CSTRTORVC}\newline
+Converts a C string to an \verb|RVC| using the standard
+RS Algol 68 coercion
+\begin{verbatim}
+   REF STRUCT n CHAR => REF VECTOR[]CHAR
+\end{verbatim}
+\noindent
+It is mainly used to access C strings yielded by C library routines.
+The parameter must be terminated by a \verb|null character|.
+\item \hxtt{OP FLATRVB=(RVC)BITS:}{FLATRVB}\newline
+Converts a \verb|VECTOR[4]CHAR| into a \verb|BITS|.
+\item \hxtt{OP FLATRVLB=(RVC)LONG BITS:}{FLATRVLB}\newline
+Converts a \verb|VECTOR[8]CHAR| into a \verb|LONG BITS|.
+\item \hxtt{OP FLATRVSB=(RVC)SHORT BITS:}{FLATRVSB}\newline
+Converts a \verb|VECTOR[2]CHAR| into a \verb|SHORT BITS|.
+\item \hxtt{OP FLATRVSSB=(RVC)SHORT SHORT BITS:}{FLATRVSSB}\newline
+Converts a \verb|BECTOR[1]CHAR| into a \verb|SHORT SHORT BITS|.
+\item \hxtt{OP FLATRVR=(RVC)REAL:}{FLATRVR}\newline
+Converts a \verb|VECTOR[8]CHAR| into a \verb|REAL|.
+\item \hxtt{OP FLATRVSR=(RVC)SHORT REAL:}{FLATRVSR}\newline
+Converts a \verb|VECTOR[4]CHAR| into a \verb|SHORT REAL|.
+\item \hxtt{OP MAKERVC=(CHAR)RVC:}{MAKERVC}\newline
+\verb|OP MAKERVC=(STR)RVC:|\newline
+\verb|OP MAKERVC=([]CHAR)RVC:|
+\item \hxtt{OP VBTOCPTR=(VECTOR[]BITS)CPTR:}{VBTOCPTR}\newline
+This operator gets the address of the \verb|VECTOR[]BITS| in a form
+suitable as a parameter to a C~library routine.
+\item \hxtt{OP VCTOCHARPTR=(STR)CCHARPTR:}{VCTOCHARPTR}\newline
+Yields the C pointer from a a68toc descriptor. If a C string is
+expected, a \verb|null character| must be appended to the data before
+the routine is called. This need not be done for string denotations.
+This routine may be used to yield a C~pointer from an \verb|RVC|, as
+the C~representation is the same.
+\item \hxtt{OP VITOINTPTR=(VECTOR[]INT)CINTPTR:}{VITOINTPTR}\newline
+Yields the address of the \verb|VECTOR[]INT| in a form suitable for
+use as a parameter of a C~library routine.
+\item \hxtt{OP STRTOCSTR=(STR)CSTR:}{STRTOCSTR}\newline
+The operator combines the action of the operators
+\texttt{CCHAR\-PTR\-TO\-CSTR} and \verb|VCTOCHARPTR|.
+\item \hxtt{OP Z=(STR str)STR:}{Z}\newline
+Yields a null-terminated \verb|STR| from a \verb|STR| for use with the
+C~library.
+\end{enumerate}
+
+\Section{Control routines}{stan-cont}
+Three groups of procedures and operators are provided to control
+various aspects of the run-time environment. These are floating-point
+control, process termination control and garbage-collector control.
+
+\Subsection{Floating-point unit control}{stan-fpov}
+The Intel Pentium microprocessors all have a floating-point unit (FPU)
+as an integral part of the microprocessor. The action of the FPU is
+determined by the contents of a 16-bit register called the ``control
+word register''. Details of the register can be found in the file
+\begin{verbatim}
+   /usr/include/fpu_control.h
+\end{verbatim}
+\noindent
+Details of the working of the FPU, as controlled by the control word
+register can be found in the three volumes of the ``Intel Architecture
+Software Developer's Manual''. The control word contains bits
+which control rounding, precision and whether floating-point errors
+should cause an exception. The QAD standard prelude provides two
+procedures which enable you to get and set the control word register:-
+\begin{enumerate}
+\item \hxtt{PROC get fpu cw = (REF SHORT BITS cw)VOID:}{get fpu cw}\newline
+After calling \verb|get fpu cw|, the current value of the FPU control
+word will be assigned to the parameter.
+\item \hxtt{PROC set fpu cw = (SHORT BITS cw)VOID:}{set fpu cw}\newline
+After calling \verb|set fpu cw|, the current value of the FPU control
+word will have been set to the value of the parameter.
+\end{enumerate}
+The QAD standard prelude provides three values of mode \verb|SHORT|
+\verb|BITS| which enable you to control how rounding is performed.
+They are:-
+\begin{enumerate}
+\item \ixtt{fpu cw ieee}\newline
+This value enables you to reset the FPU control word to the standard
+value for the C~library.
+\item \ixtt{fpu cw algol68 round}\newline
+This value ensures that the FPU will perform rounding to the nearest
+number. A \verb|REAL| value ending in $0\cdot5$ will be rounded to the
+nearest even number. This ensures that rounding errors in random values
+will not accumulate.
+\item \ixtt{fpu cw algol68 entier}\newline
+This value ensures that the FPU will truncate \verb|REAL| numbers
+towards $-\infty$ when converting to an integer of the equivalent
+precision.
+\end{enumerate}
+These values are used as masks. Here, for example, is the source code
+for the operator \verb|ROUND|:-
+\begin{verbatim}
+   OP ROUND = (REAL r)INT:
+   (
+      INT n;
+      SHORT BITS ocw;  get fpu cw(ocw);
+      set fpu cw(ocw & fpu cw algol68 round);
+      ph round(r,n);
+      set fpu cw(ocw);
+      n
+   )
+\end{verbatim}
+\noindent
+Notice how the FPU control word is reset to its original value before
+the end of the operator.
+
+The FPU control word is also used to control whether overflow should
+be detectable. The standard mode of operation is to ignore integer
+overflow. The control word masks mentioned above ensure that integer
+overflow can be detected using a \bfix{signal}. The procedure
+\hxtt{on signal}{on signal} is declared as follows:-
+\begin{verbatim}
+   PROC on signal=(INT sig,
+                   PROC(INT)VOID handler)VOID:
+\end{verbatim}
+\noindent
+The example program \verb|testov.a68| shows how \verb|on signal| can be
+used. The Algol~68 identifiers for all the Linux signals are the same
+as the Linux signal identifiers, but in lower case. For example, the
+signal used in FPU control is \verb|sigfpu|. The signal generated by
+keying \verb|Ctrl-C| (sometimes depicted as \verb|^C|) on program input
+is \verb|sigint|. Here is a short program which illustrates signal
+trapping:-
+\begin{verbatim}
+   PROGRAM sig CONTEXT VOID
+   USE standard
+   BEGIN
+      on signal(sigint,
+                (INT sig)VOID:
+                 (write(("sigint trapped",
+                         newline));
+                  exit(1)));
+      write("Please key ^C: "); read(LOC CHAR);
+      write(("No signal trapped",newline))
+   END
+   FINISH
+\end{verbatim}
+\noindent
+Usually, when you trap a signal such as \ixtt{sigint}, your program
+could close down processing in an orderly manner: files could be closed
+properly, a message to the user could be issued, and so on. You can do
+anything you want in the procedure provided as a parameter to
+\verb|on signal|. You can also predeclare the procedure and simply
+provide its identifier in the \verb|on signal| call.
+
+Integer overflow is ignored by the microprocessor. So the
+formula \verb|max int + 3| simply yields an incorrect value.
+
+The procedure \ixtt{ansi raise} will cause any specified signal to
+occur. Here is the mode of \ixtt{ansi raise}:
+\begin{verbatim}
+   PROC ansi raise = (INT sig)INT:
+\end{verbatim}
+
+\Subsection{Terminating a process}{stan-prcont}
+As well as raising and trapping signals, it is sometimes useful to
+specify procedures to be elaborated when your program has finished, for
+whatever reason. Four procedures are provided for process
+termination:-
+\begin{enumerate}
+\item \hxtt{PROC iso at exit=(PROC VOID p)INT:}{iso at exit}\newline
+The procedure \verb|p| is registered to be elaborated when the program
+terminates normally or when the procedure \verb|exit| (see procedure
+\hyref{stan-pcexit}) is called. Registered procedures are elaborated in
+the reverse order of being registered, so that the procedure registered
+last is elaborated first. The procedure \verb|at exit| yields $0$ for
+success, $-1$ for an error.
+\item
+\hxtt{PROC on exit=(PROC(INT,CPTR)VOID p,}{on exit}\newline
+\verb|              []CHAR arg)INT:|\hylabel{stan-pconexit}\newline
+Unlike the procedure \ixtt{at exit} (see above),
+\verb|on exit| allows you to register a procedure which takes two
+parameters. The first is the integer parameter given to the
+\ixtt{exit}
+procedure (or $0$ for normal termination) and the second is a
+\verb|[]CHAR| which the procedure \verb|p| can use. \ixtt{on exit}
+yields $0$ for success and $-1$ for an error.
+\item \hxtt{PROC exit = (INT status)VOID:}{exit}\newline
+\hypertarget{stan-pcexit}{}\label{stan-pcexit}
+This procedure terminates the program immediately. Any procedures
+registered using \ixtt{at exit} or \ixtt{on exit} will be elaborated in
+the reverse order of registration. Any open files will be closed, but
+Algol~68 buffers will not be flushed. The value of \verb|status| will
+be passed to the parent process of the program.
+\item \hxtt{PROC stop = VOID:}{stop}\newline\hypertarget{stan-stop}{}\label{stan-stop}
+This is a synonym for \verb|exit(0)|.
+\end{enumerate}
+The example program \verb|testexit.a68| shows one way in which
+\verb|at exit| and \verb|on exit| may be used.
+
+\Subsection{Garbage-collector control}{stan-gc}
+The garbage-collector manages the run-time heap. The term ``garbage''
+is used to designate memory on the heap which is no longer
+referenced. Although the garbage-collector is usually called whenever
+space on the heap is required, a number of routines are provided for
+explicit garbage collection or for fine control of the
+garbage-collector.
+\begin{enumerate}
+\item \hxtt{PROC garbage\_collect = VOID:}{garbage\_collect}\newline
+The garbage-collector can be called explicitly by an Algol~68 program
+using this procedure.
+\item \hxtt{PROC disable\_garbage\_collector = VOID:}{disable\_garbage\_collector}\newline
+Disables the garbage-collector.
+\item \hxtt{PROC enable\_garbage\_collector = VOID:}{enable\_garbage\_collector}\newline
+Enables the garbage-collector.
+\item \hxtt{PROC gc\_param = (VECTOR[]CHAR cmd,INT v)INT:}{gc\_param}\newline
+This routine is used to set or get the values of a number of
+parameters which control the garbage-collector. The \verb|cmd| should
+consist of \verb*|GET | or \verb*|SET | followed by the string
+identifying the required parameter followed by a \verb|nul ch|.
+The available strings are
+\begin{enumerate}
+\item \ixtt{COLLECTION THRESHOLD} The number of bytes in use before
+the next garbage collection is allowed.
+\item \ixtt{HEAP INCREMENT} The number of bytes by which the heap
+should be increased in size whenever the heap is grown.
+\item \ixtt{MAX HEAP SIZE} The maximum size of the heap in bytes.
+\item \ixtt{MIN HEAP SIZE} The minimum size of the heap in bytes.
+\item \ixtt{MAX SEGMENT SIZE} The maximum size of a memory segment
+acquired for the heap.
+\item \ixtt{MIN SEGMENT SIZE} The minimum size of a memory segment
+acquired for the heap.
+\item \ixtt{POLICY} The heap policy. Three values are provided for
+setting the heap policy:-
+\begin{enumerate}
+\item \hxtt{INT always collect}{always collect}\newline
+The garbage-collector will always be called if space is required.
+\item \hxtt{INT always grow heap}{always grow heap}\newline
+The garbage-collector will never be called even if space is required.
+\item \hxtt{INT default policy}{default policy}\newline
+The garbage-collector will be called if there is insufficient space
+in the heap for the memory required. Extra space will be acquired if
+garbage-collection does not yield the spaced needed.
+\end{enumerate}
+Whether the heap is grown or whether garbage-collection takes place
+depends on the current policy which is usually specified by the
+environment string \ixtt{A68\_GC\_POLICY}.
+\end{enumerate}
+\item \hxtt{PROC get\_gc\_param = (VECTOR[]CHAR param)INT:}{get\_gc\_param}\newline
+Gets the current value of the garbage-collector parameter (any one of
+the strings given in this section).
+\item \hxtt{PROC set\_gc\_params = (VECTOR[]GCPARAM gcpar)VOID:}{set\_gc\_params}\newline
+Sets the value of the garbage-collector parameter (any one of the
+strings given in this section).
+\end{enumerate}
+
+For further details about the garbage-collector, consult the code in
+the \verb|library| directory in the a68toc source tree.
+
+\Section{Transput}{stan-trans}
+If you are unclear about the working of Algol~68 transput, consult
+chapter~9. The function of this section is to document all the transput
+declarations so that you can use it as a reference manual.
+
+The declarations will be covered in the following order:-
+\begin{enumerate}
+\item Modes
+\item Standard channels
+\item Standard files
+\item Opening files
+\item Closing files
+\item Transput routines
+\item Interrogating files
+\item File properties
+\item Event routines
+\item Conversion routines
+\item Layout routines
+\end{enumerate}
+In the sequel, transput errors are mentioned using identifiers whose
+values appear in the following table:-
+$$\vbox{\begin{tabular}{|l|l|}\hline
+  \ixtt{physical file end not mended}&255\\
+  \ixtt{logical file end not mended}&254\\
+  \ixtt{stand in redirected}&253\\
+  \ixtt{environment string unset}&252\\
+  \ixtt{environment string estab err}&251\\
+  \ixtt{estab invalid parameters}&250\\
+  \ixtt{open invalid parameters}&249\\
+  \ixtt{no program args}&248\\
+  \ixtt{value error not mended}&247\\ \hline
+  \end{tabular}}
+$$
+\begin{center}
+Identifiers for transput errors
+\end{center}
+
+\Subsection{Transput modes}{stan-trmodes}
+Only five modes are available:-
+\begin{description}
+\item[\ixtt{FILE}] A structure containing details of a a book
+accessed by the program.
+\item[\ixtt{CHANNEL}] A structure containing procedures for
+accessing books.
+\item[\ixtt{SIMPLIN}] A union of names of all plain modes, rows of
+plain modes, structures of plain modes and their combinations.
+\item[\ixtt{SIMPLOUT}] A union of all plain modes, rows of plain
+modes, structures of plain modes and their combinations.
+\item[\ixtt{BUFFER}] A synonym for \ixtt{RVC}. It is used as the
+yield of the procedure \ixtt{file buffer} (see section
+\hyref{stan-trinterr}).
+\end{description}
+The mode \verb|NUMBER| is used as a parameter of the procedures
+\verb|whole|, \verb|fixed| and \verb|float|, but because it is the
+union of all number modes, it is unnecessary to specify it and so has
+not been made available for general use.
+
+\Subsection{Standard channels}{stan-trchan}
+For each channel in this section, the general properties are first
+given, followed by a table giving the properties of books opened on the
+channel and then a list of specific properties for the following
+procedures where applicable:-
+$$\begin{tabular}{|l|}\hline
+  establish\\
+  open\\
+  create\\
+  close\\
+  lock\\
+  scratch\\
+  set\\
+  logical end\\
+  reidf\\ \hline
+  \end{tabular}
+$$
+\begin{enumerate}
+\item \hxtt{CHANNEL stand in channel}{stand in channel}\newline
+\hxtt{CHANNEL stand out channel}{stand out channel}\newline
+\hxtt{CHANNEL stand back channel}{stand back channel}\newline
+These three channels have similar properties because they use the
+same access procedures. The standard buffered input channel is
+\verb|stand in channel|. Books on this channel have the following
+properties:-
+$$\begin{tabular}{|l|c|}\hline
+  \multicolumn{2}{|c|}{stand in channel}\\ \hline
+  bin possible & \texttt{TRUE}\\
+  put possible & \texttt{FALSE}\\
+  get possible & \texttt{TRUE}\\
+  set possible & \texttt{TRUE}\\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+and are available as the \ixtt{stand in book}.
+
+The \verb|stand out channel| is the standard buffered output channel.
+Books on this channel have the following properties:-
+$$\begin{tabular}{|l|c|}\hline
+  \multicolumn{2}{|c|}{stand out channel}\\ \hline
+  bin possible & \texttt{TRUE}\\
+  put possible & \texttt{TRUE}\\
+  get possible & \texttt{FALSE}\\
+  set possible & \texttt{TRUE}\\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+and are available as the \ixtt{stand out book}.
+
+The \verb|stand back channel| is the standard buffered input/output
+channel. Books on this channel have the following properties:-
+$$\begin{tabular}{|l|c|}\hline
+  \multicolumn{2}{|c|}{stand back channel}\\ \hline
+  bin possible & \texttt{TRUE}\\
+  put possible & \texttt{TRUE}\\
+  get possible & \texttt{TRUE}\\
+  set possible & \texttt{TRUE}\\
+  reidf possible & \texttt{TRUE}\\ \hline
+  \end{tabular}
+$$
+and are available as the \ixtt{stand back book}.
+
+The channels have the following properties:-
+\begin{description}
+\item[\ixtt{establish}] You must have write access to the file. If it already
+exists, it will be truncated to zero length. The default mode is
+\verb|8r644|. If the file cannot be established, the routine will return
+the value \verb|errno| (the system error name) refers to.
+\item[\ixtt{open}] the file will be opened with a default mode of \verb|8r444|.
+If the file cannot be opened, the routine will return the value
+\verb|errno| refers to.
+\item[\ixtt{create}] A zero length file with a unique identification will be
+created using the default mode of \verb|8r644|.
+\item[\ixtt{close}] The file will be closed. For the
+\ixtt{stand out channel} and the \ixtt{stand back channel}, the
+buffer will be flushed.
+\item[\ixtt{lock}] The file will be closed and then all permissions will be
+removed from the file provided you have write access to the directory
+containing the file.
+\item[\ixtt{scratch}] The file will be closed and then unlinked.
+\item[\ixtt{set}] The current position will be set to any legal position in
+the book (non-negative positions only). If the position is set beyond
+the current logical end, a sparse file will be created.
+\item[\ixtt{logical end}] The position will be set to just beyond the last
+byte in the file.
+\item[\ixtt{reidf}] For the \ixtt{stand back channel} only. When
+the file is closed, it will be renamed. If the rename fails (an
+already existing file with that name, for example), an error message
+will be output on the \ixtt{stand error} file giving a description of
+the error and identifying the file.
+\end{description}
+
+\item \hxtt{CHANNEL arg channel}{arg channel}\newline
+The \ixtt{arg channel} gives access to the program arguments including the actual
+call of the program which precedes the program arguments. Arguments are
+separated by a single space. A name of mode \verb|REF FILE| opened with
+this channel has \ixtt{blank} as the string terminator. The arguments,
+as a book, have the following properties:-
+$$\begin{tabular}{|l|l|}\hline
+\multicolumn{2}{|c|}{\texttt{arg channel}}\\ \hline
+  bin possible & \texttt{FALSE} \\
+  put possible & \texttt{FALSE} \\
+  get possible & \texttt{TRUE} \\
+  set possible & \texttt{TRUE} \\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+The channel has the following properties:-
+\begin{description}
+\item[\ixtt{establish}] Same as \verb|open|.
+\item[\ixtt{open}] The program arguments will be made available. If the
+arguments are unavailable, the routine will return
+\verb|no program args|.
+\item[\ixtt{create}] Same as \verb|open|.
+\item[\ixtt{close}] No action.
+\item[\ixtt{lock}] No action.
+\item[\ixtt{scratch}] No action.
+\item[\ixtt{set}] Provided that the required position lies between the
+beginning and the end of the arguments, the position will be set
+accordingly.
+\item[\ixtt{logical end}] The position will be set to just beyond the last
+character of the last argument.
+\item[\ixtt{reidf}] Inapplicable.
+\end{description}
+The procedure \verb|make term| can be used to set the string delimiter
+to any required value to facilitate searching for quote-delimited or
+otherwise delimited arguments.
+
+\item \hxtt{CHANNEL env channel}{env channel}\newline
+The \ixtt{env channel} gives read-only access to environment strings (referred to
+in Linux documentation as ``environment variables''). The environment
+string, as a book, has the following properties:-
+$$\begin{tabular}{|l|l|}\hline
+  \multicolumn{2}{|c|}{\texttt{env channel}}\\ \hline
+  bin possible & \texttt{FALSE} \\
+  put possible & \texttt{FALSE} \\
+  get possible & \texttt{TRUE} \\
+  set possible & \texttt{TRUE} \\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+The channel has the following properties:-
+\begin{description}
+\item[\ixtt{establish}] Yields an error of value\newline
+\ixtt{environment string estab err}.
+\item[\ixtt{open}] If the environment string is the null string or
+is unset, \verb|open| yields an error of value\newline
+\ixtt{environment string unset}.  Otherwise, the string is available
+as a book.
+\item[\ixtt{create}] Yields an error of value\newline
+\ixtt{environment string estab err}.
+\item[\ixtt{close}] No action.
+\item[\ixtt{lock}] The routine will attempt to remove all
+permissions from a file of the same identification as the environment
+string identification.
+\item[\ixtt{scratch}] The routine will attempt to unlink a file of
+the given identification.
+\item[\ixtt{set}] Provided that the required position lies between the
+beginning and the end of the string, the position will be set
+accordingly.
+\item[\ixtt{logical end}] The position will be set to just beyond
+the last character.
+\item[\ixtt{reidf}] Inapplicable.
+\end{description}
+The default string terminator is \ixtt{nul ch}. You should set the string
+terminator using \ixtt{make term}.
+
+\item \hxtt{CHANNEL kbd channel}{kbd channel}\newline
+The \ixtt{kbd channel} provides access to unechoed keystrokes (also referred
+to as ``non-canonical input''). Be warned that if a file opened with
+this channel is not closed and the program ends prematurely, none of
+your keystrokes will be echoed! You can reset to canonical input using
+the command
+\begin{verbatim}
+   stty sane
+\end{verbatim}
+\noindent
+The keyboard is made available as a book having the following
+properties:-
+$$\begin{tabular}{|l|l|}\hline
+  \multicolumn{2}{|c|}{\texttt{kbd channel}}\\ \hline
+  bin possible & \texttt{TRUE} \\
+  put possible & \texttt{FALSE} \\
+  get possible & \texttt{TRUE} \\
+  set possible & \texttt{FALSE} \\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+The channel is usually used to access the characters input by control
+and function keys as well as normal keystrokes, so it is advisable to
+use \verb|get bin| rather than \verb|get|. The channel has the
+following properties:-
+\begin{description}
+\item[\ixtt{establish}] Same as \verb|open|.
+\item[\ixtt{open}] You should use the null string \verb|""| for the
+identification. The routine checks to see whether stand in has been
+redirected and yields the error \ixtt{stand in redirected} if so.
+Otherwise, the characteristics of \verb|stand in| are changed to wait
+for a single character with no minimum waiting time and with no echo
+of the input.
+\item[\ixtt{create}] Same as \verb|open|.
+\item[\ixtt{close}] The routine resets \ixtt{stand in} to the
+condition it was in previously.
+\item[\ixtt{lock}] Same as \verb|close|.
+\item[\ixtt{scratch}] Same as \verb|close|.
+\item[\ixtt{set}] Inapplicable.
+\item[\ixtt{logical end}] Inapplicable.
+\item[\ixtt{reidf}] Inapplicable.
+\end{description}
+
+\item \hxtt{CHANNEL mem channel}{mem channel}\hypertarget{stan-memch}{}\label{stan-memch}{}\newline
+The \ixtt{mem channel} provides a memory buffer with access to all transput
+facilities. It is similar to the standard Algol~68 \verb|associate|
+except that binary transput is also allowed. The buffer behaves as a
+book with the following properties:-
+$$\begin{tabular}{|l|l|}\hline
+  \multicolumn{2}{|c|}{\texttt{mem channel}}\\ \hline
+  bin possible & \texttt{TRUE} \\
+  put possible & \texttt{TRUE} \\
+  get possible & \texttt{TRUE} \\
+  set possible & \texttt{TRUE} \\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+The channel has the following properties:-
+\begin{description}
+\item[\ixtt{establish}] If the values of \verb|p| and \verb|l| are both
+\verb|1| and the value of \verb|c| is a positive integer then \verb|c|
+is taken to be the size of the buffer. Otherwise, the routine yields
+\ixtt{estab invalid parameters} as error value. The identification
+should be \verb|""|.
+\item[\ixtt{open}] The routine should be called with an identification of mode
+\verb|RVC| (see section \hyref{stan-RVC}). The identification will be
+used as the memory buffer.
+\item[\ixtt{create}] The value \ixtt{estab invalid parameters} will be
+returned.
+\item[\ixtt{close}] No action.
+\item[\ixtt{lock}] Inapplicable.
+\item[\ixtt{scratch}] Inapplicable.
+\item[\ixtt{set}] Provided the position lies in or just beyond the end of the
+buffer, the position will be set.
+\item[\ixtt{logical end}] The position will be set to just beyond the end of
+the buffer.
+\item[\ixtt{reidf}] Inapplicable.
+\end{description}
+The channel can be used to access individual characters of integers and
+reals. \ixtt{make term} can also be used.
+
+\item \hxtt{CHANNEL client socket channel}{client socket channel}\newline
+\hypertarget{stan-sockch}{}\label{stan-sockch}\hxtt{CHANNEL server socket channel}{server socket channel}\newline
+These channels provide UNIX- or Internet-type sockets in the form
+of standard Algol~68 files.
+Sockets behave as books with the following properties:-
+$$\begin{tabular}{|l|l|}\hline
+  \multicolumn{2}{|c|}{\texttt{client/server socket channel}}\\ \hline
+  bin possible & \texttt{TRUE}\\
+  put possible & \texttt{TRUE}\\
+  get possible & \texttt{TRUE}\\
+  set possible & \texttt{FALSE}\\
+  reidf possible & \texttt{FALSE}\\ \hline
+  \end{tabular}
+$$
+The channels have the following properties:-
+\begin{description}
+\item[\ixtt{establish}] The \verb|p| should be the family of socket (either
+\ixtt{af unix} or \ixtt{af inet}). If the latter, the \verb|l| should
+be the port. The \verb|c| should be the MTU (maximum transport unit).
+This governs the size of the buffer associated with the socket. No
+checks are performed on its value. If \verb|p| is neither \verb|af unix|
+nor \verb|af inet|, the routine returns \ixtt{estab invalid
+parameters} as error value. The server socket should be established
+before the client socket.
+\item[\ixtt{open}] Yields an error of \verb|open invalid parameters| for
+both channels.
+\item[\ixtt{create}] Inapplicable.
+\item[\ixtt{close}] The buffer is flushed and the socket closed.
+\item[\ixtt{lock}]  The buffer is flushed, the socket closed and then all
+access permissions removed (provided that write access is available to
+the directory containing the socket).
+\item[\ixtt{scratch}] The buffer is flushed, the socket closed and then
+unlinked.
+\item[\ixtt{set}] Inapplicable.
+\item[\ixtt{logical end}] Inapplicable.
+\item[\ixtt{reidf}] Inapplicable.
+\end{description}
+An extra procedure \ixtt{accept}, which mirrors the C~library procedure,
+has the following header
+\begin{verbatim}
+   PROC accept = (REF FILE socket)REF FILE:
+\end{verbatim}
+\noindent
+and is used by the server to accept a \ixtt{client socket}, thereby
+yielding a \verb|REF FILE| name which can be used to communicate with
+the client.
+
+The example programs \verb|client1|, \verb|server1|, \verb|client2|
+and \verb|server2| (whose source can be found in the \verb|examples|
+directory) demonstrate simple use of sockets.
+\end{enumerate}
+
+\Subsection{Standard files}{stan-trfiles}
+Four standard files are provided:-
+\begin{enumerate}
+\item \hxtt{REF FILE stand in}{stand in}\newline
+This file corresponds to the C~\verb|stdin|. Books connected via
+\verb|stand in| differ from those connected via the channel
+\ixtt{stand in channel}: \ixtt{set possible} returns \verb|FALSE|. Thus
+this file must be regarded as a simple stream of bytes. When the
+\ixtt{kbd channel} is being used, \ixtt{stand in} is unavailable.
+\item \hxtt{REF FILE stand out}{stand out}\newline
+This file corresponds to the C~\verb|stdout|. Books connected via
+\verb|stand out| differ from those connected via the channel
+\ixtt{stand out channel}: \ixtt{set possible} returns \verb|FALSE|.
+Thus this file must be regarded as a simple stream of bytes.
+\item \hxtt{REF FILE stand error}{stand error}\newline
+This file corresponds to the C~\verb|stderr| and behaves like the file
+\verb|stand out|.
+\item \hxtt{REF FILE stand back}{stand back}\newline
+This file accesses a workbook which is deleted on termination of the
+program. All kinds of transput are allowed on this file.
+\end{enumerate}
+
+\Subsection{Opening files}{stan-tropen}
+Three procedures are available for opening files:-
+\begin{enumerate}
+\item \hxtt{PROC establish=}{establish}\newline
+      \verb|   (REF FILE f,STRING idf,|\newline
+      \verb|    CHANNEL chann,INT p,l,c)INT:|\newline
+In standard Algol~68, this procedure creates a new file with \verb|p|
+pages, each page containing \verb|l| lines, each line containing
+\verb|c| characters. In the QAD standard prelude, the
+\ixtt{mem channel} (see section \hyref{stan-memch}) takes notice of
+\verb|p|, \verb|l| and \verb|c| and both \verb|p| and \verb|l| must
+be \verb|1|. The socket channels (see section
+\hyref{stan-sockch}) use \verb|p| for the socket family, \verb|l| for
+the port if the family is \verb|af inet| and \verb|c| for the size of
+the MTU. For other channels, the values of \verb|p|, \verb|l| and
+\verb|c| are ignored. The procedure yields zero on success, otherwise
+an integer denoting an error (see section \hyref{stan-trchan}).
+\item \hxtt{PROC open=(REF FILE f,}{open}\newline
+      \verb|           UNION(CHAR,STRING,RVC) idf,|\newline
+      \verb|           CHANNEL chann)INT|\newline
+In standard Algol~68, the second parameter of this procedure has mode
+\verb|STRING|. The above union ensures that an \ixtt{RVC} parameter can
+be used to open an existing memory buffer with the memory channel. This
+is particularly useful for performing transput on buffers obtained from
+C~library routines. The procedure yields zero on success, otherwise an
+integer denoting an error (see section \hyref{stan-trchan}).
+\item \verb|PROC create=(REF FILE f,CHANNEL chann)INT:|\newline
+Creates a work file with a unique identification in the directory
+\verb|/tmp| using the given channel.
+\end{enumerate}
+
+\pagebreak
+\Subsection{Closing files}{stan-trclose}
+Three procedures are provided:-
+\begin{enumerate}
+\item \verb|PROC close=(REF FILE f)VOID:|\newline
+This is the standard procedure for closing a file. It is standard
+practice to close every opened file. The procedure checks to see
+whether the file is open. If the \verb|reidf| procedure has been
+called, after closing the file, the procedure renames the file to the
+identification given in the \verb|reidf| field.
+\item \verb|PROC lock=(REF FILE f)VOID:|\newline
+The Algol~68 Revised Report requires that the file be closed in such a
+manner that some system action is required before it can be reopened.
+In this case, the file is closed and then all access permissions
+removed. Before the file can be reopened, the user will have to use
+\verb|chmod|.
+\item \verb|PROC scratch=(REF FILE f)VOID:|\newline
+The file is closed and then unlinked.
+\end{enumerate}
+
+\Subsection{Transput routines}{stan-trtran}
+The procedures in this section are responsible for the trans\-put of
+actual values. Firstly, formatless transput is covered and then binary
+transput. The \ix{a68toc} compiler does not support formatted
+transput. In each section, the shorthand \verb|L| is used for the
+various precisions of numbers and bits values.
+
+\Subsubsection{Straightening}{stan-straight}
+The term \bfix{straightening} is used in Algol~68 to mean the process
+whereby a complex mode is separated into its constituent modes. For
+example, the mode
+\begin{verbatim}
+   MODE X=STRUCT(INT a,
+                 CHAR b,
+                 UNION(REAL,VOID) u)
+\end{verbatim}
+\noindent
+would be straightened into values of the following modes:-
+\begin{itemize}
+\item \verb|INT|
+\item \verb|CHAR|
+\item \verb|UNION(REAL,VOID)|
+\end{itemize}
+The mode \verb|REF[]X| would be straightened into a number of values
+each having the mode \verb|REF X|, and then each such value would be
+further straightened into values having the modes
+\begin{itemize}
+\item \verb|REF INT|
+\item \verb|REF CHAR|
+\item \verb|REF UNION(REAL,VOID)|
+\end{itemize}
+However, a value of mode \verb|COMPL| is not straightened into two
+values both of mode \verb|REAL|. Instead, the real part is transput,
+then an \verb|"I"| read or written followed by the imaginary part.
+
+\Subsubsection{Formatless transput}{stan-fmtless}
+Formatless transput converts internal values into strings of
+characters or strings of characters into internal values.
+\begin{enumerate}
+\item \hxtt{PROC write=([]UNION(SIMPLOUT,}{write}\newline
+\verb|            PROC(REF FILE)VOID) x)VOID:|\newline
+This is equivalent to \verb|put(stand out,x)| (synonym \ixtt{print}).
+\item \hxtt{PROC put=(REF FILE f,}{put}\newline
+\verb|          []UNION(SIMPLOUT,|\newline
+\verb|          PROC(REF FILE)VOID) x)VOID:|\newline
+The parameter \verb|x| is straightened and the resulting values are
+output. Each plain mode is output as follows:-
+\begin{description}
+\item[\texttt{CHAR}] Output a character to the next logical position in the
+file. For \verb|[]CHAR|, output all the characters on the current
+line.
+\item[\texttt{BOOL}] Output \verb|flip| or \verb|flop| for \verb|TRUE| or
+\verb|FALSE| respectively. For \verb|[]BOOL|, output \verb|flip| or
+\verb|flop| for each \verb|BOOL|.
+\item[\texttt{L BITS}] Output \verb|flip| for each bit equal to one and
+\verb|flop| for each bit equal to zero. \verb|l bits width|
+characters are output in all. No newline or newpage is output. For
+\verb|[]L BITS|, each \verb|BITS| value is output as above with no
+intervening spaces.
+\item[\texttt{L INT}] Output a space character if the logical position is not
+at the start of a line. Then output the integer using the call
+\begin{verbatim}
+   whole(i,1+l int width)
+\end{verbatim}
+\noindent
+which will right-justify the integer in
+\begin{verbatim}
+   1+l int width
+\end{verbatim}
+\noindent
+positions with a preceding sign. For \verb|[]L INT|, each integer is
+output as described above, preceded by a space if it is not at the
+beginning of the line. No newlines or newpages are output.
+\item[\texttt{L REAL}] A space is output if the logical position is not at the
+start of a line and then the number is output space-filled
+right-justified in
+\begin{verbatim}
+   l real width+l exp width+3
+\end{verbatim}
+\noindent
+positions in floating-point format and preceded by a sign. For a
+value of mode \verb|[]L REAL|, each \verb|REAL| value is output as
+described above.
+\item[\texttt{L COMPL}] The complex value is output as two real numbers in
+floating-point format separated by \verb*| i |. For \verb|[]L COMPL|,
+each complex value is output as described above.
+\item[\texttt{PROC(REF FILE)VOID:}]
+An \verb|lf| character is output if the routine is \texttt{newline}
+and an \verb|ff| character if the routine is \texttt{newpage}.
+User-defined routines with this mode can be used.
+\end{description}
+\item \hxtt{PROC read=([]UNION(SIMPLIN,}{read}\newline
+\verb|           PROC(REF FILE)VOID) x)VOID:|\newline
+This is equivalent to \verb|get(stand in,|$\ldots$\verb|)|.
+\item \hxtt{PROC get=(REF FILE f,}{get}\newline
+\verb|          []UNION(SIMPLIN,|\newline
+\verb|          PROC(REF FILE)VOID x)VOID:|\newline
+This procedure converts strings of characters into internal values.
+Inputting data is covered for each plain mode and \verb|REF STRING|. In
+each case, if the end of the file is detected while reading characters,
+the logical file end procedure is called:-
+\begin{description}
+\item[\texttt{REF CHAR}]\ \newline
+Any characters \verb|c| where \verb|c < blank| are
+skipped and the next character is assigned to the name.
+
+If a \verb|REF[]CHAR| is given, then the above action occurs for each
+of the required characters of the multiple.
+\item[\texttt{REF STRING}]\ \newline
+All characters, including any control characters, are
+assigned to the name until any character in the character set specified
+by the \verb|string term| field of \verb|f| is read. The file is then
+backspaced so that the string terminator will be available for the next
+\verb|get|.
+\item[\texttt{REF BOOL}]\ \newline
+The next non-space character is read and, if it is
+neither \verb|flip| nor \verb|flop|, the char error procedure is
+called with \verb|flop| as the suggestion. For \verb|REF[]BOOL|, each
+\verb|REF BOOL| name is assigned a value as described above.
+\item[\texttt{REF L BITS}]\ \newline
+The action for \verb|REF BOOL| is repeated for each bit in the name.
+For \verb|REF[]L BITS|, each \texttt{REF L BITS} name is assigned a
+value as described above.
+\item[\texttt{REF L INT}]\ \newline
+If the next non-control character (\textit{ie}, a
+character which is neither a space, a tab character, a newline or
+newpage character or other control character) is not a decimal
+digit, then the char error procedure is called with \verb|"0"| as the
+suggestion. Reading of decimal digits continues until a character
+which is not a decimal digit is encountered when the file is
+back\-spaced. If during the reading of decimal digits, the value of
+\verb|l max int| would be exceeded, reading continues, but the input
+value is not increased. For \verb|REF[]L INT|, each integer is read
+as described above.
+\item[\texttt{REF L REAL}]\ \newline
+A real number consists of 3 parts:-
+\begin{itemize}
+\item an optional sign possibly followed by spaces
+\item an optional integral part
+\item a \verb|"."| followed by any number of control characters (such
+as newline or tab characters) and the fractional part
+\item an optional exponent preceded by a character in the set
+\verb|"Ee\"|. The exponent may have a sign. Absence of a sign is
+taken to mean a positive exponent
+\end{itemize}
+The number may be preceded by any number of control characters or
+spaces. For \verb|REF[]L REAL|, each \verb|REAL| value is read as
+described above.
+\item[\texttt{REF L COMPL}]\ \newline
+Two real numbers separated by \verb|"i"| are read
+from the file. Newlines or newpages or other control characters can
+precede each real. The first number is regarded as the real part and
+the second the imaginary part. For \verb|REF[]L COMPL|, each
+\verb|REF L COMPL| is read as described above.
+\end{description}
+\end{enumerate}
+
+\Subsubsection{Binary transput}{stan-bin}
+Binary transput performs no conversion on internal values, thus
+providing a means of storing internal values in a compact form in
+books or reading such values into a program.
+\begin{enumerate}
+\item \hxtt{PROC write bin=([]SIMPLOUT x)VOID:}{write bin}\newline
+This is equivalent to \verb|put bin(stand back,x)|.
+\item \hxtt{PROC put bin=(REF FILE f,}{put bin}\newline
+\verb|              []SIMPLOUT x)VOID:|\newline
+This procedure outputs internal values in a compact form. Then
+external size is the same as the internal size.
+\item \hxtt{PROC read bin=([]SIMPLIN x)VOID:}{read bin}\newline
+This procedure is equivalent to
+\begin{verbatim}
+      get bin(stand back,x)
+\end{verbatim}
+\item \hxtt{PROC get bin=(REF FILE f,[]SIMPLIN x)VOID:}{get bin}\newline
+This procedure transfers external values in a compact form directly
+into internal values.
+\end{enumerate}
+In all the above procedures, the transput is direct with no code
+conversion. It should also be noted that the procedure
+\ixtt{make term}, although usually used with formatless transput, can
+also be used with binary transput in the QAD standard prelude for
+inputting a \verb|STRING| terminated by any of a number of
+characters. You should note that if \hx{set possible} for the channel
+concerned, then the terminator (which will \textit{always} include
+the \hx{lf} character) will not have been read when \hx{get bin}
+returns. However, if not \ixtt{set possible} for the channel (and neither
+\ixtt{stand in} nor \ixtt{stand out} can be set), then no backspace is
+possible for binary transput and so the terminating character will
+have been read.
+
+\Subsubsection{Other procedures}{stan-otherproc}
+A number of miscellaneous procedures fall into this category.
+\begin{enumerate}
+\item \hxtt{PROC file buffer  = (REF FILE f)BUFFER:}{file buffer}\newline
+Yields the buffer of a \verb|REF FILE| value.
+\item \hxtt{PROC flush buffer = (REF FILE f) VOID:}{flush buffer}\newline
+This procedures empties the buffer if it has been changed by a
+\verb|put| or a \verb|put bin|.
+\item \hxtt{PROC no file end=(REF FILE f)BOOL:}{no file end}\newline
+One of the default procedures in \ixtt{default io procs}.
+\item \hxtt{PROC ignore value error = (REF FILE f)BOOL:}{ignore value error}\newline
+One of the default procedures in \ixtt{default io procs}.
+\item \hxtt{PROC ignore char error = (REF FILE f, REF CHAR ch)BOOL:}{ignore char error}\newline
+One of the default procedures in \ixtt{default io procs}.
+\end{enumerate}
+
+\Subsection{Interrogating files}{stan-trinterr}
+A number of procedures are available for interrogating the properties
+of files:-
+\begin{enumerate}
+\item Properties of the book:-
+\begin{enumerate}
+\item \hxtt{PROC bin possible=(REF FILE f)BOOL:}{bin possible}\newline
+Yields \verb|TRUE| if binary transput is possible.
+\item \hxtt{PROC put possible=(REF FILE f)BOOL:}{put possible}\newline
+Yields \verb|TRUE| if data can be sent to the book.
+\item \hxtt{PROC get possible=(REF FILE f)BOOL:}{get possible}\newline
+Yields \verb|TRUE| if data can be got from the book.
+\item \hxtt{PROC set possible=(REF FILE f)BOOL:}{set possible}\newline
+Yields \verb|TRUE| if the book can be browsed: that is, if the position
+in the book for further transput can be set.
+\item \hxtt{PROC reidf possible=(REF FILE f)BOOL:}{reidf possible}\newline
+Yields \verb|TRUE| if the identification of the book can be changed.
+\end{enumerate}
+\item \hxtt{PROC current pos=(REF FILE f)INT:}{current pos}\newline
+The standard Algol~68 procedure yields a triple giving the page, line
+and character number. However, the QAD standard prelude does not use
+pages, lines and characters, so this procedure yields the current
+character position within the book for the next trans\-put operation.
+\item \hxtt{PROC file buffer=(REF FILE f)BUFFER:}{file buffer}\newline
+Yields the memory \hx{buffer}{\texttt{BUFFER}} associated with the
+file \verb|f|.
+\item \hxtt{PROC idf=(REF FILE f)RVC:}{idf}\newline
+Yields the \hx{current}{\texttt{RVC}} identification of the book.
+\item \hxtt{PROC logical end=(REF FILE f)INT:}{logical end}\newline
+The current length of the book connected to \verb|f|.
+\end{enumerate}
+
+\Subsection{File properties}{stan-trprop}
+Three procedures are provided for altering the properties of files:-
+\begin{enumerate}
+\item \hxtt{PROC make term=(REF FILE f,}{make term}\newline
+\verb|                STRING term)VOID:|\newline
+Makes \verb|term| the current string terminator.
+\item \hxtt{PROC reidf=(REF FILE f,STRING new idf)VOID:}{reidf}\newline
+Changes the \verb|reidf| field of \verb|f| to the given value so that
+when the file is closed, the book will be renamed.
+\item \hxtt{PROC set flush after put=(REF FILE f)VOID:}{set flush after put}
+\newline
+Ensures that the buffer of a file is flushed whenever data is written
+to the file.
+\end{enumerate}
+
+\Subsection{Event routines}{stan-trevent}
+Four event routines are provided. For each routine, the default
+behaviour will be described. In each case, if the user routine yields
+\verb|FALSE|, the default action will be elaborated. If it yields
+\verb|TRUE|, the action depends on the event.
+\begin{enumerate}
+\item \hxtt{PROC on char error=(REF FILE f,}{on char error}\newline
+\verb|                    PROC(REF FILE,|\newline
+\verb|                    REF CHAR)BOOL p)VOID:|\newline
+This procedure assigns the procedure \verb|p|, which may be an
+identifier or an anonymous procedure, to the \texttt{char error mended}
+field of \verb|f|. The actions on character error are:-
+\begin{description}
+\item[Default action] Use the default character for the particular
+situation.
+\item[User action] A character may be assigned to the \texttt{REF
+CHAR} parameter and will be used if it is in the particular character
+set involved.
+\end{description}
+The relevant situations are:-
+\begin{enumerate}
+\item When reading an integer of any precision, first character,
+possibly following an optional sign with following spaces, is not a
+digit. Any decimal digit can be substituted. The default is \verb|"0"|.
+\item When reading a real of any precision, the first non-space
+character, optionally preceded by a decimal point \verb|"."|, is not a
+digit. Any decimal digit can be substituted. The default is \verb|"0"|.
+\item When reading a real of any precision, an exponent is present
+(the character \verb|"e"| or \verb|"E"| or \verb|"\"| has been read),
+and the first non-space character is not a digit. Any decimal digit
+can be substituted. The default is \verb|"0"|.
+\item When reading a complex number, the first non-space character
+following the first real is not in the set \verb|iI|. The default is
+\verb|"i"|.
+\end{enumerate}
+\item \hxtt{PROC on logical file end=}{on logical file end}\newline
+\verb| (REF FILE f,PROC(REF FILE)BOOL p)VOID:|\newline
+This procedure assigns the procedure \verb|p|, which may be an
+identifier or an anonymous procedure, to the \texttt{logical file
+mended} field of \verb|f|. The actions on logical file end are:-
+\begin{description}
+\item[Default action]
+On any channel, if the end of the file has been reached or, in
+unformatted character transput, an \verb|eof char| is read then the
+error message \texttt{logical file end not mended} will be issued and
+the program terminated with the exit value \texttt{logical file end
+not mended}.
+\item[User action]
+Any action as specified. Care should be taken if transput is performed
+on the file in question as an infinite loop could occur.
+\end{description}
+\item \hxtt{PROC on physical file end=}{on physical file end}\newline
+\verb|   (REF FILE f,PROC(REF FILE)BOOL p)VOID:|\newline
+This procedure assigns the procedure \verb|p|, whether an identifier or
+an anonymous procedure, to the
+\begin{verbatim}
+   physical file mended
+\end{verbatim}
+\noindent
+field of \verb|f|. The actions on physical file end are:-
+\begin{description}
+\item[Default action]
+On any channel, if there is no more room on the physical medium, the
+program issues the error message
+\begin{verbatim}
+   physical file end not mended
+\end{verbatim}
+\noindent
+and then terminates the program with the exit value \texttt{physical
+file end not mended}.
+\item[User action]
+Any action as specified. Care should be taken if transput is performed
+on the file in question as an infinite loop could occur.
+\end{description}
+\item \hxtt{PROC on value error=}{on value error}\newline
+\verb|   (REF FILE f,PROC(REF FILE)BOOL p)VOID:|\newline
+This procedure assigns procedure \verb|p| to the \texttt{value error
+mended} field of \verb|f|. The actions taken on a value error are:-
+\begin{description}
+\item[Default action]
+The program issues the error message \verb|value error not mended| and
+then terminates with the same exit value.
+\item[User action]
+Transput continues.
+\end{description}
+The error occurs in the following situations:-
+\begin{enumerate}
+\item When an integer on input exceeds \verb|max int| for the precision
+concerned.
+\item The size of the exponent of a real number exceeds \texttt{max
+int}.
+\item An input real number is $\pm\infty$ or greater than \texttt{max
+real} or is less than \verb|min real| for the precision concerned.
+\end{enumerate}
+\end{enumerate}
+
+\Subsection{Conversion routines}{stan-trconv}
+The conversion routines consist of three procedures conversion of
+numbers to strings of characters, one operator and the procedure
+\texttt{char in string}. All the procedures \verb|whole|,
+\verb|fixed| and \verb|float| will return a string of
+\verb|error char| if the number to be converted is too large for the
+given width, or, if the number is a real, if it is infinite or
+otherwise invalid.
+\begin{enumerate}
+\item \hxtt{PROC char in string=}{char in string}\newline
+      \verb|        (CHAR c,REF INT p,STRING s)BOOL:|\newline
+If the character \verb|c| occurs in the string \verb|s|, its index is
+assigned to \verb|p| and the procedure yields \verb|TRUE|, otherwise no
+value is assigned to \verb|p| and the procedure yields \verb|FALSE|.
+\item \hxtt{PROC whole=(NUMBER v,INT width)STRING:}{whole}\newline
+The procedure converts integer values. Leading zeros are replaced by
+spaces and a sign is included if \verb|width>0|. If \verb|width| is
+zero, the shortest possible string is yielded. If a real number is
+supplied for the parameter \verb|v|, then the call
+\verb|fixed(v, width, 0)| is elaborated.
+\item \verb|PROC fixed=(NUMBER v,|\newline
+\hxtt{            INT width,after)STRING:}{fixed}\newline
+The procedure converts real numbers to fixed point form, that is,
+without an exponent. The total number of characters in the converted
+value is given by the parameter \verb|width| whose sign controls the
+presence of a sign in the converted value as for \verb|whole|. The
+parameter \verb|after| specifies the number of required digits after
+the decimal point. From the values of \verb|width| and \verb|after|,
+the number of digits in front of the decimal point can be calculated.
+If the space left in front of the decimal point is insufficient to
+contain the integral part of the value being converted, digits after
+the decimal point are sacrificed.
+\item \hxtt{PROC float=(NUMBER v,}{float}\newline
+\verb|            INT width,after,exp)STRING:|\newline
+The procedure converts reals to floating-point form
+(``scientific notation''). The total number of characters in the
+converted value is given by the parameter \verb|width| whose sign
+controls the presence of a sign in the converted value as for
+\verb|whole|. Likewise, the sign of \verb|exp| controls the presence of
+a preceding sign for the exponent. If \verb|exp| is zero, then the
+exponent is expressed in a string of minimum length. In this case, the
+value of \verb|width| must not be zero. Note that \verb|float| always
+leaves a position for the sign. If there is no sign, a blank is
+produced instead. The values of \verb|width|, \verb|after| and
+\verb|exp| determine how many digits are available before the decimal
+point and, therefore, the value of the exponent. The latter value has
+to fit into the width specified by \verb|exp| and so, if it cannot fit,
+decimal places are sacrificed one by one until either it fits or there
+are no more decimal places (and no decimal point). If it still doesn't
+fit, digits before the decimal place are also sacrificed. If no space
+for digits remains, the whole string is filled with \verb|error char|.
+\item \verb|OP HEX=(L BITS v)[]CHAR:|\newline
+The operator \ixtt{HEX} converts a value of mode \verb|L BITS| into a
+row of hexadecimal digits. The total number of digits equals
+\verb|l bits width OVER 4|. For example, \verb|HEX 4r3| yields
+\verb|00000003|.
+\end{enumerate}
+
+\Subsection{Layout routines}{stan-trlay}
+These routines provide formatting capability on both input and output.
+\begin{enumerate}
+\item \hxtt{PROC space=(REF FILE f)VOID:}{space}\newline
+The procedure advances the position in file \verb|f| by 1 byte. It does
+\emph{not} read or write a blank.
+\item \hxtt{PROC backspace=(REF FILE f)VOID:}{backspace}\newline
+The procedure advances the position in file \verb|f| by -1 bytes. It
+does not read or write a backspace. Note that not every channel
+permits backspacing more than once consecutively.
+\item \hxtt{PROC newline=(REF FILE f)VOID:}{newline}\newline
+On input, skips any remaining characters on the current line and
+positions the file at the beginning of the next line. This means that
+all characters on input are skipped until a linefeed character
+\verb|lf| is read. On output, emits a linefeed character. This is
+non-standard behaviour.
+\item \hxtt{PROC newpage=(REF FILE f)VOID:}{newpage}\newline
+On input, skips any remaining characters on the current page and
+positions the file at the beginning of the next page. This means that
+all characters on input are skipped until a formfeed character
+\verb|ff| is read. Note that if the character following a number is a
+formfeed character, then that character will have been read during the
+read of the number. Hence, the skip to formfeed character will skip the
+whole of the \emph{following} page. On output, a formfeed character is
+emitted immediately.
+\item \hxtt{PROC skip terminators=(REF FILE f)VOID:}{skip terminators}
+\newline
+Any \verb|STRING| terminators are skipped on input
+and the file positioned at the next non-terminating character. The
+procedure is usually called after a \verb|STRING| has been read.
+\end{enumerate}
+
+\Section{Summary}{stan-summ}
+The whole of the standard prelude has been described in the above
+sections. Apart from the built-in operators implemented by the a68toc
+compiler, the whole of the standard prelude is implemented by
+Algol~68 source code.
+\catcode`\%=14
+\vfill\eject

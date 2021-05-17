@@ -1,0 +1,996 @@
+% $Log: chapter7.tex,v $
+% Revision 1.3  2002-06-20 11:49:28  sian
+% mm removed, padding removed, ca68 added
+%
+\Chapter{Structures}{chapvii}
+Structures are a powerful piece of Algol 68, particularly when
+combined with the unions described in the next chapter.  In this
+chapter, we shall meet another mode constructor, examine complex
+numbers and their associated operators and learn how to construct
+new modes.  In doing so, you will deepen your understanding of the
+language.
+
+\Section{Structure denotations}{struc-denot}
+In chapter 3, we saw how a number of individual values can be
+collected together to form a multiple whose mode was expressed as
+``row of'' the base mode. The principal characteristic of multiples
+is that all the elements have the same mode. A structure is another
+way of grouping data elements, but in this case, the individual parts
+can be, but need not be, of different modes. In general, accessing
+the elements of a multiple is determined at run-time by the
+elaboration of a slice. In a \ix{structure}, access to the individual
+parts, called \bfix{fields}, are determined at compile time.
+Structures are, therefore, an efficient means of grouping data
+elements.
+
+The mode constructor \ixtt{STRUCT} is used to create structure modes.
+Here is a simple identity
+\hx{declaration}{declaration!identity!STRUCT@\texttt{STRUCT}} of a
+structure:
+\begin{verbatim}
+   STRUCT(INT i,CHAR c) s = (2,"e")
+\end{verbatim}
+\noindent
+The mode of the structure is
+\begin{verbatim}
+   STRUCT(INT i,CHAR c)
+\end{verbatim}
+\noindent
+and its identifier is \verb|s|. The \verb|i| and the \verb|c| are
+called \hx{\textbf{field selectors}}{field selector} and are part of
+the mode. They are not identifiers, even though the rule for
+identifier construction applies to them, because they are not values
+in themselves.  You cannot say that \verb|i| has mode \verb|INT|
+because \verb|i| cannot stand by itself. We shall see in the next
+section how they are used.
+
+The expression to the right of the equals symbol is called a
+\hx{\textbf{structure-display}}{structure!display}. Like
+row-displays, structure-displays can only appear in a
+\hx{strong context}{context!strong}.  In a strong context, the
+compiler can determine which mode is required and so it can tell
+whether a row-display or a structure-display has been provided.  We
+could now declare another such structure:
+\begin{verbatim}
+   STRUCT(INT i,CHAR c) t = s
+\end{verbatim}
+\noindent
+and \verb|t| would have the same value as \verb|s|.
+
+Here is a structure declaration
+\begin{verbatim}
+   STRUCT(INT j,CHAR c) ss = (2,"e")
+\end{verbatim}
+\noindent
+which looks almost exactly like the first structure declaration
+above, except that the field selector \verb|i| has been replaced with
+\verb|j|.  The structure \verb|ss| has a different mode from \verb|s|
+because not only must the \hx{constituent modes}{mode!constituent} be
+the same, but the field selectors must also be identical.
+
+Structure names can be declared:
+\begin{verbatim}
+   REF STRUCT(INT i,CHAR c) sn =
+             LOC STRUCT(INT i,CHAR c)
+\end{verbatim}
+\noindent
+Because the field selectors are part of the mode, they appear on both
+sides of the declaration. The abbreviated form is
+\begin{verbatim}
+   STRUCT(INT i,CHAR c) sn
+\end{verbatim}
+\noindent
+We could then write
+\begin{verbatim}
+   sn:=s
+\end{verbatim}
+\noindent
+in the usual way.
+
+The modes of the fields can be any mode.  For example, we can declare
+\begin{verbatim}
+   STRUCT(REAL x,REAL y,REAL z) vector
+\end{verbatim}
+\noindent
+which can be abbreviated to
+\begin{verbatim}
+   STRUCT(REAL x,y,z)vector
+\end{verbatim}
+\noindent
+and here is a possible assignment:
+\begin{verbatim}
+   vector:=(1.3,-4,5.6e10)
+\end{verbatim}
+\noindent
+where the value \verb|-4| would be \hx{widened}{coercion!widening}
+to \verb|-4.0|.
+
+Here is a structure with a \hx{procedure field}{structure!procedure field}:
+\begin{verbatim}
+   STRUCT(INT int,
+          PROC(REAL)REAL p,
+          CHAR char) method = (1,sin,"s")
+\end{verbatim}
+\noindent
+Here is a name referring to such a structure:
+\begin{verbatim}
+   STRUCT(INT int,
+          PROC(REAL)REAL p,
+          CHAR char) m := method
+\end{verbatim}
+\noindent
+A structure can even contain another
+\hx{structure}{structure!nested}:
+\begin{verbatim}
+   STRUCT(CHAR c,
+          STRUCT(INT i,j)s) double=("c",(1,2))
+\end{verbatim}
+\noindent
+In this case, the inner structure has the \ix{field selector}
+\verb|s| and \textit{its\/} field selectors are \verb|i| and \verb|j|.
+
+\begin{exercise}
+\item Declare a structure containing three integer values with field
+selectors \verb|i|, \verb|j| and \verb|k|.
+\ans \verb|STRUCT(INT i,j,k) s1 = (1,2,3)|
+'
+\item Declare a name which can refer to a structure containing an
+integer, a real and a boolean using field selectors \verb|i|,
+\verb|r| and \verb|b| respectively.
+\ans \verb|STRUCT(INT i,REAL r,BOOL b)s2|
+'
+\end{exercise}
+
+\Section{Field selection}{struc-field} 
+\hx{The}{field selection} field-selectors of a
+\hx{structure mode}{structure!mode} are used to ``extract'' the
+individual fields of a structure.  For example, given this
+declaration for the structure~\verb|s|:
+\begin{verbatim}
+   STRUCT(INT i,CHAR c) s = (2,"e")
+\end{verbatim}
+\noindent
+we can select the first field of \verb|s| using the \bfix{selection}
+\begin{verbatim}
+   i OF s
+\end{verbatim}
+\noindent
+The mode of the selection is \verb|INT| and its value is \verb|2|.
+Note that the construct \ixtt{OF} is not an operator. The second
+field of \verb|s| can be selected using the selection
+\begin{verbatim}
+   c OF s
+\end{verbatim}
+\noindent
+whose mode is \verb|CHAR| with value \verb|"e"|. The field-selectors
+cannot be used on their own: they can only be used in a selection.
+
+A selection can be used as an operand. Consider the formula
+\begin{verbatim}
+   i OF s * ABS c OF s
+\end{verbatim}
+\noindent
+In the structure \verb|method|, declared in the previous section, the
+procedure in the structure can be selected by
+\begin{verbatim}
+   p OF method
+\end{verbatim}
+\noindent
+which has the mode \verb|PROC(REAL)REAL|. For a reason which will be
+clarified in chapter~10, if you want to call this procedure, you must
+enclose the selection in \ix{parentheses}:
+\begin{verbatim}
+   (p OF method)(0.5)
+\end{verbatim}
+\noindent
+Remembering that the context of the actual-parameters of a procedure
+is strong, you could also \hx{write}{coercion!widening}
+\begin{verbatim}
+   (p OF method)(int OF method)
+\end{verbatim}
+\noindent
+where \verb|int OF method| would be widened to a real number and the
+whole expression would yield a value of mode \verb|REAL|.
+
+The two fields of the structure \verb|double| (also declared in the
+previous section), can be selected by writing
+\begin{verbatim}
+   c OF double
+   s OF double
+\end{verbatim}
+\noindent
+and their modes are \verb|CHAR| and \verb|STRUCT(INT i,j)|
+respectively. Now the fields of the inner structure \verb|s| of
+\verb|double| can be selected by writing
+\begin{verbatim}
+   i OF s OF double
+   j OF s OF double
+\end{verbatim}
+\noindent
+and both selections have mode \verb|INT|.
+
+Now consider the structure name \verb|sn| declared by
+\begin{verbatim}
+   STRUCT(INT i,CHAR s) sn;
+\end{verbatim}
+\noindent
+The mode of \verb|sn| is
+\begin{verbatim}
+   REF STRUCT(INT i,CHAR s)
+\end{verbatim}
+\noindent
+This means that the mode of the selection
+\begin{verbatim}
+   i OF sn
+\end{verbatim}
+\noindent
+is not \verb|INT|, but \verb|REF INT|, and the mode of the selection
+\begin{verbatim}
+   c OF sn
+\end{verbatim}
+\noindent
+is \verb|REF CHAR|. That is, the modes of the fields of a structure
+name are all preceded by \ixtt{REF} (they are all names).  This is
+particularly important for recursively defined structures (see
+chapter~11). Thus, instead of assigning a complete structure using a
+\hx{structure-display}{structure!display}, you can assign values to individual fields.
+That is, the assignment
+\begin{verbatim}
+   sn:=(3,"f")
+\end{verbatim}
+\noindent
+is equivalent to the assignments
+\begin{verbatim}
+   i OF sn := 3;
+   c OF sn := "f"
+\end{verbatim}
+\noindent
+except that the assignments to the individual fields are separated by
+the go-on symbol (the semicolon \ixtt{;}) and the
+two units in the structure-display are separated by a comma and so
+are elaborated \hx{collaterally}{elaboration!collateral}.
+
+Given the declaration and initial assignment
+\begin{verbatim}
+   STRUCT(CHAR c,STRUCT(INT i,j)s)dn:=double
+\end{verbatim}
+\noindent
+the selection
+\begin{verbatim}
+   s OF dn
+\end{verbatim}
+\noindent
+has the mode \verb|REF STRUCT(INT i,j)|, and so you could assign
+directly to~it:
+\begin{verbatim}
+   s OF dn:=(-1,-2)
+\end{verbatim}
+\noindent
+as well as to one of its fields:
+\begin{verbatim}
+   j OF s OF dn:=0
+\end{verbatim}
+
+\begin{exercise}
+\item Given the declarations
+\begin{verbatim}
+   STRUCT(STRUCT(CHAR a,INT b)c,
+          PROC(STRUCT(CHAR a,INT b))INT p,
+          INT d)st;
+   STRUCT(CHAR a,INT b)sta
+\end{verbatim}
+\noindent
+what is the mode of
+\begin{subex}
+\item \verb|c OF st| \subans \verb|REF STRUCT(CHAR a,INT b)|
+'
+\item \verb|a OF c OF st| \subans \verb|REF CHAR|
+'
+\item \verb|a OF sta| \subans \verb|REF CHAR|
+'
+\item \verb|(p OF st)(sta)| \subans \verb|INT|, provided that a
+procedure had been assigned to \verb|p OF st|.
+'
+\item \verb|b OF c OF st * b OF sta| \subans \verb|INT|
+'
+\item \verb|sta:=c OF st| \subans \verb|REF STRUCT(CHAR a,INT b)|
+'
+\end{subex}
+\item Declare a procedure which could be assigned to the selection
+\verb|p OF st| in the last question. \ans \ %
+\begin{verbatim}
+   PROC p1=(STRUCT(CHAR a,INT b)s)INT:
+      ABS a OF s * b OF s
+\end{verbatim}
+'
+\end{exercise}
+
+\Section{Mode declarations}{struc-mode}
+\hx{Structure}{declaration!structure} declarations are very common
+in Algol 68 programs because they are a convenient way of grouping
+disparate data elements, but writing out their modes every time a
+name needs declaring is error-prone.  Using the
+\bfix{mode declaration}, a new mode \hx{indicant}{mode!indicant} can
+be declared to act as an abbreviation.  For example, the mode
+declaration
+\begin{verbatim}
+   MODE VEC = STRUCT(REAL x,y,z)
+\end{verbatim}
+\noindent
+makes \verb|VEC| synonymous for the mode specification on the
+right-hand side of the equals symbol. Henceforth, new values using
+\verb|VEC| can be declared in the ordinary way:
+\begin{verbatim}
+   VEC vec = (1,2,3);
+   VEC vn := vec;
+   [10]VEC va;
+   PROC(VEC v)VEC pv=CO a routine-denotation CO;
+   STRUCT(VEC v,w,x) tensor
+\end{verbatim}
+
+Here is a mode declaration for a structure which contains a reference
+mode:
+\begin{verbatim}
+   MODE RV = STRUCT(CHAR c,REF[]CHAR s)
+\end{verbatim}
+\noindent
+but we shall consider such advanced modes in chapter~11. Using a mode
+declaration, you might be tempted to declare a mode such as
+\begin{verbatim}
+   MODE CIRCULAR =
+         STRUCT(INT i,CIRCULAR c)  CO wrong CO
+\end{verbatim}
+\noindent
+but this is not allowed. However, there is nothing wrong with such
+modes~as
+\begin{verbatim}
+   MODE NODE  = STRUCT(STRING s,
+                       REF NODE next),
+        PNODE = STRUCT(STRING s,
+                       PROC(PNODE)STRING proc)
+\end{verbatim}
+\noindent
+because the \verb|NODE| inside the \verb|STRUCT| of its declaration
+is hidden by the \verb|REF|. Likewise, the \verb|PNODE| parameter for
+\verb|proc| in the declaration of \verb|PNODE| is hidden by the
+\verb|PROC|.
+
+Suppose you want a mode which refers to another mode which hasn't
+been declared, and the second mode will refer back to the first mode.
+Both mode declarations cannot be first. In Algol 68 proper, you
+simply declare both modes in the usual way. However, the
+\hx{a68toc}{a68toc!recursive modes}
+compiler is a single-pass compiler (it reads the source program once
+only) and so all applied-occurrences must occur later in the source
+program than the defining-occurrences. In this case, one of the modes
+is declared using a \hx{\textbf{stub declaration}}{declaration!stub}.
+Here is an example:
+\begin{verbatim}
+   MODE MODE2,
+        MODE1 = STRUCT(CHAR c,REF MODE2 rb),
+        MODE2 = STRUCT(INT i,REF MODE1 ra)
+\end{verbatim}
+\noindent
+There is nothing circular about these declarations.  This is another
+example of \ix{mutual recursion}.  Go ahead and experiment.
+
+This raises the point of which modes are actually permissible. We
+shall deal with this in chapter~10. For now, just ensure that you
+don't declare modes like \verb|CIRCULAR|, and avoid modes which can
+be strongly coerced into themselves, such as
+\begin{verbatim}
+MODE WRONG = [1:5]WRONG
+\end{verbatim}
+\noindent
+If you inadvertently declare a disallowed mode, the compiler will
+declare that the mode is not legal.
+
+Mode declarations are not confined to structures. For example, the
+mode \ixtt{STRING} is declared in the standard prelude as
+\begin{verbatim}
+   MODE STRING = FLEX[1:0]CHAR
+\end{verbatim}
+\noindent
+and you can write declarations like
+\begin{verbatim}
+MODE FDES     = INT,
+     MULTIPLE = [30]REAL,
+     ROUTINE  = PROC(INT)INT,
+     MATRIX   = [n,n]REAL
+\end{verbatim}
+\noindent
+Notice that the mode declarations have been abbreviated (by omitting
+\verb|MODE| each time and using commas). In the declaration of
+\verb|ROUTINE|, notice that no identifier is given for the parameter of
+the procedure. In the last declaration, the bounds will be determined
+at the time of the declaration of any value using the mode
+\verb|MATRIX|. Here, for example, is a small program using
+\verb|MATRIX|:
+\begin{verbatim}
+   PROGRAM tt CONTEXT VOID
+   USE standard
+   BEGIN
+   INT n;
+   MODE MATRIX = [n,n]REAL;
+
+   WHILE   
+      print((newline,
+             "Enter an integer ",
+             "followed by a blank:"));
+      read(n);
+      n > 0
+   DO
+      MATRIX m;
+
+      FOR i TO 1 UPB m
+      DO
+         FOR j TO 2 UPB m
+         DO
+            m[i,j]:=random*1000
+         OD
+      OD;
+
+      FOR i TO 1 UPB m
+      DO
+         print((m[i,],newline))
+      OD
+   OD
+   END
+   FINISH
+\end{verbatim}
+\newpage
+
+\begin{exercise}
+\item Declare a mode for a structure containing two fields, one of mode
+\verb|REAL| and one of mode \verb|PROC(REAL)REAL|.
+\ans \ %
+\begin{verbatim}
+   MODE EX_7_3_1=STRUCT(REAL r,
+                        PROC(REAL)REAL p)
+\end{verbatim}
+'
+\item Declare a mode for a structure which contains three fields, the
+first being the mode of the previous exercise, the second a procedure
+which takes that mode as a parameter and yields \verb|VOID|, and the third
+being of mode \verb|CHAR|.
+\ans \ %
+\begin{verbatim}
+   MODE EX_7_3_2=
+      STRUCT(EX_7_3_1 e,
+             PROC(EX_7_3_1)VOID p,
+             CHAR c)
+\end{verbatim}
+'
+\item What is wrong with these two definitions?
+\begin{verbatim}
+   MODE AMODE = STRUCT(INT i,BMODE b),
+        BMODE = STRUCT(CHAR c,AMODE a)
+\end{verbatim}
+\noindent
+Try writing a program containing these declarations, with names
+of modes \verb|AMODE| and \verb|BMODE| and finish the program with
+the unit \verb|SKIP|.  \ans One of the \verb|BMODE| and \verb|AMODE|
+structures is insufficiently shielded. You will get an error for
+\verb|BMODE| saying it is not a legal mode and another error for the
+declaration of a \verb|REF AMODE| saying that the mode \verb|AMODE|
+has not been declared.
+'
+\end{exercise}
+
+\Section{Complex numbers}{struc-compl}
+This section describes the mode used to perform complex arithmetic.
+This kind of arithmetic is useful to engineers, particularly electrical
+engineers. Even if you know nothing about complex numbers, you may
+still find this section useful.
+
+The \ix{standard prelude} contains the mode
+\hx{declaration}{declaration!mode}
+\begin{verbatim}
+   MODE COMPL = STRUCT(REAL re,im)
+\end{verbatim}
+\noindent
+You can use values based on this mode to perform complex arithmetic.
+Here are declarations for values of modes \ixtt{COMPL} and
+\verb|REF COMPL| respectively:
+\begin{verbatim}
+   COMPL z1 = (2.4,-4.6);
+   COMPL z2:=z1
+\end{verbatim}
+\noindent
+Most of the operators you need to manipulate \ix{complex numbers}
+have been declared in the standard prelude.
+
+You can use the monadic operators \ixtt{+} and \ixtt{-} which have
+also been declared for values of mode \verb|COMPL|.
+
+The dyadic operator \ixtt{**} has been declared for a left-operand of
+mode \verb|COMPL| and a right-operand of mode \verb|INT|.  The dyadic
+operators \verb|+ - * /| have been declared for all combinations of
+complex numbers, real numbers and integers, and so have the
+boolean operators \ixtt{=} and \ixtt{/=}.  The assigning operators
+\ixtt{TIMESAB}, \ixtt{DIVAB}, \ixtt{PLUSAB}, and \ixtt{MINUSAB} all
+take a left operand of mode \verb|REF COMPL| and a right-operand of
+modes \verb|INT|, \verb|REAL| or \verb|COMPL|.  In a strong
+\hx{context}{context!strong}, a real number will be
+\hx{widened}{coercion!widening} to a complex number.  So, for
+example, in the following identity declaration
+\begin{verbatim}
+   COMPL z3 = -3.4
+\end{verbatim}
+\noindent
+\verb|z3| will have the same value as if it had been
+declared by
+\begin{verbatim}
+   COMPL z3 = (-3.4,0)
+\end{verbatim}
+\noindent
+This is the only case where a real number can be widened into a
+structure.
+
+The dyadic operator \ixtt{I} takes left- and right-operands of any
+combination of \verb|REAL| and \verb|INT| and yields a complex
+number.  It has a priority of~9. For example, in a formula, the
+context of operands is firm and so widening is not allowed.
+Nevertheless, the yield of this formula is \verb|COMPL|:
+\begin{verbatim}
+   2 * 3 I 4
+\end{verbatim}
+
+Some operators act only on complex numbers. The monadic operator
+\ixtt{RE} takes a \verb|COMPL| operand and yields its \verb|re| field
+with mode \verb|REAL|. Likewise, the monadic operator \ixtt{IM} takes
+an operand of mode \verb|COMPL| and yields its \verb|im| field with
+mode \verb|REAL|. For example, given the declaration above of
+\verb|z3|, \verb|RE z3| would yield \verb|-3.4|, and \verb|IM z3|
+would yield \verb|0.0|. Given the complex number \verb|z| declared as
+\begin{verbatim}
+   COMPL z = 2 I 3
+\end{verbatim}
+\noindent
+then \hxtt{CONJ z}{CONJ} would yield \verb|RE z I - IM z| or
+\verb|(2.0,-3.0)|. The operator \ixtt{ARG} gives the argument of its
+operand: \verb|ARG z| would yield $0.982\,793\,723\,2$, lying in the
+interval $\left(-\pi,\pi\right]$.  The monadic operator \ixtt{ABS}
+with a complex number may be defined as
+\begin{verbatim}
+   OP ABS = (COMPL z)REAL:
+      sqrt(RE z**2 + IM z**2)
+\end{verbatim}
+\noindent
+Remember that in the formula \verb|RE z**2|, the operator
+\verb|RE| is monadic and so is elaborated first.
+
+As described in the previous section, the mode \ixtt{COMPL} can be
+used wherever a mode is required.  In particular, procedures taking
+\verb|COMPL| parameters and yielding \verb|COMPL| values can be
+declared.  Structures containing \verb|COMPL| can be declared as
+above.
+
+From the section on field selection, it is clear that in the
+declarations
+\begin{verbatim}
+   COMPL z = (2.0,3.0);
+   COMPL w:=z
+\end{verbatim}
+\noindent
+the selection
+\begin{verbatim}
+   re OF z
+\end{verbatim}
+\noindent
+has mode \verb|REAL| (and value \verb|2.0|), while the selection
+\begin{verbatim}
+   re OF w
+\end{verbatim}
+\noindent
+has mode \verb|REF REAL| (and its value is a name). However, the
+formula
+\begin{verbatim}
+   RE w
+\end{verbatim}
+\noindent
+still yields a value of mode \verb|REAL| because
+\ixtt{RE} is an operator whose single operand has mode
+\verb|COMPL|. In the above phrase, the \verb|w| will be dereferenced
+before \verb|RE| is elaborated. Thus it is quite legal to write
+\begin{verbatim}
+   im OF w:=RE w
+\end{verbatim}
+\noindent
+or
+\begin{verbatim}
+   im OF w:=re OF w
+\end{verbatim}
+\noindent
+in which case the right-hand side of the assignment will be
+dereferenced before a copy is assigned.
+
+\begin{exercise}
+\item If the complex number \verb|za| has the mode \verb|COMPL| and the
+value yielded by \verb|(2,-3)|, what is the value of
+\begin{subex}
+\item \verb|CONJ za| \subans \verb|(2.0,3.0)|
+'
+\item \verb|IM za * RE za * RE za| \subans \verb|-12.0|
+'
+\item \verb|ABS za| \subans Write a short program to get
+\begin{verbatim}
+   3.6055512754639891
+\end{verbatim}
+'
+\item \verb|ARG za| \subans \verb|0.982 793 723 247 329 1|
+'
+\end{subex}
+\item What is the value of the formula \verb|23 - 11 I -10|?
+\ans The value denoted by \verb|(12.0,-10.0)|.
+'
+\item Given the declarations
+\begin{verbatim}
+   COMPL a = 2 I 3;
+   COMPL b:= CONJ a
+\end{verbatim}
+\noindent
+what is the mode and value of each of the following:
+\begin{subex}
+\item \verb|im OF b| \subans \verb|REF REAL|, a name.
+'
+\item \verb|IM b| \subans \verb|REAL  -3.0|
+'
+\item \verb|im OF a| \subans \verb|REAL  3.0|
+'
+\item \verb|IM a| \subans \verb|REAL  3.0|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Multiples in structures}{struc-mult}
+If multiples are required in a structure, the structure
+\hx{declaration}{declaration!structure} should only contain the
+required bounds if it is an \ix{actual-declarer}.  For example, we
+could declare
+\begin{verbatim}
+   STRUCT([]CHAR forename,
+                 surname,
+                 title)
+      lecturer=
+         ("Nerissa","Leitch","Dr")
+\end{verbatim}
+\noindent
+where the mode on the left is a \ix{formal-declarer} (remember that
+the mode on the left-hand side of an identity
+\hx{declaration}{identity!declaration!formal-declarer} is always a
+formal-declarer).  We could equally well declare
+\begin{verbatim}
+   STRUCT([]CHAR forename,
+                 surname,
+                 title)
+      student=
+            ("Tom","MacAllister","Mr")
+\end{verbatim}
+\noindent
+As you can see, the bounds of the individual multiples differ in the
+two cases.
+
+When declaring a name, because the mode preceding the name identifier
+is an actual-declarer (in an abbreviated declaration), the bounds of
+the required multiples must be included. A suitable declaration for a
+name which could refer to \verb|lecturer| would be
+\begin{verbatim}
+   STRUCT([7]CHAR forename,
+          [6]CHAR surname,
+          [3]CHAR title)
+            new lecturer := lecturer
+\end{verbatim}
+\noindent
+but this would not be able to refer to \verb|student|. A better
+declaration would use \ixtt{STRING}:
+\begin{verbatim}
+   STRUCT(STRING forename,surname,title)person
+\end{verbatim}
+\noindent
+in which case we could now write
+\begin{verbatim}
+   person:=lecturer;
+   person:=student
+\end{verbatim}
+\noindent
+Using field selection, we can write
+\begin{verbatim}
+   title OF person
+\end{verbatim}
+\noindent
+which would have mode \verb|REF STRING|. Thus, using field selection,
+we can assign to the individual fields of \verb|person|:
+\begin{verbatim}
+   surname OF person:="McRae"
+\end{verbatim}
+
+When slicing a field which is a multiple, it is necessary to remember
+that \hx{slicing}{slice} binds more tightly than selecting (see
+chapter~10 for a detailed explanation). Thus the first character of
+the surname of \verb|student| would be accessed by writing
+\begin{verbatim}
+   (surname OF student)[1]
+\end{verbatim}
+\noindent
+which would have mode \verb|CHAR|. The parentheses ensure that the
+selection is elaborated before the slicing. Similarly, the first five
+characters of the forename of \verb|person| would be accessed as
+\begin{verbatim}
+   (forename OF person)[:5]
+\end{verbatim}
+\noindent
+with mode \verb|REF[]CHAR|.
+
+Consider the following program:
+\begin{verbatim}
+   PROGRAM t1 CONTEXT VOID
+   BEGIN
+      MODE AMODE = STRUCT([4]CHAR a,INT b);
+      AMODE a = ("abcde",3);
+      AMODE b:=a;
+      SKIP
+   END
+   FINISH
+\end{verbatim}
+\noindent
+In the identity declaration for \verb|a|, the mode required is a
+\ix{formal-declarer}.  In this case, the
+\hx{a68toc}{a68toc!ignoring bounds}
+compiler will ignore the bounds in the declaration of \verb|AMODE|
+giving the mode
+\begin{verbatim}
+   STRUCT([]CHAR a,INT b)
+\end{verbatim}
+\noindent
+which explains why the structure-display on the right is accepted
+(\verb|"abcde"| has bounds \verb|[1:5]|). However, although the
+program compiles without errors, when it is run, it fails with the
+error message
+\begin{verbatim}
+   Run time fault (aborting):
+   ASSIGN2: bounds do not match in [] assignment
+\end{verbatim}
+\noindent
+because the mode used in the declaration of the name \verb|b| is an
+\ix{actual-declarer} (it contains the bounds given in the mode
+\hx{declaration}{declaration!mode}) and you cannot assign a
+\verb|[]CHAR| with bounds \verb|[1:5]| to a \verb|REF[]CHAR| with
+bounds \verb|[1:4]|.
+
+With more complicated structures, it is better to use a mode
+declaration. For example, we could declare
+\begin{verbatim}
+   MODE EMPLOYEE =
+      STRUCT(STRING name,
+             [2]STRING address,
+             STRING dept,ni code,tax code,
+             REAL basic,overtime rate,
+             [52]REAL net pay,tax);
+
+   EMPLOYEE emp
+\end{verbatim}
+\noindent
+and then read specific values from the keyboard (chapter 9 covers
+reading data from files):
+\begin{verbatim}
+   read((name OF emp,newline,
+         (address OF emp)[1],newline,
+         (address OF emp)[2],newline,
+   ...
+\end{verbatim}
+\noindent
+The modes of
+\begin{verbatim}
+   name OF emp
+   address OF emp
+   net pay OF emp
+\end{verbatim}
+\noindent
+are
+\begin{verbatim}
+   REF STRING
+   REF[]STRING
+   REF[]REAL
+\end{verbatim}
+\noindent
+respectively. The phrase
+\begin{verbatim}
+   (net pay OF emp)[:10]
+\end{verbatim}
+\noindent
+has the mode \verb|REF[]REAL| with bounds \verb|[1:10]| and
+represents the net pay of \verb|emp| for the first 10 weeks. Note
+that although the monetary values are held as \verb|REAL| values, the
+accuracy with which a \verb|REAL| number is stored is such that no
+rounding errors will ensue. See section~\hyref{dev-money} which
+describes which modes are suitable for storing monetary values.
+
+\begin{exercise}
+\item Given the declaration of \verb|emp| in the text, what would be
+the mode of each of the following:
+\begin{subex}
+\item \verb|address OF emp| \subans \verb|REF[]STRING|
+'
+\item \verb|basic OF emp| \subans \verb|REF REAL|
+'
+\item \verb|(tax OF emp)[12]| \subans \verb|REF REAL|
+'
+\item \verb|(net pay OF emp)[10:12]| \subans \verb|REF[]REAL|
+'
+\end{subex}
+\item What are the bounds of the name in (d) above?
+\ans \verb|[1:3]|.
+'
+\end{exercise}
+
+\Section{Rows of structures}{struc-rows}
+\hx{In}{structure!multiple} the last section, we considered
+multiples in structures.  What happens if we have a multiple each of
+whose elements is a structure?  No problem.  If we had declared
+\begin{verbatim}
+   [10]COMPL z4
+\end{verbatim}
+\noindent
+then the selection \verb|re OF z4| would yield a name with mode
+\verb|REF[]REAL| and bounds \verb|[1:10]|.\footnote{Unfortunately,
+there is a limitation in the \protect\hx{a68toc}{a68toc!selections} compiler
+whereby this selection (and similar selections) are disallowed.} It
+would be possible, because it is a name, to assign to it:
+\begin{verbatim}
+   re OF z4:=(1,2,3,4,5,6,7,8,9,10)
+\end{verbatim}
+
+Selecting the field of a sliced multiple of a structure is
+straightforward. Since the multiple is sliced before the field is
+selected, no parentheses are necessary. Thus the real part of the
+third \verb|COMPL| of \verb|z4| above is given by the expression
+\begin{verbatim}
+   re OF z4[3]
+\end{verbatim}
+
+Now consider a multiple of a structure which contains a multiple. Here
+is its declaration:
+\begin{verbatim}
+   [100]STRUCT(CHAR c,[5]INT i)s
+\end{verbatim}
+\noindent
+Then the fourth integer in the \ith{25}{th} structure of \verb|s| is
+given by
+\begin{verbatim}
+   (i OF s[25])[4]
+\end{verbatim}
+\noindent
+and all the characters are given by the selection
+\begin{verbatim}
+   c OF s
+\end{verbatim}
+\noindent
+with mode \verb|REF[]CHAR| and bounds \verb|[1:100]|.\footnote{But
+this is not supported by the \protect\hx{a68toc}{a68toc!selections} compiler.}
+
+\begin{exercise}
+\item Suppose a firm had 20 employees, and in writing one of the
+programs in their payroll system, the modes of section 7.5 were used.
+Suppose now that we have the declaration
+\begin{verbatim}
+   [20]EMPLOYEE employee;
+\end{verbatim}
+\noindent
+What would be the mode of each of the following:
+\begin{subex}
+\item \verb|(dept OF employee[3])[3]| \subans \verb|REF CHAR|
+'
+\item \verb|dept OF employee[10:12]| \subans \verb|REF[]STRING|
+'
+\item \verb|ni code OF employee[1]| \subans \verb|REF STRING|
+'
+\item \verb|net pay OF employee[15]| \subans \verb|REF[]REAL|
+'
+\item \verb|(tax OF employee[2])[50:51]| \subans \verb|REF[]REAL|
+'
+\end{subex}
+\end{exercise}
+
+\Section{Transput of structures}{struc-trans}
+The following program fragment will print the details of the name
+\verb|emp| declared in section \hyref{struc-mult}:
+\begin{verbatim}
+   print((emp,newline))
+\end{verbatim}
+\noindent
+For details of how this works, see the remarks on
+``\ix{straightening}'' in section \hyref{trans-straight}. However,
+the individual strings would be printed together and so, in this
+case, it would be better to write the following:
+\begin{verbatim}
+   print((name OF emp,newline));
+   FOR i TO UPB address OF emp
+   DO
+      print((address OF emp)[i],newline))
+   OD;
+   print((dept OF emp,newline,
+          ni code OF emp,newline,
+          tax code OF emp,
+          basic OF emp,
+          overtime OF emp,
+          net pay OF emp,
+          tax OF emp,newline))
+\end{verbatim}
+\noindent
+In practice, it would be sensible to declare a procedure or an
+operator which would print the structure and then call it as required.
+\newpage
+
+\Section{Summary}{struc-summ}
+This chapter has significantly increased the number of different
+modes we can construct.  Structures are constructed using the mode
+constructor \verb|STRUCT|.  Complicated structures are best declared
+using the mode declaration (using \verb|MODE|).  Structures can have
+any number of fields from one up, and the fields can have any mode,
+including the same modes.  The mode \verb|COMPL| has been declared in
+the standard prelude together with the necessary operators to
+manipulate complex numbers.
+
+Structures can contain procedures and multiples and multiples of
+structures can be declared. Although structures containing reference
+modes can be declared, they are covered in chapter~11. Operators and
+procedures which have structure parameters or yield can be declared.
+
+Here are some exercises to check what you have learned.
+
+\begin{exercise}
+\item Write a suitable mode for a football team which contains the
+names of its 11 members, the name of the team (ordinary name, not the
+Algol~68 meaning), the number of games played, won and drawn, and the
+number of goals scored for and against.
+\ans \ %
+\begin{verbatim}
+   MODE TEAM=STRUCT([11]STRING name,
+                    STRING team,
+                    INT played, won, drawn,
+                        for, against)
+\end{verbatim}
+'
+\item Given the declaration
+\begin{verbatim}
+   STRUCT(INT i,[3]REAL r)s
+\end{verbatim}
+\noindent
+explain why parentheses are needed in the phrase
+\begin{verbatim}
+   (r OF s)[2]
+\end{verbatim}
+\indent\ans Slicing binds more tightly than selecting, so the
+selection must be enclosed in parentheses (see section
+\hyref{gram-paren} for the full explanation).
+'
+\item Given the declaration
+\begin{verbatim}
+   [3]STRUCT(INT i,REAL r)s
+\end{verbatim}
+\noindent
+explain why parentheses are not needed in the phrase
+\verb|r OF s[2]|.  \ans The slicing takes place before the selection
+so no parentheses are needed.
+'
+\item Given the declarations
+\begin{verbatim}
+   MODE S2,
+        S1 = STRUCT([3]CHAR n,
+                    PROC S2 p),
+        S2 = STRUCT([3]CHAR m,
+                    PROC(S1)S2 p);
+   S1 s1;  S2 s2;
+\end{verbatim}
+\noindent
+what are the modes of each of the following:
+\begin{subex}
+\item \verb|p OF s1| \subans \verb|REF PROC S2|
+'
+\item \verb|p OF s2| \subans \verb|REF PROC(S1)S2|
+'
+\item \verb|(n OF s1)[2:]| \subans \verb|REF[]CHAR|
+'
+\end{subex}
+\end{exercise}
